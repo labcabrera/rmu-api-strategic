@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
         console.log("Strategic game creation << " + req.body.name);
         //TODO JWT
         const user = "lab.cabrera@gmail.com";
-        const newGame = await strategicGameService.createStrategicGame(user, req.body);
+        const newGame = await strategicGameService.save(user, req.body);
         res.status(201).json(newGame);
     } catch (error) {
         console.log(error);
