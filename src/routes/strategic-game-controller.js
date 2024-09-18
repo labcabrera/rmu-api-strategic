@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-//const StrategicGame = require("../models/strategic-game-model")
 const strategicGameService = require("../services/strategic-game-service");
 
 router.get('/', async (req, res) => {
