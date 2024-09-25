@@ -3,7 +3,7 @@ const StrategicGame = require("../models/strategic-game-model");
 const findById = async (gameId) => {
     const readedGame = await StrategicGame.findById(gameId);
     if (!readedGame) {
-        throw new { status: 404, message: "Strategic game not found" };
+        throw { status: 404, message: "Strategic game not found" };
     }
     return toJSON(readedGame);
 }
@@ -28,7 +28,7 @@ const update = async (gameId, data) => {
     const { name, description } = data;
     const updatedGame = await StrategicGame.findByIdAndUpdate(gameId, { name, description }, { new: true });
     if (!updatedGame) {
-        throw new { status: 404, message: "Strategic game not found" };
+        throw { status: 404, message: "Strategic game not found" };
     };
     return toJSON(updatedGame);
 };
