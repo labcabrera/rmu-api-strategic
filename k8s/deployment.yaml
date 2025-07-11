@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rmu-api-strategic
+  labels:
+    app: rmu-api-strategic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rmu-api-strategic
+  template:
+    metadata:
+      labels:
+        app: rmu-api-strategic
+    spec:
+      containers:
+      - name: rmu-api-strategic
+        image: labcabrera/rmu-api-strategic:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            configMapKeyRef:
+              name: rmu-shared-configmap
+              key: MONGO_URI

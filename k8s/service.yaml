@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmu-api-strategic-service
+spec:
+  selector:
+    app: rmu-api-strategic
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3002
+  type: ClusterIP
