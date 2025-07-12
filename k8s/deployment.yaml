@@ -20,8 +20,8 @@ spec:
         ports:
         - containerPort: 3002
         env:
-        - name: MONGO_URI
+        - name: RMU_MONGO_STRATEGIC_URI
           valueFrom:
             configMapKeyRef:
               name: rmu-shared-configmap
-              key: MONGO_URI
+              key: RMU_MONGO_STRATEGIC_URI
