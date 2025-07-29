@@ -1,3 +1,9 @@
 = Rolemaster Unified Strategic API
 
-Strategic API created with Node.js for the https://github.com/labcabrera/rmu-fe-main/ project.
+REST API for RMO strategic management of games. This API is in charge of defining the campaigns and characters of a game
+while the tactical API is in charge of resolving the combats that occur.
+
+This project is part of RMU Online: https://github.com/labcabrera/rmu-platform
+
+WARNING: *This application is an independent project developed by fans of Rolemaster Unified. It is not affiliated with, endorsed by, or licensed by Iron Crown Enterprises (ICE), the owners of the Rolemaster intellectual property.*
+*All Rolemaster trademarks, game systems, and materials are the property of Iron Crown Enterprises. This software is provided for personal, non-commercial use only. If you enjoy Rolemaster, please support the official publications and content from ICE.*
