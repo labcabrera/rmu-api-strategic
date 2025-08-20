@@ -15,6 +15,9 @@ import { MongoFactionRepository } from './infrastructure/persistence/repositorie
 import { KafkaFactionProducerService } from './infrastructure/messaging/kafka-faction-producer.service';
 import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model';
 import { GamesModule } from '../games/games.module';
+import { AddFactionGoldCommand } from './application/commands/add-faction-gold.command';
+import { AddFactionGoldCommandHandler } from './application/commands/handlers/add-faction-gold.command.handler';
+import { AddFactionXPCommandHandler } from './application/commands/handlers/add-faction-xp.command.handler';
 
 @Module({
   imports: [
@@ -32,6 +35,8 @@ import { GamesModule } from '../games/games.module';
     CreateFactionCommandHandler,
     UpdateFactionCommandHandler,
     DeleteFactionCommandHandler,
+    AddFactionGoldCommandHandler,
+    AddFactionXPCommandHandler,
     {
       provide: 'FactionRepository',
       useClass: MongoFactionRepository,

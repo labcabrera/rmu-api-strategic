@@ -3,7 +3,15 @@
 
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
@@ -17,6 +25,10 @@ import { FactionDto, FactionPageDto } from './dtos/faction.dto';
 import { UpdateFactionCommand } from '../../application/commands/update-faction.command';
 import { UpdateFactionDto } from './dtos/update-faction.dto';
 import { DeleteFactionCommand } from '../../application/commands/delete-faction.command';
+import { AddFactionXPDto } from './dtos/add-faction-xp.dto';
+import { AddFactionXPCommand } from '../../application/commands/add-faction-xp.command';
+import { AddFactionGoldCommand } from '../../application/commands/add-faction-gold.command';
+import { AddFactionGoldDto } from './dtos/add-faction-gold.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/factions')
@@ -83,5 +95,31 @@ export class FactionController {
   async delete(@Param('id') id: string, @Request() req) {
     const command = new DeleteFactionCommand(id, undefined, req.user!.id as string, req.user!.roles as string[]);
     await this.commandBus.execute(command);
+  }
+
+  @Post(':id/add-xp')
+  @ApiOperation({ operationId: 'addFactionXP', summary: 'Add XP to faction' })
+  @ApiOkResponse({ type: FactionDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiForbiddenResponse({ description: 'Forbidden, insufficient permissions', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async addXP(@Param('id') id: string, @Body() addFactionXPDto: AddFactionXPDto, @Request() req) {
+    const user = req.user!;
+    const command = AddFactionXPDto.toCommand(id, addFactionXPDto, user.id as string, user.roles as string[]);
+    const faction = await this.commandBus.execute<AddFactionXPCommand, Faction>(command);
+    return FactionDto.fromEntity(faction);
+  }
+
+  @Post(':id/add-gold')
+  @ApiOperation({ operationId: 'addFactionGold', summary: 'Add gold to faction' })
+  @ApiOkResponse({ type: FactionDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiForbiddenResponse({ description: 'Forbidden, insufficient permissions', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async addGold(@Param('id') id: string, @Body() addFactionGoldDto: AddFactionGoldDto, @Request() req) {
+    const user = req.user!;
+    const command = AddFactionGoldDto.toCommand(id, addFactionGoldDto, user.id as string, user.roles as string[]);
+    const faction = await this.commandBus.execute<AddFactionGoldCommand, Faction>(command);
+    return FactionDto.fromEntity(faction);
   }
 }
