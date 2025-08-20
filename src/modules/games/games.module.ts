@@ -14,6 +14,7 @@ import { GameController } from './infrastructure/controllers/game.controller';
 import { KafkaGameProducerService } from './infrastructure/messaging/kafka-game-producer.service';
 import { MongoGameRepository } from './infrastructure/persistence/repositories/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
+import { RealmApiClient } from './infrastructure/clients/realm-api-client';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { GameModel, GameSchema } from './infrastructure/persistence/models/game-
     {
       provide: 'GameRepository',
       useClass: MongoGameRepository,
+    },
+    {
+      provide: 'RealmClient',
+      useClass: RealmApiClient,
     },
     {
       provide: 'GameEventProducer',
