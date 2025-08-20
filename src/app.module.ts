@@ -6,6 +6,8 @@ import * as Joi from 'joi';
 import { AuthModule } from './modules/auth/auth.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { GamesModule } from './modules/games/games.module';
+import { CharactersModule } from './modules/characters/characters.module';
+import { FactionsModule } from './modules/factions/factions.module';
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { GamesModule } from './modules/games/games.module';
         PORT: Joi.number().positive().default(3001),
         RMU_MONGO_STRATEGIC_URI: Joi.string().required(),
         RMU_API_CORE_URI: Joi.string().required(),
+        RMU_API_ITEMS_URI: Joi.string().required(),
         RMU_IAM_JWK_URI: Joi.string().uri().required(),
         RMU_IAM_TOKEN_URI: Joi.string().uri().required(),
         RMU_IAM_CLIENT_ID: Joi.string().required(),
@@ -35,6 +38,8 @@ import { GamesModule } from './modules/games/games.module';
     AuthModule,
     SharedModule,
     GamesModule,
+    FactionsModule,
+    CharactersModule,
   ],
 })
 export class AppModule {}
