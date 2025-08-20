@@ -1,6 +1,5 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { randomUUID } from 'crypto';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/entities/character.entity';

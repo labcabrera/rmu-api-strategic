@@ -38,13 +38,19 @@ import { ProfessionApiClient } from './infrastructure/clients/profession-api-cli
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
 import { AddXPCommandHandler } from './application/commands/handlers/add-xp.command.handler';
 import { LevelUpCommandHandler } from './application/commands/handlers/level-up.command.handler';
+import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
+import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
+import { LevelUpSkillCommandHandler } from './application/commands/handlers/level-up-skill.command.handler';
 
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
     ConfigModule,
-    MongooseModule.forFeature([{ name: CharacterModel.name, schema: CharacterSchema }]),
+    MongooseModule.forFeature([
+      { name: CharacterModel.name, schema: CharacterSchema },
+      { name: CharacterLevelDevModel.name, schema: CharacterLevelDevSchema },
+    ]),
     AuthModule,
     SharedModule,
     GamesModule,
@@ -74,9 +80,14 @@ import { LevelUpCommandHandler } from './application/commands/handlers/level-up.
     DeleteItemCommandHandler,
     AddXPCommandHandler,
     LevelUpCommandHandler,
+    LevelUpSkillCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
+    },
+    {
+      provide: 'CharacterLevelDevRepository',
+      useClass: MongoCharacterLevelDevRepository,
     },
     {
       provide: 'RaceClient',
