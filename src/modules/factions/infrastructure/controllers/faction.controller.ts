@@ -13,9 +13,9 @@ import { Faction } from '../../domain/entities/faction.entity';
 import { GetFactionsQuery } from '../../application/queries/get-factions.query';
 import { CreateFactionDto } from './dtos/create-faction.dto';
 import { CreateFactionCommand } from '../../application/commands/create-faction.command';
-import { FactionDto, FactionPageDto } from './dtos/game.dto';
+import { FactionDto, FactionPageDto } from './dtos/faction.dto';
 import { UpdateFactionCommand } from '../../application/commands/update-faction.command';
-import { UpdateFactionDto } from './dtos/update-game.dto';
+import { UpdateFactionDto } from './dtos/update-faction.dto';
 import { DeleteFactionCommand } from '../../application/commands/delete-faction.command';
 
 @UseGuards(JwtAuthGuard)
