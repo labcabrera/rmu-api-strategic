@@ -52,6 +52,15 @@ export class MongoGameRepository implements GameRepository {
   }
 
   private mapToEntity(doc: GameDocument): Game {
-    throw new NotImplementedException();
+    return {
+      id: doc._id as string,
+      name: doc.name,
+      realm: doc.realm,
+      description: doc.description,
+      status: doc.status,
+      owner: doc.owner,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    };
   }
 }

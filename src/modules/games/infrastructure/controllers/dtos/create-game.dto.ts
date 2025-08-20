@@ -19,10 +19,6 @@ export class CreateGameDto {
   description: string | undefined;
 
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
-    return {
-      ...dto,
-      userId,
-      roles,
-    };
+    return new CreateGameCommand(dto.name, dto.realm, dto.description, userId, roles);
   }
 }

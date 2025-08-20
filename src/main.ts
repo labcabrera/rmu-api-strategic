@@ -12,8 +12,8 @@ import { DomainExceptionFilter } from './modules/shared/infrastructure/controlle
 
 function configureOpenApi(app: INestApplication<any>) {
   const openApiConfig = new DocumentBuilder()
-    .setTitle('Core API')
-    .setDescription('Rolemaster Unified Core API.')
+    .setTitle('Strategic API')
+    .setDescription('Rolemaster Unified Strategic API.')
     .setVersion('1.0')
     .addOAuth2(
       {
@@ -39,7 +39,7 @@ function configureOpenApi(app: INestApplication<any>) {
       },
       'access-token',
     )
-    .addServer('http://localhost:3001', 'Local development server')
+    .addServer('http://localhost:3002', 'Local development server')
     .build();
   const document = SwaggerModule.createDocument(app, openApiConfig);
   SwaggerModule.setup('api-docs', app, document, {

@@ -1,3 +1,6 @@
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+
 import { CreateGameCommand } from '../create-game.command';
 import { Game } from 'src/modules/games/domain/entities/game';
 import * as gameRepository from '../../ports/out/game-repository';
@@ -13,6 +16,7 @@ export class CreateGameCommandHandler implements ICommandHandler<CreateGameComma
   async execute(command: CreateGameCommand): Promise<Game> {
     const game: Partial<Game> = {
       ...command,
+      status: 'open',
       owner: command.userId,
       createdAt: new Date(),
     };
@@ -20,13 +24,4 @@ export class CreateGameCommandHandler implements ICommandHandler<CreateGameComma
     await this.gameNotificationPort.created(savedGame);
     return savedGame;
   }
-}
-function CommandHandler(
-  CreateGameCommand: typeof CreateGameCommand,
-): (target: typeof CreateGameCommandHandler) => void | typeof CreateGameCommandHandler {
-  throw new Error('Function not implemented.');
-}
-
-function Inject(arg0: string): (target: typeof CreateGameCommandHandler, propertyKey: undefined, parameterIndex: 0) => void {
-  throw new Error('Function not implemented.');
 }

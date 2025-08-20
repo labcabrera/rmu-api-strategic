@@ -1,16 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game, GameStatus } from 'src/modules/games/domain/entities/game';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
 
 export class GameDto {
+  id: string;
   name: string;
   realm: string;
+  status: GameStatus;
   description: string | undefined;
 
   static fromEntity(entity: Game): GameDto {
-    return {
-      ...entity,
-    };
+    const dto = new GameDto();
+    dto.id = entity.id;
+    dto.name = entity.name;
+    dto.realm = entity.realm;
+    dto.status = entity.status;
+    dto.description = entity.description;
+    return dto;
   }
 }
 

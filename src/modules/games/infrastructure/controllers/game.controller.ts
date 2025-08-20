@@ -16,6 +16,7 @@ import { UpdateGameCommand } from '../../application/commands/update-game.comman
 import { DeleteGameCommand } from '../../application/commands/delete-game.command';
 import { CreateGameDto } from './dtos/create-game.dto';
 import { CreateGameCommand } from '../../application/commands/create-game.command';
+import { UpdateGameDto } from './dtos/update-game.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/strategic-games')
@@ -55,10 +56,11 @@ export class GameController {
   @ApiOkResponse({ type: GameDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  create(@Body() createGameDto: CreateGameDto, @Request() req) {
+  async create(@Body() createGameDto: CreateGameDto, @Request() req) {
     const user = req.user!;
     const command = CreateGameDto.toCommand(createGameDto, user.id as string, user.roles as string[]);
-    return this.commandBus.execute<CreateGameCommand, Game>(command);
+    const game = await this.commandBus.execute<CreateGameCommand, Game>(command);
+    return GameDto.fromEntity(game);
   }
 
   @Patch(':id')
@@ -67,15 +69,11 @@ export class GameController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  updateSettings(@Param('id') id: string, @Request() req) {
+  async updateGame(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto, @Request() req) {
     const user = req.user!;
-    const command: UpdateGameCommand = {
-      ...req.body,
-      id: id,
-      userId: user.id as string,
-      roles: user.roles as string[],
-    };
-    return this.commandBus.execute(command);
+    const command = UpdateGameDto.toCommand(id, updateGameDto, user.id as string, user.roles as string[]);
+    const game = await this.commandBus.execute<UpdateGameCommand, Game>(command);
+    return GameDto.fromEntity(game);
   }
 
   @Delete(':id')
