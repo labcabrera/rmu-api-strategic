@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
   CharacterItem,
-  CharacterItemArmor,
   CharacterItemInfo,
   CharacterItemWeapon,
   CharacterItemWeaponRange,
-} from '../../../domain/entities/character.entity';
+  CharacterItemArmor,
+} from '../../persistence/models/character.model-childs';
 
 export class CharacterItemDto {
   id: string;

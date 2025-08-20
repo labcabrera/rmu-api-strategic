@@ -10,6 +10,7 @@ import { CharacterItemCreationDto } from './character-item.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
+import { CharacterCreationXPDto } from './character-xp.dto';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -32,6 +33,12 @@ export class CreateCharacterDto {
   @Type(() => CharacterInfoDto)
   @IsObject()
   info: CharacterInfoDto;
+
+  @ApiProperty({ description: 'Character experience', type: CharacterCreationXPDto })
+  @ValidateNested()
+  @Type(() => CharacterCreationXPDto)
+  @IsObject()
+  experience: CharacterCreationXPDto;
 
   @ApiProperty({ description: 'Character movement', type: CharacterStatisticsCreationDto })
   @ValidateNested()
@@ -85,6 +92,7 @@ export class CreateCharacterDto {
       dto.factionId,
       dto.name,
       dto.info,
+      dto.experience,
       dto.statistics.toEntity(),
       dto.movement.strideCustomBonus,
       dto.endurance.customBonus,

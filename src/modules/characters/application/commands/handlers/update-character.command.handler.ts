@@ -23,7 +23,6 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
 
     this.bindBasicFields(character, command);
     this.bindInfoFielsds(character, command);
-    this.bindMovementFielsds(character, command);
     this.bindHPFielsds(character, command);
     //TODO
 
@@ -41,9 +40,6 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
     if (!command.info) {
       return;
     }
-    if (command.info.level) {
-      character.info.level = command.info.level;
-    }
     if (command.info.height) {
       character.info.height = command.info.height;
     }
@@ -51,8 +47,6 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
       character.info.weight = command.info.weight;
     }
   }
-
-  private bindMovementFielsds(character: Character, command: UpdateCharacterCommand): void {}
 
   private bindHPFielsds(character: Character, command: UpdateCharacterCommand): void {
     if (!command.hp) {

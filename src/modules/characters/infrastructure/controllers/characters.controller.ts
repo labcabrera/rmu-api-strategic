@@ -24,6 +24,13 @@ import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto, CharacterPageDto, UpdateCharacterDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { AddXPDto } from './dto/add-xp.dto';
+import { AddXPCommand } from '../../application/commands/add-xp.command';
+import { LevelUpCommand } from '../../application/commands/level-up.command';
+import { LevelUpSkillDto } from './dto/level-up-skill.dto';
+import { LevelUpSkillCommand } from '../../application/commands/level-up-skill.command';
+import { LevelDownSkillDto } from './dto/level-down-skill.dto';
+import { LevelDownSkillCommand } from '../../application/commands/level-down-skill.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -97,6 +104,34 @@ export class CharacterController {
     await this.commandBus.execute(command);
   }
 
+  @Post(':id/xp')
+  @ApiBody({ type: AddXPDto })
+  @ApiOperation({ operationId: 'addXP', summary: 'Add XP to a character' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req) {
+    this.logger.debug(`Adding XP: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    const user = req.user!;
+    const command = AddXPDto.toCommand(id, dto, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Post(':id/xp/level-up')
+  @ApiOperation({ operationId: 'levelUp', summary: 'Level up a character' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async levelUp(@Param('id') id: string, @Request() req) {
+    this.logger.debug(`Leveling up character: ${id} for user ${req.user}`);
+    const user = req.user!;
+    const force = req.query.force === 'true';
+    const command = new LevelUpCommand(id, force, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
   @Post(':id/skills')
   @ApiBody({ type: AddSkillDto })
   @ApiOperation({ operationId: 'addSkill', summary: 'Add a new skill to a character' })
@@ -122,6 +157,34 @@ export class CharacterController {
     const user = req.user!;
     const command = UpdateSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<UpdateSkillCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Post(':id/skills/:skillId/level-up')
+  @ApiBody({ type: LevelUpSkillDto })
+  @ApiOperation({ operationId: 'levelUpSkill', summary: 'Level up skill' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async levelUpSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: LevelUpSkillDto, @Request() req) {
+    this.logger.debug(`Leveling up skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    const user = req.user!;
+    const command = LevelUpSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<LevelUpSkillCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Post(':id/skills/:skillId/level-down')
+  @ApiBody({ type: LevelUpSkillDto })
+  @ApiOperation({ operationId: 'levelDownSkill', summary: 'Level down skill' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async levelDownSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: LevelDownSkillDto, @Request() req) {
+    this.logger.debug(`Leveling down skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    const user = req.user!;
+    const command = LevelDownSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<LevelDownSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 

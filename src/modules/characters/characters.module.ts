@@ -34,13 +34,24 @@ import { CharacterController } from './infrastructure/controllers/characters.con
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
 import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
 import { FactionsModule } from '../factions/factions.module';
+import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
+import { XPProcessor } from './domain/services/character/processors/xp-processor';
+import { AddXPCommandHandler } from './application/commands/handlers/add-xp.command.handler';
+import { LevelUpCommandHandler } from './application/commands/handlers/level-up.command.handler';
+import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
+import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
+import { LevelUpSkillCommandHandler } from './application/commands/handlers/level-up-skill.command.handler';
+import { LevelDownSkillCommandHandler } from './application/commands/handlers/level-down-skill.command.handler';
 
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
     ConfigModule,
-    MongooseModule.forFeature([{ name: CharacterModel.name, schema: CharacterSchema }]),
+    MongooseModule.forFeature([
+      { name: CharacterModel.name, schema: CharacterSchema },
+      { name: CharacterLevelDevModel.name, schema: CharacterLevelDevSchema },
+    ]),
     AuthModule,
     SharedModule,
     GamesModule,
@@ -56,6 +67,7 @@ import { FactionsModule } from '../factions/factions.module';
     HPProcessor,
     EquipmentProcessor,
     DefenseProcessor,
+    XPProcessor,
     CharacterProcessorService,
     GetCharacterQueryHandler,
     GetCharactersQueryHandler,
@@ -67,9 +79,17 @@ import { FactionsModule } from '../factions/factions.module';
     DeleteSkillCommandHandler,
     AddItemCommandHandler,
     DeleteItemCommandHandler,
+    AddXPCommandHandler,
+    LevelUpCommandHandler,
+    LevelUpSkillCommandHandler,
+    LevelDownSkillCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
+    },
+    {
+      provide: 'CharacterLevelDevRepository',
+      useClass: MongoCharacterLevelDevRepository,
     },
     {
       provide: 'RaceClient',
@@ -82,6 +102,10 @@ import { FactionsModule } from '../factions/factions.module';
     {
       provide: 'SkillCategoryClient',
       useClass: SkillCategoryApiClient,
+    },
+    {
+      provide: 'ProfessionClient',
+      useClass: ProfessionApiClient,
     },
     {
       provide: 'ItemClient',

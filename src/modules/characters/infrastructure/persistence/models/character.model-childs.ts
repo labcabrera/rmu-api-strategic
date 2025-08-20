@@ -3,9 +3,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 @Schema({ _id: false })
 export class CharacterInfo {
   @Prop({ required: true })
-  level: number;
-
-  @Prop({ required: true })
   race: string;
 
   @Prop({ required: true })
@@ -283,6 +280,24 @@ export class CharacterEquipment {
 
   @Prop({ type: Number, required: false })
   weight: number | undefined;
+}
+
+@Schema({ _id: false })
+export class CharacterXP {
+  @Prop({ required: true })
+  level: number;
+
+  @Prop({ required: true })
+  availableLevel: number;
+
+  @Prop({ required: true })
+  xp: number;
+
+  @Prop({ required: true })
+  developmentPoints: number;
+
+  @Prop({ required: true })
+  availableDevelopmentPoints: number;
 }
 
 export const CharacterInfoSchema = SchemaFactory.createForClass(CharacterInfo);

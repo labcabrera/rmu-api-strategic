@@ -10,36 +10,39 @@ import {
   CharacterEquipment,
   CharacterHP,
   CharacterInitiative,
-  CharacterItem,
   CharacterMovement,
   CharacterPower,
   CharacterSkill,
   CharacterStatistics,
+  Stat,
 } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { Stat } from '../../../infrastructure/persistence/models/character.model-childs';
-import * as characterRepository from '../../ports/out/character.repository';
-import * as itemClient from '../../ports/out/item-client';
-import * as raceClient from '../../ports/out/race-client';
+import * as cr from '../../ports/out/character.repository';
+import * as ic from '../../ports/out/item-client';
+import * as rc from '../../ports/out/race-client';
 import { RaceResponse } from '../../ports/out/race-client';
-import * as skillCategoryClient from '../../ports/out/skill-category-client';
-import * as skillClient from '../../ports/out/skill-client';
+import * as scc from '../../ports/out/skill-category-client';
+import * as sc from '../../ports/out/skill-client';
 import { CreateCharacterCommand } from '../create-character.command';
-import * as gameRepository from 'src/modules/games/application/ports/out/game-repository';
-import * as factionRepository from 'src/modules/factions/application/ports/out/faction-repository';
+import * as gr from 'src/modules/games/application/ports/out/game-repository';
+import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
+import * as pc from '../../ports/out/profession-client';
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import { CharacterXP } from 'src/modules/characters/domain/entities/character-xp.entity';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
   private readonly logger = new Logger(CreateCharacterCommandHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('GameRepository') private readonly gameRepository: gameRepository.GameRepository,
-    @Inject('FactionRepository') private readonly factionRepository: factionRepository.FactionRepository,
-    @Inject('RaceClient') private readonly raceClient: raceClient.RaceClient,
-    @Inject('SkillClient') private readonly skillClient: skillClient.SkillClient,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: skillCategoryClient.SkillCategoryClient,
-    @Inject('ItemClient') private readonly itemClient: itemClient.ItemClient,
+    @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
+    @Inject('GameRepository') private readonly gameRepository: gr.GameRepository,
+    @Inject('FactionRepository') private readonly factionRepository: fr.FactionRepository,
+    @Inject('RaceClient') private readonly raceClient: rc.RaceClient,
+    @Inject('SkillClient') private readonly skillClient: sc.SkillClient,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: scc.SkillCategoryClient,
+    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClient,
+    @Inject('ItemClient') private readonly itemClient: ic.ItemClient,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
@@ -52,12 +55,24 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     if (!faction) {
       throw new ValidationError(`Faction with id ${command.factionId} not found`);
     }
+    const profession = await this.professionClient.getProfessionById(command.info.professionId);
+    if (!profession) {
+      throw new ValidationError(`Profession with id ${command.info.professionId} not found`);
+    }
 
     const raceInfo = await this.fetchRace(command.info.race);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
     const skills = await this.processSkills(command, raceInfo);
     const items = await this.processItems(command);
 
+    //TODO adjust with race for level 0
+    const experience: CharacterXP = {
+      level: command.experience.level,
+      availableLevel: 0,
+      xp: command.experience.xp,
+      developmentPoints: 60,
+      availableDevelopmentPoints: 60,
+    };
     const movement: CharacterMovement = {
       baseMovementRate: 0,
       strideCustomBonus: command.strideCustomBonus || 0,
@@ -101,6 +116,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       factionId: command.factionId,
       name: command.name,
       info: command.info,
+      experience: experience,
       statistics: processedStatistics,
       movement: movement,
       defense: defense,
@@ -260,7 +276,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     }
   }
 
-  async fetchSkills(): Promise<skillClient.SkillResponse[]> {
+  async fetchSkills(): Promise<sc.SkillResponse[]> {
     try {
       return await this.skillClient.getAllSkills();
     } catch (e) {
@@ -269,7 +285,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     }
   }
 
-  async fetchSkillCategories(): Promise<skillCategoryClient.SkillCategoryResponse[]> {
+  async fetchSkillCategories(): Promise<scc.SkillCategoryResponse[]> {
     try {
       return await this.skillCategoryClient.getAllSkillCategories();
     } catch (e) {

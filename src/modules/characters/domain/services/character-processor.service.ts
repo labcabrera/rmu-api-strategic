@@ -9,6 +9,7 @@ import { InitiativeProcessor } from './character/processors/initiative-processor
 import { MovementProcessor } from './character/processors/movement-processor';
 import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
+import { XPProcessor } from './character/processors/xp-processor';
 
 @Injectable()
 export class CharacterProcessorService {
@@ -19,8 +20,9 @@ export class CharacterProcessorService {
     private readonly skillProcessor: SkillProcessor,
     private readonly attackProcessor: AttackProcessor,
     private readonly equipmentProcessor: EquipmentProcessor,
-    private readonly hPProcessor: HPProcessor,
+    private readonly hpProcessor: HPProcessor,
     private readonly defenseProcessor: DefenseProcessor,
+    private readonly xpProcessor: XPProcessor,
   ) {}
 
   process(character: Partial<Character>): void {
@@ -30,7 +32,8 @@ export class CharacterProcessorService {
     this.skillProcessor.process(character);
     this.attackProcessor.process(character);
     this.equipmentProcessor.process(character);
-    this.hPProcessor.process(character);
+    this.hpProcessor.process(character);
     this.defenseProcessor.process(character);
+    this.xpProcessor.process(character);
   }
 }
