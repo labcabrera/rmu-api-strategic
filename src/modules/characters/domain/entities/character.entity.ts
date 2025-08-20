@@ -1,8 +1,8 @@
 export interface Character {
   id: string;
   gameId: string;
+  factionId: string;
   name: string;
-  faction: string;
   info: CharacterInfo;
   statistics: CharacterStatistics;
   movement: CharacterMovement;

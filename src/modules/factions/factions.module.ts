@@ -46,6 +46,6 @@ import { AddFactionXPCommandHandler } from './application/commands/handlers/add-
       useClass: KafkaFactionProducerService,
     },
   ],
-  exports: [],
+  exports: ['FactionRepository'],
 })
 export class FactionsModule {}

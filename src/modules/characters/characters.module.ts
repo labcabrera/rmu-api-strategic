@@ -33,6 +33,7 @@ import { SkillCategoryApiClient } from './infrastructure/clients/skill-category-
 import { CharacterController } from './infrastructure/controllers/characters.controller';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
 import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
+import { FactionsModule } from '../factions/factions.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { MongoCharacterRepository } from './infrastructure/persistence/repositor
     AuthModule,
     SharedModule,
     GamesModule,
+    FactionsModule,
   ],
   controllers: [CharacterController],
   providers: [

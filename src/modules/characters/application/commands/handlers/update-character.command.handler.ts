@@ -35,9 +35,6 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
     if (command.name) {
       character.name = command.name;
     }
-    if (command.faction) {
-      character.faction = command.faction;
-    }
   }
 
   private bindInfoFielsds(character: Character, command: UpdateCharacterCommand): void {

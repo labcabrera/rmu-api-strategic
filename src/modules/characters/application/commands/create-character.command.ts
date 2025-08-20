@@ -3,7 +3,7 @@ import { CharacterInfo, CharacterStatistics } from '../../domain/entities/charac
 export class CreateCharacterCommand {
   constructor(
     public readonly gameId: string,
-    public readonly faction: string,
+    public readonly factionId: string,
     public readonly name: string,
     public readonly info: CharacterInfo,
     public readonly statistics: CharacterStatistics,

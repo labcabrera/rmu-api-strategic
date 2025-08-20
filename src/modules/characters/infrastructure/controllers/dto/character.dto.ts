@@ -15,14 +15,17 @@ import { CharacterSkillDto } from './character-skill.dto';
 import { CharacterStatisticsDto } from './character-statistics.dto';
 
 export class CharacterDto {
-  @ApiProperty({ description: 'Game identifier', example: 'lotr' })
+  @ApiProperty({ description: 'Character identifier', example: 'character-001' })
   id: string;
 
-  @ApiProperty({ description: 'Name of the game', example: 'Mordor Game 1' })
-  name: string;
+  @ApiProperty({ description: 'Strategic game identifier', example: 'game-001' })
+  gameId: string;
 
-  @ApiProperty({ description: 'Faction of the character', example: 'Gondor' })
-  faction: string;
+  @ApiProperty({ description: 'Faction identifier of the character', example: 'faction-mordor' })
+  factionId: string;
+
+  @ApiProperty({ description: 'Name of the character', example: 'Sauron' })
+  name: string;
 
   @ApiProperty({ description: 'Information about the character', type: Object })
   info: characterEntity.CharacterInfo;
@@ -48,8 +51,9 @@ export class CharacterDto {
   static fromEntity(entity: characterEntity.Character) {
     const dto = new CharacterDto();
     dto.id = entity.id;
+    dto.gameId = entity.gameId;
+    dto.factionId = entity.factionId;
     dto.name = entity.name;
-    dto.faction = entity.faction;
     dto.info = entity.info;
     dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);
     dto.movement = CharacterMovementDto.fromEntity(entity.movement);

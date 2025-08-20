@@ -12,7 +12,7 @@ import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
 
 export class CreateCharacterDto {
-  @ApiProperty({ description: 'Character name', example: 'Foo' })
+  @ApiProperty({ description: 'Character name', example: 'Sauron' })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -22,10 +22,10 @@ export class CreateCharacterDto {
   @IsNotEmpty()
   gameId: string;
 
-  @ApiProperty({ description: 'Character faction', example: 'Gondor' })
+  @ApiProperty({ description: 'Faction identifier', example: 'faction-01' })
   @IsString()
   @IsNotEmpty()
-  faction: string;
+  factionId: string;
 
   @ApiProperty({ description: 'Character information', type: CharacterInfoDto })
   @ValidateNested()
@@ -82,7 +82,7 @@ export class CreateCharacterDto {
     }));
     return new CreateCharacterCommand(
       dto.gameId,
-      dto.faction,
+      dto.factionId,
       dto.name,
       dto.info,
       dto.statistics.toEntity(),
