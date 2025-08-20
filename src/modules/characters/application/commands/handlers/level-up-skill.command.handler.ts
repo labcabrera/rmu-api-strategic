@@ -10,6 +10,10 @@ import * as cldr from '../../ports/out/character-level-dev.repository';
 import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
 import * as pc from '../../ports/out/profession-client';
 import * as sc from '../../ports/out/skill-client';
+import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
+import * as scc from '../../ports/out/skill-category-client';
+import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character.model-childs';
+import { SkillResponse } from '../../ports/out/skill-client';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
@@ -18,6 +22,7 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
     @Inject('CharacterLevelDevRepository') private readonly characterLevelRepository: cldr.CharacterLevelDevRepository,
     @Inject('SkillClient') private readonly skillClient: sc.SkillClient,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: scc.SkillCategoryClient,
     @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClient,
   ) {}
 
@@ -50,23 +55,20 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
       };
     }
 
+    const costs = profession.skillCosts[skill.categoryId]! as number[];
     const devSkills = (clr.skills?.get(command.skillId) as number[]) || [];
 
     const currentSkillLevel = devSkills.length || 0;
     const requiredLevel = currentSkillLevel + 1;
-    if (requiredLevel >= devSkills.length) {
+    if (requiredLevel >= costs.length) {
       throw new ValidationError('Skill level exceeds limit');
     }
 
-    const costs = profession.skillCosts[skill.categoryId]! as number[];
     const cost = costs[requiredLevel - 1];
     devSkills.push(cost);
     clr.skills!.set(command.skillId, devSkills);
 
-    let used = 0;
-    for (const values of clr.skills!.values()) {
-      used += values.reduce((acc, n) => acc + n, 0);
-    }
+    const used = CharacterLevelCalculator.calculateUsedDevPoints(clr);
     if (used > character.experience.developmentPoints) {
       throw new ValidationError('Insufficient development points');
     }
@@ -74,10 +76,11 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     // Update character skill
     const characterSkill = character.skills.find((s) => s.skillId === command.skillId);
     if (!characterSkill) {
+      const attributeBonus = await this.getAttributeBonus(skill);
       character.skills.push({
         skillId: command.skillId,
         specialization: command.specialization,
-        statistics: [],
+        statistics: attributeBonus,
         ranks: 1,
         statBonus: 0,
         racialBonus: 0,
@@ -98,5 +101,13 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     //TODO
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(characterId, character);
+  }
+
+  private async getAttributeBonus(skill: SkillResponse): Promise<string[]> {
+    const category = await this.skillCategoryClient.getSkillCategoryById(skill.categoryId);
+    if (!category) {
+      throw new Error('Skill category not found');
+    }
+    return category.bonus.concat(skill.bonus);
   }
 }
