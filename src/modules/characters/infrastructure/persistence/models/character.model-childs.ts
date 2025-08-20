@@ -9,6 +9,9 @@ export class CharacterInfo {
   race: string;
 
   @Prop({ required: true })
+  professionId: string;
+
+  @Prop({ required: true })
   sizeId: string;
 
   @Prop({ required: true })

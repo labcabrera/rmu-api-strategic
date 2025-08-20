@@ -23,6 +23,7 @@ export interface Character {
 export interface CharacterInfo {
   level: number;
   race: string;
+  professionId: string;
   sizeId: string;
   height: number;
   weight: number;
