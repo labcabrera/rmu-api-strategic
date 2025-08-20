@@ -41,6 +41,7 @@ import { LevelUpCommandHandler } from './application/commands/handlers/level-up.
 import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
 import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
 import { LevelUpSkillCommandHandler } from './application/commands/handlers/level-up-skill.command.handler';
+import { LevelDownSkillCommandHandler } from './application/commands/handlers/level-down-skill.command.handler';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { LevelUpSkillCommandHandler } from './application/commands/handlers/leve
     AddXPCommandHandler,
     LevelUpCommandHandler,
     LevelUpSkillCommandHandler,
+    LevelDownSkillCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,

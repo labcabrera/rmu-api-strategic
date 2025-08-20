@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
@@ -27,8 +26,8 @@ export class MongoCharacterRepository implements CharacterRepository {
     return characters.map((doc) => this.mapToEntity(doc));
   }
 
-  deleteByGameId(gameId: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async deleteByGameId(gameId: string): Promise<void> {
+    await this.characterModel.deleteMany({ gameId });
   }
 
   async findByRsql(rsql: string, page: number, size: number): Promise<Page<Character>> {

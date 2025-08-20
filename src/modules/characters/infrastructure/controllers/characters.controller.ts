@@ -29,6 +29,8 @@ import { AddXPCommand } from '../../application/commands/add-xp.command';
 import { LevelUpCommand } from '../../application/commands/level-up.command';
 import { LevelUpSkillDto } from './dto/level-up-skill.dto';
 import { LevelUpSkillCommand } from '../../application/commands/level-up-skill.command';
+import { LevelDownSkillDto } from './dto/level-down-skill.dto';
+import { LevelDownSkillCommand } from '../../application/commands/level-down-skill.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -169,6 +171,20 @@ export class CharacterController {
     const user = req.user!;
     const command = LevelUpSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<LevelUpSkillCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Post(':id/skills/:skillId/level-down')
+  @ApiBody({ type: LevelUpSkillDto })
+  @ApiOperation({ operationId: 'levelDownSkill', summary: 'Level down skill' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async levelDownSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: LevelDownSkillDto, @Request() req) {
+    this.logger.debug(`Leveling down skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    const user = req.user!;
+    const command = LevelDownSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<LevelDownSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 
