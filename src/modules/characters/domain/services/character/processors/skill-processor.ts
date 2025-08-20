@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character, CharacterSkill } from '../../../entities/character.entity';
+import { Character, CharacterSkill, Stat } from '../../../entities/character.entity';
 
 @Injectable()
 export class SkillProcessor {
@@ -26,14 +26,14 @@ export class SkillProcessor {
   }
 
   private getStatBonus(character: Partial<Character>, statistics: string[]): number {
-    let statBonus = 0;
+    let result = 0;
     statistics?.forEach((stat) => {
-      const statValue = (character.statistics as any)[stat];
+      const statValue = character.statistics![stat] as Stat;
       if (statValue?.totalBonus) {
-        statBonus += statValue.totalBonus;
+        result += statValue.totalBonus;
       }
     });
-    return statBonus;
+    return result;
   }
 
   private getRankBonus(ranks: number): number {

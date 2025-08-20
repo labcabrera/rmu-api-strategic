@@ -1,5 +1,4 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import * as cae from 'src/modules/characters/domain/entities/character-attack.entity';
 import { ProfessionalBonusType, WeaponDevelopmentType } from 'src/modules/characters/domain/entities/character.entity';
 
 @Schema({ _id: false })

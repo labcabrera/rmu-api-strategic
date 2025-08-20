@@ -6,6 +6,7 @@ import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import { DeleteItemCommand } from '../delete-item.command';
+import { CharacterEquipment } from 'src/modules/characters/infrastructure/persistence/models/character.model-childs';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemCommandHandler implements ICommandHandler<DeleteItemCommand, Character> {
@@ -31,7 +32,7 @@ export class DeleteItemCommandHandler implements ICommandHandler<DeleteItemComma
     return updated;
   }
 
-  private cleanupEquipedItem(equipment: any, deletedItemId: string): void {
+  private cleanupEquipedItem(equipment: CharacterEquipment, deletedItemId: string): void {
     const slots = ['mainHand', 'offHand', 'body', 'head', 'arms', 'legs'];
     for (const slot of slots) {
       if (equipment[slot] === deletedItemId) {

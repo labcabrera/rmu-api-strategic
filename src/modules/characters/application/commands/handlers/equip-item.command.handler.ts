@@ -22,7 +22,7 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
       throw new NotFoundError('Character', characterId);
     }
 
-    const item: CharacterItem = character.items.find((e: any) => e.id === command.itemId) as CharacterItem;
+    const item: CharacterItem = character.items.find((e) => e.id === command.itemId) as CharacterItem;
     if (!item) {
       throw new Error(`Item not found: ${command.itemId}`);
     }

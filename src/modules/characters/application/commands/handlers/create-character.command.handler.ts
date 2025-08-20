@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
 import { randomUUID } from 'crypto';
-import { ValidationError } from '../../../../shared/domain/errors';
+
+import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors';
 import {
   Character,
   CharacterDefense,
@@ -137,7 +141,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     return newCharacter;
   }
 
-  processStatistics(raceInfo: any, statistics: CharacterStatistics): CharacterStatistics {
+  processStatistics(raceInfo: RaceResponse, statistics: CharacterStatistics): CharacterStatistics {
     const values = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
     const result: any = {};
     values.forEach((e) => {
@@ -275,7 +279,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       return await this.raceClient.getRaceById(raceId);
     } catch (e) {
       this.logger.error(e);
-      throw new ValidationError(`Race with id ${raceId} not found. ${e.message}`);
+      throw new ValidationError(`Race with id ${raceId} not found.`);
     }
   }
 
@@ -284,7 +288,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       return await this.skillClient.getAllSkills();
     } catch (e) {
       this.logger.error(e);
-      throw new ValidationError(`Error fetching skills: ${e.message}`);
+      throw new BadGatewayError(`Error fetching skills`);
     }
   }
 
@@ -293,7 +297,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       return await this.skillCategoryClient.getAllSkillCategories();
     } catch (e) {
       this.logger.error(e);
-      throw new ValidationError(`Error fetching skill categories: ${e.message}`);
+      throw new BadGatewayError(`Error fetching skill categories`);
     }
   }
 
@@ -302,7 +306,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       return await this.itemClient.getItemById(itemId);
     } catch (e) {
       this.logger.error(e);
-      throw new ValidationError(`Item with id ${itemId} not found. ${e.message}`);
+      throw new ValidationError(`Item with id ${itemId} not found.`);
     }
   }
 }

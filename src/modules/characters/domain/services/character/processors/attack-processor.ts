@@ -22,6 +22,7 @@ export class AttackProcessor {
     const equipment = character.equipment!;
     if (equipment[slot]) {
       const item = character.items.find((e) => e.id == equipment[slot]);
+      //TODO check attack shield
       if (item?.weapon) {
         const skillId = item.weapon.skillId;
         const skill = character.skills.find((e) => e.skillId == skillId);

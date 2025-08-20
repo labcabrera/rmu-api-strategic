@@ -5,6 +5,7 @@ import { Character } from '../../../entities/character.entity';
 export class DefenseProcessor {
   process(character: Partial<Character>): void {
     this.processArmorType(character);
+    this.processDefensiveBonus(character);
   }
 
   private processArmorType(character: Partial<Character>): void {
@@ -13,7 +14,7 @@ export class DefenseProcessor {
     }
     if (character.equipment.body) {
       const itemId = character.equipment.body;
-      const item = character.items.find((e: any) => e.id == itemId);
+      const item = character.items.find((e) => e.id == itemId);
       if (item && item.armor && item.armor.armorType) {
         character.defense.armorType = item.armor.armorType;
       }
