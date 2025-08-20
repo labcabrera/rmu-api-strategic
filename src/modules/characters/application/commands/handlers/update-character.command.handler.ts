@@ -41,9 +41,6 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
     if (!command.info) {
       return;
     }
-    if (command.info.level) {
-      character.info.level = command.info.level;
-    }
     if (command.info.height) {
       character.info.height = command.info.height;
     }

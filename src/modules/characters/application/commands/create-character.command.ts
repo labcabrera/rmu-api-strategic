@@ -6,6 +6,7 @@ export class CreateCharacterCommand {
     public readonly factionId: string,
     public readonly name: string,
     public readonly info: CharacterInfo,
+    public readonly experience: CreateCharacterExperience,
     public readonly statistics: CharacterStatistics,
     public readonly strideCustomBonus: number | undefined,
     public readonly enduranceCustomBonus: number | undefined,
@@ -15,6 +16,11 @@ export class CreateCharacterCommand {
     public readonly userId: string,
     public readonly roles: string[],
   ) {}
+}
+
+export interface CreateCharacterExperience {
+  level: number;
+  xp: number;
 }
 
 export interface CreateCharacterSkill {

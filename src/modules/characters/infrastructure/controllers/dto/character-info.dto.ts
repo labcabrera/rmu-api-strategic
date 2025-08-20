@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { CharacterInfo } from '../../persistence/models/character.model-childs';
 
 export class CharacterInfoDto {
-  @ApiProperty({ description: 'Character level', example: 4 })
-  @IsNumber()
-  @IsNotEmpty()
-  level: number;
-
   @ApiProperty({ description: 'Race identifier', example: 'ork' })
   @IsString()
   @IsNotEmpty()
@@ -31,4 +27,14 @@ export class CharacterInfoDto {
   @IsNumber()
   @IsNotEmpty()
   weight: number;
+
+  static fromEntity(entity: CharacterInfo): CharacterInfoDto {
+    const dto = new CharacterInfoDto();
+    dto.race = entity.race;
+    dto.professionId = entity.professionId;
+    dto.sizeId = entity.sizeId;
+    dto.height = entity.height;
+    dto.weight = entity.weight;
+    return dto;
+  }
 }

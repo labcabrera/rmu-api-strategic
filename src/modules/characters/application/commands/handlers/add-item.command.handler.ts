@@ -3,11 +3,12 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character, CharacterItem } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import * as itemClient from '../../ports/out/item-client';
 import { AddItemCommand } from '../add-item.comand';
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 
 @CommandHandler(AddItemCommand)
 export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {

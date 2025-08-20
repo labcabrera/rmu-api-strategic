@@ -2,10 +2,11 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character, CharacterEquipment, CharacterItem } from '../../../domain/entities/character.entity';
+import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import { EquipItemCommand } from '../equip-item-command';
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemUseCase implements ICommandHandler<EquipItemCommand, Character> {

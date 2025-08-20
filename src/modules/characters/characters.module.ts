@@ -35,6 +35,7 @@ import { CharacterModel, CharacterSchema } from './infrastructure/persistence/mo
 import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
 import { FactionsModule } from '../factions/factions.module';
 import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
+import { XPProcessor } from './domain/services/character/processors/xp-processor';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ProfessionApiClient } from './infrastructure/clients/profession-api-cli
     HPProcessor,
     EquipmentProcessor,
     DefenseProcessor,
+    XPProcessor,
     CharacterProcessorService,
     GetCharacterQueryHandler,
     GetCharactersQueryHandler,

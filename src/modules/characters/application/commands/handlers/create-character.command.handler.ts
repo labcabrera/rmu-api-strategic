@@ -10,14 +10,13 @@ import {
   CharacterEquipment,
   CharacterHP,
   CharacterInitiative,
-  CharacterItem,
   CharacterMovement,
   CharacterPower,
   CharacterSkill,
   CharacterStatistics,
+  Stat,
 } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { Stat } from '../../../infrastructure/persistence/models/character.model-childs';
 import * as cr from '../../ports/out/character.repository';
 import * as ic from '../../ports/out/item-client';
 import * as rc from '../../ports/out/race-client';
@@ -28,6 +27,8 @@ import { CreateCharacterCommand } from '../create-character.command';
 import * as gr from 'src/modules/games/application/ports/out/game-repository';
 import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
 import * as pc from '../../ports/out/profession-client';
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import { CharacterXP } from 'src/modules/characters/domain/entities/character-xp.entity';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -64,6 +65,14 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     const skills = await this.processSkills(command, raceInfo);
     const items = await this.processItems(command);
 
+    //TODO adjust with race for level 0
+    const experience: CharacterXP = {
+      level: command.experience.level,
+      availableLevel: 0,
+      xp: command.experience.xp,
+      developmentPoints: 60,
+      availableDevelopmentPoints: 60,
+    };
     const movement: CharacterMovement = {
       baseMovementRate: 0,
       strideCustomBonus: command.strideCustomBonus || 0,
@@ -107,6 +116,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       factionId: command.factionId,
       name: command.name,
       info: command.info,
+      experience: experience,
       statistics: processedStatistics,
       movement: movement,
       defense: defense,
