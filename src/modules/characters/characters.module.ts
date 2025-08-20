@@ -37,6 +37,7 @@ import { FactionsModule } from '../factions/factions.module';
 import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
 import { AddXPCommandHandler } from './application/commands/handlers/add-xp.command.handler';
+import { LevelUpCommandHandler } from './application/commands/handlers/level-up.command.handler';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { AddXPCommandHandler } from './application/commands/handlers/add-xp.comm
     AddItemCommandHandler,
     DeleteItemCommandHandler,
     AddXPCommandHandler,
+    LevelUpCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
