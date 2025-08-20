@@ -1,6 +1,8 @@
 import { CharacterItem } from './character-item.entity';
 import { CharacterXP } from './character-xp.entity';
 
+export type ProfessionalBonusType = 'professional' | 'knack';
+
 export interface Character {
   id: string;
   gameId: string;
@@ -95,10 +97,12 @@ export interface CharacterSkill {
   skillId: string;
   specialization: string | undefined;
   statistics: string[];
+  professional: ProfessionalBonusType[] | undefined;
   ranks: number;
   statBonus: number;
   racialBonus: number;
   developmentBonus: number;
+  professionalBonus: number;
   customBonus: number;
   totalBonus: number;
 }

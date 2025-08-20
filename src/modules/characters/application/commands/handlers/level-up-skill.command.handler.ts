@@ -60,7 +60,9 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
 
     const currentSkillLevel = devSkills.length || 0;
     const requiredLevel = currentSkillLevel + 1;
-    if (requiredLevel >= costs.length) {
+
+    //TODO GM should permit one additional extra level
+    if (requiredLevel > costs.length) {
       throw new ValidationError('Skill level exceeds limit');
     }
 
@@ -81,10 +83,12 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
         skillId: command.skillId,
         specialization: command.specialization,
         statistics: attributeBonus,
+        professional: undefined,
         ranks: 1,
         statBonus: 0,
         racialBonus: 0,
         developmentBonus: 0,
+        professionalBonus: 0,
         customBonus: 0,
         totalBonus: 0,
       });

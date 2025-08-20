@@ -1,15 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterSkill } from '../../../domain/entities/character.entity';
+import { CharacterSkill, ProfessionalBonusType } from '../../../domain/entities/character.entity';
 
 export class CharacterSkillDto {
   skillId: string;
   specialization: string | undefined;
   statistics: string[];
+  professional: ProfessionalBonusType[] | undefined;
   ranks: number;
   statBonus: number;
   racialBonus: number;
   developmentBonus: number;
+  professionalBonus: number;
   customBonus: number;
   totalBonus: number;
 
@@ -18,9 +20,11 @@ export class CharacterSkillDto {
     dto.skillId = skill.skillId;
     dto.specialization = skill.specialization;
     dto.statistics = skill.statistics;
+    dto.professional = skill.professional;
     dto.ranks = skill.ranks;
     dto.statBonus = skill.statBonus;
     dto.racialBonus = skill.racialBonus;
+    dto.professionalBonus = skill.professionalBonus;
     dto.developmentBonus = skill.developmentBonus;
     dto.customBonus = skill.customBonus;
     dto.totalBonus = skill.totalBonus;

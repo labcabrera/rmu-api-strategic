@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ProfessionalBonusType } from 'src/modules/characters/domain/entities/character.entity';
 
 @Schema({ _id: false })
 export class CharacterInfo {
@@ -149,6 +150,9 @@ export class CharacterSkill {
   @Prop({ type: [String], required: true })
   statistics: string[];
 
+  @Prop({ type: [String], required: false })
+  professional: ProfessionalBonusType[] | undefined;
+
   @Prop({ required: true })
   ranks: number;
 
@@ -160,6 +164,9 @@ export class CharacterSkill {
 
   @Prop({ required: true })
   developmentBonus: number;
+
+  @Prop({ required: true })
+  professionalBonus: number;
 
   @Prop({ required: true })
   customBonus: number;

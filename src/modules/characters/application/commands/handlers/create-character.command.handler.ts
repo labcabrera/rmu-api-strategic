@@ -208,14 +208,16 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       return {
         skillId: readedSkill.id,
         skillCategoryId: readedSkill.categoryId,
+        specialization: e.specialization,
         attributeBonus: 0,
+        professional: [],
         ranks: e.ranks,
         statBonus: 0,
         racialBonus: racialBonus,
         developmentBonus: 0,
         customBonus: customBonus,
+        professionalBonus: 0,
         totalBonus: 0,
-        specialization: e.specialization,
         statistics: statistics,
       };
     });
