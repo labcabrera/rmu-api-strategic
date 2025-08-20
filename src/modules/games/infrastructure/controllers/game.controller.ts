@@ -15,6 +15,7 @@ import { GetGamesQuery } from '../../application/queries/get-games.query';
 import { UpdateGameCommand } from '../../application/commands/update-game.command';
 import { DeleteGameCommand } from '../../application/commands/delete-game.command';
 import { CreateGameDto } from './dtos/create-game.dto';
+import { CreateGameCommand } from '../../application/commands/create-game.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/strategic-games')
@@ -55,15 +56,16 @@ export class GameController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   create(@Body() createGameDto: CreateGameDto, @Request() req) {
-    const command = CreateGameDto.toCommand(createGameDto, req.user!.id as string, req.user!.roles as string[]);
-    return this.commandBus.execute(command);
+    const user = req.user!;
+    const command = CreateGameDto.toCommand(createGameDto, user.id as string, user.roles as string[]);
+    return this.commandBus.execute<CreateGameCommand, Game>(command);
   }
 
   @Patch(':id')
-  @ApiOperation({ operationId: 'updateRace', summary: 'Update race by id' })
+  @ApiOperation({ operationId: 'updateGame', summary: 'Update game by id' })
   @ApiOkResponse({ type: GameDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiNotFoundResponse({ description: 'Race not found', type: ErrorDto })
+  @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   updateSettings(@Param('id') id: string, @Request() req) {
     const user = req.user!;

@@ -10,7 +10,7 @@ import { GetGameQueryHandler } from './application/queries/handlers/get-game.que
 import { GetGamesQueryHandler } from './application/queries/handlers/get-games.query.handler';
 import { UpdateGameCommandHandler } from './application/commands/handlers/update-game.command.handler';
 import { DeleteGameCommandHandler } from './application/commands/handlers/delete-game.command.handler';
-import { GameController } from './infrastructure/controllers/race.controller';
+import { GameController } from './infrastructure/controllers/game.controller';
 import { KafkaGameProducerService } from './infrastructure/messaging/kafka-game-producer.service';
 import { MongoGameRepository } from './infrastructure/persistence/repositories/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
