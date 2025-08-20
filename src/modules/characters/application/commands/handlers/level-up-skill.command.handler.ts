@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character, WeaponDevelopmentType } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
 import { LevelUpSkillCommand } from '../level-up-skill.command';
@@ -12,8 +12,8 @@ import * as pc from '../../ports/out/profession-client';
 import * as sc from '../../ports/out/skill-client';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 import * as scc from '../../ports/out/skill-category-client';
-import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character.model-childs';
 import { SkillResponse } from '../../ports/out/skill-client';
+import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character.model-childs';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
@@ -42,11 +42,11 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     }
 
     const level = character.experience.level;
-    let clr: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(characterId, level);
+    let cld: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(characterId, level);
     let insert = false;
-    if (!clr) {
+    if (!cld) {
       insert = true;
-      clr = {
+      cld = {
         characterId: characterId,
         level: level,
         skills: new Map<string, number[]>(),
@@ -54,9 +54,54 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
         createdAt: new Date(),
       };
     }
+    const devSkills = (cld.skills?.get(command.skillId) as number[]) || [];
+    const cost = this.getDevCost(character, skill, profession, cld, command);
+    devSkills.push(cost);
+    cld.skills!.set(command.skillId, devSkills);
 
-    const costs = profession.skillCosts[skill.categoryId]! as number[];
-    const devSkills = (clr.skills?.get(command.skillId) as number[]) || [];
+    const used = CharacterLevelCalculator.calculateUsedDevPoints(cld);
+    if (used > character.experience.developmentPoints) {
+      throw new ValidationError('Insufficient development points');
+    }
+    // Update character skill
+    const characterSkill = character.skills.find((s) => s.skillId === command.skillId);
+    if (!characterSkill) {
+      const attributeBonus = await this.getAttributeBonus(skill);
+      character.skills.push(this.buildCharacterSkillTemplate(command, attributeBonus));
+    } else {
+      characterSkill.ranks += 1;
+    }
+    character.experience.availableDevelopmentPoints = character.experience.developmentPoints - used;
+
+    if (insert) {
+      await this.characterLevelRepository.create(cld);
+    } else {
+      await this.characterLevelRepository.update(cld.id!, cld);
+    }
+    this.characterProcessorService.process(character);
+    return await this.characterRepository.update(characterId, character);
+  }
+
+  /**
+   * Obtain the skill development cost. In the case of combat skills, instead of using the categoryId,
+   * check the order in which they are assigned to the character to see which one to use.
+   */
+  private getDevCost(
+    character: Character,
+    skill: SkillResponse,
+    profession: pc.ProfessionResponse,
+    cld: Partial<CharacterLevelDev>,
+    command: LevelUpSkillCommand,
+  ): number {
+    let category = skill.categoryId;
+
+    if (skill.categoryId === 'combat-training') {
+      const type = this.resolveWeapontCategory(skill.id);
+      const index = character.experience.weaponDevelopment.indexOf(type);
+      category = `combat${index + 1}`;
+    }
+    const costs = profession.skillCosts[category]! as number[];
+    const devSkills = (cld.skills?.get(command.skillId) as number[]) || [];
 
     const currentSkillLevel = devSkills.length || 0;
     const requiredLevel = currentSkillLevel + 1;
@@ -65,46 +110,34 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     if (requiredLevel > costs.length) {
       throw new ValidationError('Skill level exceeds limit');
     }
+    return costs[requiredLevel - 1];
+  }
 
-    const cost = costs[requiredLevel - 1];
-    devSkills.push(cost);
-    clr.skills!.set(command.skillId, devSkills);
+  private buildCharacterSkillTemplate(command: LevelUpSkillCommand, attributeBonus: string[]): CharacterSkill {
+    return {
+      skillId: command.skillId,
+      specialization: command.specialization,
+      statistics: attributeBonus,
+      professional: undefined,
+      ranks: 1,
+      statBonus: 0,
+      racialBonus: 0,
+      developmentBonus: 0,
+      professionalBonus: 0,
+      customBonus: 0,
+      totalBonus: 0,
+    };
+  }
 
-    const used = CharacterLevelCalculator.calculateUsedDevPoints(clr);
-    if (used > character.experience.developmentPoints) {
-      throw new ValidationError('Insufficient development points');
+  private resolveWeapontCategory(skillId: string): WeaponDevelopmentType {
+    if (skillId.search('melee') !== -1) {
+      return 'melee';
+    } else if (skillId.search('ranged') !== -1) {
+      return 'ranged';
+    } else if (skillId.search('shield') !== -1) {
+      return 'shield';
     }
-
-    // Update character skill
-    const characterSkill = character.skills.find((s) => s.skillId === command.skillId);
-    if (!characterSkill) {
-      const attributeBonus = await this.getAttributeBonus(skill);
-      character.skills.push({
-        skillId: command.skillId,
-        specialization: command.specialization,
-        statistics: attributeBonus,
-        professional: undefined,
-        ranks: 1,
-        statBonus: 0,
-        racialBonus: 0,
-        developmentBonus: 0,
-        professionalBonus: 0,
-        customBonus: 0,
-        totalBonus: 0,
-      });
-    } else {
-      characterSkill.ranks += 1;
-    }
-    character.experience.availableDevelopmentPoints = character.experience.developmentPoints - used;
-
-    if (insert) {
-      await this.characterLevelRepository.create(clr);
-    } else {
-      await this.characterLevelRepository.update(clr.id!, clr);
-    }
-    //TODO
-    this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
+    return 'unarmed';
   }
 
   private async getAttributeBonus(skill: SkillResponse): Promise<string[]> {

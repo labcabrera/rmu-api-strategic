@@ -2,6 +2,7 @@ import { CharacterItem } from './character-item.entity';
 import { CharacterXP } from './character-xp.entity';
 
 export type ProfessionalBonusType = 'professional' | 'knack';
+export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
 
 export interface Character {
   id: string;

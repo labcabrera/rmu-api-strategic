@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/entities/character.entity';
+import { ProfessionalBonusType, WeaponDevelopmentType } from 'src/modules/characters/domain/entities/character.entity';
 
 @Schema({ _id: false })
 export class CharacterInfo {
@@ -305,6 +305,9 @@ export class CharacterXP {
 
   @Prop({ required: true })
   availableDevelopmentPoints: number;
+
+  @Prop({ required: true })
+  weaponDevelopment: WeaponDevelopmentType[];
 }
 
 export const CharacterInfoSchema = SchemaFactory.createForClass(CharacterInfo);

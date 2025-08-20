@@ -72,6 +72,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       xp: command.experience.xp,
       developmentPoints: 60,
       availableDevelopmentPoints: 60,
+      weaponDevelopment: ['melee', 'ranged', 'shield', 'unarmed'],
     };
     const movement: CharacterMovement = {
       baseMovementRate: 0,

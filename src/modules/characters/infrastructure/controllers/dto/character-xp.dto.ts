@@ -1,5 +1,6 @@
 import { IsNumber } from 'class-validator';
 import { CharacterXP } from 'src/modules/characters/domain/entities/character-xp.entity';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/entities/character.entity';
 
 export class CharacterXPDto {
   level: number;
@@ -7,6 +8,7 @@ export class CharacterXPDto {
   xp: number;
   developmentPoints: number;
   availableDevelopmentPoints: number;
+  weaponDevelopment: WeaponDevelopmentType[];
 
   static fromEntity(entity: CharacterXP): CharacterXPDto {
     const dto = new CharacterXPDto();
@@ -15,6 +17,7 @@ export class CharacterXPDto {
     dto.xp = entity.xp;
     dto.developmentPoints = entity.developmentPoints;
     dto.availableDevelopmentPoints = entity.availableDevelopmentPoints;
+    dto.weaponDevelopment = entity.weaponDevelopment;
     return dto;
   }
 }

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
@@ -19,6 +16,7 @@ import { CreateCharacterDto } from './dto/create-character.dto';
 import { AddXPDto } from './dto/add-xp.dto';
 import { AddXPCommand } from '../../application/commands/add-xp.command';
 import { LevelUpCommand } from '../../application/commands/level-up.command';
+import * as ar from 'src/modules/shared/infrastructure/controller/auth-request';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -36,9 +34,8 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Realm not found', type: ErrorDto })
-  async findById(@Param('id') id: string, @Request() req) {
-    const user = req.user!;
-    const query = new GetCharacterQuery(id, user.id as string, user.roles as string[]);
+  async findById(@Param('id') id: string, @Request() req: ar.AuthRequest) {
+    const query = new GetCharacterQuery(id, req.user.id, req.user.roles);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
     return CharacterDto.fromEntity(entity);
   }
@@ -47,10 +44,9 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterPageDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'findCharacters', summary: 'Find characters by RSQL' })
-  async find(@Query() dto: PagedQueryDto, @Request() req) {
-    this.logger.debug(`Finding characters with query ${dto.q} for user ${req.user}`);
-    const user = req.user!;
-    const query = new GetCharactersQuery(dto.q, dto.page, dto.size, user.id as string, user.roles as string[]);
+  async find(@Query() dto: PagedQueryDto, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Finding characters with query ${dto.q} for user ${req.user.id}`);
+    const query = new GetCharactersQuery(dto.q, dto.page, dto.size, req.user.id, req.user.roles);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
     const mapped = page.content.map((character) => CharacterDto.fromEntity(character));
     return new Page<CharacterDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
@@ -62,10 +58,9 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async create(@Body() dto: CreateCharacterDto, @Request() req) {
-    this.logger.debug(`Creating character ${dto.name} for user ${req.user}`);
-    const user = req.user!;
-    const command = CreateCharacterDto.toCommand(dto, user.id as string, user.roles as string[]);
+  async create(@Body() dto: CreateCharacterDto, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Creating character ${dto.name} for user ${req.user.id}`);
+    const command = CreateCharacterDto.toCommand(dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<CreateCharacterCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
@@ -74,10 +69,9 @@ export class CharacterController {
   @ApiOperation({ operationId: 'updateCharacter', summary: 'Update character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  async updateSettings(@Param('id') id: string, @Body() dto: UpdateCharacterDto, @Request() req) {
-    this.logger.debug(`Updating character ${id} for user ${req.user}`);
-    const user = req.user!;
-    const command = UpdateCharacterDto.toCommand(id, dto, user.id as string, user.roles as string[]);
+  async updateSettings(@Param('id') id: string, @Body() dto: UpdateCharacterDto, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Updating character ${id} for user ${req.user.id}`);
+    const command = UpdateCharacterDto.toCommand(id, dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<UpdateCharacterCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
@@ -86,10 +80,9 @@ export class CharacterController {
   @HttpCode(204)
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'deleteCharacter', summary: 'Delete character by id' })
-  async delete(@Param('id') id: string, @Request() req) {
-    this.logger.debug(`Deleting character ${id} for user ${req.user}`);
-    const user = req.user!;
-    const command = new DeleteCharacterCommand(id, user.id as string, user.roles as string[]);
+  async delete(@Param('id') id: string, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Deleting character ${id} for user ${req.user.id}`);
+    const command = new DeleteCharacterCommand(id, req.user.id, req.user.roles);
     await this.commandBus.execute(command);
   }
 
@@ -99,10 +92,9 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req) {
-    this.logger.debug(`Adding character ${id} XP for user ${req.user}`);
-    const user = req.user!;
-    const command = AddXPDto.toCommand(id, dto, user.id as string, user.roles as string[]);
+  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Adding character ${id} XP for user ${req.user.id}`);
+    const command = AddXPDto.toCommand(id, dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
@@ -112,11 +104,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUp(@Param('id') id: string, @Request() req) {
-    this.logger.debug(`Leveling up character: ${id} for user ${req.user}`);
-    const user = req.user!;
+  async levelUp(@Param('id') id: string, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Leveling up character: ${id} for user ${req.user.id}`);
     const force = req.query.force === 'true';
-    const command = new LevelUpCommand(id, force, user.id as string, user.roles as string[]);
+    const command = new LevelUpCommand(id, force, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
