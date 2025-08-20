@@ -24,6 +24,8 @@ import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto, CharacterPageDto, UpdateCharacterDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { AddXPDto } from './dto/add-xp.dto';
+import { AddXPCommand } from '../../application/commands/add-xp.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -95,6 +97,20 @@ export class CharacterController {
     const user = req.user!;
     const command = new DeleteCharacterCommand(id, user.id as string, user.roles as string[]);
     await this.commandBus.execute(command);
+  }
+
+  @Post(':id/add-xp')
+  @ApiBody({ type: AddXPDto })
+  @ApiOperation({ operationId: 'addXP', summary: 'Add XP to a character' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req) {
+    this.logger.debug(`Adding XP: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    const user = req.user!;
+    const command = AddXPDto.toCommand(id, dto, user.id as string, user.roles as string[]);
+    const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
   }
 
   @Post(':id/skills')

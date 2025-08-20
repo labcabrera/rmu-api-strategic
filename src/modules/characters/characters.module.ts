@@ -36,6 +36,7 @@ import { MongoCharacterRepository } from './infrastructure/persistence/repositor
 import { FactionsModule } from '../factions/factions.module';
 import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
+import { AddXPCommandHandler } from './application/commands/handlers/add-xp.command.handler';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { XPProcessor } from './domain/services/character/processors/xp-processor
     DeleteSkillCommandHandler,
     AddItemCommandHandler,
     DeleteItemCommandHandler,
+    AddXPCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
