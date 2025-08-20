@@ -1,0 +1,31 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+import * as game from 'src/modules/games/domain/entities/game';
+
+export type GameDocument = GameModel & Document;
+
+@Schema({ collection: 'games', versionKey: false })
+export class GameModel {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ required: true })
+  realm: string;
+
+  @Prop({ required: true })
+  status: game.GameStatus;
+
+  @Prop({ required: false })
+  description?: string;
+
+  @Prop({ required: true })
+  owner: string;
+
+  @Prop({ required: true })
+  createdAt: Date;
+
+  @Prop({ required: false })
+  updatedAt?: Date;
+}
+
+export const GameSchema = SchemaFactory.createForClass(GameModel);
