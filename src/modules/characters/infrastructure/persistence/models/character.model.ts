@@ -23,10 +23,10 @@ export class CharacterModel {
   gameId: string;
 
   @Prop({ required: true })
-  name: string;
+  factionId: string;
 
   @Prop({ required: true })
-  faction: string;
+  name: string;
 
   @Prop({ type: CharacterInfo, required: true })
   info: CharacterInfo;

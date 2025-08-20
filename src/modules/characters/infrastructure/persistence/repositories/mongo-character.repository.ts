@@ -75,8 +75,8 @@ export class MongoCharacterRepository implements CharacterRepository {
     return {
       id: plain._id as string,
       gameId: plain.gameId,
+      factionId: plain.factionId,
       name: plain.name,
-      faction: plain.faction,
       info: plain.info,
       statistics: plain.statistics,
       movement: plain.movement,

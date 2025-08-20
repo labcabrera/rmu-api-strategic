@@ -26,19 +26,20 @@ import * as skillCategoryClient from '../../ports/out/skill-category-client';
 import * as skillClient from '../../ports/out/skill-client';
 import { CreateCharacterCommand } from '../create-character.command';
 import * as gameRepository from 'src/modules/games/application/ports/out/game-repository';
-import { Game } from 'src/modules/games/domain/entities/game';
+import * as factionRepository from 'src/modules/factions/application/ports/out/faction-repository';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
   private readonly logger = new Logger(CreateCharacterCommandHandler.name);
 
   constructor(
+    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+    @Inject('GameRepository') private readonly gameRepository: gameRepository.GameRepository,
+    @Inject('FactionRepository') private readonly factionRepository: factionRepository.FactionRepository,
     @Inject('RaceClient') private readonly raceClient: raceClient.RaceClient,
     @Inject('SkillClient') private readonly skillClient: skillClient.SkillClient,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: skillCategoryClient.SkillCategoryClient,
     @Inject('ItemClient') private readonly itemClient: itemClient.ItemClient,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('GameRepository') private readonly gameRepository: gameRepository.GameRepository,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
@@ -47,8 +48,11 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     if (!tacticalGame) {
       throw new ValidationError(`Game with id ${command.gameId} not found`);
     }
+    const faction = await this.factionRepository.findById(command.factionId);
+    if (!faction) {
+      throw new ValidationError(`Faction with id ${command.factionId} not found`);
+    }
 
-    this.validateCommand(command, tacticalGame);
     const raceInfo = await this.fetchRace(command.info.race);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
     const skills = await this.processSkills(command, raceInfo);
@@ -94,8 +98,8 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     };
     const characterData: Partial<Character> = {
       gameId: command.gameId,
+      factionId: command.factionId,
       name: command.name,
-      faction: command.faction,
       info: command.info,
       statistics: processedStatistics,
       movement: movement,
@@ -280,18 +284,6 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     } catch (e) {
       this.logger.error(e);
       throw new ValidationError(`Item with id ${itemId} not found. ${e.message}`);
-    }
-  }
-
-  validateCommand(command: CreateCharacterCommand, game: Game): void {
-    if (!command.faction) {
-      throw new Error('Required faction');
-    }
-    // if (!game.factions.includes(command.faction)) {
-    //   throw new Error('Invalid faction');
-    // }
-    if (!command.info || !command.info.race) {
-      throw new Error('Required race');
     }
   }
 }

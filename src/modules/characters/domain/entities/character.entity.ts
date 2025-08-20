@@ -1,8 +1,8 @@
 export interface Character {
   id: string;
   gameId: string;
+  factionId: string;
   name: string;
-  faction: string;
   info: CharacterInfo;
   statistics: CharacterStatistics;
   movement: CharacterMovement;
@@ -23,6 +23,7 @@ export interface Character {
 export interface CharacterInfo {
   level: number;
   race: string;
+  professionId: string;
   sizeId: string;
   height: number;
   weight: number;
