@@ -4,15 +4,15 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/out/character.repository';
+import * as cr from '../../ports/out/character.repository';
 import { EquipItemCommand } from '../equip-item-command';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 
 @CommandHandler(EquipItemCommand)
-export class EquipItemUseCase implements ICommandHandler<EquipItemCommand, Character> {
+export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand, Character> {
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('CharacterProcessorService') private readonly characterProcessorService: CharacterProcessorService,
+    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
