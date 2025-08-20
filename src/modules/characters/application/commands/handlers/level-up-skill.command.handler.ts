@@ -44,17 +44,51 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
       clr = {
         characterId: characterId,
         level: level,
-        skills: {},
+        skills: new Map<string, number[]>(),
+        owner: character.owner,
+        createdAt: new Date(),
       };
     }
 
-    const currentSkillLevel = clr.skills![command.skillId] || 0;
+    const devSkills = (clr.skills?.get(command.skillId) as number[]) || [];
+
+    const currentSkillLevel = devSkills.length || 0;
     const requiredLevel = currentSkillLevel + 1;
-    if (requiredLevel > 3) {
+    if (requiredLevel >= devSkills.length) {
       throw new ValidationError('Skill level exceeds limit');
     }
 
-    //TODO
+    const costs = profession.skillCosts[skill.categoryId]! as number[];
+    const cost = costs[requiredLevel - 1];
+    devSkills.push(cost);
+    clr.skills!.set(command.skillId, devSkills);
+
+    let used = 0;
+    for (const values of clr.skills!.values()) {
+      used += values.reduce((acc, n) => acc + n, 0);
+    }
+    if (used > character.experience.developmentPoints) {
+      throw new ValidationError('Insufficient development points');
+    }
+
+    // Update character skill
+    const characterSkill = character.skills.find((s) => s.skillId === command.skillId);
+    if (!characterSkill) {
+      character.skills.push({
+        skillId: command.skillId,
+        specialization: command.specialization,
+        statistics: [],
+        ranks: 1,
+        statBonus: 0,
+        racialBonus: 0,
+        developmentBonus: 0,
+        customBonus: 0,
+        totalBonus: 0,
+      });
+    } else {
+      characterSkill.ranks += 1;
+    }
+    character.experience.availableDevelopmentPoints = character.experience.developmentPoints - used;
 
     if (insert) {
       await this.characterLevelRepository.create(clr);

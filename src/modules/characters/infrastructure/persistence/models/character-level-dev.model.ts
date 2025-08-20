@@ -11,8 +11,8 @@ export class CharacterLevelDevModel {
   @Prop({ required: true })
   level: number;
 
-  @Prop({ type: Map, of: Number })
-  skills: Map<string, number>;
+  @Prop({ type: Map, of: [Number] })
+  skills: Map<string, number[]>;
 
   @Prop({ required: true })
   owner: string;
