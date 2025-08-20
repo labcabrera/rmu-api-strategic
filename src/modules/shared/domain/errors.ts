@@ -63,3 +63,11 @@ export class InvalidSearchExpression extends DomainError {
     Object.setPrototypeOf(this, InvalidSearchExpression.prototype);
   }
 }
+
+export class BadGatewayError extends DomainError {
+  constructor(message: string) {
+    super(message, 502);
+    this.name = 'BadGatewayError';
+    Object.setPrototypeOf(this, BadGatewayError.prototype);
+  }
+}

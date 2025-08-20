@@ -10,6 +10,7 @@ import { CharacterLevelDev } from 'src/modules/characters/domain/entities/charac
 import * as pc from '../../ports/out/profession-client';
 import * as sc from '../../ports/out/skill-client';
 import { LevelDownSkillCommand } from '../level-down-skill.command';
+import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 
 @CommandHandler(LevelDownSkillCommand)
 export class LevelDownSkillCommandHandler implements ICommandHandler<LevelDownSkillCommand, Character> {
@@ -47,10 +48,7 @@ export class LevelDownSkillCommandHandler implements ICommandHandler<LevelDownSk
       clr.skills.delete(command.skillId);
     }
 
-    let used = 0;
-    for (const values of clr.skills.values()) {
-      used += values.reduce((acc, n) => acc + n, 0);
-    }
+    const used = CharacterLevelCalculator.calculateUsedDevPoints(clr);
     character.experience.availableDevelopmentPoints = character.experience.developmentPoints - used;
 
     await this.characterLevelRepository.update(clr.id!, clr);

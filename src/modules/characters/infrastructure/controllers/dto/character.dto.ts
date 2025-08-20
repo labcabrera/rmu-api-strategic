@@ -15,6 +15,7 @@ import { CharacterStatisticsDto } from './character-statistics.dto';
 import { CharacterXPDto } from './character-xp.dto';
 import * as characterEntity from 'src/modules/characters/domain/entities/character.entity';
 import { CharacterInfoDto } from './character-info.dto';
+import { CharacterAttackDto } from './character-attack.dto';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -62,6 +63,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character equipment', type: CharacterEquipmentDto })
   equipment: CharacterEquipmentDto;
 
+  @ApiProperty({ description: 'Character attacks', type: [CharacterAttackDto] })
+  attacks: CharacterAttackDto[];
+
   static fromEntity(entity: characterEntity.Character) {
     const dto = new CharacterDto();
     dto.id = entity.id;
@@ -79,6 +83,7 @@ export class CharacterDto {
     dto.skills = entity.skills.map((skill) => CharacterSkillDto.fromEntity(skill));
     dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
+    dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
     return dto;
   }
 }

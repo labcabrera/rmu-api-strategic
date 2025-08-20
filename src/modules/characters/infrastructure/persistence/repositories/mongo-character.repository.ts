@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
@@ -88,6 +91,7 @@ export class MongoCharacterRepository implements CharacterRepository {
       skills: plain.skills,
       items: plain.items,
       equipment: plain.equipment,
+      attacks: plain.attacks,
       status: plain.status,
       owner: plain.owner,
       createdAt: plain.createdAt,

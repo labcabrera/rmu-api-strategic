@@ -1,5 +1,9 @@
+import { CharacterAttack } from './character-attack.entity';
 import { CharacterItem } from './character-item.entity';
 import { CharacterXP } from './character-xp.entity';
+
+export type ProfessionalBonusType = 'professional' | 'knack';
+export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
 
 export interface Character {
   id: string;
@@ -18,6 +22,7 @@ export interface Character {
   skills: CharacterSkill[];
   items: CharacterItem[];
   equipment: CharacterEquipment;
+  attacks: CharacterAttack[];
   status?: string;
   owner: string;
   createdAt?: Date;
@@ -95,10 +100,12 @@ export interface CharacterSkill {
   skillId: string;
   specialization: string | undefined;
   statistics: string[];
+  professional: ProfessionalBonusType[] | undefined;
   ranks: number;
   statBonus: number;
   racialBonus: number;
   developmentBonus: number;
+  professionalBonus: number;
   customBonus: number;
   totalBonus: number;
 }

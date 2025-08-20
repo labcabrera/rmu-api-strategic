@@ -18,11 +18,11 @@ export class CharacterProcessorService {
     private readonly movementProcessor: MovementProcessor,
     private readonly initiativeProcessor: InitiativeProcessor,
     private readonly skillProcessor: SkillProcessor,
-    private readonly attackProcessor: AttackProcessor,
     private readonly equipmentProcessor: EquipmentProcessor,
     private readonly hpProcessor: HPProcessor,
     private readonly defenseProcessor: DefenseProcessor,
     private readonly xpProcessor: XPProcessor,
+    private readonly attackProcessor: AttackProcessor,
   ) {}
 
   process(character: Partial<Character>): void {
