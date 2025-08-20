@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { GamesModule } from './modules/games/games.module';
 import { CharactersModule } from './modules/characters/characters.module';
+import { FactionsModule } from './modules/factions/factions.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CharactersModule } from './modules/characters/characters.module';
     AuthModule,
     SharedModule,
     GamesModule,
+    FactionsModule,
     CharactersModule,
   ],
 })
