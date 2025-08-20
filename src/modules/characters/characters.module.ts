@@ -34,6 +34,7 @@ import { CharacterController } from './infrastructure/controllers/characters.con
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
 import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
 import { FactionsModule } from '../factions/factions.module';
+import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
 
 @Module({
   imports: [
@@ -82,6 +83,10 @@ import { FactionsModule } from '../factions/factions.module';
     {
       provide: 'SkillCategoryClient',
       useClass: SkillCategoryApiClient,
+    },
+    {
+      provide: 'ProfessionClient',
+      useClass: ProfessionApiClient,
     },
     {
       provide: 'ItemClient',
