@@ -42,6 +42,8 @@ import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/r
 import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
 import { LevelUpSkillCommandHandler } from './application/commands/handlers/level-up-skill.command.handler';
 import { LevelDownSkillCommandHandler } from './application/commands/handlers/level-down-skill.command.handler';
+import { CharacterSkill } from './infrastructure/persistence/models/character.model-childs';
+import { CharacterSkillController } from './infrastructure/controllers/characters-skill.controller';
 
 @Module({
   imports: [
@@ -57,7 +59,7 @@ import { LevelDownSkillCommandHandler } from './application/commands/handlers/le
     GamesModule,
     FactionsModule,
   ],
-  controllers: [CharacterController],
+  controllers: [CharacterController, CharacterSkillController],
   providers: [
     StatProcessor,
     MovementProcessor,

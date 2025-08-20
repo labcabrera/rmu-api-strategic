@@ -9,28 +9,19 @@ import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { Page } from '../../../shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from '../../../shared/infrastructure/controller/dto';
 import { AddItemCommand } from '../../application/commands/add-item.comand';
-import { AddSkillCommand } from '../../application/commands/add-skill.command';
 import { CreateCharacterCommand } from '../../application/commands/create-character.command';
 import { DeleteCharacterCommand } from '../../application/commands/delete-character.command';
 import { DeleteItemCommand } from '../../application/commands/delete-item.command';
-import { DeleteSkillCommand } from '../../application/commands/delete-skill-command';
 import { UpdateCharacterCommand } from '../../application/commands/update-character.command';
-import { UpdateSkillCommand } from '../../application/commands/update-skill.command';
 import { GetCharacterQuery } from '../../application/queries/get-character.query';
 import { GetCharactersQuery } from '../../application/queries/get-characters.query';
 import { Character } from '../../domain/entities/character.entity';
 import { AddItemDto } from './dto/add-item.dto';
-import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto, CharacterPageDto, UpdateCharacterDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
-import { UpdateSkillDto } from './dto/update-skill.dto';
 import { AddXPDto } from './dto/add-xp.dto';
 import { AddXPCommand } from '../../application/commands/add-xp.command';
 import { LevelUpCommand } from '../../application/commands/level-up.command';
-import { LevelUpSkillDto } from './dto/level-up-skill.dto';
-import { LevelUpSkillCommand } from '../../application/commands/level-up-skill.command';
-import { LevelDownSkillDto } from './dto/level-down-skill.dto';
-import { LevelDownSkillCommand } from '../../application/commands/level-down-skill.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -52,7 +43,6 @@ export class CharacterController {
     const user = req.user!;
     const query = new GetCharacterQuery(id, user.id as string, user.roles as string[]);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
-    this.logger.debug(`Character found: ${JSON.stringify(entity)}`);
     return CharacterDto.fromEntity(entity);
   }
 
@@ -61,7 +51,7 @@ export class CharacterController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'findCharacters', summary: 'Find characters by RSQL' })
   async find(@Query() dto: PagedQueryDto, @Request() req) {
-    this.logger.debug(`Finding characters with query: ${JSON.stringify(dto)}`);
+    this.logger.debug(`Finding characters with query ${dto.q} for user ${req.user}`);
     const user = req.user!;
     const query = new GetCharactersQuery(dto.q, dto.page, dto.size, user.id as string, user.roles as string[]);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
@@ -76,7 +66,7 @@ export class CharacterController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   async create(@Body() dto: CreateCharacterDto, @Request() req) {
-    this.logger.debug(`Creating character: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    this.logger.debug(`Creating character ${dto.name} for user ${req.user}`);
     const user = req.user!;
     const command = CreateCharacterDto.toCommand(dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<CreateCharacterCommand, Character>(command);
@@ -88,6 +78,7 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   async updateSettings(@Param('id') id: string, @Body() dto: UpdateCharacterDto, @Request() req) {
+    this.logger.debug(`Updating character ${id} for user ${req.user}`);
     const user = req.user!;
     const command = UpdateCharacterDto.toCommand(id, dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<UpdateCharacterCommand, Character>(command);
@@ -99,6 +90,7 @@ export class CharacterController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'deleteCharacter', summary: 'Delete character by id' })
   async delete(@Param('id') id: string, @Request() req) {
+    this.logger.debug(`Deleting character ${id} for user ${req.user}`);
     const user = req.user!;
     const command = new DeleteCharacterCommand(id, user.id as string, user.roles as string[]);
     await this.commandBus.execute(command);
@@ -111,7 +103,7 @@ export class CharacterController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req) {
-    this.logger.debug(`Adding XP: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    this.logger.debug(`Adding character ${id} XP for user ${req.user}`);
     const user = req.user!;
     const command = AddXPDto.toCommand(id, dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
@@ -132,75 +124,6 @@ export class CharacterController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Post(':id/skills')
-  @ApiBody({ type: AddSkillDto })
-  @ApiOperation({ operationId: 'addSkill', summary: 'Add a new skill to a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addSkill(@Param('id') id: string, @Body() dto: AddSkillDto, @Request() req) {
-    this.logger.debug(`Adding skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
-    const user = req.user!;
-    const command = AddSkillDto.toCommand(id, dto, user.id as string, user.roles as string[]);
-    const entity = await this.commandBus.execute<AddSkillCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
-  @Patch(':id/skills/:skillId')
-  @ApiBody({ type: UpdateSkillDto })
-  @ApiOperation({ operationId: 'updateSkill', summary: 'Update a skill of a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: UpdateSkillDto, @Request() req) {
-    this.logger.debug(`Updating skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
-    const user = req.user!;
-    const command = UpdateSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
-    const entity = await this.commandBus.execute<UpdateSkillCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
-  @Post(':id/skills/:skillId/level-up')
-  @ApiBody({ type: LevelUpSkillDto })
-  @ApiOperation({ operationId: 'levelUpSkill', summary: 'Level up skill' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUpSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: LevelUpSkillDto, @Request() req) {
-    this.logger.debug(`Leveling up skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
-    const user = req.user!;
-    const command = LevelUpSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
-    const entity = await this.commandBus.execute<LevelUpSkillCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
-  @Post(':id/skills/:skillId/level-down')
-  @ApiBody({ type: LevelUpSkillDto })
-  @ApiOperation({ operationId: 'levelDownSkill', summary: 'Level down skill' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelDownSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: LevelDownSkillDto, @Request() req) {
-    this.logger.debug(`Leveling down skill: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
-    const user = req.user!;
-    const command = LevelDownSkillDto.toCommand(id, skillId, dto, user.id as string, user.roles as string[]);
-    const entity = await this.commandBus.execute<LevelDownSkillCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
-  @Delete(':id/skills/:skillId')
-  @ApiOperation({ operationId: 'deleteSkill', summary: 'Delete a skill from a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async deleteSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Request() req) {
-    this.logger.debug(`Deleting character ${id} skill ${skillId} for user ${req.user}`);
-    const user = req.user!;
-    const command = new DeleteSkillCommand(id, skillId, user.id as string, user.roles as string[]);
-    const entity = await this.commandBus.execute<DeleteSkillCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
   @Post(':id/items')
   @ApiBody({ type: AddItemDto })
   @ApiOperation({ operationId: 'addItem', summary: 'Add a new item to a character' })
@@ -208,7 +131,7 @@ export class CharacterController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   async addItem(@Param('id') id: string, @Body() dto: AddItemDto, @Request() req) {
-    this.logger.debug(`Adding item: ${JSON.stringify(dto, null, 2)} for user ${req.user}`);
+    this.logger.debug(`Adding character ${id} item ${dto.itemTypeId} for user ${req.user}`);
     const user = req.user!;
     const command = AddItemDto.toCommand(id, dto, user.id as string, user.roles as string[]);
     const entity = await this.commandBus.execute<AddItemCommand, Character>(command);
