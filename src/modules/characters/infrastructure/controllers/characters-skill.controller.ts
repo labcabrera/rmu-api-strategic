@@ -21,7 +21,7 @@ import { LevelDownSkillCommand } from '../../application/commands/level-down-ski
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
-@ApiTags('Characters')
+@ApiTags('Character skills')
 export class CharacterSkillController {
   private readonly logger = new Logger(CharacterSkillController.name);
 

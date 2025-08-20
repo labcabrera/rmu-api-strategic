@@ -13,7 +13,7 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  @ApiOperation({ summary: 'Check application health' })
+  @ApiOperation({ summary: 'Check application health', operationId: 'health' })
   check() {
     return this.health.check([
       () => this.mongoose.pingCheck('mongodb'),
