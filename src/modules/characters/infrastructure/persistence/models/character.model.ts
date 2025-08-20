@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 import {
+  CharacterAttack,
   CharacterDefense,
   CharacterEndurance,
   CharacterEquipment,
@@ -63,6 +64,9 @@ export class CharacterModel {
 
   @Prop({ type: CharacterEquipment, required: true })
   equipment: CharacterEquipment;
+
+  @Prop({ type: [CharacterAttack], required: true })
+  attacks: CharacterAttack[];
 
   status: string | undefined;
 

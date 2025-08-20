@@ -1,3 +1,4 @@
+import { CharacterAttack } from './character-attack.entity';
 import { CharacterItem } from './character-item.entity';
 import { CharacterXP } from './character-xp.entity';
 
@@ -21,6 +22,7 @@ export interface Character {
   skills: CharacterSkill[];
   items: CharacterItem[];
   equipment: CharacterEquipment;
+  attacks: CharacterAttack[];
   status?: string;
   owner: string;
   createdAt?: Date;

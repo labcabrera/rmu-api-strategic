@@ -1,4 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema } from '@nestjs/mongoose';
+import * as cae from 'src/modules/characters/domain/entities/character-attack.entity';
 import { ProfessionalBonusType, WeaponDevelopmentType } from 'src/modules/characters/domain/entities/character.entity';
 
 @Schema({ _id: false })
@@ -310,4 +311,23 @@ export class CharacterXP {
   weaponDevelopment: WeaponDevelopmentType[];
 }
 
-export const CharacterInfoSchema = SchemaFactory.createForClass(CharacterInfo);
+@Schema({ _id: false })
+export class CharacterAttack {
+  @Prop({ required: true })
+  attackName: string;
+
+  @Prop({ required: true })
+  attackTable: string;
+
+  @Prop({ required: true })
+  sizeAdjustment: number;
+
+  @Prop({ required: true })
+  fumbleTable: string;
+
+  @Prop({ required: true })
+  fumble: number;
+
+  @Prop({ required: true })
+  bo: number;
+}
