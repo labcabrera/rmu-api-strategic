@@ -7,9 +7,10 @@ import { AuthModule } from 'src/modules/auth/auth.module';
 import { HealthController } from './infrastructure/controller/health.controller';
 import { KafkaProducerService } from './infrastructure/messaging/kafka-producer.service';
 import { RsqlParser } from './infrastructure/messaging/rsql-parser';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TerminusModule, CqrsModule, ConfigModule, AuthModule],
+  imports: [TerminusModule, CqrsModule, ConfigModule, HttpModule, AuthModule],
   controllers: [HealthController],
   providers: [RsqlParser, KafkaProducerService],
   exports: [RsqlParser, KafkaProducerService],

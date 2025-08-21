@@ -53,7 +53,7 @@ function configureOpenApi(app: INestApplication<any>) {
     },
   });
 
-  // Apply security schema to all paths
+  // Apply security schema to all paths except health endpoint
   document.paths = Object.entries(document.paths).reduce(
     (acc, [path, methods]) => {
       acc[path] = {};
