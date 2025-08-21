@@ -66,6 +66,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character attacks', type: [CharacterAttackDto] })
   attacks: CharacterAttackDto[];
 
+  @ApiProperty({ description: 'Character owner', example: 'user-001' })
+  owner: string;
+
   static fromEntity(entity: characterEntity.Character) {
     const dto = new CharacterDto();
     dto.id = entity.id;
@@ -84,6 +87,7 @@ export class CharacterDto {
     dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
+    dto.owner = entity.owner;
     return dto;
   }
 }

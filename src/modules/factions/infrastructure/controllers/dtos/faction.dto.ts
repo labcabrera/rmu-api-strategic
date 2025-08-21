@@ -8,6 +8,7 @@ export class FactionDto {
   name: string;
   factionManagement: FactionManagementDto;
   description: string | undefined;
+  owner: string;
 
   static fromEntity(entity: Faction): FactionDto {
     const dto = new FactionDto();
@@ -16,6 +17,7 @@ export class FactionDto {
     dto.name = entity.name;
     dto.description = entity.description;
     dto.factionManagement = FactionManagementDto.fromEntity(entity.management);
+    dto.owner = entity.owner;
     return dto;
   }
 }

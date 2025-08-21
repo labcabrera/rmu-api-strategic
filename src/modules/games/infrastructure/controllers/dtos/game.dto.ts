@@ -8,6 +8,7 @@ export class GameDto {
   realm: string;
   status: GameStatus;
   description: string | undefined;
+  owner: string;
 
   static fromEntity(entity: Game): GameDto {
     const dto = new GameDto();
@@ -16,6 +17,7 @@ export class GameDto {
     dto.realm = entity.realm;
     dto.status = entity.status;
     dto.description = entity.description;
+    dto.owner = entity.owner;
     return dto;
   }
 }
