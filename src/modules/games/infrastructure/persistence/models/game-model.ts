@@ -4,7 +4,7 @@ import * as game from 'src/modules/games/domain/entities/game';
 
 export type GameDocument = GameModel & Document;
 
-@Schema({ collection: 'games', versionKey: false })
+@Schema({ collection: 'strategic-games', versionKey: false })
 export class GameModel {
   @Prop({ required: true })
   name: string;

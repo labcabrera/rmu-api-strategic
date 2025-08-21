@@ -59,6 +59,9 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     if (!faction) {
       throw new ValidationError(`Faction with id ${command.factionId} not found`);
     }
+    if (faction.gameId != tacticalGame.id) {
+      throw new ValidationError(`Faction ${command.factionId} does not belong to game ${command.gameId}`);
+    }
     const profession = await this.professionClient.getProfessionById(command.info.professionId);
     if (!profession) {
       throw new ValidationError(`Profession with id ${command.info.professionId} not found`);
