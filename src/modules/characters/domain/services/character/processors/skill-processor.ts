@@ -18,8 +18,10 @@ export class SkillProcessor {
     const racialBonus = skill.racialBonus || 0;
     const developmentBonus = this.getRankBonus(ranks);
     const customBonus = skill.customBonus || 0;
-    const totalBonus = statBonus + racialBonus + developmentBonus + customBonus;
+    const professionalBonus = this.getProfessionalBonus(character, skill);
+    const totalBonus = statBonus + racialBonus + professionalBonus + developmentBonus + customBonus;
 
+    skill.professionalBonus = professionalBonus;
     skill.statBonus = statBonus;
     skill.developmentBonus = developmentBonus;
     skill.totalBonus = totalBonus;
@@ -34,6 +36,13 @@ export class SkillProcessor {
       }
     });
     return result;
+  }
+
+  private getProfessionalBonus(character: Partial<Character>, skill: CharacterSkill): number {
+    if (skill.professional && skill.professional.includes('professional')) {
+      return Math.min(30, skill.ranks);
+    }
+    return 0;
   }
 
   private getRankBonus(ranks: number): number {

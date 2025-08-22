@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Logger, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
@@ -16,6 +16,7 @@ import { LevelUpSkillCommand } from '../../application/commands/level-up-skill.c
 import { LevelDownSkillDto } from './dto/level-down-skill.dto';
 import { LevelDownSkillCommand } from '../../application/commands/level-down-skill.command';
 import * as ar from 'src/modules/shared/infrastructure/controller/auth-request';
+import { SetUpProfessionalSkillCommand } from '../../application/commands/setup-professional-skill.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -56,7 +57,7 @@ export class CharacterSkillController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Post(':id/skills/:skillId/level-up')
+  @Patch(':id/skills/:skillId/level-up')
   @ApiBody({ type: LevelUpSkillDto })
   @ApiOperation({ operationId: 'levelUpSkill', summary: 'Level up skill' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
@@ -74,7 +75,7 @@ export class CharacterSkillController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Post(':id/skills/:skillId/level-down')
+  @Patch(':id/skills/:skillId/level-down')
   @ApiBody({ type: LevelUpSkillDto })
   @ApiOperation({ operationId: 'levelDownSkill', summary: 'Level down skill' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
@@ -92,7 +93,20 @@ export class CharacterSkillController {
     return CharacterDto.fromEntity(entity);
   }
 
+  @Patch(':id/skills/:skillId/professional')
+  @ApiOperation({ operationId: 'makeProfessionalSkill', summary: 'Make skill professional' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async makeProfessionalSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Leveling down character ${id} skill ${skillId} for user ${req.user.id}`);
+    const command = new SetUpProfessionalSkillCommand(id, skillId, req.user.id, req.user.roles);
+    const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
   @Delete(':id/skills/:skillId')
+  @HttpCode(200)
   @ApiOperation({ operationId: 'deleteSkill', summary: 'Delete a skill from a character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })

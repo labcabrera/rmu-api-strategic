@@ -45,6 +45,7 @@ import { LevelDownSkillCommandHandler } from './application/commands/handlers/le
 import { CharacterSkillController } from './infrastructure/controllers/characters-skill.controller';
 import { CharacterItemController } from './infrastructure/controllers/characters-item.controller';
 import { EquipItemCommandHandler } from './application/commands/handlers/equip-item.command.handler';
+import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { EquipItemCommandHandler } from './application/commands/handlers/equip-i
     LevelUpCommandHandler,
     LevelUpSkillCommandHandler,
     LevelDownSkillCommandHandler,
+    SetupProfessionSkillCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
