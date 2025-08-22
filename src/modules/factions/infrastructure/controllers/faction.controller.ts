@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiForbiddenResponse,
@@ -98,6 +98,7 @@ export class FactionController {
   }
 
   @Post(':id/add-xp')
+  @HttpCode(200)
   @ApiOperation({ operationId: 'addFactionXP', summary: 'Add XP to faction' })
   @ApiOkResponse({ type: FactionDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
@@ -111,6 +112,7 @@ export class FactionController {
   }
 
   @Post(':id/add-gold')
+  @HttpCode(200)
   @ApiOperation({ operationId: 'addFactionGold', summary: 'Add gold to faction' })
   @ApiOkResponse({ type: FactionDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
