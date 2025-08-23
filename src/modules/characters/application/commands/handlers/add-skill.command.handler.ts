@@ -30,6 +30,16 @@ export class AddSkillCommandHandler implements ICommandHandler<AddSkillCommand, 
     }
     const skillInfo = await this.skillClient.getSkillById(skillId);
     const skillCategoryInfo = await this.skillCategoryClient.getSkillCategoryById(skillInfo.categoryId);
+    if (skillInfo.specializations && skillInfo.specializations.length > 0) {
+      if (!command.specialization || command.specialization.trim().length === 0) {
+        throw new ValidationError(`Specialization is required for skill ${skillId}`);
+      }
+    } else {
+      if (command.specialization && command.specialization.trim().length > 0) {
+        throw new ValidationError(`Specialization is not allowed for skill ${skillId}`);
+      }
+    }
+
     const statistics = [...skillCategoryInfo.bonus, ...skillInfo.bonus];
     //TODO read from api
     const racialBonus: number = 0;
