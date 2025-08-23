@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 import { Game, GameOptions, GamePowerLevel, GameStatus } from 'src/modules/games/domain/entities/game';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
 
@@ -27,12 +28,26 @@ export class GameDto {
 }
 
 export class GameOptionsDto {
-  @ApiProperty({ description: 'Experience multiplier', type: Number })
+  @ApiProperty({ description: 'Experience multiplier', type: Number, default: 1.0, example: 1.0 })
+  @IsNumber()
+  @IsNotEmpty()
   experienceMultiplier: number;
+
+  @ApiProperty({ description: 'Fatigue multiplier', type: Number, default: 1.0, example: 1.0 })
+  @IsNumber()
+  @IsNotEmpty()
+  fatigueMultiplier: number;
+
+  @ApiProperty({ description: 'Board scale multiplier', type: Number, default: 1.0, example: 1.0 })
+  @IsNumber()
+  @IsNotEmpty()
+  boardScaleMultiplier: number;
 
   static fromEntity(entity: GameOptions): GameOptionsDto {
     const dto = new GameOptionsDto();
     dto.experienceMultiplier = entity.experienceMultiplier;
+    dto.fatigueMultiplier = entity.fatigueMultiplier;
+    dto.boardScaleMultiplier = entity.boardScaleMultiplier;
     return dto;
   }
 }

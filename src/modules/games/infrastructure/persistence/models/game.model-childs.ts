@@ -4,6 +4,12 @@ import { Prop, Schema } from '@nestjs/mongoose';
 export class GameOptions {
   @Prop({ required: true })
   experienceMultiplier: number;
+
+  @Prop({ required: true })
+  fatigueMultiplier: number;
+
+  @Prop({ required: true })
+  boardScaleMultiplier: number;
 }
 
 @Schema({ _id: false })
