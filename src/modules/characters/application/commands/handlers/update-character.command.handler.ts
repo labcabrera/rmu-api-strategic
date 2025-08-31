@@ -20,43 +20,17 @@ export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateChar
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-
-    this.bindBasicFields(character, command);
-    this.bindInfoFielsds(character, command);
-    this.bindHPFielsds(character, command);
-    //TODO
-
+    this.bindFields(character, command);
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(characterId, character);
   }
 
-  private bindBasicFields(character: Character, command: UpdateCharacterCommand): void {
+  private bindFields(character: Character, command: UpdateCharacterCommand): void {
     if (command.name) {
       character.name = command.name;
     }
-  }
-
-  private bindInfoFielsds(character: Character, command: UpdateCharacterCommand): void {
-    if (!command.info) {
-      return;
-    }
-    if (command.info.height) {
-      character.info.height = command.info.height;
-    }
-    if (command.info.weight) {
-      character.info.weight = command.info.weight;
-    }
-  }
-
-  private bindHPFielsds(character: Character, command: UpdateCharacterCommand): void {
-    if (!command.hp) {
-      return;
-    }
-    if (command.hp.current) {
-      character.hp.current = command.hp.current;
-    }
-    if (command.hp.max) {
-      character.hp.max = command.hp.max;
+    if (command.description) {
+      character.description = command.description;
     }
   }
 }

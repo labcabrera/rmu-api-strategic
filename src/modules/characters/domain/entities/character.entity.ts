@@ -24,6 +24,7 @@ export interface Character {
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
   status?: string;
+  description: string | undefined;
   owner: string;
   createdAt?: Date;
   updatedAt?: Date;

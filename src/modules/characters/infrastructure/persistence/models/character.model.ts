@@ -70,13 +70,16 @@ export class CharacterModel {
 
   status: string | undefined;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: false })
+  description: string | undefined;
+
+  @Prop({ type: String, required: true })
   owner: string;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   createdAt: Date;
 
-  @Prop({ required: false })
+  @Prop({ type: Date, required: false })
   updatedAt?: Date;
 }
 
