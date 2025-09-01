@@ -43,11 +43,17 @@ export class GameOptionsDto {
   @IsNotEmpty()
   boardScaleMultiplier: number;
 
+  @ApiProperty({ description: 'Game letality (custom bonus to all attacks)', type: Number, default: 0, example: 0 })
+  @IsNumber()
+  @IsNotEmpty()
+  letality: number;
+
   static fromEntity(entity: GameOptions): GameOptionsDto {
     const dto = new GameOptionsDto();
     dto.experienceMultiplier = entity.experienceMultiplier;
     dto.fatigueMultiplier = entity.fatigueMultiplier;
     dto.boardScaleMultiplier = entity.boardScaleMultiplier;
+    dto.letality = entity.letality;
     return dto;
   }
 }

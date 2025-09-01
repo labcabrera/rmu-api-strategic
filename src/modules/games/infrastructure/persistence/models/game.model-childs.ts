@@ -10,6 +10,9 @@ export class GameOptions {
 
   @Prop({ required: true })
   boardScaleMultiplier: number;
+
+  @Prop({ required: true })
+  letality: number;
 }
 
 @Schema({ _id: false })

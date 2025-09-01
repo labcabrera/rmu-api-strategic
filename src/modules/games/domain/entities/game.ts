@@ -17,6 +17,7 @@ export interface GameOptions {
   experienceMultiplier: number;
   fatigueMultiplier: number;
   boardScaleMultiplier: number;
+  letality: number;
 }
 
 export interface GamePowerLevel {
