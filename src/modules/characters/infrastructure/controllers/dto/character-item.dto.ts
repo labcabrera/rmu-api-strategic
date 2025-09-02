@@ -6,7 +6,7 @@ import {
   CharacterItemWeapon,
   CharacterItemWeaponRange,
   CharacterItemArmor,
-} from '../../persistence/models/character.model-childs';
+} from '../../persistence/models/character-childs.model';
 
 export class CharacterItemDto {
   id: string;

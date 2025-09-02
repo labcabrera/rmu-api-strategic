@@ -3,9 +3,11 @@ export interface CharacterItem {
   name: string;
   itemTypeId: string;
   category: string;
+  carried: boolean;
   weapon: CharacterItemWeapon | undefined;
   weaponRange: CharacterItemWeaponRange[] | undefined;
   armor: CharacterItemArmor | undefined;
+  affixes: CharacterItemAffix[] | undefined;
   info: CharacterItemInfo;
 }
 
@@ -38,4 +40,11 @@ export interface CharacterItemInfo {
   strength: number;
   weight: number;
   productionTime: number;
+}
+
+export interface CharacterItemAffix {
+  key: string;
+  value: string | undefined;
+  bonus: number | undefined;
+  description: string | undefined;
 }

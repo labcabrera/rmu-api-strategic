@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
 import { EquipItemCommand } from '../equip-item-command';
-import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand, Character> {
@@ -72,8 +72,15 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
     }
     // Set armor type if equipping body armor
     if (slot === 'body' && item.armor && item.armor.armorType) {
-      character.defense.armorType = item.armor.armorType;
+      character.defense.armor.bodyAt = item.armor.armorType;
+    } else if (slot === 'head' && item.armor && item.armor.armorType) {
+      character.defense.armor.headAt = item.armor.armorType;
+    } else if (slot === 'arms' && item.armor && item.armor.armorType) {
+      character.defense.armor.armsAt = item.armor.armorType;
+    } else if (slot === 'legs' && item.armor && item.armor.armorType) {
+      character.defense.armor.legsAt = item.armor.armorType;
     }
+
     // Equip item to specified slot
     if (slot === 'mainHand') {
       equipment.mainHand = command.itemId;

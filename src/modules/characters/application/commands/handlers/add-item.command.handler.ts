@@ -30,9 +30,11 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
       name: command.name || command.itemTypeId,
       itemTypeId: command.itemTypeId,
       category: readedItem.category,
+      carried: true,
       weapon: readedItem.weapon,
       weaponRange: readedItem.weaponRange,
       armor: readedItem.armor,
+      affixes: [],
       info: readedItem.info,
     };
     character.items.push(item);

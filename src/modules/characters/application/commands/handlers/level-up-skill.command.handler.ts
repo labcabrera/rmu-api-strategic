@@ -13,7 +13,7 @@ import * as sc from '../../ports/out/skill-client';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 import * as scc from '../../ports/out/skill-category-client';
 import { SkillResponse } from '../../ports/out/skill-client';
-import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character.model-childs';
+import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillCommand, Character> {

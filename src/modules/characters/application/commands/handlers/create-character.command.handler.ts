@@ -88,8 +88,15 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       strideRacialBonus: raceInfo.strideBonus || 0,
     };
     const defense: CharacterDefense = {
-      armorType: 1,
       defensiveBonus: 0,
+      armor: {
+        at: 1,
+        racialAt: 1,
+        bodyAt: undefined,
+        headAt: undefined,
+        armsAt: undefined,
+        legsAt: undefined,
+      },
     };
     const hp: CharacterHP = {
       max: 0,
@@ -113,10 +120,12 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       totalBonus: 0,
     };
     const equipment: CharacterEquipment = {
-      mainHand: '',
-      offHand: '',
-      body: '',
-      head: '',
+      mainHand: undefined,
+      offHand: undefined,
+      body: undefined,
+      head: undefined,
+      arms: undefined,
+      legs: undefined,
       weight: 0,
     };
     const characterData: Partial<Character> = {
@@ -247,9 +256,11 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
           name: name,
           itemTypeId: e.itemTypeId,
           category: readedItem.category,
+          carried: true,
           weapon: readedWeapon,
           weaponRange: readedWeaponRange,
           armor: readedArmor,
+          affixes: [],
           info: readedItem.info,
         };
       }),

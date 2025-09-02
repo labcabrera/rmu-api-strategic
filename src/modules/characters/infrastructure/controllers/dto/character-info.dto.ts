@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { CharacterInfo } from '../../persistence/models/character.model-childs';
+import { CharacterInfo } from '../../persistence/models/character-childs.model';
 
 export class CharacterInfoDto {
   @ApiProperty({ description: 'Race identifier', example: 'ork' })

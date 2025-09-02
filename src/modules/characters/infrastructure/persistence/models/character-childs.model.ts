@@ -80,12 +80,33 @@ export class CharacterMovement {
 }
 
 @Schema({ _id: false })
+export class CharacterArmor {
+  @Prop({ type: Number, required: false })
+  at: number | undefined;
+
+  @Prop({ type: Number, required: true })
+  racialAt: number;
+
+  @Prop({ type: Number, required: false })
+  bodyAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  headAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  armsAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  legsAt: number | undefined;
+}
+
+@Schema({ _id: false })
 export class CharacterDefense {
   @Prop({ required: true })
-  armorType: number;
-
-  @Prop({ required: true })
   defensiveBonus: number;
+
+  @Prop({ type: CharacterArmor, required: true })
+  armor: CharacterArmor;
 }
 
 @Schema({ _id: false })
@@ -245,6 +266,21 @@ export class CharacterItemArmor {
 }
 
 @Schema({ _id: false })
+export class CharacterItemAffix {
+  @Prop({ required: true })
+  key: string;
+
+  @Prop({ type: String, required: false })
+  value: string | undefined;
+
+  @Prop({ type: Number, required: false })
+  bonus: number | undefined;
+
+  @Prop({ type: String, required: false })
+  description: string | undefined;
+}
+
+@Schema({ _id: false })
 export class CharacterItem {
   @Prop({ required: true })
   id: string;
@@ -258,6 +294,9 @@ export class CharacterItem {
   @Prop({ required: true })
   category: string;
 
+  @Prop({ required: true })
+  carried: boolean;
+
   @Prop({ type: CharacterItemWeapon, required: false })
   weapon: CharacterItemWeapon | undefined;
 
@@ -266,6 +305,9 @@ export class CharacterItem {
 
   @Prop({ type: CharacterItemArmor, required: false })
   armor: CharacterItemArmor | undefined;
+
+  @Prop({ type: [CharacterItemAffix], required: false })
+  affixes: CharacterItemAffix[] | undefined;
 
   @Prop({ required: true })
   info: CharacterItemInfo;
@@ -284,6 +326,12 @@ export class CharacterEquipment {
 
   @Prop({ type: String, required: false })
   head: string | undefined;
+
+  @Prop({ type: String, required: false })
+  arms: string | undefined;
+
+  @Prop({ type: String, required: false })
+  legs: string | undefined;
 
   @Prop({ type: Number, required: false })
   weight: number | undefined;

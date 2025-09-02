@@ -15,7 +15,7 @@ import {
   CharacterSkill,
   CharacterStatistics,
   CharacterXP,
-} from './character.model-childs';
+} from './character-childs.model';
 
 export type CharacterDocument = CharacterModel & Document;
 

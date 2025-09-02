@@ -68,8 +68,17 @@ export interface CharacterMovement {
 }
 
 export interface CharacterDefense {
-  armorType: number;
   defensiveBonus: number;
+  armor: CharacterArmor;
+}
+
+export interface CharacterArmor {
+  at: number | undefined;
+  racialAt: number;
+  bodyAt: number | undefined;
+  headAt: number | undefined;
+  armsAt: number | undefined;
+  legsAt: number | undefined;
 }
 
 export interface CharacterHP {
@@ -116,5 +125,7 @@ export interface CharacterEquipment {
   offHand: string | undefined;
   body: string | undefined;
   head: string | undefined;
+  arms: string | undefined;
+  legs: string | undefined;
   weight: number | undefined;
 }

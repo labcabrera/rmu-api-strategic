@@ -1,27 +1,48 @@
 import { Injectable } from '@nestjs/common';
+import { ValidationError } from 'src/modules/shared/domain/errors';
+import { CharacterItem } from '../../../entities/character-item.entity';
 import { Character } from '../../../entities/character.entity';
 
 @Injectable()
 export class DefenseProcessor {
   process(character: Partial<Character>): void {
-    this.processArmorType(character);
+    this.processArmor(character);
     this.processDefensiveBonus(character);
   }
 
-  private processArmorType(character: Partial<Character>): void {
-    if (!character.equipment || !character.equipment.body || !character.items || !character.defense) {
+  private processArmor(character: Partial<Character>): void {
+    if (!character.equipment || !character.items || !character.defense) {
       return;
     }
-    if (character.equipment.body) {
-      const itemId = character.equipment.body;
-      const item = character.items.find((e) => e.id == itemId);
-      if (item && item.armor && item.armor.armorType) {
-        character.defense.armorType = item.armor.armorType;
-      }
+    const eq = character.equipment;
+    const items = character.items;
+    const racialAt = character.defense.armor.racialAt;
+    const armor = character.defense.armor;
+    armor.bodyAt = this.getItemArmorTypeOrDefault(eq.body, items, racialAt);
+    armor.headAt = this.getItemArmorTypeOrDefault(eq.head, items, racialAt);
+    armor.armsAt = this.getItemArmorTypeOrDefault(eq.arms, items, racialAt);
+    armor.legsAt = this.getItemArmorTypeOrDefault(eq.legs, items, racialAt);
+
+    if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
+      armor.at = armor.bodyAt;
+      armor.bodyAt = undefined;
+      armor.headAt = undefined;
+      armor.armsAt = undefined;
+      armor.legsAt = undefined;
     } else {
-      //TODO read from racial
-      character.defense.armorType = 1;
+      armor.at = undefined;
     }
+  }
+
+  private getItemArmorTypeOrDefault(itemId: string | undefined, items: CharacterItem[], defaultAt: number): number {
+    if (!itemId) {
+      return defaultAt;
+    }
+    const item = items.find((e) => e.id == itemId);
+    if (!item || !item.armor || !item.armor.armorType) {
+      throw new ValidationError('Invalid armor item');
+    }
+    return item.armor.armorType;
   }
 
   private processDefensiveBonus(character: Partial<Character>): void {
