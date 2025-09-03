@@ -14,11 +14,19 @@ export interface CharacterItem {
 
 export interface CharacterItemWeapon {
   attackTable: string;
+  fumbleTable: string;
   skillId: string;
   fumble: number;
   sizeAdjustment: number;
   requiredHands: number;
   throwable: boolean;
+  ranges: CharacterItemWeaponRange[] | undefined;
+}
+
+export interface CharacterItemWeaponRange {
+  from: number;
+  to: number;
+  bonus: number;
 }
 
 export interface CharacterItemWeaponRange {

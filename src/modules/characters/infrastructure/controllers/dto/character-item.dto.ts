@@ -1,13 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import {
-  CharacterItem,
-  CharacterItemInfo,
-  CharacterItemWeapon,
-  CharacterItemWeaponRange,
-  CharacterItemArmor,
-} from '../../persistence/models/character-childs.model';
 import { CharacterItemInfoDto } from './character-item-info.dto';
+import { CharacterItemWeaponDto, CharacterItemWeaponRangeDto } from './character-item-weapon.dto';
+import { CharacterItemArmorDto } from './character-item-armor.dto';
+import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 
 export class CharacterItemDto {
   id: string;
@@ -26,64 +22,8 @@ export class CharacterItemDto {
     dto.itemTypeId = item.itemTypeId;
     dto.category = item.category;
     dto.weapon = item.weapon ? CharacterItemWeaponDto.fromEntity(item.weapon) : undefined;
-    dto.weaponRange = item.weaponRange ? item.weaponRange.map((e) => CharacterItemWeaponRangeDto.fromEntity(e)) : undefined;
     dto.armor = item.armor ? CharacterItemArmorDto.fromEntity(item.armor) : undefined;
     dto.info = CharacterItemInfoDto.fromEntity(item.info);
-    return dto;
-  }
-}
-
-export class CharacterItemWeaponDto {
-  attackTable: string;
-  skillId: string;
-  fumble: number;
-  sizeAdjustment: number;
-  requiredHands: number;
-  throwable: boolean;
-
-  static fromEntity(entity: CharacterItemWeapon): CharacterItemWeaponDto | undefined {
-    if (!entity) return undefined;
-    const dto = new CharacterItemWeaponDto();
-    dto.attackTable = entity.attackTable;
-    dto.skillId = entity.skillId;
-    dto.fumble = entity.fumble;
-    dto.sizeAdjustment = entity.sizeAdjustment;
-    dto.requiredHands = entity.requiredHands;
-    dto.throwable = entity.throwable;
-    return dto;
-  }
-}
-
-export class CharacterItemWeaponRangeDto {
-  from: number;
-  to: number;
-  bonus: number;
-
-  static fromEntity(entity: CharacterItemWeaponRange): CharacterItemWeaponRangeDto {
-    const dto = new CharacterItemWeaponRangeDto();
-    dto.from = entity.from;
-    dto.to = entity.to;
-    dto.bonus = entity.bonus;
-    return dto;
-  }
-}
-
-export class CharacterItemArmorDto {
-  slot: string;
-  armorType: number;
-  enc: number;
-  maneuver: number;
-  rangedPenalty: number;
-  perception: number;
-
-  static fromEntity(entity: CharacterItemArmor): CharacterItemArmorDto {
-    const dto = new CharacterItemArmorDto();
-    dto.slot = entity.slot;
-    dto.armorType = entity.armorType;
-    dto.enc = entity.enc;
-    dto.maneuver = entity.maneuver;
-    dto.rangedPenalty = entity.rangedPenalty;
-    dto.perception = entity.perception;
     return dto;
   }
 }

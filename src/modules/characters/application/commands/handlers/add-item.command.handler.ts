@@ -9,7 +9,6 @@ import * as characterRepository from '../../ports/out/character.repository';
 import * as itemClient from '../../ports/out/item-client';
 import { AddItemCommand } from '../add-item.comand';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
-import { read } from 'fs';
 
 @CommandHandler(AddItemCommand)
 export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {

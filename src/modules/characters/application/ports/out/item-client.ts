@@ -9,11 +9,13 @@ export interface ItemResponse {
 
 export interface ItemWeaponResponse {
   attackTable: string;
+  fumbleTable: string;
   skillId: string;
   fumble: number;
   sizeAdjustment: number;
   requiredHands: number;
   throwable: boolean;
+  ranges: ItemWeaponRangeResponse[] | undefined;
 }
 
 export interface ItemInfoResponse {
