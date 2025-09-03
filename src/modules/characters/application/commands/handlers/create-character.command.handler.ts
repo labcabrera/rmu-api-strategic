@@ -13,6 +13,7 @@ import {
   CharacterEndurance,
   CharacterEquipment,
   CharacterHP,
+  CharacterInfo,
   CharacterInitiative,
   CharacterMovement,
   CharacterPower,
@@ -70,7 +71,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     const raceInfo = await this.fetchRace(command.info.race);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
     const skills = await this.processSkills(command, raceInfo);
-    const items = await this.processItems(command);
+    const items = await this.processItems(command.info, command);
 
     //TODO adjust with race for level 0
     const experience: CharacterXP = {
@@ -240,7 +241,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     });
   }
 
-  async processItems(command: CreateCharacterCommand): Promise<CharacterItem[]> {
+  async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
     if (!command.items || command.items.length == 0) {
       return [];
     }
@@ -251,6 +252,14 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
         const readedArmor = readedItem.armor ? readedItem.armor : undefined;
         const readedWeaponRange = readedItem.weaponRange ? readedItem.weaponRange : undefined;
         const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
+        const itemInfo = {
+          length: readedItem.info.length,
+          strength: readedItem.info.strength,
+          weight: readedItem.info.weight,
+        };
+        if (!itemInfo.weight && readedItem.info.weightPercent) {
+          itemInfo.weight = readedItem.info.weightPercent * characterInfo.weight;
+        }
         return {
           id: randomUUID(),
           name: name,
@@ -261,8 +270,9 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
           weaponRange: readedWeaponRange,
           armor: readedArmor,
           affixes: [],
-          info: readedItem.info,
-        };
+          info: itemInfo,
+          description: undefined,
+        } as CharacterItem;
       }),
     );
   }

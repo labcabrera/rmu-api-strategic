@@ -21,10 +21,11 @@ export interface ItemInfoResponse {
     value: number;
     type: string;
   };
-  length: number;
-  strength: number;
-  weight: number;
-  productionTime: number;
+  length: number | undefined;
+  strength: number | undefined;
+  weight: number | undefined;
+  weightPercent: number | undefined;
+  productionHours: number | undefined;
 }
 
 export interface ItemArmorResponse {

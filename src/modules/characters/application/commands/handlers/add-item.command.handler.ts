@@ -9,6 +9,7 @@ import * as characterRepository from '../../ports/out/character.repository';
 import * as itemClient from '../../ports/out/item-client';
 import { AddItemCommand } from '../add-item.comand';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import { read } from 'fs';
 
 @CommandHandler(AddItemCommand)
 export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {
@@ -25,6 +26,16 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
       throw new NotFoundError('Character', characterId);
     }
     const readedItem = await this.itemClient.getItemById(command.itemTypeId);
+    let weight = readedItem.info.weight ? readedItem.info.weight : 0;
+    if (readedItem.info.weightPercent) {
+      weight = (character.info.weight * readedItem.info.weightPercent) / 100;
+    }
+    const info = {
+      length: readedItem.info.length,
+      strength: readedItem.info.strength,
+      weight: weight,
+      productionTime: -100,
+    };
     const item: CharacterItem = {
       id: randomUUID(),
       name: command.name || command.itemTypeId,
@@ -35,10 +46,15 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
       weaponRange: readedItem.weaponRange,
       armor: readedItem.armor,
       affixes: [],
-      info: readedItem.info,
+      info: info,
+      description: '',
     };
     character.items.push(item);
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(characterId, character);
+  }
+
+  getWeight(item: CharacterItem): number {
+    return item.info.weight;
   }
 }

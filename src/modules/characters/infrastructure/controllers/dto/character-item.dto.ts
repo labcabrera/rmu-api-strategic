@@ -7,6 +7,7 @@ import {
   CharacterItemWeaponRange,
   CharacterItemArmor,
 } from '../../persistence/models/character-childs.model';
+import { CharacterItemInfoDto } from './character-item-info.dto';
 
 export class CharacterItemDto {
   id: string;
@@ -28,22 +29,6 @@ export class CharacterItemDto {
     dto.weaponRange = item.weaponRange ? item.weaponRange.map((e) => CharacterItemWeaponRangeDto.fromEntity(e)) : undefined;
     dto.armor = item.armor ? CharacterItemArmorDto.fromEntity(item.armor) : undefined;
     dto.info = CharacterItemInfoDto.fromEntity(item.info);
-    return dto;
-  }
-}
-
-export class CharacterItemInfoDto {
-  length: number;
-  strength: number;
-  weight: number;
-  productionTime: number;
-
-  static fromEntity(info: CharacterItemInfo): CharacterItemInfoDto {
-    const dto = new CharacterItemInfoDto();
-    dto.length = info.length;
-    dto.strength = info.strength;
-    dto.weight = info.weight;
-    dto.productionTime = info.productionTime;
     return dto;
   }
 }

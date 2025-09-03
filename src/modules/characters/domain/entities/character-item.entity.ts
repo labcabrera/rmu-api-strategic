@@ -9,6 +9,7 @@ export interface CharacterItem {
   armor: CharacterItemArmor | undefined;
   affixes: CharacterItemAffix[] | undefined;
   info: CharacterItemInfo;
+  description: string | undefined;
 }
 
 export interface CharacterItemWeapon {
@@ -36,10 +37,15 @@ export interface CharacterItemArmor {
 }
 
 export interface CharacterItemInfo {
-  length: number;
-  strength: number;
+  length: number | undefined;
+  strength: number | undefined;
   weight: number;
-  productionTime: number;
+}
+
+export interface CharacterItemCost {
+  min: number;
+  average: number;
+  max: number;
 }
 
 export interface CharacterItemAffix {
