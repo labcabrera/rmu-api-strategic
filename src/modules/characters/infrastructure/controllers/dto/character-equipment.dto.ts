@@ -23,7 +23,7 @@ export class CharacterEquipmentDto {
     dto.arms = entity.arms;
     dto.legs = entity.legs;
     dto.weight = entity.weight;
-    dto.encumbrance = entity.encumbrance;
+    dto.encumbrance = entity.enc;
     dto.maneuverPenalty = entity.maneuverPenalty;
     dto.rangedPenalty = entity.rangedPenalty;
     dto.perceptionPenalty = entity.perceptionPenalty;

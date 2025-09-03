@@ -42,6 +42,7 @@ export interface CharacterItemArmor {
   maneuver: number;
   rangedPenalty: number;
   perception: number;
+  baseDifficulty: string;
 }
 
 export interface CharacterItemInfo {

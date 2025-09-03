@@ -24,7 +24,7 @@ export class CharacterEquipment {
   weight: number;
 
   @Prop({ type: Number, required: true })
-  encumbrance: number;
+  enc: number;
 
   @Prop({ type: Number, required: true })
   maneuverPenalty: number;

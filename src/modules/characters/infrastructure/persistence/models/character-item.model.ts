@@ -70,6 +70,9 @@ export class CharacterItemArmor {
 
   @Prop({ required: true })
   perception: number;
+
+  @Prop({ type: String, required: false })
+  baseDifficulty: string | undefined;
 }
 
 @Schema({ _id: false })

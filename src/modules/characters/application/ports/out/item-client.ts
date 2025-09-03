@@ -37,6 +37,7 @@ export interface ItemArmorResponse {
   maneuver: number;
   rangedPenalty: number;
   perception: number;
+  baseDifficulty: string;
 }
 
 export interface ItemWeaponRangeResponse {

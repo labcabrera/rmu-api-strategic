@@ -7,6 +7,7 @@ export class CharacterItemArmorDto {
   maneuver: number;
   rangedPenalty: number;
   perception: number;
+  baseDifficulty: string;
 
   static fromEntity(entity: CharacterItemArmor): CharacterItemArmorDto {
     const dto = new CharacterItemArmorDto();
@@ -16,6 +17,7 @@ export class CharacterItemArmorDto {
     dto.maneuver = entity.maneuver;
     dto.rangedPenalty = entity.rangedPenalty;
     dto.perception = entity.perception;
+    dto.baseDifficulty = entity.baseDifficulty;
     return dto;
   }
 }
