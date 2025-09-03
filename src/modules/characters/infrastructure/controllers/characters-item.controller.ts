@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Logger, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
@@ -14,6 +14,8 @@ import { EquipItemCommand } from '../../application/commands/equip-item-command'
 import * as ar from 'src/modules/shared/infrastructure/controller/auth-request';
 import { UnequipItemCommand } from '../../application/commands/unequip-item-command';
 import { UpdateItemCarriedStatusCommand } from '../../application/commands/update-item-carried-status.command';
+import { TransferGoldCommand } from '../../application/commands/transfer-gold.command';
+import { TransferGoldDto } from './dto/transfer-faction-gold.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -66,6 +68,19 @@ export class CharacterItemController {
     this.logger.debug(`Updating carried status for character ${id} item ${itemId} to ${carried} for user ${req.user.id}`);
     const command = new UpdateItemCarriedStatusCommand(id, itemId, carried, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<UpdateItemCarriedStatusCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Patch(':id/transfer-faction-gold')
+  @ApiBody({ type: TransferGoldDto })
+  @ApiOperation({ operationId: 'transferFactionGold', summary: 'Transfer gold between character and his faction' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async transferFactionGold(@Param('id') id: string, @Body() dto: TransferGoldDto, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Transferring faction gold for character ${id} for user ${req.user.id}`);
+    const command = TransferGoldDto.toCommand(id, dto, req.user.id, req.user.roles);
+    const entity = await this.commandBus.execute<TransferGoldCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 

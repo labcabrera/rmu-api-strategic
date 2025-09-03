@@ -47,6 +47,8 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
       affixes: [],
       info: info,
       description: '',
+      stackable: false,
+      amount: undefined,
     };
     character.items.push(item);
     this.characterProcessorService.process(character);

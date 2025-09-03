@@ -48,6 +48,7 @@ import { EquipItemCommandHandler } from './application/commands/handlers/equip-i
 import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
 import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
 import { UpdateItemCarriedStatusCommandHandler } from './application/commands/handlers/update-item-carried-status.command.handler';
+import { TransferGoldCommandHandler } from './application/commands/handlers/transfer-gold.command.handler';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { UpdateItemCarriedStatusCommandHandler } from './application/commands/ha
     LevelUpSkillCommandHandler,
     LevelDownSkillCommandHandler,
     SetupProfessionSkillCommandHandler,
+    TransferGoldCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,

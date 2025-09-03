@@ -9,6 +9,8 @@ export interface CharacterItem {
   armor: CharacterItemArmor | undefined;
   affixes: CharacterItemAffix[] | undefined;
   info: CharacterItemInfo;
+  stackable: boolean | undefined;
+  amount: number | undefined;
   description: string | undefined;
 }
 

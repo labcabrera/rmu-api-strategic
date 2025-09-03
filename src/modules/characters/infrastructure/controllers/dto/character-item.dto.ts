@@ -15,6 +15,9 @@ export class CharacterItemDto {
   weaponRange: CharacterItemWeaponRangeDto[] | undefined;
   armor: CharacterItemArmorDto | undefined;
   info: CharacterItemInfoDto;
+  stackable: boolean | undefined;
+  amount: number | undefined;
+  description: string | undefined;
 
   static fromEntity(item: CharacterItem): CharacterItemDto {
     const dto = new CharacterItemDto();
@@ -26,6 +29,9 @@ export class CharacterItemDto {
     dto.weapon = item.weapon ? CharacterItemWeaponDto.fromEntity(item.weapon) : undefined;
     dto.armor = item.armor ? CharacterItemArmorDto.fromEntity(item.armor) : undefined;
     dto.info = CharacterItemInfoDto.fromEntity(item.info);
+    dto.stackable = item.stackable;
+    dto.amount = item.amount;
+    dto.description = item.description;
     return dto;
   }
 }

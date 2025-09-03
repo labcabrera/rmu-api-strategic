@@ -4,6 +4,7 @@ export interface ItemResponse {
   weapon: ItemWeaponResponse | undefined;
   weaponRange: ItemWeaponRangeResponse[] | undefined;
   armor: ItemArmorResponse | undefined;
+  stackable: boolean | undefined;
   info: ItemInfoResponse;
 }
 

@@ -43,7 +43,7 @@ export class EquipmentProcessor {
   }
 
   private sortItems(character: Partial<Character>) {
-    const categoryOrder = ['weapon', 'shield', 'armor', 'clothes'];
+    const categoryOrder = ['weapon', 'shield', 'armor', 'clothes', 'coins'];
     character.items!.sort((a, b) => {
       const aCatIdx = categoryOrder.indexOf(a.category);
       const bCatIdx = categoryOrder.indexOf(b.category);

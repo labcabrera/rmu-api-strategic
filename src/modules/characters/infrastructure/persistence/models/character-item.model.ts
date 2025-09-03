@@ -122,6 +122,12 @@ export class CharacterItem {
   @Prop({ required: true })
   info: CharacterItemInfo;
 
+  @Prop({ type: Boolean, required: false })
+  stackable: boolean | undefined;
+
+  @Prop({ type: Number, required: false })
+  amount: number | undefined;
+
   @Prop({ type: String, required: false })
   description: string | undefined;
 }
