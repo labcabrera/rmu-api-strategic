@@ -37,10 +37,8 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
       if (factionAvailable < command.amount) {
         throw new ValidationError(`Insufficient faction gold: ${factionAvailable}`);
       }
-      faction.management.availableGold -= command.amount;
-    } else {
-      faction.management.availableGold += command.amount;
     }
+    faction.management.availableGold -= command.amount;
 
     const goldCoins = character.items.find((item) => item.itemTypeId === 'gold-coin');
     if (command.amount < 0) {
@@ -50,7 +48,6 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
       if (goldCoins.amount! < command.amount) {
         throw new ValidationError(`Insufficient gold coins: ${goldCoins.amount}`);
       }
-      goldCoins.amount! -= command.amount;
     }
 
     if (goldCoins) {
