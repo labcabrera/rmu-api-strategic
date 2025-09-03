@@ -12,6 +12,7 @@ import { CharacterDto } from './dto/character.dto';
 import { EquipItemDto } from './dto/equip-item.dto';
 import { EquipItemCommand } from '../../application/commands/equip-item-command';
 import * as ar from 'src/modules/shared/infrastructure/controller/auth-request';
+import { UnequipItemCommand } from '../../application/commands/unequip-item-command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -59,6 +60,19 @@ export class CharacterItemController {
     this.logger.debug(`Equipping character ${id} item ${dto.itemId} for user ${req.user.id}`);
     const command = EquipItemDto.toCommand(id, dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<EquipItemCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Delete(':id/equipment/:slot')
+  @ApiBody({ type: EquipItemDto })
+  @ApiOperation({ operationId: 'unequipItem', summary: 'Unequip an item from a character' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async unequipItem(@Param('id') id: string, @Param('slot') slot: string, @Request() req: ar.AuthRequest) {
+    this.logger.debug(`Unequipping character ${id} slot ${slot} for user ${req.user.id}`);
+    const command = new UnequipItemCommand(id, slot, req.user.id, req.user.roles);
+    const entity = await this.commandBus.execute<UnequipItemCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 }

@@ -5,6 +5,8 @@ export class CharacterEquipmentDto {
   offHand: string | undefined;
   body: string | undefined;
   head: string | undefined;
+  arms: string | undefined;
+  legs: string | undefined;
   weight: number | undefined;
 
   static fromEntity(entity: CharacterEquipment): CharacterEquipmentDto {
@@ -13,6 +15,8 @@ export class CharacterEquipmentDto {
     dto.offHand = entity.offHand;
     dto.body = entity.body;
     dto.head = entity.head;
+    dto.arms = entity.arms;
+    dto.legs = entity.legs;
     dto.weight = entity.weight;
     return dto;
   }

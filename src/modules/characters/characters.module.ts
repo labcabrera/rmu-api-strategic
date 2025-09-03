@@ -46,6 +46,7 @@ import { CharacterSkillController } from './infrastructure/controllers/character
 import { CharacterItemController } from './infrastructure/controllers/characters-item.controller';
 import { EquipItemCommandHandler } from './application/commands/handlers/equip-item.command.handler';
 import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
+import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { SetupProfessionSkillCommandHandler } from './application/commands/handl
     AddItemCommandHandler,
     DeleteItemCommandHandler,
     EquipItemCommandHandler,
+    UnequipItemCommandHandler,
     AddXPCommandHandler,
     LevelUpCommandHandler,
     LevelUpSkillCommandHandler,
