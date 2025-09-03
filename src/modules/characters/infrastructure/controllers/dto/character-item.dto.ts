@@ -10,6 +10,7 @@ export class CharacterItemDto {
   name: string;
   itemTypeId: string;
   category: string;
+  carried: boolean;
   weapon: CharacterItemWeaponDto | undefined;
   weaponRange: CharacterItemWeaponRangeDto[] | undefined;
   armor: CharacterItemArmorDto | undefined;
@@ -21,6 +22,7 @@ export class CharacterItemDto {
     dto.name = item.name;
     dto.itemTypeId = item.itemTypeId;
     dto.category = item.category;
+    dto.carried = item.carried;
     dto.weapon = item.weapon ? CharacterItemWeaponDto.fromEntity(item.weapon) : undefined;
     dto.armor = item.armor ? CharacterItemArmorDto.fromEntity(item.armor) : undefined;
     dto.info = CharacterItemInfoDto.fromEntity(item.info);

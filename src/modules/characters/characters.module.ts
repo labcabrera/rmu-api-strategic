@@ -47,6 +47,7 @@ import { CharacterItemController } from './infrastructure/controllers/characters
 import { EquipItemCommandHandler } from './application/commands/handlers/equip-item.command.handler';
 import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
 import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
+import { UpdateItemCarriedStatusCommandHandler } from './application/commands/handlers/update-item-carried-status.command.handler';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { UnequipItemCommandHandler } from './application/commands/handlers/unequ
     DeleteItemCommandHandler,
     EquipItemCommandHandler,
     UnequipItemCommandHandler,
+    UpdateItemCarriedStatusCommandHandler,
     AddXPCommandHandler,
     LevelUpCommandHandler,
     LevelUpSkillCommandHandler,
