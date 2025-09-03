@@ -5,7 +5,6 @@ import {
   CharacterAttack,
   CharacterDefense,
   CharacterEndurance,
-  CharacterEquipment,
   CharacterHP,
   CharacterInfo,
   CharacterInitiative,
@@ -16,6 +15,7 @@ import {
   CharacterXP,
 } from './character-childs.model';
 import { CharacterItem } from './character-item.model';
+import { CharacterEquipment } from './character-equipment.model';
 
 export type CharacterDocument = CharacterModel & Document;
 

@@ -197,30 +197,6 @@ export class CharacterSkill {
 }
 
 @Schema({ _id: false })
-export class CharacterEquipment {
-  @Prop({ type: String, required: false })
-  mainHand: string | undefined;
-
-  @Prop({ type: String, required: false })
-  offHand: string | undefined;
-
-  @Prop({ type: String, required: false })
-  body: string | undefined;
-
-  @Prop({ type: String, required: false })
-  head: string | undefined;
-
-  @Prop({ type: String, required: false })
-  arms: string | undefined;
-
-  @Prop({ type: String, required: false })
-  legs: string | undefined;
-
-  @Prop({ type: Number, required: false })
-  weight: number | undefined;
-}
-
-@Schema({ _id: false })
 export class CharacterXP {
   @Prop({ required: true })
   level: number;

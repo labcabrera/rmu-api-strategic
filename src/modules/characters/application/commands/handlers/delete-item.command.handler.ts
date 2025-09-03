@@ -2,11 +2,10 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import { DeleteItemCommand } from '../delete-item.command';
-import { CharacterEquipment } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemCommandHandler implements ICommandHandler<DeleteItemCommand, Character> {

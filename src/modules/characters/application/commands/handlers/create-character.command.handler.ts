@@ -128,6 +128,11 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       arms: undefined,
       legs: undefined,
       weight: 0,
+      encumbrance: 0,
+      maneuverPenalty: 0,
+      rangedPenalty: 0,
+      perceptionPenalty: 0,
+      movementBaseDifficulty: undefined,
     };
     const characterData: Partial<Character> = {
       gameId: command.gameId,

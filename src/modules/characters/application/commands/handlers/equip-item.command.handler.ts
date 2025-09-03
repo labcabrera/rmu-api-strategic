@@ -36,12 +36,10 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
     item.carried = true;
     const slot = command.slot;
     const equipment: CharacterEquipment = character.equipment;
-    const slots: (keyof CharacterEquipment)[] = ['mainHand', 'offHand', 'body', 'head', 'arms', 'legs'];
-    slots.forEach((s) => {
-      if (equipment[s] === command.itemId) {
-        equipment[s] = undefined;
-      }
-    });
+
+    equipment.mainHand = equipment.mainHand === command.itemId ? undefined : equipment.mainHand;
+    equipment.offHand = equipment.offHand === command.itemId ? undefined : equipment.offHand;
+
     if (command.slot === 'mainHand' && item.weapon && item.weapon.requiredHands > 1) {
       equipment.offHand = undefined;
     }
