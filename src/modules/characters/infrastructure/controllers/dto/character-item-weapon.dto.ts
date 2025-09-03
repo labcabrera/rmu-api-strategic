@@ -14,6 +14,7 @@ export class CharacterItemWeaponDto {
     if (!entity) return undefined;
     const dto = new CharacterItemWeaponDto();
     dto.attackTable = entity.attackTable;
+    dto.fumbleTable = entity.fumbleTable;
     dto.skillId = entity.skillId;
     dto.fumble = entity.fumble;
     dto.sizeAdjustment = entity.sizeAdjustment;

@@ -9,13 +9,13 @@ import {
   CharacterHP,
   CharacterInfo,
   CharacterInitiative,
-  CharacterItem,
   CharacterMovement,
   CharacterPower,
   CharacterSkill,
   CharacterStatistics,
   CharacterXP,
 } from './character-childs.model';
+import { CharacterItem } from './character-item.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
