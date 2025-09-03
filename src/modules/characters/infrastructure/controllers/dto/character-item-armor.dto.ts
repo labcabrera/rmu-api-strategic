@@ -2,7 +2,7 @@ import { CharacterItemArmor } from 'src/modules/characters/domain/entities/chara
 
 export class CharacterItemArmorDto {
   slot: string;
-  armorType: number;
+  at: number;
   enc: number;
   maneuver: number;
   rangedPenalty: number;
@@ -11,7 +11,7 @@ export class CharacterItemArmorDto {
   static fromEntity(entity: CharacterItemArmor): CharacterItemArmorDto {
     const dto = new CharacterItemArmorDto();
     dto.slot = entity.slot;
-    dto.armorType = entity.armorType;
+    dto.at = entity.at;
     dto.enc = entity.enc;
     dto.maneuver = entity.maneuver;
     dto.rangedPenalty = entity.rangedPenalty;

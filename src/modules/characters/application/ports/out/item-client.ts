@@ -32,7 +32,7 @@ export interface ItemInfoResponse {
 
 export interface ItemArmorResponse {
   slot: string;
-  armorType: number;
+  at: number;
   enc: number;
   maneuver: number;
   rangedPenalty: number;

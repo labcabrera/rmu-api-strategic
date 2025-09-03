@@ -39,10 +39,10 @@ export class DefenseProcessor {
       return defaultAt;
     }
     const item = items.find((e) => e.id == itemId);
-    if (!item || !item.armor || !item.armor.armorType) {
+    if (!item || !item.armor || !item.armor.at) {
       throw new ValidationError('Invalid armor item');
     }
-    return item.armor.armorType;
+    return item.armor.at;
   }
 
   private processDefensiveBonus(character: Partial<Character>): void {

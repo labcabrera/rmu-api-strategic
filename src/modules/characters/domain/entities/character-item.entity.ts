@@ -37,7 +37,7 @@ export interface CharacterItemWeaponRange {
 
 export interface CharacterItemArmor {
   slot: string;
-  armorType: number;
+  at: number;
   enc: number;
   maneuver: number;
   rangedPenalty: number;

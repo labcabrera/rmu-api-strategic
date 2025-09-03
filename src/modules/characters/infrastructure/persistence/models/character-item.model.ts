@@ -57,7 +57,7 @@ export class CharacterItemArmor {
   slot: string;
 
   @Prop({ required: true })
-  armorType: number;
+  at: number;
 
   @Prop({ required: true })
   enc: number;

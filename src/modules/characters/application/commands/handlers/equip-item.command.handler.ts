@@ -61,24 +61,24 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
   private applyEquipmentLogic(character: Character, item: CharacterItem, command: EquipItemCommand): void {
     const slot = command.slot;
     const equipment: CharacterEquipment = character.equipment;
-    const slots: (keyof CharacterEquipment)[] = ['mainHand', 'offHand', 'body', 'head'];
+    const slots: (keyof CharacterEquipment)[] = ['mainHand', 'offHand', 'body', 'head', 'arms', 'legs'];
     slots.forEach((s) => {
       if (equipment[s] === command.itemId) {
         equipment[s] = undefined;
       }
     });
-    if (command.slot === 'offHand' && item.weapon && item.weapon.requiredHands > 1) {
+    if (command.slot === 'mainHand' && item.weapon && item.weapon.requiredHands > 1) {
       equipment.offHand = undefined;
     }
     // Set armor type if equipping body armor
-    if (slot === 'body' && item.armor && item.armor.armorType) {
-      character.defense.armor.bodyAt = item.armor.armorType;
-    } else if (slot === 'head' && item.armor && item.armor.armorType) {
-      character.defense.armor.headAt = item.armor.armorType;
-    } else if (slot === 'arms' && item.armor && item.armor.armorType) {
-      character.defense.armor.armsAt = item.armor.armorType;
-    } else if (slot === 'legs' && item.armor && item.armor.armorType) {
-      character.defense.armor.legsAt = item.armor.armorType;
+    if (slot === 'body' && item.armor && item.armor.at) {
+      character.defense.armor.bodyAt = item.armor.at;
+    } else if (slot === 'head' && item.armor && item.armor.at) {
+      character.defense.armor.headAt = item.armor.at;
+    } else if (slot === 'arms' && item.armor && item.armor.at) {
+      character.defense.armor.armsAt = item.armor.at;
+    } else if (slot === 'legs' && item.armor && item.armor.at) {
+      character.defense.armor.legsAt = item.armor.at;
     }
 
     // Equip item to specified slot
