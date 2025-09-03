@@ -26,41 +26,14 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
     if (!item) {
       throw new ValidationError(`Item not found: ${command.itemId}`);
     }
-
     this.validateEquipmentData(character, item, command);
-    this.applyEquipmentLogic(character, item, command);
-
+    this.equip(character, item, command);
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(command.characterId, character);
   }
 
-  private validateEquipmentData(character: Character, item: CharacterItem, command: EquipItemCommand): void {
-    if (command.slot) {
-      switch (command.slot) {
-        case 'mainHand':
-        case 'offHand':
-          if (item.category === 'armor') {
-            throw new ValidationError('Can not equip armor types in main hand or off-hand');
-          }
-          break;
-        case 'body':
-        case 'head':
-        case 'arms':
-        case 'legs':
-          if (item.category !== 'armor') {
-            throw new ValidationError('Required armor type for the requested slot');
-          }
-          break;
-        default:
-          throw new ValidationError('Invalid item slot');
-      }
-      if (command.slot === 'offHand' && item.weapon && item.weapon.requiredHands > 1) {
-        throw new ValidationError('Two handed weapons cant be equiped in offHand slot');
-      }
-    }
-  }
-
-  private applyEquipmentLogic(character: Character, item: CharacterItem, command: EquipItemCommand): void {
+  private equip(character: Character, item: CharacterItem, command: EquipItemCommand): void {
+    item.carried = true;
     const slot = command.slot;
     const equipment: CharacterEquipment = character.equipment;
     const slots: (keyof CharacterEquipment)[] = ['mainHand', 'offHand', 'body', 'head', 'arms', 'legs'];
@@ -107,5 +80,31 @@ export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand
     //   //TODO check racial armor type
     //   character.defense.armorType = 1;
     // }
+  }
+
+  private validateEquipmentData(character: Character, item: CharacterItem, command: EquipItemCommand): void {
+    if (command.slot) {
+      switch (command.slot) {
+        case 'mainHand':
+        case 'offHand':
+          if (item.category === 'armor') {
+            throw new ValidationError('Can not equip armor types in main hand or off-hand');
+          }
+          break;
+        case 'body':
+        case 'head':
+        case 'arms':
+        case 'legs':
+          if (item.category !== 'armor') {
+            throw new ValidationError('Required armor type for the requested slot');
+          }
+          break;
+        default:
+          throw new ValidationError('Invalid item slot');
+      }
+      if (command.slot === 'offHand' && item.weapon && item.weapon.requiredHands > 1) {
+        throw new ValidationError('Two handed weapons cant be equiped in offHand slot');
+      }
+    }
   }
 }

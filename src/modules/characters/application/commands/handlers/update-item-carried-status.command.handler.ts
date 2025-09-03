@@ -28,6 +28,13 @@ export class UpdateItemCarriedStatusCommandHandler implements ICommandHandler<Up
     if (item.carried === command.carried) {
       throw new NotModifiedError(`Item carried status is already set to: ${command.carried}`);
     }
+    if (command.carried === false) {
+      for (const slot of ['mainHand', 'offHand', 'body', 'head', 'legs', 'arms']) {
+        if (character.equipment[slot] == item.id) {
+          character.equipment[slot] = undefined;
+        }
+      }
+    }
     item.carried = command.carried;
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(command.characterId, character);
