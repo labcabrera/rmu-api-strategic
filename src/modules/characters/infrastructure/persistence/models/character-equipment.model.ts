@@ -27,6 +27,9 @@ export class CharacterEquipment {
   enc: number;
 
   @Prop({ type: Number, required: true })
+  baseManeuverPenalty: number;
+
+  @Prop({ type: Number, required: true })
   maneuverPenalty: number;
 
   @Prop({ type: Number, required: true })

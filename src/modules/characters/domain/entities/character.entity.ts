@@ -141,6 +141,7 @@ export interface CharacterEquipment {
   legs: string | undefined;
   weight: number;
   enc: number;
+  baseManeuverPenalty: number;
   maneuverPenalty: number;
   rangedPenalty: number;
   perceptionPenalty: number;

@@ -129,6 +129,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       legs: undefined,
       weight: 0,
       enc: 0,
+      baseManeuverPenalty: 0,
       maneuverPenalty: 0,
       rangedPenalty: 0,
       perceptionPenalty: 0,
