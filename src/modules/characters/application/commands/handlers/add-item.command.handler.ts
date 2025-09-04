@@ -30,7 +30,9 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
     if (cost) {
       const goldItem = character.items.find((i) => i.itemTypeId === 'gold-coin');
       if (goldItem!.amount! < cost) {
-        throw new ValidationError('The character does not have enough gold to purchase the item');
+        throw new ValidationError(
+          `Character does not have enough gold to purchase the item. Cost: ${cost}, Available: ${goldItem!.amount}`,
+        );
       }
       goldItem!.amount! -= cost;
     }

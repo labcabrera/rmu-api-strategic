@@ -20,7 +20,7 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
 
   async execute(command: TransferGoldCommand): Promise<Character> {
     if (command.amount === 0) {
-      throw new ValidationError(`Invalid gold transfer amount: ${command.amount}`);
+      throw new ValidationError(`Gold amount cannot be zero`);
     }
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
@@ -31,15 +31,7 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
     if (!faction) {
       throw new NotFoundError('Faction', character.factionId);
     }
-    const factionAvailable = faction.management.availableGold;
-
-    if (command.amount > 0) {
-      if (factionAvailable < command.amount) {
-        throw new ValidationError(`Insufficient faction gold: ${factionAvailable}`);
-      }
-    }
     faction.management.availableGold -= command.amount;
-
     const goldCoins = character.items.find((item) => item.itemTypeId === 'gold-coin');
     if (command.amount < 0) {
       if (!goldCoins) {
@@ -49,7 +41,6 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
         throw new ValidationError(`Insufficient gold coins: ${goldCoins.amount}`);
       }
     }
-
     if (goldCoins) {
       if (!goldCoins.amount) {
         goldCoins.amount = 0;
@@ -69,6 +60,13 @@ export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldC
         amount: command.amount,
       } as CharacterItem;
       character.items.push(goldCoins);
+    }
+
+    if (faction.management.availableGold < 0) {
+      throw new ValidationError(`Insuficient faction gold`);
+    }
+    if (goldCoins!.amount! < 0) {
+      throw new ValidationError(`Insuficient character gold amount`);
     }
 
     this.characterProcessorService.process(character);
