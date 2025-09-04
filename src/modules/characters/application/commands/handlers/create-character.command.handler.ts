@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -34,6 +35,7 @@ import * as fr from 'src/modules/factions/application/ports/out/faction-reposito
 import * as pc from '../../ports/out/profession-client';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 import { CharacterXP } from 'src/modules/characters/domain/entities/character-xp.entity';
+import { CharacterResistance } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -70,6 +72,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
 
     const raceInfo = await this.fetchRace(command.info.raceId);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
+    const resistances = this.processResistances(raceInfo);
     const skills = await this.processSkills(command, raceInfo);
     const items = await this.processItems(command.info, command);
 
@@ -145,6 +148,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       statistics: processedStatistics,
       movement: movement,
       defense: defense,
+      resistances: resistances,
       hp: hp,
       endurance: endurance,
       power: power,
@@ -200,6 +204,21 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       };
     });
     return result;
+  }
+
+  private processResistances(raceInfo: RaceResponse): CharacterResistance[] {
+    const resistances: CharacterResistance[] = [];
+    Object.keys(raceInfo.resistances).forEach((key) => {
+      resistances.push({
+        resistance: key,
+        statBonus: 0,
+        racialBonus: raceInfo.resistances[key] || 0,
+        realmBonus: 0,
+        customBonus: 0,
+        totalBonus: 0,
+      });
+    });
+    return resistances;
   }
 
   async processSkills(command: CreateCharacterCommand, raceInfo: RaceResponse): Promise<CharacterSkill[]> {

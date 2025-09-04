@@ -262,6 +262,9 @@ export class CharacterResistance {
   racialBonus: number;
 
   @Prop({ required: true })
+  realmBonus: number;
+
+  @Prop({ required: true })
   customBonus: number;
 
   @Prop({ required: true })

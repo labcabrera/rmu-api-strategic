@@ -31,18 +31,21 @@ export class ResistancesProcessor {
   }
 
   private calculateResistances(character: Partial<Character>, resistance: string): void {
-    let resistanceEntry = character.resistances?.find((r) => r.resistance === resistance);
-    if (!resistanceEntry) {
-      resistanceEntry = {
+    let re = character.resistances?.find((r) => r.resistance === resistance);
+    if (!re) {
+      re = {
         resistance: resistance,
         statBonus: 0,
         racialBonus: 0,
+        realmBonus: 0,
         customBonus: 0,
         totalBonus: 0,
       } as CharacterResistance;
-      character.resistances?.push(resistanceEntry);
+      character.resistances?.push(re);
     }
-    resistanceEntry.statBonus = this.getStatusBonus(character, resistance);
+    re.realmBonus = this.getRealmBonus(character, resistance);
+    re.statBonus = this.getStatusBonus(character, resistance);
+    re.totalBonus = re.statBonus + re.racialBonus + re.realmBonus + re.customBonus;
   }
 
   private getStatusBonus(character: Partial<Character>, resistance: string): number {
@@ -57,6 +60,17 @@ export class ResistancesProcessor {
         return character.statistics?.em.totalBonus || 0;
       case 'mentalism':
         return character.statistics?.pr.totalBonus || 0;
+      default:
+        return 0;
+    }
+  }
+
+  private getRealmBonus(character: Partial<Character>, resistance: string): number {
+    switch (resistance) {
+      case 'channeling':
+      case 'essence':
+      case 'mentalism':
+        return character.info?.realmType === resistance ? 10 : 0;
       default:
         return 0;
     }

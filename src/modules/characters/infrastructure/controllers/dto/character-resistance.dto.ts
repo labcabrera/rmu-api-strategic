@@ -4,6 +4,7 @@ export class CharacterResistanceDto {
   resistance: string;
   statBonus: number;
   racialBonus: number;
+  realmBonus: number;
   customBonus: number;
   totalBonus: number;
 
@@ -12,6 +13,7 @@ export class CharacterResistanceDto {
     dto.resistance = entity.resistance;
     dto.statBonus = entity.statBonus;
     dto.racialBonus = entity.racialBonus;
+    dto.realmBonus = entity.realmBonus;
     dto.customBonus = entity.customBonus;
     dto.totalBonus = entity.totalBonus;
     return dto;
