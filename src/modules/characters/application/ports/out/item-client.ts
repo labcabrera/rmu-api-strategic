@@ -21,8 +21,9 @@ export interface ItemWeaponResponse {
 
 export interface ItemInfoResponse {
   cost: {
-    value: number;
-    type: string;
+    min: number | undefined;
+    average: number | undefined;
+    max: number | undefined;
   };
   length: number | undefined;
   strength: number | undefined;

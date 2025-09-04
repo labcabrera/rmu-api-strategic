@@ -2,13 +2,14 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 
-import { NotFoundError } from '../../../../shared/domain/errors';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import * as itemClient from '../../ports/out/item-client';
 import { AddItemCommand } from '../add-item.comand';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import { ItemResponse } from '../../ports/out/item-client';
 
 @CommandHandler(AddItemCommand)
 export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {
@@ -25,6 +26,15 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
       throw new NotFoundError('Character', characterId);
     }
     const readedItem = await this.itemClient.getItemById(command.itemTypeId);
+    const cost = this.getCost(readedItem, command);
+    if (cost) {
+      const goldItem = character.items.find((i) => i.itemTypeId === 'gold-coin');
+      if (goldItem!.amount! < cost) {
+        throw new ValidationError('The character does not have enough gold to purchase the item');
+      }
+      goldItem!.amount! -= cost;
+    }
+
     let weight = readedItem.info.weight ? readedItem.info.weight : 0;
     if (readedItem.info.weightPercent) {
       weight = (character.info.weight * readedItem.info.weightPercent) / 100;
@@ -57,5 +67,12 @@ export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Ch
 
   getWeight(item: CharacterItem): number {
     return item.info.weight;
+  }
+
+  getCost(readedItem: ItemResponse, command: AddItemCommand): number | undefined {
+    if (command.cost) {
+      return command.cost;
+    }
+    return readedItem.info.cost?.average || undefined;
   }
 }
