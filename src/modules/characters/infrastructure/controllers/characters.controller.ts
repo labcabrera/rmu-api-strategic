@@ -11,12 +11,13 @@ import { UpdateCharacterCommand } from '../../application/commands/update-charac
 import { GetCharacterQuery } from '../../application/queries/get-character.query';
 import { GetCharactersQuery } from '../../application/queries/get-characters.query';
 import { Character } from '../../domain/entities/character.entity';
-import { CharacterDto, CharacterPageDto, UpdateCharacterDto } from './dto/character.dto';
+import { CharacterDto, CharacterPageDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AddXPDto } from './dto/add-xp.dto';
 import { AddXPCommand } from '../../application/commands/add-xp.command';
 import { LevelUpCommand } from '../../application/commands/level-up.command';
 import * as ar from 'src/modules/shared/infrastructure/controller/auth-request';
+import { UpdateCharacterDto } from './dto/update-character-dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { PaginationDto } from '../../../../shared/infrastructure/controller/dto';
-import { UpdateCharacterCommand } from '../../../application/commands/update-character.command';
-import { CharacterHP } from '../../persistence/models/character.model-childs';
 import { CharacterDefenseDto } from './character-defense.dto';
 import { CharacterEnduranceDto } from './character-endurance.dto';
 import { CharacterEquipmentDto } from './character-equipment.dto';
@@ -66,6 +64,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character attacks', type: [CharacterAttackDto] })
   attacks: CharacterAttackDto[];
 
+  @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
+  description: string | undefined;
+
   @ApiProperty({ description: 'Character owner', example: 'user-001' })
   owner: string;
 
@@ -87,19 +88,9 @@ export class CharacterDto {
     dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
+    dto.description = entity.description;
     dto.owner = entity.owner;
     return dto;
-  }
-}
-
-export class UpdateCharacterDto {
-  characterId: string;
-  name: string | undefined;
-  faction: string | undefined;
-  info: Partial<characterEntity.CharacterInfo> | undefined;
-  hp: Partial<CharacterHP> | undefined;
-  static toCommand(id: string, dto: UpdateCharacterDto, userId: string, roles: string[]): UpdateCharacterCommand {
-    return new UpdateCharacterCommand(dto.characterId, dto.name, dto.faction, dto.info, dto.hp, userId, roles);
   }
 }
 

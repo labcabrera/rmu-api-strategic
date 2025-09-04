@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { GameOptions, GamePowerLevel } from './game.model-childs';
 import * as game from 'src/modules/games/domain/entities/game';
 
 export type GameDocument = GameModel & Document;
@@ -14,6 +15,12 @@ export class GameModel {
 
   @Prop({ required: true })
   status: game.GameStatus;
+
+  @Prop({ required: true })
+  options: GameOptions;
+
+  @Prop({ required: true })
+  powerLevel: GamePowerLevel;
 
   @Prop({ required: false })
   description?: string;

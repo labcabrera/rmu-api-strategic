@@ -45,6 +45,10 @@ import { LevelDownSkillCommandHandler } from './application/commands/handlers/le
 import { CharacterSkillController } from './infrastructure/controllers/characters-skill.controller';
 import { CharacterItemController } from './infrastructure/controllers/characters-item.controller';
 import { EquipItemCommandHandler } from './application/commands/handlers/equip-item.command.handler';
+import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
+import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
+import { UpdateItemCarriedStatusCommandHandler } from './application/commands/handlers/update-item-carried-status.command.handler';
+import { TransferGoldCommandHandler } from './application/commands/handlers/transfer-gold.command.handler';
 
 @Module({
   imports: [
@@ -83,10 +87,14 @@ import { EquipItemCommandHandler } from './application/commands/handlers/equip-i
     AddItemCommandHandler,
     DeleteItemCommandHandler,
     EquipItemCommandHandler,
+    UnequipItemCommandHandler,
+    UpdateItemCarriedStatusCommandHandler,
     AddXPCommandHandler,
     LevelUpCommandHandler,
     LevelUpSkillCommandHandler,
     LevelDownSkillCommandHandler,
+    SetupProfessionSkillCommandHandler,
+    TransferGoldCommandHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,

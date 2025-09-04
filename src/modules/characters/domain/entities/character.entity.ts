@@ -24,6 +24,7 @@ export interface Character {
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
   status?: string;
+  description: string | undefined;
   owner: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -67,8 +68,17 @@ export interface CharacterMovement {
 }
 
 export interface CharacterDefense {
-  armorType: number;
   defensiveBonus: number;
+  armor: CharacterArmor;
+}
+
+export interface CharacterArmor {
+  at: number | undefined;
+  racialAt: number;
+  bodyAt: number | undefined;
+  headAt: number | undefined;
+  armsAt: number | undefined;
+  legsAt: number | undefined;
 }
 
 export interface CharacterHP {
@@ -115,5 +125,12 @@ export interface CharacterEquipment {
   offHand: string | undefined;
   body: string | undefined;
   head: string | undefined;
-  weight: number | undefined;
+  arms: string | undefined;
+  legs: string | undefined;
+  weight: number;
+  enc: number;
+  maneuverPenalty: number;
+  rangedPenalty: number;
+  perceptionPenalty: number;
+  movementBaseDifficulty: string | undefined;
 }

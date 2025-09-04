@@ -5,17 +5,17 @@ import {
   CharacterAttack,
   CharacterDefense,
   CharacterEndurance,
-  CharacterEquipment,
   CharacterHP,
   CharacterInfo,
   CharacterInitiative,
-  CharacterItem,
   CharacterMovement,
   CharacterPower,
   CharacterSkill,
   CharacterStatistics,
   CharacterXP,
-} from './character.model-childs';
+} from './character-childs.model';
+import { CharacterItem } from './character-item.model';
+import { CharacterEquipment } from './character-equipment.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -70,13 +70,16 @@ export class CharacterModel {
 
   status: string | undefined;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: false })
+  description: string | undefined;
+
+  @Prop({ type: String, required: true })
   owner: string;
 
-  @Prop({ required: true })
+  @Prop({ type: Date, required: true })
   createdAt: Date;
 
-  @Prop({ required: false })
+  @Prop({ type: Date, required: false })
   updatedAt?: Date;
 }
 

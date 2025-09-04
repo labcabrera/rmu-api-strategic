@@ -13,6 +13,7 @@ import {
   CharacterEndurance,
   CharacterEquipment,
   CharacterHP,
+  CharacterInfo,
   CharacterInitiative,
   CharacterMovement,
   CharacterPower,
@@ -70,7 +71,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     const raceInfo = await this.fetchRace(command.info.race);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
     const skills = await this.processSkills(command, raceInfo);
-    const items = await this.processItems(command);
+    const items = await this.processItems(command.info, command);
 
     //TODO adjust with race for level 0
     const experience: CharacterXP = {
@@ -88,8 +89,15 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       strideRacialBonus: raceInfo.strideBonus || 0,
     };
     const defense: CharacterDefense = {
-      armorType: 1,
       defensiveBonus: 0,
+      armor: {
+        at: 1,
+        racialAt: 1,
+        bodyAt: undefined,
+        headAt: undefined,
+        armsAt: undefined,
+        legsAt: undefined,
+      },
     };
     const hp: CharacterHP = {
       max: 0,
@@ -113,11 +121,18 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       totalBonus: 0,
     };
     const equipment: CharacterEquipment = {
-      mainHand: '',
-      offHand: '',
-      body: '',
-      head: '',
+      mainHand: undefined,
+      offHand: undefined,
+      body: undefined,
+      head: undefined,
+      arms: undefined,
+      legs: undefined,
       weight: 0,
+      enc: 0,
+      maneuverPenalty: 0,
+      rangedPenalty: 0,
+      perceptionPenalty: 0,
+      movementBaseDifficulty: undefined,
     };
     const characterData: Partial<Character> = {
       gameId: command.gameId,
@@ -231,7 +246,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     });
   }
 
-  async processItems(command: CreateCharacterCommand): Promise<CharacterItem[]> {
+  async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
     if (!command.items || command.items.length == 0) {
       return [];
     }
@@ -242,16 +257,29 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
         const readedArmor = readedItem.armor ? readedItem.armor : undefined;
         const readedWeaponRange = readedItem.weaponRange ? readedItem.weaponRange : undefined;
         const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
+        const itemInfo = {
+          length: readedItem.info.length,
+          strength: readedItem.info.strength,
+          weight: readedItem.info.weight,
+        };
+        if (!itemInfo.weight && readedItem.info.weightPercent) {
+          itemInfo.weight = readedItem.info.weightPercent * characterInfo.weight;
+        }
         return {
           id: randomUUID(),
           name: name,
           itemTypeId: e.itemTypeId,
           category: readedItem.category,
+          carried: true,
           weapon: readedWeapon,
           weaponRange: readedWeaponRange,
           armor: readedArmor,
-          info: readedItem.info,
-        };
+          affixes: [],
+          info: itemInfo,
+          stackable: readedItem.stackable,
+          amount: undefined,
+          description: undefined,
+        } as CharacterItem;
       }),
     );
   }

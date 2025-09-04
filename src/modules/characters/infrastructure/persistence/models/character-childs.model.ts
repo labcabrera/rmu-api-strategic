@@ -80,12 +80,33 @@ export class CharacterMovement {
 }
 
 @Schema({ _id: false })
+export class CharacterArmor {
+  @Prop({ type: Number, required: false })
+  at: number | undefined;
+
+  @Prop({ type: Number, required: true })
+  racialAt: number;
+
+  @Prop({ type: Number, required: false })
+  bodyAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  headAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  armsAt: number | undefined;
+
+  @Prop({ type: Number, required: false })
+  legsAt: number | undefined;
+}
+
+@Schema({ _id: false })
 export class CharacterDefense {
   @Prop({ required: true })
-  armorType: number;
-
-  @Prop({ required: true })
   defensiveBonus: number;
+
+  @Prop({ type: CharacterArmor, required: true })
+  armor: CharacterArmor;
 }
 
 @Schema({ _id: false })
@@ -173,120 +194,6 @@ export class CharacterSkill {
 
   @Prop({ required: true })
   totalBonus: number;
-}
-
-@Schema({ _id: false })
-export class CharacterItemInfo {
-  @Prop({ required: false })
-  length: number;
-
-  @Prop({ required: false })
-  strength: number;
-
-  @Prop({ required: false })
-  weight: number;
-
-  @Prop({ required: false })
-  productionTime: number;
-}
-
-@Schema({ _id: false })
-export class CharacterItemWeapon {
-  @Prop({ required: true })
-  attackTable: string;
-
-  @Prop({ required: true })
-  skillId: string;
-
-  @Prop({ required: true })
-  fumble: number;
-
-  @Prop({ required: true })
-  sizeAdjustment: number;
-
-  @Prop({ required: true })
-  requiredHands: number;
-
-  @Prop({ required: true })
-  throwable: boolean;
-}
-
-@Schema({ _id: false })
-export class CharacterItemWeaponRange {
-  @Prop({ required: true })
-  from: number;
-
-  @Prop({ required: true })
-  to: number;
-
-  @Prop({ required: true })
-  bonus: number;
-}
-
-@Schema({ _id: false })
-export class CharacterItemArmor {
-  @Prop({ required: true })
-  slot: string;
-
-  @Prop({ required: true })
-  armorType: number;
-
-  @Prop({ required: true })
-  enc: number;
-
-  @Prop({ required: true })
-  maneuver: number;
-
-  @Prop({ required: true })
-  rangedPenalty: number;
-
-  @Prop({ required: true })
-  perception: number;
-}
-
-@Schema({ _id: false })
-export class CharacterItem {
-  @Prop({ required: true })
-  id: string;
-
-  @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true })
-  itemTypeId: string;
-
-  @Prop({ required: true })
-  category: string;
-
-  @Prop({ type: CharacterItemWeapon, required: false })
-  weapon: CharacterItemWeapon | undefined;
-
-  @Prop({ type: [CharacterItemWeaponRange], required: false })
-  weaponRange: CharacterItemWeaponRange[] | undefined;
-
-  @Prop({ type: CharacterItemArmor, required: false })
-  armor: CharacterItemArmor | undefined;
-
-  @Prop({ required: true })
-  info: CharacterItemInfo;
-}
-
-@Schema({ _id: false })
-export class CharacterEquipment {
-  @Prop({ type: String, required: false })
-  mainHand: string | undefined;
-
-  @Prop({ type: String, required: false })
-  offHand: string | undefined;
-
-  @Prop({ type: String, required: false })
-  body: string | undefined;
-
-  @Prop({ type: String, required: false })
-  head: string | undefined;
-
-  @Prop({ type: Number, required: false })
-  weight: number | undefined;
 }
 
 @Schema({ _id: false })
