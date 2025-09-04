@@ -68,7 +68,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       throw new ValidationError(`Profession with id ${command.info.professionId} not found`);
     }
 
-    const raceInfo = await this.fetchRace(command.info.race);
+    const raceInfo = await this.fetchRace(command.info.raceId);
     const processedStatistics = this.processStatistics(raceInfo, command.statistics);
     const skills = await this.processSkills(command, raceInfo);
     const items = await this.processItems(command.info, command);
@@ -139,6 +139,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
       factionId: command.factionId,
       name: command.name,
       info: command.info,
+      roleplay: command.roleplay,
       experience: experience,
       statistics: processedStatistics,
       movement: movement,

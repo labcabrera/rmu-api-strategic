@@ -49,6 +49,7 @@ import { SetupProfessionSkillCommandHandler } from './application/commands/handl
 import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
 import { UpdateItemCarriedStatusCommandHandler } from './application/commands/handlers/update-item-carried-status.command.handler';
 import { TransferGoldCommandHandler } from './application/commands/handlers/transfer-gold.command.handler';
+import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { TransferGoldCommandHandler } from './application/commands/handlers/tran
     HPProcessor,
     EquipmentProcessor,
     DefenseProcessor,
+    ResistancesProcessor,
     XPProcessor,
     CharacterProcessorService,
     GetCharacterQueryHandler,

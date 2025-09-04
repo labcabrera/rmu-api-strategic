@@ -55,12 +55,12 @@ export class StatCreationDto {
   @ApiProperty({ description: 'Potential stat value', example: 90 })
   @IsNumber()
   @IsOptional()
-  potential: number | undefined;
+  potential: number;
 
   @ApiProperty({ description: 'Temporary stat value', example: 90 })
   @IsNumber()
   @IsOptional()
-  temporary: number | undefined;
+  temporary: number;
 
   @ApiProperty({ description: 'Custom stat bonus', example: 90 })
   @IsNumber()
@@ -151,7 +151,7 @@ export class CharacterStatisticsCreationDto {
   st: StatCreationDto;
 
   toEntity(): CharacterStatistics {
-    const defaultStat = { potential: undefined, temporary: undefined, bonus: 0, racial: 0, custom: 0, totalBonus: 0 };
+    const defaultStat = { potential: 50, temporary: 50, bonus: 0, racial: 0, custom: 0, totalBonus: 0 };
     return {
       ag: this.ag ? this.ag.toEntity() : defaultStat,
       co: this.co ? this.co.toEntity() : defaultStat,

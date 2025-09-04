@@ -1,16 +1,19 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { ProfessionalBonusType, WeaponDevelopmentType } from 'src/modules/characters/domain/entities/character.entity';
+import * as ce from 'src/modules/characters/domain/entities/character.entity';
 
 @Schema({ _id: false })
 export class CharacterInfo {
   @Prop({ required: true })
-  race: string;
+  raceId: string;
 
   @Prop({ required: true })
   professionId: string;
 
   @Prop({ required: true })
   sizeId: string;
+
+  @Prop({ required: true })
+  realmType: ce.CharacterRealm;
 
   @Prop({ required: true })
   height: number;
@@ -172,7 +175,7 @@ export class CharacterSkill {
   statistics: string[];
 
   @Prop({ type: [String], required: false })
-  professional: ProfessionalBonusType[] | undefined;
+  professional: ce.ProfessionalBonusType[] | undefined;
 
   @Prop({ required: true })
   ranks: number;
@@ -214,7 +217,7 @@ export class CharacterXP {
   availableDevelopmentPoints: number;
 
   @Prop({ required: true })
-  weaponDevelopment: WeaponDevelopmentType[];
+  weaponDevelopment: ce.WeaponDevelopmentType[];
 }
 
 @Schema({ _id: false })
@@ -236,4 +239,31 @@ export class CharacterAttack {
 
   @Prop({ required: true })
   bo: number;
+}
+
+@Schema({ _id: false })
+export class CharacterRoleplayInfo {
+  @Prop({ type: String, required: false })
+  gender: ce.CharacterGender | undefined;
+
+  @Prop({ type: Number, required: false })
+  age: number | undefined;
+}
+
+@Schema({ _id: false })
+export class CharacterResistance {
+  @Prop({ required: true })
+  resistance: string;
+
+  @Prop({ required: true })
+  statBonus: number;
+
+  @Prop({ required: true })
+  racialBonus: number;
+
+  @Prop({ required: true })
+  customBonus: number;
+
+  @Prop({ required: true })
+  totalBonus: number;
 }

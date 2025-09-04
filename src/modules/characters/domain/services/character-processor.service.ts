@@ -10,6 +10,7 @@ import { MovementProcessor } from './character/processors/movement-processor';
 import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
 import { XPProcessor } from './character/processors/xp-processor';
+import { ResistancesProcessor } from './character/processors/resistances-processor';
 
 @Injectable()
 export class CharacterProcessorService {
@@ -23,6 +24,7 @@ export class CharacterProcessorService {
     private readonly defenseProcessor: DefenseProcessor,
     private readonly xpProcessor: XPProcessor,
     private readonly attackProcessor: AttackProcessor,
+    private readonly resistancesProcessor: ResistancesProcessor,
   ) {}
 
   process(character: Partial<Character>): void {
@@ -34,6 +36,7 @@ export class CharacterProcessorService {
     this.equipmentProcessor.process(character);
     this.hpProcessor.process(character);
     this.defenseProcessor.process(character);
+    this.resistancesProcessor.process(character);
     this.xpProcessor.process(character);
   }
 }

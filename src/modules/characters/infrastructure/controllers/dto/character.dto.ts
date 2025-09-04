@@ -14,6 +14,8 @@ import { CharacterXPDto } from './character-xp.dto';
 import * as characterEntity from 'src/modules/characters/domain/entities/character.entity';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
+import { CharacterResistanceDto } from './character-resistance.dto';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -31,6 +33,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'General information about the character', type: CharacterInfoDto })
   info: CharacterInfoDto;
 
+  @ApiProperty({ description: 'Roleplay information of the character', type: CharacterRoleplayInfoDto })
+  roleplay: CharacterRoleplayInfoDto;
+
   @ApiProperty({ description: 'Level and experience points of the character', type: CharacterXPDto })
   experience: CharacterXPDto;
 
@@ -42,6 +47,9 @@ export class CharacterDto {
 
   @ApiProperty({ description: 'Character defense', type: CharacterDefenseDto })
   defense: CharacterDefenseDto;
+
+  @ApiProperty({ description: 'Character resistances', type: [CharacterResistanceDto] })
+  resistances: CharacterResistanceDto[];
 
   @ApiProperty({ description: 'Character endurance', type: CharacterEnduranceDto })
   endurance: CharacterEnduranceDto;
@@ -77,10 +85,12 @@ export class CharacterDto {
     dto.factionId = entity.factionId;
     dto.name = entity.name;
     dto.info = entity.info;
+    dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
     dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);
     dto.movement = CharacterMovementDto.fromEntity(entity.movement);
     dto.defense = CharacterDefenseDto.fromEntity(entity.defense);
+    dto.resistances = entity.resistances.map((resistance) => CharacterResistanceDto.fromEntity(resistance));
     dto.endurance = CharacterEnduranceDto.fromEntity(entity.endurance);
     dto.hp = CharacterHPDto.fromEntity(entity.hp);
     dto.initiative = CharacterInitiativeDto.fromEntity(entity.initiative);

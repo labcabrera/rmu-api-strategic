@@ -1,20 +1,26 @@
 import { CharacterAttack } from './character-attack.entity';
 import { CharacterItem } from './character-item.entity';
+import { CharacterResistance } from './character-resistances.entity';
 import { CharacterXP } from './character-xp.entity';
 
 export type ProfessionalBonusType = 'professional' | 'knack';
 export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
+export type CharacterRealm = 'channeling' | 'essence' | 'mentalism';
+export type CharacterGender = 'male' | 'female' | 'other';
 
 export interface Character {
   id: string;
   gameId: string;
   factionId: string;
+
   name: string;
   info: CharacterInfo;
+  roleplay: CharacterRoleplayInfo;
   experience: CharacterXP;
   statistics: CharacterStatistics;
   movement: CharacterMovement;
   defense: CharacterDefense;
+  resistances: CharacterResistance[];
   hp: CharacterHP;
   endurance: CharacterEndurance;
   power?: CharacterPower;
@@ -30,17 +36,23 @@ export interface Character {
   updatedAt?: Date;
 }
 
+export interface CharacterRoleplayInfo {
+  gender: CharacterGender | undefined;
+  age: number | undefined;
+}
+
 export interface CharacterInfo {
-  race: string;
+  raceId: string;
   professionId: string;
   sizeId: string;
+  realmType: CharacterRealm;
   height: number;
   weight: number;
 }
 
 export interface Stat {
-  potential: number | undefined;
-  temporary: number | undefined;
+  potential: number;
+  temporary: number;
   bonus: number;
   racial: number;
   custom: number;
