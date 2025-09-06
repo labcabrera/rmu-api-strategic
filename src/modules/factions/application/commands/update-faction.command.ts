@@ -1,9 +1,9 @@
 export class UpdateFactionCommand {
-  constructor(
-    public readonly factionId: string,
-    public readonly name: string,
-    public readonly description: string | undefined,
-    public readonly userId: string,
-    public readonly roles: string[],
-  ) {}
+  factionId: string;
+  name: string;
+  availableGold: number | undefined;
+  availableXP: number | undefined;
+  description: string | undefined;
+  userId: string;
+  roles: string[];
 }

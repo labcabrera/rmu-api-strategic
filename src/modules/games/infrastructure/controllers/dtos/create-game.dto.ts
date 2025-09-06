@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CreateGameCommand } from 'src/modules/games/application/commands/create-game.command';
 import { GameOptionsDto, GamePowerLevelDto } from './game.dto';
 
@@ -16,6 +16,7 @@ export class CreateGameDto {
 
   @ApiProperty({ description: 'Game options', type: GameOptionsDto })
   @IsNotEmpty()
+  @ValidateNested()
   options: GameOptionsDto;
 
   @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto })

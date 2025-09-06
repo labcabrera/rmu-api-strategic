@@ -30,22 +30,18 @@ export class GameDto {
 export class GameOptionsDto {
   @ApiProperty({ description: 'Experience multiplier', type: Number, default: 1.0, example: 1.0 })
   @IsNumber()
-  @IsNotEmpty()
   experienceMultiplier: number;
 
   @ApiProperty({ description: 'Fatigue multiplier', type: Number, default: 1.0, example: 1.0 })
   @IsNumber()
-  @IsNotEmpty()
   fatigueMultiplier: number;
 
   @ApiProperty({ description: 'Board scale multiplier', type: Number, default: 1.0, example: 1.0 })
   @IsNumber()
-  @IsNotEmpty()
   boardScaleMultiplier: number;
 
   @ApiProperty({ description: 'Game letality (custom bonus to all attacks)', type: Number, default: 0, example: 0 })
   @IsNumber()
-  @IsNotEmpty()
   letality: number;
 
   static fromEntity(entity: GameOptions): GameOptionsDto {

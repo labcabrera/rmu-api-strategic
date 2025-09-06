@@ -19,9 +19,24 @@ export class UpdateFactionCommandHandler implements ICommandHandler<UpdateFactio
     if (!current) {
       throw new NotFoundError('Faction', command.factionId);
     }
-    const faction: Partial<Faction> = { ...command, updatedAt: new Date() };
-    const updated = await this.factionRepository.update(command.factionId, faction);
+    this.updateData(current, command);
+    const updated = await this.factionRepository.update(command.factionId, current);
     await this.factionNotificationPort.updated(updated);
     return updated;
+  }
+
+  private updateData(current: Faction, command: UpdateFactionCommand): void {
+    if (command.name) {
+      current.name = command.name;
+    }
+    if (command.availableGold) {
+      current.management.availableGold = command.availableGold;
+    }
+    if (command.availableXP) {
+      current.management.availableXP = command.availableXP;
+    }
+    if (command.description) {
+      current.description = command.description;
+    }
   }
 }

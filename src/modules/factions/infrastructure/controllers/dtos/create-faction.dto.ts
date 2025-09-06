@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CreateFactionCommand } from 'src/modules/factions/application/commands/create-faction.command';
 
@@ -13,14 +14,16 @@ export class CreateFactionDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Available gold for the faction', example: 100 })
+  @ApiProperty({ description: 'Available gold for the faction', type: Number, example: 100 })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   availableGold: number | undefined;
 
-  @ApiProperty({ description: 'Available XP for the faction', example: 200000 })
+  @ApiProperty({ description: 'Available XP for the faction', type: Number, example: 200000 })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   availableXP: number | undefined;
 
   @ApiProperty({ description: 'Faction description', example: 'A faction from Mordor' })
