@@ -21,6 +21,7 @@ export interface GameOptions {
 }
 
 export interface GamePowerLevel {
+  baseDevPoints: number;
   statRandomMin: number;
   statBoostPotential: number;
   statBoostTemporary: number;

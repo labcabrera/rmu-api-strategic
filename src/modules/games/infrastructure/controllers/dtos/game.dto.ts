@@ -59,6 +59,9 @@ export class GameOptionsDto {
 }
 
 export class GamePowerLevelDto {
+  @ApiProperty({ description: 'Base development points', type: Number })
+  baseDevPoints: number;
+
   @ApiProperty({ description: 'Stat random min', type: Number })
   statRandomMin: number;
 
@@ -76,6 +79,7 @@ export class GamePowerLevelDto {
 
   static fromEntity(entity: GamePowerLevel): GamePowerLevelDto {
     const dto = new GamePowerLevelDto();
+    dto.baseDevPoints = entity.baseDevPoints;
     dto.statRandomMin = entity.statRandomMin;
     dto.statBoostPotential = entity.statBoostPotential;
     dto.statBoostTemporary = entity.statBoostTemporary;

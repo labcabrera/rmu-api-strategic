@@ -25,8 +25,8 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
       gameId: command.gameId,
       name: command.name,
       management: {
-        availableGold: 0,
-        availableXP: 0,
+        availableGold: command.availableGold || 0,
+        availableXP: command.availableXP || 0,
       },
       description: command.description,
       owner: command.userId,

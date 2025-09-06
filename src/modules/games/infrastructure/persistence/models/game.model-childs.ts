@@ -18,6 +18,9 @@ export class GameOptions {
 @Schema({ _id: false })
 export class GamePowerLevel {
   @Prop({ required: true })
+  baseDevPoints: number;
+
+  @Prop({ required: true })
   statRandomMin: number;
 
   @Prop({ required: true })
