@@ -5,16 +5,16 @@ import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/character.repository';
-import { UpdateSkillCommand } from '../commands/update-skill.command';
+import { SetUpProfessionalSkillCommand } from '../commands/setup-professional-skill.command';
 
-@CommandHandler(UpdateSkillCommand)
-export class UpdateSkillCommandHandler implements ICommandHandler<UpdateSkillCommand, Character> {
+@CommandHandler(SetUpProfessionalSkillCommand)
+export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfessionalSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
   ) {}
 
-  async execute(command: UpdateSkillCommand): Promise<Character> {
+  async execute(command: SetUpProfessionalSkillCommand): Promise<Character> {
     const characterId = command.characterId;
     const skillId = command.skillId;
     const character = await this.characterRepository.findById(command.characterId);
@@ -25,10 +25,8 @@ export class UpdateSkillCommandHandler implements ICommandHandler<UpdateSkillCom
     if (!skill) {
       throw new Error(`Skill ${skillId} not found for character ${characterId}`);
     }
-    if (command.customBonus !== undefined) {
-      skill.customBonus = command.customBonus;
-    }
-    skill.ranks = command.ranks || skill.ranks;
+    //TODO CHECK MAX PROFESSIONAL SKILLS
+    skill.professional = ['professional'];
     this.characterProcessorService.process(character);
     const updated: Character = await this.characterRepository.update(characterId, character);
     return updated;

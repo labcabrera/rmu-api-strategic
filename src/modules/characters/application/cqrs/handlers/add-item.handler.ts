@@ -11,7 +11,7 @@ import { CharacterItem } from 'src/modules/characters/domain/value-objects/chara
 import { ItemResponse } from '../../ports/item-client.port';
 
 @CommandHandler(AddItemCommand)
-export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {
+export class AddItemHandler implements ICommandHandler<AddItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,

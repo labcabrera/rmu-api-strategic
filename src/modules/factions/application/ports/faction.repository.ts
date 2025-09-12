@@ -6,7 +6,7 @@ export interface FactionRepository {
 
   findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Faction>>;
 
-  save(faction: Partial<Faction>): Promise<Faction>;
+  save(faction: Faction): Promise<Faction>;
 
   update(factionId: string, faction: Partial<Faction>): Promise<Faction>;
 

@@ -1,21 +1,20 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
 import { DeleteSkillCommand } from '../commands/delete-skill-command';
-import * as cldr from '../../ports/character-level-dev.repository';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
+import type { CharacterLevelDevRepository } from '../../ports/character-level-dev.repository';
+import type { CharacterRepository } from '../../ports/character.repository';
 
 //TODO only can remove skills added in the current level
 @CommandHandler(DeleteSkillCommand)
-export class DeleteSkillCommandHandler implements ICommandHandler<DeleteSkillCommand, Character> {
+export class DeleteSkillHandler implements ICommandHandler<DeleteSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('CharacterLevelDevRepository') private readonly characterLevelRepository: cldr.CharacterLevelDevRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('CharacterLevelDevRepository') private readonly characterLevelRepository: CharacterLevelDevRepository,
   ) {}
 
   async execute(command: DeleteSkillCommand): Promise<Character> {

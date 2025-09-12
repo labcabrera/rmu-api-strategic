@@ -21,6 +21,11 @@ export class MongoGameRepository implements GameRepository {
     return readed ? this.mapToEntity(readed) : null;
   }
 
+  async findByRealm(realmId: string): Promise<Game[]> {
+    const docs = await this.gameModel.find({ realm: realmId }).sort({ name: 1 });
+    return docs.map((doc) => this.mapToEntity(doc));
+  }
+
   async findByRsql(rsql: string, page: number, size: number): Promise<Page<Game>> {
     const skip = page * size;
     const mongoQuery = this.rsqlParser.parse(rsql);

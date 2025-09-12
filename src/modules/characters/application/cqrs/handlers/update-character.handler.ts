@@ -5,30 +5,32 @@ import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/character.repository';
-import { SetUpProfessionalSkillCommand } from '../commands/setup-professional-skill.command';
+import { UpdateCharacterCommand } from '../commands/update-character.command';
 
-@CommandHandler(SetUpProfessionalSkillCommand)
-export class SetupProfessionSkillCommandHandler implements ICommandHandler<SetUpProfessionalSkillCommand, Character> {
+@CommandHandler(UpdateCharacterCommand)
+export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
   ) {}
 
-  async execute(command: SetUpProfessionalSkillCommand): Promise<Character> {
+  async execute(command: UpdateCharacterCommand): Promise<Character> {
     const characterId = command.characterId;
-    const skillId = command.skillId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-    const skill = character.skills.find((skill) => skill.skillId === skillId) || null;
-    if (!skill) {
-      throw new Error(`Skill ${skillId} not found for character ${characterId}`);
-    }
-    //TODO CHECK MAX PROFESSIONAL SKILLS
-    skill.professional = ['professional'];
+    this.bindFields(character, command);
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(characterId, character);
-    return updated;
+    return await this.characterRepository.update(characterId, character);
+  }
+
+  private bindFields(character: Character, command: UpdateCharacterCommand): void {
+    if (command.name) {
+      character.name = command.name;
+    }
+    if (command.description) {
+      character.description = command.description;
+    }
   }
 }

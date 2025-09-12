@@ -13,7 +13,7 @@ import { LevelDownSkillCommand } from '../commands/level-down-skill.command';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 
 @CommandHandler(LevelDownSkillCommand)
-export class LevelDownSkillCommandHandler implements ICommandHandler<LevelDownSkillCommand, Character> {
+export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,

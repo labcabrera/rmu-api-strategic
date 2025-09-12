@@ -9,7 +9,7 @@ import { EquipItemCommand } from '../commands/equip-item-command';
 import { UnequipItemCommand } from '../commands/unequip-item-command';
 
 @CommandHandler(UnequipItemCommand)
-export class UnequipItemCommandHandler implements ICommandHandler<UnequipItemCommand, Character> {
+export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,

@@ -6,13 +6,14 @@ import type { GameRepository } from 'src/modules/games/application/ports/game.re
 import type { FactionRepository } from '../../ports/faction.repository';
 import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { CreateFactionCommand } from '../commands/create-faction.command';
+import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 
 @CommandHandler(CreateFactionCommand)
 export class CreateFactionCommandHandler implements ICommandHandler<CreateFactionCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
+    @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
   ) {}
 
   async execute(command: CreateFactionCommand): Promise<Faction> {
@@ -20,19 +21,15 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
     if (!game) {
       throw new ValidationError('Game not found');
     }
-    const faction: Partial<Faction> = {
-      gameId: command.gameId,
-      name: command.name,
-      management: {
-        availableGold: command.availableGold || 0,
-        availableXP: command.availableXP || 0,
-      },
-      description: command.description,
-      owner: command.userId,
-      createdAt: new Date(),
-    };
-    const saved = await this.factionRepository.save(faction);
-    await this.factionNotificationPort.created(saved);
-    return saved;
+    const faction = Faction.create(
+      command.gameId,
+      command.name,
+      new FactionManagement(command.availableGold || 0, command.availableXP || 0),
+      command.description,
+      command.userId,
+    );
+    const created = await this.factionRepository.save(faction);
+    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
+    return created;
   }
 }

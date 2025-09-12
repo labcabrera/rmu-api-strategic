@@ -10,7 +10,7 @@ import { AddFactionXPCommand } from '../commands/add-faction-xp.command';
 export class AddFactionXPCommandHandler implements ICommandHandler<AddFactionXPCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
+    @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
   ) {}
 
   async execute(command: AddFactionXPCommand): Promise<Faction> {
@@ -23,9 +23,9 @@ export class AddFactionXPCommandHandler implements ICommandHandler<AddFactionXPC
     if (!faction) {
       throw new NotFoundError('Faction', command.factionId);
     }
-    faction.management.availableXP += command.xp;
+    faction.addXp(command.xp);
     const updated = await this.factionRepository.update(command.factionId, faction);
-    await this.factionNotificationPort.updated(updated);
+    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
     return updated;
   }
 }
