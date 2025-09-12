@@ -17,15 +17,15 @@ import { InitiativeProcessor } from './domain/services/character/processors/init
 import { MovementProcessor } from './domain/services/character/processors/movement-processor';
 import { SkillProcessor } from './domain/services/character/processors/skill-processor';
 import { StatProcessor } from './domain/services/character/processors/stat-processor';
-import { ItemApiClient } from './infrastructure/clients/item-api-client';
-import { RaceApiClient } from './infrastructure/clients/race-api-client';
-import { SkillApiClient } from './infrastructure/clients/skill-api-client';
-import { SkillCategoryApiClient } from './infrastructure/clients/skill-category-api-client';
+import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
+import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-client.adapter';
+import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
+import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
 import { CharacterController } from './infrastructure/controllers/characters.controller';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
 import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
 import { FactionsModule } from '../factions/factions.module';
-import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
+import { ApiProfessionClientAdapter } from './infrastructure/api-clients/api.profession-client.adapter';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
 import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
 import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
@@ -106,23 +106,23 @@ import { UpdateSkillCommandHandler } from './application/cqrs/handlers/update-sk
     },
     {
       provide: 'RaceClient',
-      useClass: RaceApiClient,
+      useClass: ApiRaceClientAdapter,
     },
     {
       provide: 'SkillClient',
-      useClass: SkillApiClient,
+      useClass: ApiSkillClientAdapter,
     },
     {
       provide: 'SkillCategoryClient',
-      useClass: SkillCategoryApiClient,
+      useClass: ApiSkillCategoryClientAdapter,
     },
     {
       provide: 'ProfessionClient',
-      useClass: ProfessionApiClient,
+      useClass: ApiProfessionClientAdapter,
     },
     {
       provide: 'ItemClient',
-      useClass: ItemApiClient,
+      useClass: ApiItemClientAdapter,
     },
   ],
   exports: ['CharacterRepository'],

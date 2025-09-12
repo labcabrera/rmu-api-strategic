@@ -6,7 +6,7 @@ import { TokenService } from '../../../auth/token.service';
 import { SkillClientPort, SkillResponse } from '../../application/ports/skill-client.port';
 
 @Injectable()
-export class SkillApiClient implements SkillClientPort {
+export class ApiSkillClientAdapter implements SkillClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

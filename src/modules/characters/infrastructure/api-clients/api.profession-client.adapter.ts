@@ -6,7 +6,7 @@ import { TokenService } from 'src/modules/auth/token.service';
 import { ProfessionClientPort, ProfessionResponse } from '../../application/ports/profession-client.port';
 
 @Injectable()
-export class ProfessionApiClient implements ProfessionClientPort {
+export class ApiProfessionClientAdapter implements ProfessionClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

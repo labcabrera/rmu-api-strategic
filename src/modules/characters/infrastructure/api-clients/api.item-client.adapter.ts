@@ -7,8 +7,8 @@ import { ItemClientPort, ItemResponse } from '../../application/ports/item-clien
 import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors';
 
 @Injectable()
-export class ItemApiClient implements ItemClientPort {
-  private readonly logger = new Logger(ItemApiClient.name);
+export class ApiItemClientAdapter implements ItemClientPort {
+  private readonly logger = new Logger(ApiItemClientAdapter.name);
 
   constructor(
     private readonly tokenService: TokenService,

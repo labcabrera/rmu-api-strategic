@@ -6,7 +6,7 @@ import { TokenService } from 'src/modules/auth/token.service';
 import { RaceClientPort } from '../../application/ports/race-client.port';
 
 @Injectable()
-export class RaceApiClient implements RaceClientPort {
+export class ApiRaceClientAdapter implements RaceClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
