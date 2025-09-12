@@ -18,6 +18,7 @@ import {
 } from './character-childs.model';
 import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
+import { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -76,7 +77,8 @@ export class CharacterModel {
   @Prop({ type: [CharacterAttack], required: true })
   attacks: CharacterAttack[];
 
-  status: string | undefined;
+  @Prop({ type: String, required: false })
+  status: CharacterStatus | undefined;
 
   @Prop({ type: String, required: false })
   description: string | undefined;

@@ -127,6 +127,9 @@ export class CharacterHP {
 @Schema({ _id: false })
 export class CharacterEndurance {
   @Prop({ required: true })
+  base: number;
+
+  @Prop({ required: true })
   customBonus: number;
 
   @Prop({ required: true })

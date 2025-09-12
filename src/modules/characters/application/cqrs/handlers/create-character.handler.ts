@@ -10,7 +10,7 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import type { RaceClientPort, RaceResponse } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
 import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
-import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.entity';
+import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.vo';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 import type { ItemClientPort } from '../../ports/item-client.port';
@@ -100,13 +100,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       max: 0,
       current: 0,
     };
-    const endurance: CharacterEndurance = {
-      customBonus: command.enduranceCustomBonus || 0,
-      max: 0,
-      current: 0,
-      accumulator: 0,
-      fatiguePenalty: 0,
-    };
+    const endurance: CharacterEndurance = CharacterEndurance.empty();
     const power: CharacterPower = {
       max: 0,
       current: 0,

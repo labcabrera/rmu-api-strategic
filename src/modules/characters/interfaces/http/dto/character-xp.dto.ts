@@ -1,5 +1,5 @@
 import { IsNumber } from 'class-validator';
-import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.entity';
+import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.vo';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 export class CharacterXPDto {

@@ -1,15 +1,35 @@
-export interface CharacterEquipment {
-  mainHand: string | undefined;
-  offHand: string | undefined;
-  body: string | undefined;
-  head: string | undefined;
-  arms: string | undefined;
-  legs: string | undefined;
-  weight: number;
-  enc: number;
-  baseManeuverPenalty: number;
-  maneuverPenalty: number;
-  rangedPenalty: number;
-  perceptionPenalty: number;
-  movementBaseDifficulty: string | undefined;
+export class CharacterEquipment {
+  constructor(
+    public mainHand: string | undefined,
+    public offHand: string | undefined,
+    public body: string | undefined,
+    public head: string | undefined,
+    public arms: string | undefined,
+    public legs: string | undefined,
+    public weight: number,
+    public enc: number,
+    public baseManeuverPenalty: number,
+    public maneuverPenalty: number,
+    public rangedPenalty: number,
+    public perceptionPenalty: number,
+    public movementBaseDifficulty: string | undefined,
+  ) {}
+
+  static empty(): CharacterEquipment {
+    return new CharacterEquipment(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      undefined,
+    );
+  }
 }
