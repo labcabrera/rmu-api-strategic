@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../entities/character.entity';
+import { Character } from '../../../aggregates/character.aggregate';
 
 @Injectable()
 export class MovementProcessor {

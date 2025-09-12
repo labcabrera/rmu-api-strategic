@@ -3,20 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { GamesModule } from '../games/games.module';
 import { SharedModule } from '../shared/shared.module';
-import { AddItemCommandHandler } from './application/commands/handlers/add-item.command.handler';
-import { AddSkillCommandHandler } from './application/commands/handlers/add-skill.command.handler';
-import { CreateCharacterCommandHandler } from './application/commands/handlers/create-character.command.handler';
-import { DeleteCharacterCommandHandler } from './application/commands/handlers/delete-character.command.handler';
-import { DeleteItemCommandHandler } from './application/commands/handlers/delete-item.command.handler';
-import { DeleteSkillCommandHandler } from './application/commands/handlers/delete-skill.command.handler';
-import { UpdateCharacterCommandHandler } from './application/commands/handlers/update-character.command.handler';
-import { UpdateSkillCommandHandler } from './application/commands/handlers/update-skill.command.handler';
-import { GetCharacterQueryHandler } from './application/queries/handlers/get-character.query.handler';
-import { GetCharactersQueryHandler } from './application/queries/handlers/get-characters.query.handler';
+import { GetCharacterQueryHandler } from './application/cqrs/handlers/get-character.query.handler';
+import { GetCharactersQueryHandler } from './application/cqrs/handlers/get-characters.query.handler';
 import { CharacterProcessorService } from './domain/services/character-processor.service';
 import { AttackProcessor } from './domain/services/character/processors/attack-processor';
 import { DefenseProcessor } from './domain/services/character/processors/defense-processor';
@@ -26,29 +17,41 @@ import { InitiativeProcessor } from './domain/services/character/processors/init
 import { MovementProcessor } from './domain/services/character/processors/movement-processor';
 import { SkillProcessor } from './domain/services/character/processors/skill-processor';
 import { StatProcessor } from './domain/services/character/processors/stat-processor';
-import { ItemApiClient } from './infrastructure/clients/item-api-client';
-import { RaceApiClient } from './infrastructure/clients/race-api-client';
-import { SkillApiClient } from './infrastructure/clients/skill-api-client';
-import { SkillCategoryApiClient } from './infrastructure/clients/skill-category-api-client';
-import { CharacterController } from './infrastructure/controllers/characters.controller';
+import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
+import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-client.adapter';
+import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
+import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
-import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
+import { MongoCharacterRepository } from './infrastructure/db/mongo.character.repository';
 import { FactionsModule } from '../factions/factions.module';
-import { ProfessionApiClient } from './infrastructure/clients/profession-api-client';
+import { ApiProfessionClientAdapter } from './infrastructure/api-clients/api.profession-client.adapter';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
-import { AddXPCommandHandler } from './application/commands/handlers/add-xp.command.handler';
-import { LevelUpCommandHandler } from './application/commands/handlers/level-up.command.handler';
-import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
-import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
-import { LevelUpSkillCommandHandler } from './application/commands/handlers/level-up-skill.command.handler';
-import { LevelDownSkillCommandHandler } from './application/commands/handlers/level-down-skill.command.handler';
-import { CharacterSkillController } from './infrastructure/controllers/characters-skill.controller';
-import { CharacterItemController } from './infrastructure/controllers/characters-item.controller';
-import { EquipItemCommandHandler } from './application/commands/handlers/equip-item.command.handler';
-import { SetupProfessionSkillCommandHandler } from './application/commands/handlers/setup-professional-skill.command.handler';
-import { UnequipItemCommandHandler } from './application/commands/handlers/unequip-item.command.handler';
-import { UpdateItemCarriedStatusCommandHandler } from './application/commands/handlers/update-item-carried-status.command.handler';
-import { TransferGoldCommandHandler } from './application/commands/handlers/transfer-gold.command.handler';
+import { MongoCharacterLevelDevRepository } from './infrastructure/db/mongo.character-level-dev.repository';
+import {
+  CharacterLevelDevModel,
+  CharacterLevelDevSchema,
+} from './infrastructure/persistence/models/character-level-dev.model';
+import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor';
+import { AddItemCommandHandler } from './application/cqrs/handlers/add-item.command.handler';
+import { AddSkillCommandHandler } from './application/cqrs/handlers/add-skill.command.handler';
+import { AddXPCommandHandler } from './application/cqrs/handlers/add-xp.command.handler';
+import { CreateCharacterCommandHandler } from './application/cqrs/handlers/create-character.command.handler';
+import { DeleteCharacterCommandHandler } from './application/cqrs/handlers/delete-character.command.handler';
+import { DeleteItemCommandHandler } from './application/cqrs/handlers/delete-item.command.handler';
+import { DeleteSkillCommandHandler } from './application/cqrs/handlers/delete-skill.command.handler';
+import { EquipItemCommandHandler } from './application/cqrs/handlers/equip-item.command.handler';
+import { LevelDownSkillCommandHandler } from './application/cqrs/handlers/level-down-skill.command.handler';
+import { LevelUpSkillCommandHandler } from './application/cqrs/handlers/level-up-skill.command.handler';
+import { LevelUpCommandHandler } from './application/cqrs/handlers/level-up.command.handler';
+import { SetupProfessionSkillCommandHandler } from './application/cqrs/handlers/setup-professional-skill.command.handler';
+import { TransferGoldCommandHandler } from './application/cqrs/handlers/transfer-gold.command.handler';
+import { UnequipItemCommandHandler } from './application/cqrs/handlers/unequip-item.command.handler';
+import { UpdateCharacterCommandHandler } from './application/cqrs/handlers/update-character.command.handler';
+import { UpdateItemCarriedStatusCommandHandler } from './application/cqrs/handlers/update-item-carried-status.command.handler';
+import { UpdateSkillCommandHandler } from './application/cqrs/handlers/update-skill.command.handler';
+import { CharacterController } from './interfaces/http/character.controller';
+import { CharacterSkillController } from './interfaces/http/character-skill.controller';
+import { CharacterItemController } from './interfaces/http/character-item.controller';
 
 @Module({
   imports: [
@@ -74,6 +77,7 @@ import { TransferGoldCommandHandler } from './application/commands/handlers/tran
     HPProcessor,
     EquipmentProcessor,
     DefenseProcessor,
+    ResistancesProcessor,
     XPProcessor,
     CharacterProcessorService,
     GetCharacterQueryHandler,
@@ -105,23 +109,23 @@ import { TransferGoldCommandHandler } from './application/commands/handlers/tran
     },
     {
       provide: 'RaceClient',
-      useClass: RaceApiClient,
+      useClass: ApiRaceClientAdapter,
     },
     {
       provide: 'SkillClient',
-      useClass: SkillApiClient,
+      useClass: ApiSkillClientAdapter,
     },
     {
       provide: 'SkillCategoryClient',
-      useClass: SkillCategoryApiClient,
+      useClass: ApiSkillCategoryClientAdapter,
     },
     {
       provide: 'ProfessionClient',
-      useClass: ProfessionApiClient,
+      useClass: ApiProfessionClientAdapter,
     },
     {
       provide: 'ItemClient',
-      useClass: ItemApiClient,
+      useClass: ApiItemClientAdapter,
     },
   ],
   exports: ['CharacterRepository'],

@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../entities/character.entity';
+import { Character } from '../../../aggregates/character.aggregate';
+import { CharacterItem } from '../../../value-objects/character-item.vo';
 
 const baseDifficultyCodes = ['c', 's', 'r', 'e', 'l', 'm', 'h', 'vh', 'xh', 'sf', 'a', 'ni'];
 
 @Injectable()
 export class EquipmentProcessor {
   process(character: Partial<Character>): void {
+    this.setDefaultCoins(character);
     if (!character.items || character.items.length === 0 || !character.equipment) {
       return;
     }
-    const carriedWeight = character.items.filter((item) => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
+    const carriedWeight = character.items
+      .filter((item) => item.carried)
+      .reduce((sum, item) => sum + item.info.weight, 0);
     character.equipment.weight = carriedWeight;
     this.sortItems(character);
 
@@ -34,12 +38,44 @@ export class EquipmentProcessor {
       difficultyIndex = Math.max(difficultyIndex, baseDifficultyCodes.indexOf(armorItems.armor!.baseDifficulty));
     });
 
+    const armorManeuverSkillBonus = this.getArmorManeuverSkillBonus(character);
+
     character.equipment.weight = carriedWeight;
     character.equipment.enc = enc;
-    character.equipment.maneuverPenalty = maneuverPenalty;
+    character.equipment.baseManeuverPenalty = maneuverPenalty;
+    character.equipment.maneuverPenalty = Math.min(0, maneuverPenalty + armorManeuverSkillBonus);
     character.equipment.perceptionPenalty = perceptionPenalty;
     character.equipment.rangedPenalty = rangedPenalty;
     character.equipment.movementBaseDifficulty = baseDifficultyCodes[difficultyIndex];
+  }
+
+  private setDefaultCoins(character: Partial<Character>) {
+    const goldCoins = character.items?.find((item) => item.itemTypeId === 'gold-coin');
+    if (!goldCoins) {
+      const item = {
+        id: 'gold-coin',
+        name: 'Gold Coins',
+        itemTypeId: 'gold-coin',
+        category: 'coins',
+        carried: true,
+        info: {
+          weight: 0,
+        },
+        stackable: true,
+        amount: 0,
+      } as CharacterItem;
+      character.items!.push(item);
+    }
+  }
+
+  private getArmorManeuverSkillBonus(character: Partial<Character>) {
+    if (character.skills) {
+      const skill = character.skills.find((s) => s.skillId === 'armor-maneuver');
+      if (skill) {
+        return skill.totalBonus || 0;
+      }
+    }
+    return 0;
   }
 
   private sortItems(character: Partial<Character>) {

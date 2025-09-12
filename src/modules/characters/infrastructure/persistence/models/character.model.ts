@@ -10,6 +10,8 @@ import {
   CharacterInitiative,
   CharacterMovement,
   CharacterPower,
+  CharacterResistance,
+  CharacterRoleplayInfo,
   CharacterSkill,
   CharacterStatistics,
   CharacterXP,
@@ -33,6 +35,9 @@ export class CharacterModel {
   @Prop({ type: CharacterInfo, required: true })
   info: CharacterInfo;
 
+  @Prop({ type: CharacterRoleplayInfo, required: true })
+  roleplay: CharacterRoleplayInfo;
+
   @Prop({ type: CharacterXP, required: true })
   experience: CharacterXP;
 
@@ -44,6 +49,9 @@ export class CharacterModel {
 
   @Prop({ type: CharacterDefense, required: true })
   defense: CharacterDefense;
+
+  @Prop({ type: [CharacterResistance], required: true })
+  resistances: CharacterResistance[];
 
   @Prop({ type: CharacterEndurance, required: true })
   endurance: CharacterEndurance;

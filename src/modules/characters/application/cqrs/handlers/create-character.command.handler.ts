@@ -1,0 +1,358 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import { Inject, Logger } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { randomUUID } from 'crypto';
+import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
+import type { RaceClientPort, RaceResponse } from '../../ports/race-client.port';
+import { CreateCharacterCommand } from '../commands/create-character.command';
+import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
+import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.entity';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import type { ItemClientPort } from '../../ports/item-client.port';
+import type { ProfessionClientPort } from '../../ports/profession-client.port';
+import type { CharacterRepository } from '../../ports/character.repository';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
+import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
+import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
+import { CharacterMovement } from 'src/modules/characters/domain/value-objects/character-movement.vo';
+import { CharacterDefense } from 'src/modules/characters/domain/value-objects/character-defense.vo';
+import { CharacterHP } from 'src/modules/characters/domain/value-objects/character-hp.vo';
+import { CharacterEndurance } from 'src/modules/characters/domain/value-objects/character-endurance.vo';
+import { CharacterPower } from 'src/modules/characters/domain/value-objects/character-power.vo';
+import { CharacterInitiative } from 'src/modules/characters/domain/value-objects/character-initiative.vo';
+import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
+import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import { CharacterResistance } from 'src/modules/characters/domain/value-objects/character-resistances.vo';
+
+@CommandHandler(CreateCharacterCommand)
+export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
+  private readonly logger = new Logger(CreateCharacterCommandHandler.name);
+
+  constructor(
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
+    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
+    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
+    @Inject('ItemClient') private readonly itemClient: ItemClientPort,
+    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+  ) {}
+
+  async execute(command: CreateCharacterCommand): Promise<Character> {
+    const tacticalGame = await this.gameRepository.findById(command.gameId);
+    if (!tacticalGame) {
+      throw new ValidationError(`Game with id ${command.gameId} not found`);
+    }
+    const faction = await this.factionRepository.findById(command.factionId);
+    if (!faction) {
+      throw new ValidationError(`Faction with id ${command.factionId} not found`);
+    }
+    if (faction.gameId != tacticalGame.id) {
+      throw new ValidationError(`Faction ${command.factionId} does not belong to game ${command.gameId}`);
+    }
+    const profession = await this.professionClient.getProfessionById(command.info.professionId);
+    if (!profession) {
+      throw new ValidationError(`Profession with id ${command.info.professionId} not found`);
+    }
+
+    const raceInfo = await this.fetchRace(command.info.raceId);
+    const processedStatistics = this.processStatistics(raceInfo, command.statistics);
+    const resistances = this.processResistances(raceInfo);
+    const skills = await this.processSkills(command, raceInfo);
+    const items = await this.processItems(command.info, command);
+
+    //TODO adjust with race for level 0
+    const experience: CharacterXP = {
+      level: command.experience.level,
+      availableLevel: 0,
+      xp: command.experience.xp,
+      developmentPoints: 60,
+      availableDevelopmentPoints: 60,
+      weaponDevelopment: ['melee', 'ranged', 'shield', 'unarmed'],
+    };
+    const movement: CharacterMovement = {
+      baseMovementRate: 0,
+      strideCustomBonus: command.strideCustomBonus || 0,
+      strideQuBonus: 0,
+      strideRacialBonus: raceInfo.strideBonus || 0,
+    };
+    const defense: CharacterDefense = {
+      defensiveBonus: 0,
+      armor: {
+        at: 1,
+        racialAt: 1,
+        bodyAt: undefined,
+        headAt: undefined,
+        armsAt: undefined,
+        legsAt: undefined,
+      },
+    };
+    const hp: CharacterHP = {
+      max: 0,
+      current: 0,
+    };
+    const endurance: CharacterEndurance = {
+      customBonus: command.enduranceCustomBonus || 0,
+      max: 0,
+      current: 0,
+      accumulator: 0,
+      fatiguePenalty: 0,
+    };
+    const power: CharacterPower = {
+      max: 0,
+      current: 0,
+    };
+    const initiative: CharacterInitiative = {
+      customBonus: command.initiativeCustomBonus || 0,
+      baseBonus: 0,
+      penaltyBonus: 0,
+      totalBonus: 0,
+    };
+    const equipment: CharacterEquipment = {
+      mainHand: undefined,
+      offHand: undefined,
+      body: undefined,
+      head: undefined,
+      arms: undefined,
+      legs: undefined,
+      weight: 0,
+      enc: 0,
+      baseManeuverPenalty: 0,
+      maneuverPenalty: 0,
+      rangedPenalty: 0,
+      perceptionPenalty: 0,
+      movementBaseDifficulty: undefined,
+    };
+    const characterData: Partial<Character> = {
+      gameId: command.gameId,
+      factionId: command.factionId,
+      name: command.name,
+      info: command.info,
+      roleplay: command.roleplay,
+      experience: experience,
+      statistics: processedStatistics,
+      movement: movement,
+      defense: defense,
+      resistances: resistances,
+      hp: hp,
+      endurance: endurance,
+      power: power,
+      initiative: initiative,
+      skills: skills,
+      items: items,
+      equipment: equipment,
+      owner: command.userId,
+      createdAt: new Date(),
+    };
+    this.loadDefaultEquipment(characterData);
+    this.characterProcessorService.process(characterData);
+    const newCharacter = await this.characterRepository.save(characterData);
+    return newCharacter;
+  }
+
+  processStatistics(raceInfo: RaceResponse, statistics: CharacterStatistics): CharacterStatistics {
+    const values = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
+    const result: any = {};
+    values.forEach((e) => {
+      const value: Stat = statistics[e] as Stat;
+      let potential = value ? value.potential : undefined;
+      let temporary = value ? value.temporary : undefined;
+
+      if (!potential && !temporary) {
+        const random: number[] = [];
+        // Discard rolls < 10
+        random.push(Math.floor(Math.random() * 90) + 10);
+        random.push(Math.floor(Math.random() * 90) + 10);
+        random.push(Math.floor(Math.random() * 90) + 10);
+        random.sort();
+        potential = random[2];
+        temporary = random[1];
+      }
+
+      let racial = 0;
+      if (raceInfo && raceInfo.defaultStatBonus && raceInfo.defaultStatBonus[e]) {
+        racial = raceInfo.defaultStatBonus[e];
+      }
+      const bonus = 0;
+      let custom = 0;
+      if (statistics && value && value.custom) {
+        custom = value.custom;
+      }
+      const total = bonus + racial + custom;
+      result[e] = {
+        potential: potential,
+        temporary: temporary,
+        bonus: bonus,
+        racial: racial,
+        custom: custom,
+        totalBonus: total,
+      };
+    });
+    return result;
+  }
+
+  private processResistances(raceInfo: RaceResponse): CharacterResistance[] {
+    const resistances: CharacterResistance[] = [];
+    Object.keys(raceInfo.resistances).forEach((key) => {
+      resistances.push({
+        resistance: key,
+        statBonus: 0,
+        racialBonus: raceInfo.resistances[key] || 0,
+        realmBonus: 0,
+        customBonus: 0,
+        totalBonus: 0,
+      });
+    });
+    return resistances;
+  }
+
+  async processSkills(command: CreateCharacterCommand, raceInfo: RaceResponse): Promise<CharacterSkill[]> {
+    const skills = command.skills || [];
+    // Always include the 'body-development' skill
+    if (!skills.some((e) => e.skillId === 'body-development')) {
+      skills.push({
+        skillId: 'body-development',
+        ranks: 0,
+        customBonus: 0,
+        specialization: undefined,
+      });
+    }
+    const readedSkills = await this.fetchSkills();
+    const readedSkillCategories = await this.fetchSkillCategories();
+    return command.skills.map((e) => {
+      const readedSkill = readedSkills.find((s) => s.id == e.skillId);
+      if (!readedSkill) {
+        throw new ValidationError(`Invalid skill identifier '${e.skillId}'`);
+      }
+      const readedCategory = readedSkillCategories.find((c) => c.id == readedSkill.categoryId);
+      const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
+      const customBonus = e.customBonus ? e.customBonus : 0;
+      let racialBonus: number;
+      if (e.skillId === 'body-development') {
+        racialBonus = raceInfo.baseHits;
+      } else {
+        //TODO read from race info
+        racialBonus = 0;
+      }
+      return {
+        skillId: readedSkill.id,
+        skillCategoryId: readedSkill.categoryId,
+        specialization: e.specialization,
+        attributeBonus: 0,
+        professional: [],
+        ranks: e.ranks,
+        statBonus: 0,
+        racialBonus: racialBonus,
+        developmentBonus: 0,
+        customBonus: customBonus,
+        professionalBonus: 0,
+        totalBonus: 0,
+        statistics: statistics,
+      };
+    });
+  }
+
+  async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
+    if (!command.items || command.items.length == 0) {
+      return [];
+    }
+    return Promise.all(
+      command.items.map(async (e) => {
+        const readedItem = await this.itemClient.getItemById(e.itemTypeId);
+        const readedWeapon = readedItem.weapon ? readedItem.weapon : undefined;
+        const readedArmor = readedItem.armor ? readedItem.armor : undefined;
+        const readedWeaponRange = readedItem.weaponRange ? readedItem.weaponRange : undefined;
+        const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
+        const itemInfo = {
+          length: readedItem.info.length,
+          strength: readedItem.info.strength,
+          weight: readedItem.info.weight,
+        };
+        if (!itemInfo.weight && readedItem.info.weightPercent) {
+          itemInfo.weight = readedItem.info.weightPercent * characterInfo.weight;
+        }
+        return {
+          id: randomUUID(),
+          name: name,
+          itemTypeId: e.itemTypeId,
+          category: readedItem.category,
+          carried: true,
+          weapon: readedWeapon,
+          weaponRange: readedWeaponRange,
+          armor: readedArmor,
+          affixes: [],
+          info: itemInfo,
+          stackable: readedItem.stackable,
+          amount: undefined,
+          description: undefined,
+        } as CharacterItem;
+      }),
+    );
+  }
+
+  loadDefaultEquipment(character: Partial<Character>): void {
+    if (!character.items || !character.equipment) {
+      return;
+    }
+    const weapon = character.items.find((e) => e.category === 'weapon');
+    const shield = character.items.find((e) => e.category === 'shield');
+    const armor = character.items.find((e) => e.category === 'armor');
+    if (weapon && weapon.id) {
+      character.equipment.mainHand = weapon.id;
+    }
+    if (shield && shield.id) {
+      character.equipment.offHand = shield.id;
+    }
+    if (shield && shield.id) {
+      character.equipment.offHand = shield.id;
+    }
+    if (armor && armor.id) {
+      character.equipment.body = armor.id;
+    }
+  }
+
+  async fetchRace(raceId: string): Promise<RaceResponse> {
+    try {
+      return await this.raceClient.getRaceById(raceId);
+    } catch (e) {
+      this.logger.error(e);
+      throw new ValidationError(`Race with id ${raceId} not found.`);
+    }
+  }
+
+  async fetchSkills(): Promise<SkillResponse[]> {
+    try {
+      return await this.skillClient.getAllSkills();
+    } catch (e) {
+      this.logger.error(e);
+      throw new BadGatewayError(`Error fetching skills`);
+    }
+  }
+
+  async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
+    try {
+      return await this.skillCategoryClient.getAllSkillCategories();
+    } catch (e) {
+      this.logger.error(e);
+      throw new BadGatewayError(`Error fetching skill categories`);
+    }
+  }
+
+  async fetchItem(itemId: string): Promise<any> {
+    try {
+      return await this.itemClient.getItemById(itemId);
+    } catch (e) {
+      this.logger.error(e);
+      throw new ValidationError(`Item with id ${itemId} not found.`);
+    }
+  }
+}

@@ -5,9 +5,9 @@ import { Model } from 'mongoose';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
-import { FactionRepository } from 'src/modules/factions/application/ports/out/faction-repository';
+import { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
 import { FactionModel, FactionDocument } from '../models/faction.model';
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 
 @Injectable()
 export class MongoFactionRepository implements FactionRepository {
@@ -52,15 +52,15 @@ export class MongoFactionRepository implements FactionRepository {
   }
 
   private mapToEntity(doc: FactionDocument): Faction {
-    return {
-      id: doc._id as string,
-      gameId: doc.gameId,
-      name: doc.name,
-      management: doc.management,
-      description: doc.description,
-      owner: doc.owner,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-    };
+    return new Faction(
+      doc._id as string,
+      doc.gameId,
+      doc.name,
+      doc.management,
+      doc.description,
+      doc.owner,
+      doc.createdAt,
+      doc.updatedAt,
+    );
   }
 }

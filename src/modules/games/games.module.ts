@@ -3,18 +3,17 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from '../auth/auth.module';
-
 import { SharedModule } from '../shared/shared.module';
-import { CreateGameCommandHandler } from './application/commands/handlers/create-game.command.handler';
-import { GetGameQueryHandler } from './application/queries/handlers/get-game.query.handler';
-import { GetGamesQueryHandler } from './application/queries/handlers/get-games.query.handler';
-import { UpdateGameCommandHandler } from './application/commands/handlers/update-game.command.handler';
-import { DeleteGameCommandHandler } from './application/commands/handlers/delete-game.command.handler';
-import { GameController } from './infrastructure/controllers/game.controller';
-import { KafkaGameProducerService } from './infrastructure/messaging/kafka-game-producer.service';
-import { MongoGameRepository } from './infrastructure/persistence/repositories/mongo-game.repository';
+import { GameController } from './interfaces/http/game.controller';
+import { KafkaGameEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
+import { MongoGameRepository } from './infrastructure/db/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
-import { RealmApiClient } from './infrastructure/clients/realm-api-client';
+import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter';
+import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler';
+import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler';
+import { GetGameHandler } from './application/cqrs/handlers/get-game.handler';
+import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler';
+import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler';
 
 @Module({
   imports: [
@@ -26,22 +25,22 @@ import { RealmApiClient } from './infrastructure/clients/realm-api-client';
   ],
   controllers: [GameController],
   providers: [
-    GetGameQueryHandler,
-    GetGamesQueryHandler,
-    CreateGameCommandHandler,
-    UpdateGameCommandHandler,
-    DeleteGameCommandHandler,
+    GetGameHandler,
+    GetGamesHandler,
+    CreateGameHandler,
+    UpdateGameHandler,
+    DeleteGameHandler,
     {
       provide: 'GameRepository',
       useClass: MongoGameRepository,
     },
     {
       provide: 'RealmClient',
-      useClass: RealmApiClient,
+      useClass: ApiRealmClientAdapter,
     },
     {
       provide: 'GameEventProducer',
-      useClass: KafkaGameProducerService,
+      useClass: KafkaGameEventBusAdapter,
     },
   ],
   exports: ['GameRepository'],

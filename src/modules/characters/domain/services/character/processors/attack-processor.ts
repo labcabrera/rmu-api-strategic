@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../entities/character.entity';
-import { CharacterAttack } from '../../../entities/character-attack.entity';
+import { Character } from '../../../aggregates/character.aggregate';
+import { CharacterAttack } from '../../../value-objects/character-attack.vo';
 
 @Injectable()
 export class AttackProcessor {
