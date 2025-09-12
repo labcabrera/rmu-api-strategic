@@ -4,19 +4,18 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { GameDto, GamePageDto } from './dtos/game.dto';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
-import { GetGameQuery } from '../../application/queries/get-game.query';
+import { GetGameQuery } from '../../application/cqrs/queries/get-game.query';
 import { Game } from '../../domain/entities/game.aggregate';
-import { GetGamesQuery } from '../../application/queries/get-games.query';
-import { UpdateGameCommand } from '../../application/commands/update-game.command';
-import { DeleteGameCommand } from '../../application/commands/delete-game.command';
+import { GetGamesQuery } from '../../application/cqrs/queries/get-games.query';
 import { CreateGameDto } from './dtos/create-game.dto';
-import { CreateGameCommand } from '../../application/commands/create-game.command';
 import { UpdateGameDto } from './dtos/update-game.dto';
+import { CreateGameCommand } from '../../application/cqrs/commands/create-game.command';
+import { DeleteGameCommand } from '../../application/cqrs/commands/delete-game.command';
+import { UpdateGameCommand } from '../../application/cqrs/commands/update-game.command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/strategic-games')
