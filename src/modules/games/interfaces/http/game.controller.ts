@@ -15,7 +15,7 @@ import { GameDto, GamePageDto } from './dtos/game.dto';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GetGameQuery } from '../../application/cqrs/queries/get-game.query';
-import { Game } from '../../domain/entities/game.aggregate';
+import { Game } from '../../domain/aggregates/game.aggregate';
 import { GetGamesQuery } from '../../application/cqrs/queries/get-games.query';
 import { CreateGameDto } from './dtos/create-game.dto';
 import { UpdateGameDto } from './dtos/update-game.dto';

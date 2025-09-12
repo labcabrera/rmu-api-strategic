@@ -6,7 +6,7 @@ import { GameRepository } from 'src/modules/games/application/ports/game.reposit
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
 import { GameModel, GameDocument } from '../persistence/models/game-model';
-import { Game } from 'src/modules/games/domain/entities/game.aggregate';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 
 @Injectable()

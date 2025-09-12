@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Game } from 'src/modules/games/domain/entities/game.aggregate';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { UpdateGameCommand } from '../commands/update-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';

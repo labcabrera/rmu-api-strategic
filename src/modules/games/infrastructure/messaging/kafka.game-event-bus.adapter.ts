@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
-import { Game } from '../../domain/entities/game.aggregate';
+import { Game } from '../../domain/aggregates/game.aggregate';
 import { GameCreatedEvent, GameUpdatedEvent, GameDeletedEvent } from '../../domain/events/game.events';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 

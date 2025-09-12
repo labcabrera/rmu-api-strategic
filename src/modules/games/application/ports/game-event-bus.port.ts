@@ -1,4 +1,4 @@
-import { Game } from 'src/modules/games/domain/entities/game.aggregate';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 export interface GameEventBusPort {

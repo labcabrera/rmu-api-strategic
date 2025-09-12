@@ -9,7 +9,7 @@ import { KafkaGameEventBusAdapter } from './infrastructure/messaging/kafka.game-
 import { MongoGameRepository } from './infrastructure/db/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
 import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter';
-import { CreateGameCommandHandler } from './application/cqrs/handlers/create-game.command.handler';
+import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler';
 import { DeleteGameCommandHandler } from './application/cqrs/handlers/delete-game.command.handler';
 import { GetGameQueryHandler } from './application/cqrs/handlers/get-game.query.handler';
 import { GetGamesQueryHandler } from './application/cqrs/handlers/get-games.query.handler';
@@ -27,7 +27,7 @@ import { UpdateGameCommandHandler } from './application/cqrs/handlers/update-gam
   providers: [
     GetGameQueryHandler,
     GetGamesQueryHandler,
-    CreateGameCommandHandler,
+    CreateGameHandler,
     UpdateGameCommandHandler,
     DeleteGameCommandHandler,
     {

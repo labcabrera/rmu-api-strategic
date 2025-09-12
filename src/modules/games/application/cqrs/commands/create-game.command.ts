@@ -1,5 +1,5 @@
-import { GameOptions } from 'src/modules/games/domain/entities/game-options.vo';
-import { GamePowerLevel } from 'src/modules/games/domain/entities/game-power-level.vo';
+import { GameOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
+import { GamePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
 
 export class CreateGameCommand {
   constructor(

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { GameOptions } from 'src/modules/games/domain/entities/game-options.vo';
-import { GamePowerLevel } from 'src/modules/games/domain/entities/game-power-level.vo';
-import { GameStatus } from 'src/modules/games/domain/entities/game-status.vo';
-import { Game } from 'src/modules/games/domain/entities/game.aggregate';
+import { GameOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
+import { GamePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
 
 export class GameDto {

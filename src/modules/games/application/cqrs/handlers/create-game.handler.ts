@@ -1,6 +1,6 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/entities/game.aggregate';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import { CreateGameCommand } from '../commands/create-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
@@ -8,11 +8,12 @@ import type { GameRepository } from '../../ports/game.repository';
 import type { RealmClientPort } from '../../ports/realm-client.port';
 
 @CommandHandler(CreateGameCommand)
-export class CreateGameCommandHandler implements ICommandHandler<CreateGameCommand, Game> {
+export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
     @Inject('RealmClient') private readonly realmClient: RealmClientPort,
-    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
+    @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: CreateGameCommand): Promise<Game> {
@@ -20,14 +21,18 @@ export class CreateGameCommandHandler implements ICommandHandler<CreateGameComma
     if (!realm) {
       throw new ValidationError('Realm not found');
     }
-    const game: Partial<Game> = {
-      ...command,
-      status: 'open',
-      owner: command.userId,
-      createdAt: new Date(),
-    };
+    const game = Game.create(
+      command.name,
+      command.realm,
+      command.options,
+      command.powerLevel,
+      command.description,
+      command.userId,
+    );
     const savedGame = await this.gameRepository.save(game);
-    await this.gameNotificationPort.created(savedGame);
+    //this.eventPublisher.mergeObjectContext(savedGame);
+    await this.gameEventBus.created(savedGame);
+    //savedGame.commit();
     return savedGame;
   }
 }

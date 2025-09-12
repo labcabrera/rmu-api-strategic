@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { GameOptions, GamePowerLevel } from './game.model-childs';
-import type { GameStatus } from 'src/modules/games/domain/entities/game-status.vo';
+import type { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
 
 export type GameDocument = GameModel & Document;
 
