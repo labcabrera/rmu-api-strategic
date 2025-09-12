@@ -16,18 +16,18 @@ import {
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
-import { GetFactionQuery } from '../../application/queries/get-faction.query';
+import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query';
 import { Faction } from '../../domain/entities/faction.entity';
-import { GetFactionsQuery } from '../../application/queries/get-factions.query';
+import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query';
 import { CreateFactionDto } from './dtos/create-faction.dto';
-import { CreateFactionCommand } from '../../application/commands/create-faction.command';
+import { CreateFactionCommand } from '../../application/cqrs/commands/create-faction.command';
 import { FactionDto, FactionPageDto } from './dtos/faction.dto';
-import { UpdateFactionCommand } from '../../application/commands/update-faction.command';
+import { UpdateFactionCommand } from '../../application/cqrs/commands/update-faction.command';
 import { UpdateFactionDto } from './dtos/update-faction.dto';
-import { DeleteFactionCommand } from '../../application/commands/delete-faction.command';
+import { DeleteFactionCommand } from '../../application/cqrs/commands/delete-faction.command';
 import { AddFactionXPDto } from './dtos/add-faction-xp.dto';
-import { AddFactionXPCommand } from '../../application/commands/add-faction-xp.command';
-import { AddFactionGoldCommand } from '../../application/commands/add-faction-gold.command';
+import { AddFactionXPCommand } from '../../application/cqrs/commands/add-faction-xp.command';
+import { AddFactionGoldCommand } from '../../application/cqrs/commands/add-faction-gold.command';
 import { AddFactionGoldDto } from './dtos/add-faction-gold.dto';
 
 @UseGuards(JwtAuthGuard)

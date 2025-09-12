@@ -1,17 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { UpdateFactionCommand } from '../update-faction.command';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
-import * as fr from '../../ports/out/faction-repository';
-import * as fep from '../../ports/out/game-event-producer';
+import type { FactionRepository } from '../../ports/out/faction-repository';
+import type { FactionEventProducer } from '../../ports/out/game-event-producer';
+import { UpdateFactionCommand } from '../commands/update-faction.command';
 
 @CommandHandler(UpdateFactionCommand)
 export class UpdateFactionCommandHandler implements ICommandHandler<UpdateFactionCommand, Faction> {
   constructor(
-    @Inject('FactionRepository') private readonly factionRepository: fr.FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: fep.FactionEventProducer,
+    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventProducer,
   ) {}
 
   async execute(command: UpdateFactionCommand): Promise<Faction> {

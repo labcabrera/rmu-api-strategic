@@ -1,16 +1,15 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
 import { NotFoundError } from 'src/modules/shared/domain/errors';
-import { DeleteFactionCommand } from '../delete-faction.command';
-import * as factionRepository from '../../ports/out/faction-repository';
-import * as gameEventProducer from '../../ports/out/game-event-producer';
+import type { FactionRepository } from '../../ports/out/faction-repository';
+import type { FactionEventProducer } from '../../ports/out/game-event-producer';
+import { DeleteFactionCommand } from '../commands/delete-faction.command';
 
 @CommandHandler(DeleteFactionCommand)
 export class DeleteFactionCommandHandler implements ICommandHandler<DeleteFactionCommand> {
   constructor(
-    @Inject('FactionRepository') private readonly factionRepository: factionRepository.FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: gameEventProducer.FactionEventProducer,
+    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventProducer,
   ) {}
 
   async execute(command: DeleteFactionCommand): Promise<void> {

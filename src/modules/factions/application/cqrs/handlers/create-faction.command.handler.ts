@@ -1,19 +1,18 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-
-import { CreateFactionCommand } from '../create-faction.command';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
-import * as factionRepository from '../../ports/out/faction-repository';
-import * as gameEventProducer from '../../ports/out/game-event-producer';
-import * as gr from 'src/modules/games/application/ports/game.repository';
 import { ValidationError } from 'src/modules/shared/domain/errors';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import type { FactionRepository } from '../../ports/out/faction-repository';
+import type { FactionEventProducer } from '../../ports/out/game-event-producer';
+import { CreateFactionCommand } from '../commands/create-faction.command';
 
 @CommandHandler(CreateFactionCommand)
 export class CreateFactionCommandHandler implements ICommandHandler<CreateFactionCommand, Faction> {
   constructor(
-    @Inject('FactionRepository') private readonly factionRepository: factionRepository.FactionRepository,
-    @Inject('GameRepository') private readonly gameRepository: gr.GameRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: gameEventProducer.FactionEventProducer,
+    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
+    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventProducer,
   ) {}
 
   async execute(command: CreateFactionCommand): Promise<Faction> {

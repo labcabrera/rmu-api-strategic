@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { AddFactionGoldCommand } from 'src/modules/factions/application/commands/add-faction-gold.command';
+import { AddFactionGoldCommand } from 'src/modules/factions/application/cqrs/commands/add-faction-gold.command';
 
 export class AddFactionGoldDto {
   @ApiProperty({ description: 'Gold to add to faction pool', example: 10 })

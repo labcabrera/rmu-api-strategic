@@ -3,20 +3,19 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from '../auth/auth.module';
-
 import { SharedModule } from '../shared/shared.module';
 import { FactionController } from './infrastructure/controllers/faction.controller';
-import { GetFactionsQueryHandler } from './application/queries/handlers/get-factions.query.handler';
-import { GetFactionQueryHandler } from './application/queries/handlers/get-faction.query.handler';
-import { CreateFactionCommandHandler } from './application/commands/handlers/create-faction.command.handler';
-import { UpdateFactionCommandHandler } from './application/commands/handlers/update-faction.command.handler';
-import { DeleteFactionCommandHandler } from './application/commands/handlers/delete-faction.command.handler';
 import { MongoFactionRepository } from './infrastructure/persistence/repositories/mongo-faction.repository';
 import { KafkaFactionProducerService } from './infrastructure/messaging/kafka-faction-producer.service';
 import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model';
 import { GamesModule } from '../games/games.module';
-import { AddFactionGoldCommandHandler } from './application/commands/handlers/add-faction-gold.command.handler';
-import { AddFactionXPCommandHandler } from './application/commands/handlers/add-faction-xp.command.handler';
+import { AddFactionGoldCommandHandler } from './application/cqrs/handlers/add-faction-gold.command.handler';
+import { AddFactionXPCommandHandler } from './application/cqrs/handlers/add-faction-xp.command.handler';
+import { CreateFactionCommandHandler } from './application/cqrs/handlers/create-faction.command.handler';
+import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-faction.command.handler';
+import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.query.handler';
+import { GetFactionsQueryHandler } from './application/cqrs/handlers/get-factions.query.handler';
+import { UpdateFactionCommandHandler } from './application/cqrs/handlers/update-faction.command.handler';
 
 @Module({
   imports: [

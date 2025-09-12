@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { UpdateFactionCommand } from 'src/modules/factions/application/commands/update-faction.command';
+import { UpdateFactionCommand } from 'src/modules/factions/application/cqrs/commands/update-faction.command';
 
 export class UpdateFactionDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })

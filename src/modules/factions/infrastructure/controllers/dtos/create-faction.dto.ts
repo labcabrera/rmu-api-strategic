@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CreateFactionCommand } from 'src/modules/factions/application/commands/create-faction.command';
+import { CreateFactionCommand } from 'src/modules/factions/application/cqrs/commands/create-faction.command';
 
 export class CreateFactionDto {
   @ApiProperty({ description: 'Strategic game identifier', example: 'strategic-game-01' })
