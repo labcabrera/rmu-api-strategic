@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
@@ -8,7 +8,6 @@ import { CharacterItemCreationDto } from './character-item.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
-import { CharacterCreationXPDto } from './character-xp.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 import {
   CreateCharacterCommand,
@@ -43,11 +42,9 @@ export class CreateCharacterDto {
   @IsObject()
   roleplay: CharacterRoleplayInfoDto;
 
-  @ApiProperty({ description: 'Character experience', type: CharacterCreationXPDto })
-  @ValidateNested()
-  @Type(() => CharacterCreationXPDto)
-  @IsObject()
-  experience: CharacterCreationXPDto;
+  @ApiProperty({ description: 'Character level', example: 1 })
+  @IsNumber()
+  level: number;
 
   @ApiProperty({ description: 'Character movement', type: CharacterStatisticsCreationDto })
   @ValidateNested()
@@ -102,7 +99,7 @@ export class CreateCharacterDto {
       dto.name,
       dto.info,
       dto.roleplay,
-      dto.experience,
+      dto.level,
       dto.statistics.toEntity(),
       dto.movement.strideCustomBonus,
       dto.endurance.customBonus,

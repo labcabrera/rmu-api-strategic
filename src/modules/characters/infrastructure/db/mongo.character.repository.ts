@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
@@ -40,22 +41,19 @@ export class MongoCharacterRepository implements CharacterRepository {
     return new Page<Character>(content, page, size, totalElements);
   }
 
-  async save(request: Partial<Character>): Promise<Character> {
+  async save(request: Character): Promise<Character> {
     const model = new this.characterModel({ ...request, _id: request.id });
     await model.save();
     return this.mapToEntity(model);
   }
 
-  async update(id: string, update: Partial<Character>): Promise<Character> {
-    const current = await this.characterModel.findById(id);
-    if (!current) {
-      throw new NotFoundError('Character', id);
+  async update(update: Character): Promise<Character> {
+    const plain = update.toPlainObject();
+    const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
+    if (!updated) {
+      throw new NotFoundError('Character', update.id);
     }
-    const updatedCharacter = await this.characterModel.findByIdAndUpdate(id, { $set: update }, { new: true });
-    if (!updatedCharacter) {
-      throw new NotFoundError('Character', id);
-    }
-    return this.mapToEntity(updatedCharacter);
+    return this.mapToEntity(updated);
   }
 
   async deleteById(id: string): Promise<Character | null> {
@@ -70,7 +68,7 @@ export class MongoCharacterRepository implements CharacterRepository {
 
   private mapToEntity(doc: CharacterDocument): Character {
     return new Character(
-      doc._id as string,
+      doc._id,
       doc.gameId,
       doc.factionId,
       doc.name,

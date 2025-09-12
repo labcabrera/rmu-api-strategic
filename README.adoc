@@ -1,7 +1,17 @@
-= Rolemaster Unified Strategic API
+= RMU Engine Strategic API
 
-REST API for RMO strategic management of games. This API is in charge of defining the campaigns and characters of a game
-while the tactical API is in charge of resolving the combats that occur.
+image:https://img.shields.io/badge/license-GPL3.0-green.svg[License,link="https://www.gnu.org/licenses/gpl-3.0.html"]
+image:https://img.shields.io/badge/rolemaster-rmu-green.svg[Rolemaster,link="http://ironcrown.co.uk/unified-rolemaster/"]
+image:https://img.shields.io/badge/NestJS-11.0.1-green?logo=nestjs[NestJS, link="https://www.npmjs.com/package/@nestjs/common/v/11.0.1"]
+
+++++
+<a href="https://www.postman.com/labcabrera/workspace/rmu-engine/collection/5547717-39d04dee-7325-4251-86e5-e1f250cd99f2?action=share&creator=5547717&active-environment=5547717-f0da278a-5cc7-4d6c-8a82-8739ae0d1b0b" target="_blank">
+  <img src="https://run.pstmn.io/button.svg" alt="Run in Postman"/>
+</a>
+++++
+
+REST API for strategic management of games, factions and characters. This API is in charge of defining the
+campaigns and characters of a game while the tactical API is in charge of resolving the combats that occur.
 
 This project is part of RMU Online: https://github.com/labcabrera/rmu-platform
 
@@ -15,6 +25,6 @@ image::./diagrams/c4-context.png[C4 Context Diagram]
 * *Strategic Game*: A strategic game represents a campaign that can consist of several battles (tactical games). Each campaign
 has a series of factions that function as if they were independent gangs.
 
-* *Faction*: A faction is a group of characters who share resources such as gold.
+* *Faction*: A faction is a group of characters who share resources such as items or gold.
 
 * *Character*: Represents a character belonging to a gang with characteristics such as attributes, skills, items, etc.

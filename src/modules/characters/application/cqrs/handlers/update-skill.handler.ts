@@ -30,7 +30,7 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
     }
     skill.ranks = command.ranks || skill.ranks;
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(characterId, character);
+    const updated: Character = await this.characterRepository.update(character);
     return updated;
   }
 }

@@ -29,7 +29,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     this.validateEquipmentData(character, item, command);
     this.equip(character, item, command);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(command.characterId, character);
+    return await this.characterRepository.update(character);
   }
 
   private equip(character: Character, item: CharacterItem, command: EquipItemCommand): void {

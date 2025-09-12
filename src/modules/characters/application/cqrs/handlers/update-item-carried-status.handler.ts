@@ -37,6 +37,6 @@ export class UpdateItemCarriedStatusHandler implements ICommandHandler<UpdateIte
     }
     item.carried = command.carried;
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(command.characterId, character);
+    return await this.characterRepository.update(character);
   }
 }

@@ -44,7 +44,7 @@ export class DeleteSkillHandler implements ICommandHandler<DeleteSkillCommand, C
     }
     character.skills = character.skills.filter((skill) => skill.skillId !== skillId);
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(characterId, character);
+    const updated: Character = await this.characterRepository.update(character);
     return updated;
   }
 }

@@ -10,7 +10,7 @@ export interface CharacterRepository {
 
   save(entity: Partial<Character>): Promise<Character>;
 
-  update(id: string, entity: Partial<Character>): Promise<Character>;
+  update(entity: Character): Promise<Character>;
 
   deleteById(id: string): Promise<Character | null>;
 

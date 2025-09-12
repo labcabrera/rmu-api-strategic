@@ -18,11 +18,15 @@ import {
 } from './character-childs.model';
 import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
+import { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 
 export type CharacterDocument = CharacterModel & Document;
 
-@Schema({ collection: 'characters', versionKey: false })
+@Schema({ collection: 'characters', _id: false, versionKey: false })
 export class CharacterModel {
+  @Prop({ required: true })
+  _id: string;
+
   @Prop({ required: true })
   gameId: string;
 
@@ -76,7 +80,8 @@ export class CharacterModel {
   @Prop({ type: [CharacterAttack], required: true })
   attacks: CharacterAttack[];
 
-  status: string | undefined;
+  @Prop({ type: String, required: false })
+  status: CharacterStatus | undefined;
 
   @Prop({ type: String, required: false })
   description: string | undefined;

@@ -9,7 +9,7 @@ export class CreateCharacterCommand {
     public readonly name: string,
     public readonly info: CharacterInfo,
     public readonly roleplay: CharacterRoleplayInfo,
-    public readonly experience: CreateCharacterExperience,
+    public readonly level: number,
     public readonly statistics: CharacterStatistics,
     public readonly strideCustomBonus: number | undefined,
     public readonly enduranceCustomBonus: number | undefined,

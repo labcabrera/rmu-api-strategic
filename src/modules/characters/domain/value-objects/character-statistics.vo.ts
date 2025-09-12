@@ -1,10 +1,12 @@
-export interface Stat {
-  potential: number;
-  temporary: number;
-  bonus: number;
-  racial: number;
-  custom: number;
-  totalBonus: number;
+export class Stat {
+  constructor(
+    public potential: number,
+    public temporary: number,
+    public bonus: number,
+    public racial: number,
+    public custom: number,
+    public totalBonus: number,
+  ) {}
 }
 
 export class CharacterStatistics {
