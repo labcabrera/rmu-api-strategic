@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterArmor, CharacterDefense } from '../../../domain/entities/character.entity';
+import { CharacterArmor, CharacterDefense } from 'src/modules/characters/domain/value-objects/character-defense.vo';
 
 export class CharacterArmorDto {
   at: number | undefined;

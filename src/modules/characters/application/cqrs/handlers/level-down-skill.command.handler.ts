@@ -2,13 +2,13 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as cr from '../../ports/out/character.repository';
-import * as cldr from '../../ports/out/character-level-dev.repository';
-import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
-import * as pc from '../../ports/out/profession-client';
-import * as sc from '../../ports/out/skill-client';
+import * as cr from '../../ports/character.repository';
+import * as cldr from '../../ports/character-level-dev.repository';
+import { CharacterLevelDev } from 'src/modules/characters/domain/aggregates/character-level-dev.aggregate';
+import * as pc from '../../ports/profession-client.port';
+import * as sc from '../../ports/skill-client.port';
 import { LevelDownSkillCommand } from '../commands/level-down-skill.command';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 
@@ -18,8 +18,8 @@ export class LevelDownSkillCommandHandler implements ICommandHandler<LevelDownSk
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
     @Inject('CharacterLevelDevRepository') private readonly characterLevelRepository: cldr.CharacterLevelDevRepository,
-    @Inject('SkillClient') private readonly skillClient: sc.SkillClient,
-    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClient,
+    @Inject('SkillClient') private readonly skillClient: sc.SkillClientPort,
+    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClientPort,
   ) {}
 
   async execute(command: LevelDownSkillCommand): Promise<Character> {

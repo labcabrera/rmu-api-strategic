@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from 'src/modules/auth/token.service';
-import { RaceClient } from '../../application/ports/out/race-client';
+import { RaceClientPort } from '../../application/ports/race-client.port';
 
 @Injectable()
-export class RaceApiClient implements RaceClient {
+export class RaceApiClient implements RaceClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

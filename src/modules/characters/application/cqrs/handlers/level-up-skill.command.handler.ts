@@ -2,17 +2,17 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character, WeaponDevelopmentType } from '../../../domain/entities/character.entity';
+import { Character, WeaponDevelopmentType } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as cr from '../../ports/out/character.repository';
+import * as cr from '../../ports/character.repository';
 import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
-import * as cldr from '../../ports/out/character-level-dev.repository';
-import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
-import * as pc from '../../ports/out/profession-client';
-import * as sc from '../../ports/out/skill-client';
+import * as cldr from '../../ports/character-level-dev.repository';
+import { CharacterLevelDev } from 'src/modules/characters/domain/aggregates/character-level-dev.aggregate';
+import * as pc from '../../ports/profession-client.port';
+import * as sc from '../../ports/skill-client.port';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
-import * as scc from '../../ports/out/skill-category-client';
-import { SkillResponse } from '../../ports/out/skill-client';
+import * as scc from '../../ports/skill-category-client.port';
+import { SkillResponse } from '../../ports/skill-client.port';
 import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
 
 @CommandHandler(LevelUpSkillCommand)
@@ -21,9 +21,9 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
     @Inject('CharacterLevelDevRepository') private readonly characterLevelRepository: cldr.CharacterLevelDevRepository,
-    @Inject('SkillClient') private readonly skillClient: sc.SkillClient,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: scc.SkillCategoryClient,
-    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClient,
+    @Inject('SkillClient') private readonly skillClient: sc.SkillClientPort,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: scc.SkillCategoryClientPort,
+    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClientPort,
   ) {}
 
   async execute(command: LevelUpSkillCommand): Promise<Character> {

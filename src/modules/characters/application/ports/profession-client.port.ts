@@ -1,4 +1,4 @@
-export interface ProfessionClient {
+export interface ProfessionClientPort {
   getProfessionById(professionId: string): Promise<ProfessionResponse | undefined>;
 }
 export interface ProfessionResponse {

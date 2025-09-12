@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-
-import { Character, CharacterSkill, Stat } from '../../../entities/character.entity';
+import { Character } from '../../../aggregates/character.aggregate';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo';
+import { Stat } from '../../../value-objects/character-statistics.vo';
 
 @Injectable()
 export class SkillProcessor {

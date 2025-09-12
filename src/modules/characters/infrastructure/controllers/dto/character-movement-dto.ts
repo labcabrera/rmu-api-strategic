@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber } from 'class-validator';
-import { CharacterMovement } from '../../../domain/entities/character.entity';
+import { CharacterMovement } from 'src/modules/characters/domain/value-objects/character-movement.vo';
 
 export class CharacterMovementDto {
   baseMovementRate: number;

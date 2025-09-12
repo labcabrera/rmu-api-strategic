@@ -2,12 +2,12 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as cr from '../../ports/out/character.repository';
+import * as cr from '../../ports/character.repository';
 import { TransferGoldCommand } from '../commands/transfer-gold.command';
-import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
-import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import * as fr from 'src/modules/factions/application/ports/faction.repository';
+import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
 import { randomUUID } from 'crypto';
 
 @CommandHandler(TransferGoldCommand)

@@ -1,4 +1,4 @@
-import { CharacterLevelDev } from '../entities/character-level-dev.entity';
+import { CharacterLevelDev } from '../aggregates/character-level-dev.aggregate';
 
 export class CharacterLevelCalculator {
   static calculateUsedDevPoints(cld: Partial<CharacterLevelDev>): number {

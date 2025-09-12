@@ -2,20 +2,20 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/out/character.repository';
-import * as itemClient from '../../ports/out/item-client';
+import * as characterRepository from '../../ports/character.repository';
+import * as itemClient from '../../ports/item-client.port';
 import { AddItemCommand } from '../commands/add-item.comand';
-import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
-import { ItemResponse } from '../../ports/out/item-client';
+import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
+import { ItemResponse } from '../../ports/item-client.port';
 
 @CommandHandler(AddItemCommand)
 export class AddItemCommandHandler implements ICommandHandler<AddItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('ItemClient') private readonly itemClient: itemClient.ItemClient,
+    @Inject('ItemClient') private readonly itemClient: itemClient.ItemClientPort,
   ) {}
 
   async execute(command: AddItemCommand): Promise<Character> {

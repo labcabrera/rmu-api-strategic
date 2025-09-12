@@ -11,7 +11,7 @@ import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
 import { CharacterStatisticsDto } from './character-statistics.dto';
 import { CharacterXPDto } from './character-xp.dto';
-import * as characterEntity from 'src/modules/characters/domain/entities/character.entity';
+import * as characterEntity from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';

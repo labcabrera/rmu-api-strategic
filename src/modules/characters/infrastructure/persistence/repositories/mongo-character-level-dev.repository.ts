@@ -1,6 +1,6 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { CharacterLevelDevRepository } from 'src/modules/characters/application/ports/out/character-level-dev.repository';
-import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
+import { CharacterLevelDevRepository } from 'src/modules/characters/application/ports/character-level-dev.repository';
+import { CharacterLevelDev } from 'src/modules/characters/domain/aggregates/character-level-dev.aggregate';
 import { CharacterLevelDevDocument, CharacterLevelDevModel } from '../models/character-level-dev.model';
 import { Document, Model } from 'mongoose';
 import { NotFoundError } from 'src/modules/shared/domain/errors';

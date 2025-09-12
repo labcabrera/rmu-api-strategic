@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../entities/character.entity';
-import { CharacterResistance } from '../../../entities/character-resistances.entity';
+import { Character } from '../../../aggregates/character.aggregate';
+import { CharacterResistance } from '../../../value-objects/character-resistances.vo';
 
 @Injectable()
 export class ResistancesProcessor {

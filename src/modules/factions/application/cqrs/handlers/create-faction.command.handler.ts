@@ -3,8 +3,8 @@ import { Inject } from '@nestjs/common';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import type { FactionRepository } from '../../ports/out/faction-repository';
-import type { FactionEventProducer } from '../../ports/out/game-event-producer';
+import type { FactionRepository } from '../../ports/faction.repository';
+import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { CreateFactionCommand } from '../commands/create-faction.command';
 
 @CommandHandler(CreateFactionCommand)
@@ -12,7 +12,7 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventProducer,
+    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
   ) {}
 
   async execute(command: CreateFactionCommand): Promise<Faction> {

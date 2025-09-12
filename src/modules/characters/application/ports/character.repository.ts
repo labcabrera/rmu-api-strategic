@@ -1,5 +1,5 @@
-import { Page } from '../../../../shared/domain/entities/page.entity';
-import { Character } from '../../../domain/entities/character.entity';
+import { Page } from '../../../shared/domain/entities/page.entity';
+import { Character } from '../../domain/aggregates/character.aggregate';
 
 export interface CharacterRepository {
   findById(id: string): Promise<Character | null>;

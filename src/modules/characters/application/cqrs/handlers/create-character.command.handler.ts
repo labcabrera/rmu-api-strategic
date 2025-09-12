@@ -2,54 +2,48 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-
 import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors';
-import {
-  Character,
-  CharacterDefense,
-  CharacterEndurance,
-  CharacterEquipment,
-  CharacterHP,
-  CharacterInfo,
-  CharacterInitiative,
-  CharacterMovement,
-  CharacterPower,
-  CharacterSkill,
-  CharacterStatistics,
-  Stat,
-} from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as cr from '../../ports/out/character.repository';
-import * as ic from '../../ports/out/item-client';
-import * as rc from '../../ports/out/race-client';
-import { RaceResponse } from '../../ports/out/race-client';
-import * as scc from '../../ports/out/skill-category-client';
-import * as sc from '../../ports/out/skill-client';
+import type { RaceClientPort, RaceResponse } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
-import * as gr from 'src/modules/games/application/ports/game.repository';
-import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
-import * as pc from '../../ports/out/profession-client';
-import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
-import { CharacterXP } from 'src/modules/characters/domain/entities/character-xp.entity';
-import { CharacterResistance } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
+import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
+import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.entity';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import type { ItemClientPort } from '../../ports/item-client.port';
+import type { ProfessionClientPort } from '../../ports/profession-client.port';
+import type { CharacterRepository } from '../../ports/character.repository';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
+import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
+import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
+import { CharacterMovement } from 'src/modules/characters/domain/value-objects/character-movement.vo';
+import { CharacterDefense } from 'src/modules/characters/domain/value-objects/character-defense.vo';
+import { CharacterHP } from 'src/modules/characters/domain/value-objects/character-hp.vo';
+import { CharacterEndurance } from 'src/modules/characters/domain/value-objects/character-endurance.vo';
+import { CharacterPower } from 'src/modules/characters/domain/value-objects/character-power.vo';
+import { CharacterInitiative } from 'src/modules/characters/domain/value-objects/character-initiative.vo';
+import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
+import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import { CharacterResistance } from 'src/modules/characters/domain/value-objects/character-resistances.vo';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
   private readonly logger = new Logger(CreateCharacterCommandHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
-    @Inject('GameRepository') private readonly gameRepository: gr.GameRepository,
-    @Inject('FactionRepository') private readonly factionRepository: fr.FactionRepository,
-    @Inject('RaceClient') private readonly raceClient: rc.RaceClient,
-    @Inject('SkillClient') private readonly skillClient: sc.SkillClient,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: scc.SkillCategoryClient,
-    @Inject('ProfessionClient') private readonly professionClient: pc.ProfessionClient,
-    @Inject('ItemClient') private readonly itemClient: ic.ItemClient,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
+    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
+    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
+    @Inject('ItemClient') private readonly itemClient: ItemClientPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
@@ -335,7 +329,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     }
   }
 
-  async fetchSkills(): Promise<sc.SkillResponse[]> {
+  async fetchSkills(): Promise<SkillResponse[]> {
     try {
       return await this.skillClient.getAllSkills();
     } catch (e) {
@@ -344,7 +338,7 @@ export class CreateCharacterCommandHandler implements ICommandHandler<CreateChar
     }
   }
 
-  async fetchSkillCategories(): Promise<scc.SkillCategoryResponse[]> {
+  async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
     try {
       return await this.skillCategoryClient.getAllSkillCategories();
     } catch (e) {

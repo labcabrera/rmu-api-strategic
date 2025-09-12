@@ -2,8 +2,8 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
-import * as characterRepository from '../../ports/out/character.repository';
+import { Character } from '../../../domain/aggregates/character.aggregate';
+import * as characterRepository from '../../ports/character.repository';
 import { GetCharacterQuery } from '../queries/get-character.query';
 
 @QueryHandler(GetCharacterQuery)

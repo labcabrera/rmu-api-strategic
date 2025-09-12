@@ -6,7 +6,7 @@ import { Page } from '../../../shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from '../../../shared/infrastructure/controller/dto';
 import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query';
 import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query';
-import { Character } from '../../domain/entities/character.entity';
+import { Character } from '../../domain/aggregates/character.aggregate';
 import { CharacterDto, CharacterPageDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AddXPDto } from './dto/add-xp.dto';

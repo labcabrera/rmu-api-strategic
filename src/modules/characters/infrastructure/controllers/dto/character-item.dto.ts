@@ -3,7 +3,7 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { CharacterItemInfoDto } from './character-item-info.dto';
 import { CharacterItemWeaponDto, CharacterItemWeaponRangeDto } from './character-item-weapon.dto';
 import { CharacterItemArmorDto } from './character-item-armor.dto';
-import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
+import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
 
 export class CharacterItemDto {
   id: string;

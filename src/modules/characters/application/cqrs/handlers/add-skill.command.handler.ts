@@ -1,21 +1,21 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character, CharacterSkill } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/out/character.repository';
-import * as skillCategoryClient from '../../ports/out/skill-category-client';
-import * as skillClient from '../../ports/out/skill-client';
+import * as characterRepository from '../../ports/character.repository';
+import * as skillCategoryClient from '../../ports/skill-category-client.port';
+import * as skillClient from '../../ports/skill-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
+import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillCommandHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('SkillClient') private readonly skillClient: skillClient.SkillClient,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: skillCategoryClient.SkillCategoryClient,
+    @Inject('SkillClient') private readonly skillClient: skillClient.SkillClientPort,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: skillCategoryClient.SkillCategoryClientPort,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {

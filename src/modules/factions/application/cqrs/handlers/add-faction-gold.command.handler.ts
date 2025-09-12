@@ -2,15 +2,15 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
 import { ForbiddenError, NotFoundError } from 'src/modules/shared/domain/errors';
-import type { FactionRepository } from '../../ports/out/faction-repository';
-import type { FactionEventProducer } from '../../ports/out/game-event-producer';
+import type { FactionRepository } from '../../ports/faction.repository';
+import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { AddFactionGoldCommand } from '../commands/add-faction-gold.command';
 
 @CommandHandler(AddFactionGoldCommand)
 export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionGoldCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventProducer,
+    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
   ) {}
 
   async execute(command: AddFactionGoldCommand): Promise<Faction> {

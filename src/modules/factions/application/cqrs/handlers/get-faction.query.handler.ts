@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { GetFactionQuery } from '../queries/get-faction.query';
-import type { FactionRepository } from '../../ports/out/faction-repository';
+import type { FactionRepository } from '../../ports/faction.repository';
 
 @QueryHandler(GetFactionQuery)
 export class GetFactionQueryHandler implements IQueryHandler<GetFactionQuery, Faction> {

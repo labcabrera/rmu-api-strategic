@@ -1,3 +1,7 @@
+export interface RaceClientPort {
+  getRaceById(raceId: string): Promise<RaceResponse>;
+}
+
 export interface RaceResponse {
   id: string;
   name: string;
@@ -12,8 +16,4 @@ export interface RaceResponse {
   baseHits: number;
   bonusDevPoints: number;
   description: string;
-}
-
-export interface RaceClient {
-  getRaceById(raceId: string): Promise<RaceResponse>;
 }

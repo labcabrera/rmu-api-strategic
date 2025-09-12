@@ -1,4 +1,6 @@
-import { CharacterInfo, CharacterRoleplayInfo, CharacterStatistics } from 'src/modules/characters/domain/entities/character.entity';
+import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
+import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
+import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 
 export class CreateCharacterCommand {
   constructor(

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../entities/character.entity';
+import { Character } from '../aggregates/character.aggregate';
 import { AttackProcessor } from './character/processors/attack-processor';
 import { DefenseProcessor } from './character/processors/defense-processor';
 import { EquipmentProcessor } from './character/processors/equipment-processor';

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-
 import { IsNumber } from 'class-validator';
-import { CharacterInitiative } from '../../../domain/entities/character.entity';
+import { CharacterInitiative } from 'src/modules/characters/domain/value-objects/character-initiative.vo';
 
 export class CharacterInitiativeDto {
   @ApiProperty({ description: 'Base initiative bonus', example: 2 })

@@ -3,7 +3,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { ErrorDto } from '../../../shared/infrastructure/controller/dto';
-import { Character } from '../../domain/entities/character.entity';
+import { Character } from '../../domain/aggregates/character.aggregate';
 import { AddItemDto } from './dto/add-item.dto';
 import { CharacterDto } from './dto/character.dto';
 import { EquipItemDto } from './dto/equip-item.dto';

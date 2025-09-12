@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../entities/character.entity';
-import { CharacterItem } from '../../../entities/character-item.entity';
+import { Character } from '../../../aggregates/character.aggregate';
+import { CharacterItem } from '../../../value-objects/character-item.vo';
 
 const baseDifficultyCodes = ['c', 's', 'r', 'e', 'l', 'm', 'h', 'vh', 'xh', 'sf', 'a', 'ni'];
 

@@ -1,4 +1,4 @@
-import { CharacterEquipment } from '../../../domain/entities/character.entity';
+import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 
 export class CharacterEquipmentDto {
   mainHand: string | undefined;

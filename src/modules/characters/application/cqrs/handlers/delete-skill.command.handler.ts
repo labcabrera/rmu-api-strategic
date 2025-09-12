@@ -2,11 +2,11 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/out/character.repository';
+import * as characterRepository from '../../ports/character.repository';
 import { DeleteSkillCommand } from '../commands/delete-skill-command';
-import * as cldr from '../../ports/out/character-level-dev.repository';
+import * as cldr from '../../ports/character-level-dev.repository';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 
 //TODO only can remove skills added in the current level

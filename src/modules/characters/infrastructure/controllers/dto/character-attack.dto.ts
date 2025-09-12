@@ -1,4 +1,4 @@
-import { CharacterAttack } from 'src/modules/characters/domain/entities/character-attack.entity';
+import { CharacterAttack } from 'src/modules/characters/domain/value-objects/character-attack.vo';
 
 export class CharacterAttackDto {
   attackName: string;

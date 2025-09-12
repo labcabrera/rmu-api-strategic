@@ -1,5 +1,8 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import * as ce from 'src/modules/characters/domain/entities/character.entity';
+import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
+import { CharacterGender } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
 
 @Schema({ _id: false })
 export class CharacterInfo {
@@ -13,7 +16,7 @@ export class CharacterInfo {
   sizeId: string;
 
   @Prop({ required: true })
-  realmType: ce.CharacterRealm;
+  realmType: CharacterRealm;
 
   @Prop({ required: true })
   height: number;
@@ -175,7 +178,7 @@ export class CharacterSkill {
   statistics: string[];
 
   @Prop({ type: [String], required: false })
-  professional: ce.ProfessionalBonusType[] | undefined;
+  professional: ProfessionalBonusType[] | undefined;
 
   @Prop({ required: true })
   ranks: number;
@@ -217,7 +220,7 @@ export class CharacterXP {
   availableDevelopmentPoints: number;
 
   @Prop({ required: true })
-  weaponDevelopment: ce.WeaponDevelopmentType[];
+  weaponDevelopment: WeaponDevelopmentType[];
 }
 
 @Schema({ _id: false })
@@ -244,7 +247,7 @@ export class CharacterAttack {
 @Schema({ _id: false })
 export class CharacterRoleplayInfo {
   @Prop({ type: String, required: false })
-  gender: ce.CharacterGender | undefined;
+  gender: CharacterGender | undefined;
 
   @Prop({ type: Number, required: false })
   age: number | undefined;

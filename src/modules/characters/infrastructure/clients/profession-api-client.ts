@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from 'src/modules/auth/token.service';
-import { ProfessionClient, ProfessionResponse } from '../../application/ports/out/profession-client';
+import { ProfessionClientPort, ProfessionResponse } from '../../application/ports/profession-client.port';
 
 @Injectable()
-export class ProfessionApiClient implements ProfessionClient {
+export class ProfessionApiClient implements ProfessionClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

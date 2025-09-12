@@ -1,4 +1,4 @@
-import { CharacterItemInfo } from 'src/modules/characters/domain/entities/character-item.entity';
+import { CharacterItemInfo } from 'src/modules/characters/domain/value-objects/character-item.vo';
 
 export class CharacterItemInfoDto {
   length: number | undefined;

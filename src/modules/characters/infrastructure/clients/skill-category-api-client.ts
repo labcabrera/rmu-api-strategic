@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from '../../../auth/token.service';
-import { SkillCategoryClient, SkillCategoryResponse } from '../../application/ports/out/skill-category-client';
+import { SkillCategoryClientPort, SkillCategoryResponse } from '../../application/ports/skill-category-client.port';
 
 @Injectable()
-export class SkillCategoryApiClient implements SkillCategoryClient {
+export class SkillCategoryApiClient implements SkillCategoryClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

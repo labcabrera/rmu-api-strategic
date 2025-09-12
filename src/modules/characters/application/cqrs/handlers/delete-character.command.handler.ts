@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import * as characterRepository from '../../ports/out/character.repository';
+import * as characterRepository from '../../ports/character.repository';
 import { DeleteCharacterCommand } from '../commands/delete-character.command';
 
 @CommandHandler(DeleteCharacterCommand)

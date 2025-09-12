@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsObject, IsOptional, ValidateNested } from 'class-validator';
-import { CharacterStatistics, Stat } from '../../../domain/entities/character.entity';
+import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 
 export class StatDto {
   potential: number | undefined;

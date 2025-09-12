@@ -1,4 +1,4 @@
-import { CharacterItemWeapon, CharacterItemWeaponRange } from 'src/modules/characters/domain/entities/character-item.entity';
+import { CharacterItemWeapon, CharacterItemWeaponRange } from 'src/modules/characters/domain/value-objects/character-item.vo';
 
 export class CharacterItemWeaponDto {
   attackTable: string;

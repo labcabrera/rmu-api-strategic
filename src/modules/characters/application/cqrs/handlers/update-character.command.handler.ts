@@ -2,9 +2,9 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/entities/character.entity';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/out/character.repository';
+import * as characterRepository from '../../ports/character.repository';
 import { UpdateCharacterCommand } from '../commands/update-character.command';
 
 @CommandHandler(UpdateCharacterCommand)

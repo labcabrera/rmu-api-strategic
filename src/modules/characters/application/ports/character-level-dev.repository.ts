@@ -1,4 +1,4 @@
-import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
+import { CharacterLevelDev } from 'src/modules/characters/domain/aggregates/character-level-dev.aggregate';
 
 export interface CharacterLevelDevRepository {
   findByCharacterAndLevel(characterId: string, level: number): Promise<CharacterLevelDev | null>;

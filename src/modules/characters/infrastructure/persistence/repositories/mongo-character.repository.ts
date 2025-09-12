@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
-
 import { Page } from '../../../../shared/domain/entities/page.entity';
 import { NotFoundError } from '../../../../shared/domain/errors';
 import { RsqlParser } from '../../../../shared/infrastructure/messaging/rsql-parser';
-import { CharacterRepository } from '../../../application/ports/out/character.repository';
-import { Character } from '../../../domain/entities/character.entity';
+import { CharacterRepository } from '../../../application/ports/character.repository';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterDocument, CharacterModel } from '../models/character.model';
 
 @Injectable()
@@ -73,32 +71,31 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   private mapToEntity(doc: CharacterDocument): Character {
-    const plain = doc.toObject();
-    return {
-      id: plain._id as string,
-      gameId: plain.gameId,
-      factionId: plain.factionId,
-      name: plain.name,
-      info: plain.info,
-      roleplay: plain.roleplay,
-      experience: plain.experience,
-      statistics: plain.statistics,
-      movement: plain.movement,
-      defense: plain.defense,
-      resistances: plain.resistances,
-      hp: plain.hp,
-      endurance: plain.endurance,
-      power: plain.power,
-      initiative: plain.initiative,
-      skills: plain.skills,
-      items: plain.items,
-      equipment: plain.equipment,
-      attacks: plain.attacks,
-      status: plain.status,
-      description: plain.description,
-      owner: plain.owner,
-      createdAt: plain.createdAt,
-      updatedAt: plain.updatedAt,
-    };
+    return new Character(
+      doc._id as string,
+      doc.gameId,
+      doc.factionId,
+      doc.name,
+      doc.info,
+      doc.roleplay,
+      doc.experience,
+      doc.statistics,
+      doc.movement,
+      doc.defense,
+      doc.resistances,
+      doc.hp,
+      doc.endurance,
+      doc.power,
+      doc.initiative,
+      doc.skills,
+      doc.items,
+      doc.equipment,
+      doc.attacks,
+      doc.status,
+      doc.description,
+      doc.owner,
+      doc.createdAt,
+      doc.updatedAt,
+    );
   }
 }

@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from '../../../auth/token.service';
-import { ItemClient, ItemResponse } from '../../application/ports/out/item-client';
+import { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port';
 import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors';
 
 @Injectable()
-export class ItemApiClient implements ItemClient {
+export class ItemApiClient implements ItemClientPort {
   private readonly logger = new Logger(ItemApiClient.name);
 
   constructor(

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterSkill, ProfessionalBonusType } from '../../../domain/entities/character.entity';
+import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
 
 export class CharacterSkillDto {
   skillId: string;

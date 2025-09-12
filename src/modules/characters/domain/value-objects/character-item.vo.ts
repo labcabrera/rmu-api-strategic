@@ -1,17 +1,19 @@
-export interface CharacterItem {
-  id: string;
-  name: string;
-  itemTypeId: string;
-  category: string;
-  carried: boolean;
-  weapon: CharacterItemWeapon | undefined;
-  weaponRange: CharacterItemWeaponRange[] | undefined;
-  armor: CharacterItemArmor | undefined;
-  affixes: CharacterItemAffix[] | undefined;
-  info: CharacterItemInfo;
-  stackable: boolean | undefined;
-  amount: number | undefined;
-  description: string | undefined;
+export class CharacterItem {
+  constructor(
+    public id: string,
+    public name: string,
+    public itemTypeId: string,
+    public category: string,
+    public carried: boolean,
+    public weapon: CharacterItemWeapon | undefined,
+    public weaponRange: CharacterItemWeaponRange[] | undefined,
+    public armor: CharacterItemArmor | undefined,
+    public affixes: CharacterItemAffix[] | undefined,
+    public info: CharacterItemInfo,
+    public stackable: boolean | undefined,
+    public amount: number | undefined,
+    public description: string | undefined,
+  ) {}
 }
 
 export interface CharacterItemWeapon {

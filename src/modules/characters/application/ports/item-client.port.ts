@@ -1,3 +1,7 @@
+export interface ItemClientPort {
+  getItemById(itemId: string): Promise<ItemResponse>;
+}
+
 export interface ItemResponse {
   id: string;
   category: string;
@@ -46,8 +50,4 @@ export interface ItemWeaponRangeResponse {
   from: number;
   to: number;
   bonus: number;
-}
-
-export interface ItemClient {
-  getItemById(itemId: string): Promise<ItemResponse>;
 }

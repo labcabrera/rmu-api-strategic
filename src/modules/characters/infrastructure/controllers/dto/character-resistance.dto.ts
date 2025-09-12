@@ -1,4 +1,4 @@
-import { CharacterResistance } from 'src/modules/characters/domain/entities/character-resistances.entity';
+import { CharacterResistance } from 'src/modules/characters/domain/value-objects/character-resistances.vo';
 
 export class CharacterResistanceDto {
   resistance: string;

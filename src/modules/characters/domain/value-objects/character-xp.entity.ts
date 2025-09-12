@@ -1,4 +1,4 @@
-import { WeaponDevelopmentType } from './character.entity';
+import { WeaponDevelopmentType } from '../aggregates/character.aggregate';
 
 export interface CharacterXP {
   level: number;
