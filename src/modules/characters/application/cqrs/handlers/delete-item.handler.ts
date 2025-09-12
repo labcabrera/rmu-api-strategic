@@ -8,7 +8,7 @@ import { DeleteItemCommand } from '../commands/delete-item.command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 
 @CommandHandler(DeleteItemCommand)
-export class DeleteItemCommandHandler implements ICommandHandler<DeleteItemCommand, Character> {
+export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,

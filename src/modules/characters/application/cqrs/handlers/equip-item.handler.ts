@@ -9,7 +9,7 @@ import { EquipItemCommand } from '../commands/equip-item-command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 
 @CommandHandler(EquipItemCommand)
-export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand, Character> {
+export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,

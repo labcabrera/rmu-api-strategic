@@ -8,7 +8,7 @@ import * as characterRepository from '../../ports/character.repository';
 import { AddXPCommand } from '../commands/add-xp.command';
 
 @CommandHandler(AddXPCommand)
-export class AddXPCommandHandler implements ICommandHandler<AddXPCommand, Character> {
+export class AddXPHandler implements ICommandHandler<AddXPCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,

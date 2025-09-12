@@ -7,7 +7,7 @@ import * as characterRepository from '../../ports/character.repository';
 import { GetCharacterQuery } from '../queries/get-character.query';
 
 @QueryHandler(GetCharacterQuery)
-export class GetCharacterQueryHandler implements IQueryHandler<GetCharacterQuery, Character> {
+export class GetCharacterHandler implements IQueryHandler<GetCharacterQuery, Character> {
   constructor(
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
   ) {}

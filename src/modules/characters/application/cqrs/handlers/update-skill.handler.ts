@@ -5,32 +5,32 @@ import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/character.repository';
-import { UpdateCharacterCommand } from '../commands/update-character.command';
+import { UpdateSkillCommand } from '../commands/update-skill.command';
 
-@CommandHandler(UpdateCharacterCommand)
-export class UpdateCharacterCommandHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
+@CommandHandler(UpdateSkillCommand)
+export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
   ) {}
 
-  async execute(command: UpdateCharacterCommand): Promise<Character> {
+  async execute(command: UpdateSkillCommand): Promise<Character> {
     const characterId = command.characterId;
+    const skillId = command.skillId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-    this.bindFields(character, command);
+    const skill = character.skills.find((skill) => skill.skillId === skillId) || null;
+    if (!skill) {
+      throw new Error(`Skill ${skillId} not found for character ${characterId}`);
+    }
+    if (command.customBonus !== undefined) {
+      skill.customBonus = command.customBonus;
+    }
+    skill.ranks = command.ranks || skill.ranks;
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
-  }
-
-  private bindFields(character: Character, command: UpdateCharacterCommand): void {
-    if (command.name) {
-      character.name = command.name;
-    }
-    if (command.description) {
-      character.description = command.description;
-    }
+    const updated: Character = await this.characterRepository.update(characterId, character);
+    return updated;
   }
 }

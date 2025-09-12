@@ -16,7 +16,7 @@ import { SkillResponse } from '../../ports/skill-client.port';
 import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
 
 @CommandHandler(LevelUpSkillCommand)
-export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
+export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,

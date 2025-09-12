@@ -11,7 +11,7 @@ import { CharacterItem } from 'src/modules/characters/domain/value-objects/chara
 import { randomUUID } from 'crypto';
 
 @CommandHandler(TransferGoldCommand)
-export class TransferGoldCommandHandler implements ICommandHandler<TransferGoldCommand, Character> {
+export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,

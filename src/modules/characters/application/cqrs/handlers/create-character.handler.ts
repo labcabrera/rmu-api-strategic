@@ -32,8 +32,8 @@ import { CharacterSkill } from 'src/modules/characters/domain/value-objects/char
 import { CharacterResistance } from 'src/modules/characters/domain/value-objects/character-resistances.vo';
 
 @CommandHandler(CreateCharacterCommand)
-export class CreateCharacterCommandHandler implements ICommandHandler<CreateCharacterCommand, Character> {
-  private readonly logger = new Logger(CreateCharacterCommandHandler.name);
+export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
+  private readonly logger = new Logger(CreateCharacterHandler.name);
 
   constructor(
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,

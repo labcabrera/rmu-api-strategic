@@ -8,7 +8,7 @@ import * as characterRepository from '../../ports/character.repository';
 import { LevelUpCommand } from '../commands/level-up.command';
 
 @CommandHandler(LevelUpCommand)
-export class LevelUpCommandHandler implements ICommandHandler<LevelUpCommand, Character> {
+export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,

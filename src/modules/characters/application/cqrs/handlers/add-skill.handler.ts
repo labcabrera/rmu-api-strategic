@@ -10,7 +10,7 @@ import { AddSkillCommand } from '../commands/add-skill.command';
 import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 
 @CommandHandler(AddSkillCommand)
-export class AddSkillCommandHandler implements ICommandHandler<AddSkillCommand, Character> {
+export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
