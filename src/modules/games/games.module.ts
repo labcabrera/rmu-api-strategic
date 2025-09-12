@@ -10,10 +10,10 @@ import { MongoGameRepository } from './infrastructure/db/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
 import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter';
 import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler';
-import { DeleteGameCommandHandler } from './application/cqrs/handlers/delete-game.command.handler';
-import { GetGameQueryHandler } from './application/cqrs/handlers/get-game.query.handler';
-import { GetGamesQueryHandler } from './application/cqrs/handlers/get-games.query.handler';
-import { UpdateGameCommandHandler } from './application/cqrs/handlers/update-game.command.handler';
+import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler';
+import { GetGameHandler } from './application/cqrs/handlers/get-game.handler';
+import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler';
+import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler';
 
 @Module({
   imports: [
@@ -25,11 +25,11 @@ import { UpdateGameCommandHandler } from './application/cqrs/handlers/update-gam
   ],
   controllers: [GameController],
   providers: [
-    GetGameQueryHandler,
-    GetGamesQueryHandler,
+    GetGameHandler,
+    GetGamesHandler,
     CreateGameHandler,
-    UpdateGameCommandHandler,
-    DeleteGameCommandHandler,
+    UpdateGameHandler,
+    DeleteGameHandler,
     {
       provide: 'GameRepository',
       useClass: MongoGameRepository,

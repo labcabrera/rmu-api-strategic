@@ -3,18 +3,18 @@ import { Game } from '../aggregates/game.aggregate';
 
 export class GameCreatedEvent extends DomainEvent<Game> {
   constructor(data: Game) {
-    super('GameCreatedEvent', data);
+    super('created', data);
   }
 }
 
 export class GameUpdatedEvent extends DomainEvent<Game> {
   constructor(data: Game) {
-    super('GameUpdatedEvent', data);
+    super('updated', data);
   }
 }
 
 export class GameDeletedEvent extends DomainEvent<Game> {
   constructor(data: Game) {
-    super('GameDeletedEvent', data);
+    super('deleted', data);
   }
 }

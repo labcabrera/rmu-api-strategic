@@ -4,9 +4,10 @@ import { NotFoundError } from 'src/modules/shared/domain/errors';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import { DeleteGameCommand } from '../commands/delete-game.command';
+import { GameDeletedEvent } from 'src/modules/games/domain/events/game.events';
 
 @CommandHandler(DeleteGameCommand)
-export class DeleteGameCommandHandler implements ICommandHandler<DeleteGameCommand> {
+export class DeleteGameHandler implements ICommandHandler<DeleteGameCommand> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
     @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
@@ -17,8 +18,7 @@ export class DeleteGameCommandHandler implements ICommandHandler<DeleteGameComma
     if (!game) {
       throw new NotFoundError('Game', command.id);
     }
-    //TODO delete characters, factions...
     await this.gameRepository.deleteById(command.id);
-    await this.gameNotificationPort.deleted(game);
+    this.gameNotificationPort.publish(new GameDeletedEvent(game));
   }
 }

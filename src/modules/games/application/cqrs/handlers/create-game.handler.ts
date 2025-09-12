@@ -6,6 +6,7 @@ import { CreateGameCommand } from '../commands/create-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import type { RealmClientPort } from '../../ports/realm-client.port';
+import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
@@ -30,9 +31,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       command.userId,
     );
     const savedGame = await this.gameRepository.save(game);
-    //this.eventPublisher.mergeObjectContext(savedGame);
-    await this.gameEventBus.created(savedGame);
-    //savedGame.commit();
+    game.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
     return savedGame;
   }
 }

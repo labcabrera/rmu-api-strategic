@@ -6,7 +6,7 @@ import type { GameRepository } from '../../ports/game.repository';
 import { GetGamesQuery } from '../queries/get-games.query';
 
 @QueryHandler(GetGamesQuery)
-export class GetGamesQueryHandler implements IQueryHandler<GetGamesQuery, Page<Game>> {
+export class GetGamesHandler implements IQueryHandler<GetGamesQuery, Page<Game>> {
   constructor(@Inject('GameRepository') private readonly gameRepository: GameRepository) {}
 
   async execute(query: GetGamesQuery): Promise<Page<Game>> {

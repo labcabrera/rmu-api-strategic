@@ -5,12 +5,13 @@ import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { UpdateGameCommand } from '../commands/update-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
+import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 @CommandHandler(UpdateGameCommand)
-export class UpdateGameCommandHandler implements ICommandHandler<UpdateGameCommand, Game> {
+export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Game> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly raceNotificationPort: GameEventBusPort,
+    @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
   ) {}
 
   async execute(command: UpdateGameCommand): Promise<Game> {
@@ -18,9 +19,9 @@ export class UpdateGameCommandHandler implements ICommandHandler<UpdateGameComma
     if (!current) {
       throw new NotFoundError('Game', command.gameId);
     }
-    const game: Partial<Game> = { ...command, updatedAt: new Date() };
-    const updated = await this.gameRepository.update(command.gameId, game);
-    await this.raceNotificationPort.updated(updated);
+    current.update(command.name, undefined, undefined, command.description);
+    const updated = await this.gameRepository.update(current.id, current);
+    current.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
     return updated;
   }
 }
