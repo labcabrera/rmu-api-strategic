@@ -3,7 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { NotFoundError } from '../../../../shared/domain/errors';
 import * as characterRepository from '../../ports/out/character.repository';
-import { DeleteCharacterCommand } from '../delete-character.command';
+import { DeleteCharacterCommand } from '../commands/delete-character.command';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterCommandHandler implements ICommandHandler<DeleteCharacterCommand> {

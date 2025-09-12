@@ -6,7 +6,7 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
-import { EquipItemCommand } from '../equip-item-command';
+import { EquipItemCommand } from '../commands/equip-item-command';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemCommandHandler implements ICommandHandler<EquipItemCommand, Character> {

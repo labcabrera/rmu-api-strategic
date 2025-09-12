@@ -6,7 +6,7 @@ import { NotFoundError, NotModifiedError, ValidationError } from '../../../../sh
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
-import { UpdateItemCarriedStatusCommand } from '../update-item-carried-status.command';
+import { UpdateItemCarriedStatusCommand } from '../commands/update-item-carried-status.command';
 
 @CommandHandler(UpdateItemCarriedStatusCommand)
 export class UpdateItemCarriedStatusCommandHandler implements ICommandHandler<UpdateItemCarriedStatusCommand, Character> {

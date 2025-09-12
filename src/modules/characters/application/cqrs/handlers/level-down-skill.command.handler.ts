@@ -9,7 +9,7 @@ import * as cldr from '../../ports/out/character-level-dev.repository';
 import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
 import * as pc from '../../ports/out/profession-client';
 import * as sc from '../../ports/out/skill-client';
-import { LevelDownSkillCommand } from '../level-down-skill.command';
+import { LevelDownSkillCommand } from '../commands/level-down-skill.command';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 
 @CommandHandler(LevelDownSkillCommand)

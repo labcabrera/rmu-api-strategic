@@ -1,5 +1,5 @@
 import { IsNumber, IsOptional } from 'class-validator';
-import { LevelDownSkillCommand } from 'src/modules/characters/application/commands/level-down-skill.command';
+import { LevelDownSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-down-skill.command';
 
 export class LevelDownSkillDto {
   @IsNumber()

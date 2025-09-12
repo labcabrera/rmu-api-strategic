@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
-import { LevelUpCommand } from '../level-up.command';
+import { LevelUpCommand } from '../commands/level-up.command';
 
 @CommandHandler(LevelUpCommand)
 export class LevelUpCommandHandler implements ICommandHandler<LevelUpCommand, Character> {

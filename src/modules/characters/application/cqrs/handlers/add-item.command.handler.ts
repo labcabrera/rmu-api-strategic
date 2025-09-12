@@ -1,13 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
 import * as itemClient from '../../ports/out/item-client';
-import { AddItemCommand } from '../add-item.comand';
+import { AddItemCommand } from '../commands/add-item.comand';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 import { ItemResponse } from '../../ports/out/item-client';
 

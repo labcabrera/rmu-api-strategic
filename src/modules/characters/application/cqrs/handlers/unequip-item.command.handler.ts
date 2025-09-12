@@ -5,8 +5,8 @@ import { NotFoundError, NotModifiedError } from '../../../../shared/domain/error
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
-import { EquipItemCommand } from '../equip-item-command';
-import { UnequipItemCommand } from '../unequip-item-command';
+import { EquipItemCommand } from '../commands/equip-item-command';
+import { UnequipItemCommand } from '../commands/unequip-item-command';
 
 @CommandHandler(UnequipItemCommand)
 export class UnequipItemCommandHandler implements ICommandHandler<UnequipItemCommand, Character> {

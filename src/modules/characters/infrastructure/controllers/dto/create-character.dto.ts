@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator';
-
-import { CreateCharacterCommand, CreateCharacterItem } from '../../../application/commands/create-character.command';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
@@ -12,6 +10,7 @@ import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
 import { CharacterCreationXPDto } from './character-xp.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
+import { CreateCharacterCommand, CreateCharacterItem } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })

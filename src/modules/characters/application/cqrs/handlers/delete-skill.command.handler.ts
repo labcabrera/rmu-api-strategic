@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
-import { DeleteSkillCommand } from '../delete-skill-command';
+import { DeleteSkillCommand } from '../commands/delete-skill-command';
 import * as cldr from '../../ports/out/character-level-dev.repository';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 

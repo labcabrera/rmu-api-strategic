@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
-import { TransferGoldCommand } from '../transfer-gold.command';
+import { TransferGoldCommand } from '../commands/transfer-gold.command';
 import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
 import { randomUUID } from 'crypto';

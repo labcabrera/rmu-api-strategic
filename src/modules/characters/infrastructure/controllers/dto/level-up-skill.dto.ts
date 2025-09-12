@@ -1,5 +1,5 @@
 import { IsNumber, IsOptional } from 'class-validator';
-import { LevelUpSkillCommand } from 'src/modules/characters/application/commands/level-up-skill.command';
+import { LevelUpSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-up-skill.command';
 
 export class LevelUpSkillDto {
   @IsNumber()

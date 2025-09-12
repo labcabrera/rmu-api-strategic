@@ -1,4 +1,4 @@
-import { CharacterInfo, CharacterRoleplayInfo, CharacterStatistics } from '../../domain/entities/character.entity';
+import { CharacterInfo, CharacterRoleplayInfo, CharacterStatistics } from 'src/modules/characters/domain/entities/character.entity';
 
 export class CreateCharacterCommand {
   constructor(

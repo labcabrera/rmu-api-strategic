@@ -1,5 +1,5 @@
 import { IsNumber } from 'class-validator';
-import { AddXPCommand } from 'src/modules/characters/application/commands/add-xp.command';
+import { AddXPCommand } from 'src/modules/characters/application/cqrs/commands/add-xp.command';
 
 export class AddXPDto {
   @IsNumber()

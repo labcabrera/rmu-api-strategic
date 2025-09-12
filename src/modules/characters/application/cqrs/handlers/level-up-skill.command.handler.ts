@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character, WeaponDevelopmentType } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as cr from '../../ports/out/character.repository';
-import { LevelUpSkillCommand } from '../level-up-skill.command';
+import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
 import * as cldr from '../../ports/out/character-level-dev.repository';
 import { CharacterLevelDev } from 'src/modules/characters/domain/entities/character-level-dev.entity';
 import * as pc from '../../ports/out/profession-client';

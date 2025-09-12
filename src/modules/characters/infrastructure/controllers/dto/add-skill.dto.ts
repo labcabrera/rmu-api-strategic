@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-
-import { AddSkillCommand } from '../../../application/commands/add-skill.command';
+import { AddSkillCommand } from 'src/modules/characters/application/cqrs/commands/add-skill.command';
 
 export class AddSkillDto {
   @ApiProperty({ description: 'Skill identifier', example: 'animal-handling' })

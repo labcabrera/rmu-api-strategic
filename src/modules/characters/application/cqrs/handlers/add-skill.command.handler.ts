@@ -7,7 +7,7 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import * as characterRepository from '../../ports/out/character.repository';
 import * as skillCategoryClient from '../../ports/out/skill-category-client';
 import * as skillClient from '../../ports/out/skill-client';
-import { AddSkillCommand } from '../add-skill.command';
+import { AddSkillCommand } from '../commands/add-skill.command';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillCommandHandler implements ICommandHandler<AddSkillCommand, Character> {

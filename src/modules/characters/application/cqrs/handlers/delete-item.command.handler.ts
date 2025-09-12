@@ -5,7 +5,7 @@ import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character, CharacterEquipment } from '../../../domain/entities/character.entity';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/out/character.repository';
-import { DeleteItemCommand } from '../delete-item.command';
+import { DeleteItemCommand } from '../commands/delete-item.command';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemCommandHandler implements ICommandHandler<DeleteItemCommand, Character> {

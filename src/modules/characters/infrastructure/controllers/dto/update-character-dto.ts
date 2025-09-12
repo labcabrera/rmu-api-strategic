@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { UpdateCharacterCommand } from 'src/modules/characters/application/commands/update-character.command';
+import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
 
 export class UpdateCharacterDto {
   @ApiProperty({ description: 'New character name', example: 'Sauron' })
