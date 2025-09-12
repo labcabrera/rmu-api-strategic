@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { GameRepository } from 'src/modules/games/application/ports/out/game-repository';
+import { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
-import { GameModel, GameDocument } from '../models/game-model';
+import { GameModel, GameDocument } from '../persistence/models/game-model';
 import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 

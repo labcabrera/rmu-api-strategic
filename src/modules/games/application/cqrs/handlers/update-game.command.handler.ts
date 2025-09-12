@@ -3,14 +3,14 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { UpdateGameCommand } from '../commands/update-game.command';
-import type { GameEventProducer } from '../../ports/out/game-event-producer';
-import type { GameRepository } from '../../ports/out/game-repository';
+import type { GameEventBusPort } from '../../ports/game-event-bus.port';
+import type { GameRepository } from '../../ports/game.repository';
 
 @CommandHandler(UpdateGameCommand)
 export class UpdateGameCommandHandler implements ICommandHandler<UpdateGameCommand, Game> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly raceNotificationPort: GameEventProducer,
+    @Inject('GameEventProducer') private readonly raceNotificationPort: GameEventBusPort,
   ) {}
 
   async execute(command: UpdateGameCommand): Promise<Game> {

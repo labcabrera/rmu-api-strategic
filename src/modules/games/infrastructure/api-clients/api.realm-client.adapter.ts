@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from '../../../auth/token.service';
-import { RealmClient, RealmResponse } from '../../application/ports/out/realm-client';
+import { RealmClientPort, RealmResponse } from '../../application/ports/realm-client.port';
 
 @Injectable()
-export class RealmApiClient implements RealmClient {
+export class ApiRealmClientAdapter implements RealmClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,

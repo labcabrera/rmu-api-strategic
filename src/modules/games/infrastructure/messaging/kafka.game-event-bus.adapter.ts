@@ -1,12 +1,20 @@
-import { Injectable } from '@nestjs/common';
-
+import { Injectable, Logger } from '@nestjs/common';
 import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
 import { Game } from '../../domain/entities/game.aggregate';
 import { GameCreatedEvent, GameUpdatedEvent, GameDeletedEvent } from '../../domain/events/game.events';
+import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 @Injectable()
-export class KafkaGameProducerService {
+export class KafkaGameEventBusAdapter {
+  private readonly logger = new Logger(KafkaGameEventBusAdapter.name);
+
   constructor(private readonly kafkaProducerService: KafkaProducerService) {}
+
+  publish(event: DomainEvent<Game>): void {
+    this.kafkaProducerService.emit(`internal.rmu-strategic.game.${event.eventType}.v1`, event).catch((err) => {
+      this.logger.error('Error publishing event to Kafka', err);
+    });
+  }
 
   async created(entity: Game): Promise<void> {
     const event = new GameCreatedEvent(entity);

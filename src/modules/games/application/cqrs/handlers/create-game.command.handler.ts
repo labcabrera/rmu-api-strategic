@@ -3,16 +3,16 @@ import { Inject } from '@nestjs/common';
 import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import { CreateGameCommand } from '../commands/create-game.command';
-import type { GameEventProducer } from '../../ports/out/game-event-producer';
-import type { GameRepository } from '../../ports/out/game-repository';
-import type { RealmClient } from '../../ports/out/realm-client';
+import type { GameEventBusPort } from '../../ports/game-event-bus.port';
+import type { GameRepository } from '../../ports/game.repository';
+import type { RealmClientPort } from '../../ports/realm-client.port';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameCommandHandler implements ICommandHandler<CreateGameCommand, Game> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('RealmClient') private readonly realmClient: RealmClient,
-    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventProducer,
+    @Inject('RealmClient') private readonly realmClient: RealmClientPort,
+    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
   ) {}
 
   async execute(command: CreateGameCommand): Promise<Game> {

@@ -3,6 +3,6 @@ export interface RealmResponse {
   name: string;
 }
 
-export interface RealmClient {
+export interface RealmClientPort {
   getRealmById(realmId: string): Promise<RealmResponse | undefined>;
 }

@@ -1,15 +1,15 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
-import type { GameEventProducer } from '../../ports/out/game-event-producer';
-import type { GameRepository } from '../../ports/out/game-repository';
+import type { GameEventBusPort } from '../../ports/game-event-bus.port';
+import type { GameRepository } from '../../ports/game.repository';
 import { DeleteGameCommand } from '../commands/delete-game.command';
 
 @CommandHandler(DeleteGameCommand)
 export class DeleteGameCommandHandler implements ICommandHandler<DeleteGameCommand> {
   constructor(
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventProducer,
+    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
   ) {}
 
   async execute(command: DeleteGameCommand): Promise<void> {

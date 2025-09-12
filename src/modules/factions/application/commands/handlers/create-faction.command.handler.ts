@@ -5,7 +5,7 @@ import { CreateFactionCommand } from '../create-faction.command';
 import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
 import * as factionRepository from '../../ports/out/faction-repository';
 import * as gameEventProducer from '../../ports/out/game-event-producer';
-import * as gr from 'src/modules/games/application/ports/out/game-repository';
+import * as gr from 'src/modules/games/application/ports/game.repository';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 
 @CommandHandler(CreateFactionCommand)

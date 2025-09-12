@@ -4,11 +4,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
-import { GameController } from './infrastructure/controllers/game.controller';
-import { KafkaGameProducerService } from './infrastructure/messaging/kafka-game-producer.service';
-import { MongoGameRepository } from './infrastructure/persistence/repositories/mongo-game.repository';
+import { GameController } from './interfaces/http/game.controller';
+import { KafkaGameEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
+import { MongoGameRepository } from './infrastructure/db/mongo-game.repository';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
-import { RealmApiClient } from './infrastructure/clients/realm-api-client';
+import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter';
 import { CreateGameCommandHandler } from './application/cqrs/handlers/create-game.command.handler';
 import { DeleteGameCommandHandler } from './application/cqrs/handlers/delete-game.command.handler';
 import { GetGameQueryHandler } from './application/cqrs/handlers/get-game.query.handler';
@@ -36,11 +36,11 @@ import { UpdateGameCommandHandler } from './application/cqrs/handlers/update-gam
     },
     {
       provide: 'RealmClient',
-      useClass: RealmApiClient,
+      useClass: ApiRealmClientAdapter,
     },
     {
       provide: 'GameEventProducer',
-      useClass: KafkaGameProducerService,
+      useClass: KafkaGameEventBusAdapter,
     },
   ],
   exports: ['GameRepository'],

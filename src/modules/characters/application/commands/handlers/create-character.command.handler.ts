@@ -30,7 +30,7 @@ import { RaceResponse } from '../../ports/out/race-client';
 import * as scc from '../../ports/out/skill-category-client';
 import * as sc from '../../ports/out/skill-client';
 import { CreateCharacterCommand } from '../create-character.command';
-import * as gr from 'src/modules/games/application/ports/out/game-repository';
+import * as gr from 'src/modules/games/application/ports/game.repository';
 import * as fr from 'src/modules/factions/application/ports/out/faction-repository';
 import * as pc from '../../ports/out/profession-client';
 import { CharacterItem } from 'src/modules/characters/domain/entities/character-item.entity';
