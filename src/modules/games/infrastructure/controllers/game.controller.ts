@@ -10,7 +10,7 @@ import { GameDto, GamePageDto } from './dtos/game.dto';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GetGameQuery } from '../../application/queries/get-game.query';
-import { Game } from '../../domain/entities/game';
+import { Game } from '../../domain/entities/game.aggregate';
 import { GetGamesQuery } from '../../application/queries/get-games.query';
 import { UpdateGameCommand } from '../../application/commands/update-game.command';
 import { DeleteGameCommand } from '../../application/commands/delete-game.command';

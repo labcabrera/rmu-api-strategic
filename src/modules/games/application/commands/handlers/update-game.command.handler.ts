@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import * as raceNotificationPort from '../../ports/out/game-event-producer';
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import * as gameRepository from '../../ports/out/game-repository';
 import { UpdateGameCommand } from '../update-game.command';
 import { NotFoundError } from 'src/modules/shared/domain/errors';

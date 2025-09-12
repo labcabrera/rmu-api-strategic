@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 
 import { CreateGameCommand } from '../create-game.command';
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import * as gameRepository from '../../ports/out/game-repository';
 import * as raceEventProducer from '../../ports/out/game-event-producer';
 import * as realmClient from '../../ports/out/realm-client';

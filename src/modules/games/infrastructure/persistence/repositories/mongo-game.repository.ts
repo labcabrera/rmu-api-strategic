@@ -6,7 +6,7 @@ import { GameRepository } from 'src/modules/games/application/ports/out/game-rep
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
 import { GameModel, GameDocument } from '../models/game-model';
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 
 @Injectable()
@@ -52,17 +52,17 @@ export class MongoGameRepository implements GameRepository {
   }
 
   private mapToEntity(doc: GameDocument): Game {
-    return {
-      id: doc._id as string,
-      name: doc.name,
-      realm: doc.realm,
-      status: doc.status,
-      options: doc.options,
-      powerLevel: doc.powerLevel,
-      description: doc.description,
-      owner: doc.owner,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-    };
+    return new Game(
+      doc._id as string,
+      doc.name,
+      doc.realm,
+      doc.status,
+      doc.options,
+      doc.powerLevel,
+      doc.description,
+      doc.owner,
+      doc.createdAt,
+      doc.updatedAt,
+    );
   }
 }

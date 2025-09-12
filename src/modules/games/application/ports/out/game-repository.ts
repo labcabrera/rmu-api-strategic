@@ -1,4 +1,4 @@
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 
 export interface GameRepository {

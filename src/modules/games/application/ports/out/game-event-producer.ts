@@ -1,4 +1,4 @@
-import { Game } from 'src/modules/games/domain/entities/game';
+import { Game } from 'src/modules/games/domain/entities/game.aggregate';
 
 export interface GameEventProducer {
   created(entity: Game): Promise<void>;
