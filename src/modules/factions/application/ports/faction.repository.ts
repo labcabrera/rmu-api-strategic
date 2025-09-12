@@ -1,4 +1,4 @@
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 
 export interface FactionRepository {

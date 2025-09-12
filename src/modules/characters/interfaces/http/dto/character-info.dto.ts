@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { CharacterInfo } from '../../persistence/models/character-childs.model';
+import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 
 export class CharacterInfoDto {

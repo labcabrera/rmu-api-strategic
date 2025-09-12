@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 import type { FactionRepository } from '../../ports/faction.repository';
 import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';

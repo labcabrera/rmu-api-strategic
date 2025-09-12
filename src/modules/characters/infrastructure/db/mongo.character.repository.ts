@@ -3,12 +3,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
-import { Page } from '../../../../shared/domain/entities/page.entity';
-import { NotFoundError } from '../../../../shared/domain/errors';
-import { RsqlParser } from '../../../../shared/infrastructure/messaging/rsql-parser';
-import { CharacterRepository } from '../../../application/ports/character.repository';
-import { Character } from '../../../domain/aggregates/character.aggregate';
-import { CharacterDocument, CharacterModel } from '../models/character.model';
+import { Page } from '../../../shared/domain/entities/page.entity';
+import { NotFoundError } from '../../../shared/domain/errors';
+import { RsqlParser } from '../../../shared/infrastructure/messaging/rsql-parser';
+import { CharacterRepository } from '../../application/ports/character.repository';
+import { Character } from '../../domain/aggregates/character.aggregate';
+import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
 
 @Injectable()
 export class MongoCharacterRepository implements CharacterRepository {

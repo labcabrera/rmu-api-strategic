@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { EquipItemCommand } from 'src/modules/characters/application/commands/equip-item-command';
+import { EquipItemCommand } from 'src/modules/characters/application/cqrs/commands/equip-item-command';
 
 export class EquipItemDto {
   @IsString()

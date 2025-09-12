@@ -21,16 +21,13 @@ import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-clie
 import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-client.adapter';
 import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
 import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
-import { CharacterController } from './infrastructure/controllers/characters.controller';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
-import { MongoCharacterRepository } from './infrastructure/persistence/repositories/mongo-character.repository';
+import { MongoCharacterRepository } from './infrastructure/db/mongo.character.repository';
 import { FactionsModule } from '../factions/factions.module';
 import { ApiProfessionClientAdapter } from './infrastructure/api-clients/api.profession-client.adapter';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
-import { MongoCharacterLevelDevRepository } from './infrastructure/persistence/repositories/mongo-character-level-dev.repository';
+import { MongoCharacterLevelDevRepository } from './infrastructure/db/mongo.character-level-dev.repository';
 import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
-import { CharacterSkillController } from './infrastructure/controllers/characters-skill.controller';
-import { CharacterItemController } from './infrastructure/controllers/characters-item.controller';
 import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor';
 import { AddItemCommandHandler } from './application/cqrs/handlers/add-item.command.handler';
 import { AddSkillCommandHandler } from './application/cqrs/handlers/add-skill.command.handler';
@@ -49,6 +46,9 @@ import { UnequipItemCommandHandler } from './application/cqrs/handlers/unequip-i
 import { UpdateCharacterCommandHandler } from './application/cqrs/handlers/update-character.command.handler';
 import { UpdateItemCarriedStatusCommandHandler } from './application/cqrs/handlers/update-item-carried-status.command.handler';
 import { UpdateSkillCommandHandler } from './application/cqrs/handlers/update-skill.command.handler';
+import { CharacterController } from './interfaces/http/character.controller';
+import { CharacterSkillController } from './interfaces/http/character-skill.controller';
+import { CharacterItemController } from './interfaces/http/character-item.controller';
 
 @Module({
   imports: [

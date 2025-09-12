@@ -17,7 +17,7 @@ import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query';
-import { Faction } from '../../domain/entities/faction.entity';
+import { Faction } from '../../domain/aggregates/faction.aggregate';
 import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query';
 import { CreateFactionDto } from './dtos/create-faction.dto';
 import { CreateFactionCommand } from '../../application/cqrs/commands/create-faction.command';

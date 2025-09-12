@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Faction, FactionManagement } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
+import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
 
 export class FactionDto {

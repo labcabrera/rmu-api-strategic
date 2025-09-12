@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { GetFactionQuery } from '../queries/get-faction.query';
 import type { FactionRepository } from '../../ports/faction.repository';

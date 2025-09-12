@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
-import { FactionController } from './infrastructure/controllers/faction.controller';
+import { FactionController } from './interfaces/http/faction.controller';
 import { MongoFactionRepository } from './infrastructure/persistence/repositories/mongo-faction.repository';
 import { KafkaFactionProducerService } from './infrastructure/messaging/kafka-faction-producer.service';
 import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model';

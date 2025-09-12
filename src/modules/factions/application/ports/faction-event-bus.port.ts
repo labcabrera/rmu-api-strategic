@@ -1,4 +1,4 @@
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 
 export interface FactionEventBusPort {
   created(entity: Faction): Promise<void>;

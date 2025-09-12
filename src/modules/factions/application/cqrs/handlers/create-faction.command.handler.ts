@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Faction } from 'src/modules/factions/domain/entities/faction.entity';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import type { FactionRepository } from '../../ports/faction.repository';
