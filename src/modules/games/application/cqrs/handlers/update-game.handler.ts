@@ -5,7 +5,6 @@ import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { UpdateGameCommand } from '../commands/update-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 @CommandHandler(UpdateGameCommand)
 export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Game> {

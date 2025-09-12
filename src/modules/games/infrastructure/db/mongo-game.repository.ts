@@ -53,7 +53,7 @@ export class MongoGameRepository implements GameRepository {
 
   private mapToEntity(doc: GameDocument): Game {
     return new Game(
-      doc._id as string,
+      doc._id,
       doc.name,
       doc.realm,
       doc.status,
