@@ -22,7 +22,7 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     }
     this.bindFields(character, command);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
+    return await this.characterRepository.update(character);
   }
 
   private bindFields(character: Character, command: UpdateCharacterCommand): void {

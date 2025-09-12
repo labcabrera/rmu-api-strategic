@@ -82,7 +82,7 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
       await this.characterLevelRepository.update(cld.id!, cld);
     }
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
+    return await this.characterRepository.update(character);
   }
 
   /**

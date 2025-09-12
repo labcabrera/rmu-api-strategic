@@ -56,6 +56,6 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
 
     await this.characterLevelRepository.update(clr.id!, clr);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
+    return await this.characterRepository.update(character);
   }
 }

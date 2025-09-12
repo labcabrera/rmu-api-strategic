@@ -15,25 +15,14 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
   ) {}
 
   async execute(command: LevelUpCommand): Promise<Character> {
-    const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) {
-      throw new NotFoundError('Character', characterId);
+      throw new NotFoundError('Character', command.characterId);
     }
-    if (character.experience.level >= character.experience.availableLevel) {
-      throw new ValidationError('Insufficient experience points to level up.');
-    }
-    if (character.experience.availableDevelopmentPoints > 5 && !command.force) {
-      throw new ValidationError(
-        'Has unused development points. To level up regardless of points, use the option force=true.',
-      );
-    }
-    //TODO calculate from other factors
-    const devPoints = 60;
-    character.experience.level += 1;
-    character.experience.developmentPoints = devPoints;
-    character.experience.availableDevelopmentPoints = devPoints;
+    character.levelUp(command.force);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(characterId, character);
+    const updated = await this.characterRepository.update(character);
+    //TODO propagate events
+    return updated;
   }
 }

@@ -26,6 +26,6 @@ export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, C
     }
     character.equipment[command.slot] = undefined;
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(command.characterId, character);
+    return await this.characterRepository.update(character);
   }
 }

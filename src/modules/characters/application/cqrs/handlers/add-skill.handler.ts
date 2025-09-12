@@ -58,7 +58,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     };
     character.skills.push(skill);
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(characterId, character);
+    const updated: Character = await this.characterRepository.update(character);
     return updated;
   }
 

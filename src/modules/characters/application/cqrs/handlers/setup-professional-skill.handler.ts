@@ -28,7 +28,7 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
     //TODO CHECK MAX PROFESSIONAL SKILLS
     skill.professional = ['professional'];
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(characterId, character);
+    const updated: Character = await this.characterRepository.update(character);
     return updated;
   }
 }

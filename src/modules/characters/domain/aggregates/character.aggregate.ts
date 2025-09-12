@@ -18,6 +18,7 @@ import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent } from '../events/character.events';
+import { ValidationError } from 'src/modules/shared/domain/errors';
 
 export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
 
@@ -115,6 +116,47 @@ export class Character extends AggregateRoot {
   finishCreation(): void {
     this.status = 'created';
     this.apply(new CharacterCreatedEvent(this));
+  }
+
+  levelUp(force: boolean): void {
+    if (this.experience.level >= this.experience.availableLevel) {
+      throw new ValidationError('Insufficient experience points to level up');
+    }
+    if (this.experience.availableDevelopmentPoints > 0 && !force) {
+      throw new ValidationError(
+        'Character has unused development points. To level up regardless of points, use the option force=true',
+      );
+    }
+    this.experience.level += 1;
+    this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
+  }
+
+  toPlainObject(): any {
+    return {
+      gameId: this.gameId,
+      factionId: this.factionId,
+      name: this.name,
+      info: this.info,
+      roleplay: this.roleplay,
+      experience: this.experience,
+      statistics: this.statistics,
+      movement: this.movement,
+      defense: this.defense,
+      resistances: this.resistances,
+      hp: this.hp,
+      endurance: this.endurance,
+      power: this.power,
+      initiative: this.initiative,
+      skills: this.skills,
+      items: this.items,
+      equipment: this.equipment,
+      attacks: this.attacks,
+      status: this.status,
+      description: this.description,
+      owner: this.owner,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
   }
 
   private setupRacialResistanceBonus(resistance: string, bonus: number): void {
