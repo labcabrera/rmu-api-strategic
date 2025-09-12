@@ -8,7 +8,9 @@ import { GetCharacterQuery } from '../queries/get-character.query';
 
 @QueryHandler(GetCharacterQuery)
 export class GetCharacterQueryHandler implements IQueryHandler<GetCharacterQuery, Character> {
-  constructor(@Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository) {}
+  constructor(
+    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+  ) {}
 
   async execute(query: GetCharacterQuery): Promise<Character> {
     const data = await this.characterRepository.findById(query.characterId);

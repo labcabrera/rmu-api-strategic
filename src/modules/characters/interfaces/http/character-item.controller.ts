@@ -64,7 +64,9 @@ export class CharacterItemController {
     @Param('carried') carried: boolean,
     @Request() req: AuthRequest,
   ) {
-    this.logger.debug(`Updating carried status for character ${id} item ${itemId} to ${carried} for user ${req.user.id}`);
+    this.logger.debug(
+      `Updating carried status for character ${id} item ${itemId} to ${carried} for user ${req.user.id}`,
+    );
     const command = new UpdateItemCarriedStatusCommand(id, itemId, carried, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<UpdateItemCarriedStatusCommand, Character>(command);
     return CharacterDto.fromEntity(entity);

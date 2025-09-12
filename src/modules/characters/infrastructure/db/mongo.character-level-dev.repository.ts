@@ -36,6 +36,14 @@ export class MongoCharacterLevelDevRepository implements CharacterLevelDevReposi
   }
 
   private mapToEntity(doc: CharacterLevelDevDocument): CharacterLevelDev {
-    return new CharacterLevelDev(doc._id as string, doc.characterId, doc.level, doc.skills, doc.owner, doc.createdAt, doc.updatedAt);
+    return new CharacterLevelDev(
+      doc._id as string,
+      doc.characterId,
+      doc.level,
+      doc.skills,
+      doc.owner,
+      doc.createdAt,
+      doc.updatedAt,
+    );
   }
 }

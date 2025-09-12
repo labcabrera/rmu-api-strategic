@@ -3,7 +3,10 @@ import { IsNumber } from 'class-validator';
 import { TransferGoldCommand } from 'src/modules/characters/application/cqrs/commands/transfer-gold.command';
 
 export class TransferGoldDto {
-  @ApiProperty({ description: 'Transfer amount. If positive, the gold will be transferred to the character.', example: 10 })
+  @ApiProperty({
+    description: 'Transfer amount. If positive, the gold will be transferred to the character.',
+    example: 10,
+  })
   @IsNumber()
   amount: number;
 

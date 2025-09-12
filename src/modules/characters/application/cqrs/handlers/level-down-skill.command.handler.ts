@@ -35,7 +35,10 @@ export class LevelDownSkillCommandHandler implements ICommandHandler<LevelDownSk
     characterSkill.ranks--;
 
     const level = character.experience.level;
-    const clr: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(characterId, level);
+    const clr: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(
+      characterId,
+      level,
+    );
     if (!clr) {
       throw new ValidationError('Character level development record not found');
     } else if (!clr.skills) {

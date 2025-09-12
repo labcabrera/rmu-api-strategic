@@ -42,7 +42,10 @@ export class LevelUpSkillCommandHandler implements ICommandHandler<LevelUpSkillC
     }
 
     const level = character.experience.level;
-    let cld: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(characterId, level);
+    let cld: Partial<CharacterLevelDev> | null = await this.characterLevelRepository.findByCharacterAndLevel(
+      characterId,
+      level,
+    );
     let insert = false;
     if (!cld) {
       insert = true;

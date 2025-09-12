@@ -6,7 +6,13 @@ export class LevelDownSkillDto {
   @IsOptional()
   specialization: string | undefined;
 
-  static toCommand(characterId: string, skillId: string, dto: LevelDownSkillDto, user: string, roles: string[]): LevelDownSkillCommand {
+  static toCommand(
+    characterId: string,
+    skillId: string,
+    dto: LevelDownSkillDto,
+    user: string,
+    roles: string[],
+  ): LevelDownSkillCommand {
     return new LevelDownSkillCommand(characterId, skillId, dto.specialization, user, roles);
   }
 }

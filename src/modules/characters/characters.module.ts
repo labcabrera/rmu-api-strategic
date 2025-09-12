@@ -27,7 +27,10 @@ import { FactionsModule } from '../factions/factions.module';
 import { ApiProfessionClientAdapter } from './infrastructure/api-clients/api.profession-client.adapter';
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
 import { MongoCharacterLevelDevRepository } from './infrastructure/db/mongo.character-level-dev.repository';
-import { CharacterLevelDevModel, CharacterLevelDevSchema } from './infrastructure/persistence/models/character-level-dev.model';
+import {
+  CharacterLevelDevModel,
+  CharacterLevelDevSchema,
+} from './infrastructure/persistence/models/character-level-dev.model';
 import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor';
 import { AddItemCommandHandler } from './application/cqrs/handlers/add-item.command.handler';
 import { AddSkillCommandHandler } from './application/cqrs/handlers/add-skill.command.handler';

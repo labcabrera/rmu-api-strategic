@@ -7,7 +7,9 @@ import { DeleteCharacterCommand } from '../commands/delete-character.command';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterCommandHandler implements ICommandHandler<DeleteCharacterCommand> {
-  constructor(@Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository) {}
+  constructor(
+    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+  ) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
     const character = await this.characterRepository.findById(command.characterId);

@@ -24,7 +24,9 @@ export class LevelUpCommandHandler implements ICommandHandler<LevelUpCommand, Ch
       throw new ValidationError('Insufficient experience points to level up.');
     }
     if (character.experience.availableDevelopmentPoints > 5 && !command.force) {
-      throw new ValidationError('Has unused development points. To level up regardless of points, use the option force=true.');
+      throw new ValidationError(
+        'Has unused development points. To level up regardless of points, use the option force=true.',
+      );
     }
     //TODO calculate from other factors
     const devPoints = 60;

@@ -10,7 +10,9 @@ import { GetCharactersQuery } from '../queries/get-characters.query';
 export class GetCharactersQueryHandler implements IQueryHandler<GetCharactersQuery, Page<Character>> {
   private readonly logger = new Logger(GetCharactersQueryHandler.name);
 
-  constructor(@Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository) {}
+  constructor(
+    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+  ) {}
 
   async execute(query: GetCharactersQuery): Promise<Page<Character>> {
     this.logger.debug('Finding characters with query: ', query.rsql);

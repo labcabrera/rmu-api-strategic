@@ -15,7 +15,9 @@ export class AddFactionXPCommandHandler implements ICommandHandler<AddFactionXPC
 
   async execute(command: AddFactionXPCommand): Promise<Faction> {
     if (!command.roles.includes('faction-management')) {
-      throw new ForbiddenError('You do not have permission to add XP to this faction. Required faction-management role.');
+      throw new ForbiddenError(
+        'You do not have permission to add XP to this faction. Required faction-management role.',
+      );
     }
     const faction = await this.factionRepository.findById(command.factionId);
     if (!faction) {

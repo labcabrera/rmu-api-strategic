@@ -11,7 +11,9 @@ export class EquipmentProcessor {
     if (!character.items || character.items.length === 0 || !character.equipment) {
       return;
     }
-    const carriedWeight = character.items.filter((item) => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
+    const carriedWeight = character.items
+      .filter((item) => item.carried)
+      .reduce((sum, item) => sum + item.info.weight, 0);
     character.equipment.weight = carriedWeight;
     this.sortItems(character);
 

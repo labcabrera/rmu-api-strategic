@@ -44,7 +44,12 @@ export class CharacterSkillController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: UpdateSkillDto, @Request() req: AuthRequest) {
+  async updateSkill(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Body() dto: UpdateSkillDto,
+    @Request() req: AuthRequest,
+  ) {
     this.logger.debug(`Updating character ${id} skill  ${skillId} for user ${req.user.id}`);
     const command = UpdateSkillDto.toCommand(id, skillId, dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<UpdateSkillCommand, Character>(command);

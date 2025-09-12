@@ -2,7 +2,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { GameDto, GamePageDto } from './dtos/game.dto';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';

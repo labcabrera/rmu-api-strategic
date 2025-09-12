@@ -18,7 +18,12 @@ export class UpdateCharacterDto {
   @IsString()
   description: string | undefined;
 
-  static toCommand(characterId: string, dto: UpdateCharacterDto, userId: string, roles: string[]): UpdateCharacterCommand {
+  static toCommand(
+    characterId: string,
+    dto: UpdateCharacterDto,
+    userId: string,
+    roles: string[],
+  ): UpdateCharacterCommand {
     const result = new UpdateCharacterCommand();
     result.characterId = characterId;
     result.name = dto.name;

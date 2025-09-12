@@ -9,7 +9,9 @@ import * as cr from '../../ports/character.repository';
 import { UpdateItemCarriedStatusCommand } from '../commands/update-item-carried-status.command';
 
 @CommandHandler(UpdateItemCarriedStatusCommand)
-export class UpdateItemCarriedStatusCommandHandler implements ICommandHandler<UpdateItemCarriedStatusCommand, Character> {
+export class UpdateItemCarriedStatusCommandHandler
+  implements ICommandHandler<UpdateItemCarriedStatusCommand, Character>
+{
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: cr.CharacterRepository,
