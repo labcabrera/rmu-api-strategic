@@ -10,7 +10,7 @@ export class CharacterXP {
     public weaponDevelopment: WeaponDevelopmentType[],
   ) {}
 
-  static fromLevel(level: number): CharacterXP {
-    return new CharacterXP(0, level, level * 10000, 0, 0, []);
+  static fromLevel(level: number, weaponDevelopment: WeaponDevelopmentType[]): CharacterXP {
+    return new CharacterXP(0, level, level * 10000, 0, 0, weaponDevelopment);
   }
 }

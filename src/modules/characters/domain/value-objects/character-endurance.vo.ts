@@ -1,6 +1,7 @@
 export class CharacterEndurance {
   constructor(
     public base: number,
+    public racialBonus: number,
     public customBonus: number,
     public max: number,
     public current: number,
@@ -9,6 +10,6 @@ export class CharacterEndurance {
   ) {}
 
   static empty(): CharacterEndurance {
-    return new CharacterEndurance(0, 0, 0, 0, 0, 0);
+    return new CharacterEndurance(0, 0, 0, 0, 0, 0, 0);
   }
 }

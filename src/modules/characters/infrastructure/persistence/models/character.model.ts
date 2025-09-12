@@ -22,8 +22,11 @@ import { CharacterStatus } from 'src/modules/characters/domain/value-objects/cha
 
 export type CharacterDocument = CharacterModel & Document;
 
-@Schema({ collection: 'characters', versionKey: false })
+@Schema({ collection: 'characters', _id: false, versionKey: false })
 export class CharacterModel {
+  @Prop({ required: true })
+  _id: string;
+
   @Prop({ required: true })
   gameId: string;
 

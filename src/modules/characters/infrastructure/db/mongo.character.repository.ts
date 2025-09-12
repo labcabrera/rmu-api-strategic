@@ -40,7 +40,7 @@ export class MongoCharacterRepository implements CharacterRepository {
     return new Page<Character>(content, page, size, totalElements);
   }
 
-  async save(request: Partial<Character>): Promise<Character> {
+  async save(request: Character): Promise<Character> {
     const model = new this.characterModel({ ...request, _id: request.id });
     await model.save();
     return this.mapToEntity(model);
@@ -70,7 +70,7 @@ export class MongoCharacterRepository implements CharacterRepository {
 
   private mapToEntity(doc: CharacterDocument): Character {
     return new Character(
-      doc._id as string,
+      doc._id,
       doc.gameId,
       doc.factionId,
       doc.name,

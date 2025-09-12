@@ -130,6 +130,9 @@ export class CharacterEndurance {
   base: number;
 
   @Prop({ required: true })
+  racialBonus: number;
+
+  @Prop({ required: true })
   customBonus: number;
 
   @Prop({ required: true })

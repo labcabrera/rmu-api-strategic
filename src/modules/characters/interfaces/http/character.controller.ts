@@ -38,6 +38,7 @@ import { CreateCharacterCommand } from '../../application/cqrs/commands/create-c
 import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command';
 import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command';
 import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command';
+import { LevelUpQueryDto } from './dto/level-up-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -120,14 +121,15 @@ export class CharacterController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Post(':id/xp/level-up')
+  @Post(':id/level-up')
+  @HttpCode(200)
   @ApiOperation({ operationId: 'levelUp', summary: 'Level up a character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUp(@Param('id') id: string, @Request() req: AuthRequest) {
+  async levelUp(@Param('id') id: string, @Query() dto: LevelUpQueryDto, @Request() req: AuthRequest) {
     this.logger.debug(`Leveling up character: ${id} for user ${req.user.id}`);
-    const force = req.query.force === 'true';
+    const force = dto.force || false;
     const command = new LevelUpCommand(id, force, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
     return CharacterDto.fromEntity(entity);

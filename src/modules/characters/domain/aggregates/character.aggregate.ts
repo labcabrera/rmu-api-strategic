@@ -16,6 +16,8 @@ import { CharacterXP } from '../value-objects/character-xp.vo';
 import { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { CharacterCreatedEvent } from '../events/character.events';
 
 export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
 
@@ -50,24 +52,24 @@ export class Character extends AggregateRoot {
   }
 
   static partialCreate(
-    gameId: string,
+    game: Game,
     factionId: string,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,
     level: number,
+    weaponDevelopment: WeaponDevelopmentType[],
     statistics: CharacterStatistics,
-    description: string | undefined,
     owner: string,
   ): Character {
-    return new Character(
+    const character = new Character(
       randomUUID(),
-      gameId,
+      game.id,
       factionId,
       name,
       info,
       roleplay,
-      CharacterXP.fromLevel(level),
+      CharacterXP.fromLevel(level, weaponDevelopment),
       statistics,
       CharacterMovement.empty(),
       CharacterDefense.empty(),
@@ -81,10 +83,45 @@ export class Character extends AggregateRoot {
       CharacterEquipment.empty(),
       [], // attacks
       'partially_created',
-      description,
+      undefined, // description
       owner,
       new Date(),
       undefined,
     );
+    character.experience.developmentPoints = game.powerLevel.baseDevPoints || 60;
+    character.experience.availableDevelopmentPoints = game.powerLevel.baseDevPoints || 60;
+    return character;
+  }
+
+  setupRaceBonuses(
+    statBonus: Record<string, number>,
+    resistances: Record<string, number>,
+    size: string,
+    strideBonus: number,
+    enduranceBonus: number,
+  ): void {
+    this.movement.strideRacialBonus = strideBonus;
+    for (const [stat, bonus] of Object.entries(statBonus)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.statistics[stat].racial = bonus;
+    }
+    for (const [resistance, bonus] of Object.entries(resistances)) {
+      this.setupRacialResistanceBonus(resistance, bonus);
+    }
+    this.endurance.racialBonus = enduranceBonus;
+    this.info.sizeId = size;
+  }
+
+  finishCreation(): void {
+    this.status = 'created';
+    this.apply(new CharacterCreatedEvent(this));
+  }
+
+  private setupRacialResistanceBonus(resistance: string, bonus: number): void {
+    const found = this.resistances.some((r) => r.resistance === resistance);
+    if (found) {
+      return;
+    }
+    this.resistances.push(new CharacterResistance(resistance, 0, bonus, 0, 0));
   }
 }
