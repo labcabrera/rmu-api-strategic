@@ -10,32 +10,17 @@ import { UpdateFactionCommand } from '../commands/update-faction.command';
 export class UpdateFactionCommandHandler implements ICommandHandler<UpdateFactionCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
+    @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
   ) {}
 
   async execute(command: UpdateFactionCommand): Promise<Faction> {
-    const current = await this.factionRepository.findById(command.factionId);
-    if (!current) {
+    const faction = await this.factionRepository.findById(command.factionId);
+    if (!faction) {
       throw new NotFoundError('Faction', command.factionId);
     }
-    this.updateData(current, command);
-    const updated = await this.factionRepository.update(command.factionId, current);
-    await this.factionNotificationPort.updated(updated);
+    faction.update(command.name, command.availableXP, command.availableGold, command.description);
+    const updated = await this.factionRepository.update(command.factionId, faction);
+    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
     return updated;
-  }
-
-  private updateData(current: Faction, command: UpdateFactionCommand): void {
-    if (command.name) {
-      current.name = command.name;
-    }
-    if (command.availableGold) {
-      current.management.availableGold = command.availableGold;
-    }
-    if (command.availableXP) {
-      current.management.availableXP = command.availableXP;
-    }
-    if (command.description) {
-      current.description = command.description;
-    }
   }
 }

@@ -1,11 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { FactionManagement } from './faction.model-childs';
+import { FactionManagement } from './faction-management.model';
 
 export type FactionDocument = FactionModel & Document;
 
-@Schema({ collection: 'factions', versionKey: false })
+@Schema({ collection: 'factions', _id: false, versionKey: false })
 export class FactionModel {
+  @Prop({ required: true })
+  _id: string;
+
   @Prop({ required: true })
   gameId: string;
 

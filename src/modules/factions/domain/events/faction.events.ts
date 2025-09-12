@@ -3,18 +3,18 @@ import { Faction } from '../aggregates/faction.aggregate';
 
 export class FactionCreatedEvent extends DomainEvent<Faction> {
   constructor(data: Faction) {
-    super('FactionCreatedEvent', data);
+    super('created', data);
   }
 }
 
 export class FactionUpdatedEvent extends DomainEvent<Faction> {
   constructor(data: Faction) {
-    super('FactionUpdatedEvent', data);
+    super('updated', data);
   }
 }
 
 export class FactionDeletedEvent extends DomainEvent<Faction> {
   constructor(data: Faction) {
-    super('FactionDeletedEvent', data);
+    super('deleted', data);
   }
 }

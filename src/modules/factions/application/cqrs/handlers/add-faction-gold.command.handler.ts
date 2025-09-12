@@ -10,7 +10,7 @@ import { AddFactionGoldCommand } from '../commands/add-faction-gold.command';
 export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionGoldCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionNotificationPort: FactionEventBusPort,
+    @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
   ) {}
 
   async execute(command: AddFactionGoldCommand): Promise<Faction> {
@@ -23,9 +23,9 @@ export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionG
     if (!faction) {
       throw new NotFoundError('Faction', command.factionId);
     }
-    faction.management.availableGold += command.gold;
+    faction.addGold(command.gold);
     const updated = await this.factionRepository.update(command.factionId, faction);
-    await this.factionNotificationPort.updated(updated);
+    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
     return updated;
   }
 }
