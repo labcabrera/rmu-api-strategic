@@ -32,7 +32,7 @@ export class MongoGameRepository implements GameRepository {
     return new Page<Game>(content, page, size, totalElements);
   }
 
-  async save(game: Partial<Game>): Promise<Game> {
+  async save(game: Game): Promise<Game> {
     const model = new this.gameModel({ ...game, _id: game.id });
     await model.save();
     return this.mapToEntity(model);

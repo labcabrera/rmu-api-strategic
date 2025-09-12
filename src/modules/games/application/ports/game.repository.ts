@@ -6,7 +6,7 @@ export interface GameRepository {
 
   findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Game>>;
 
-  save(game: Partial<Game>): Promise<Game>;
+  save(game: Game): Promise<Game>;
 
   update(gameId: string, game: Partial<Game>): Promise<Game>;
 

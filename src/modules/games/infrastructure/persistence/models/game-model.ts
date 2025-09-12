@@ -5,8 +5,11 @@ import type { GameStatus } from 'src/modules/games/domain/value-objects/game-sta
 
 export type GameDocument = GameModel & Document;
 
-@Schema({ collection: 'strategic-games', versionKey: false })
+@Schema({ collection: 'strategic-games', _id: false, versionKey: false })
 export class GameModel {
+  @Prop({ required: true })
+  _id: string;
+
   @Prop({ required: true })
   name: string;
 
