@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
 import {
   CharacterAttack,
   CharacterDefense,
@@ -12,13 +11,13 @@ import {
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
-  CharacterSkill,
   CharacterStatistics,
   CharacterXP,
 } from './character-childs.model';
 import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
 import { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
+import { CharacterSkill } from './character-skill.model';
 
 export type CharacterDocument = CharacterModel & Document;
 

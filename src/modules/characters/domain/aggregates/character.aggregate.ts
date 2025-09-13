@@ -63,6 +63,9 @@ export class Character extends AggregateRoot {
     statistics: CharacterStatistics,
     owner: string,
   ): Character {
+    if (!weaponDevelopment || weaponDevelopment.length !== 4) {
+      throw new ValidationError('Invalid weapon development types');
+    }
     const character = new Character(
       randomUUID(),
       game.id,
@@ -118,6 +121,68 @@ export class Character extends AggregateRoot {
     this.apply(new CharacterCreatedEvent(this));
   }
 
+  addSkill(
+    skillId: string,
+    specialization: string | undefined,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+  ): void {
+    if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
+      throw new ValidationError('Skill with the same specialization already exists');
+    }
+    const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
+    this.skills.push(skill);
+    //TODO if not commited events add
+  }
+
+  levelUpSkill(skillId: string, allowThird: boolean): void {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranksDeveloped > 2 && !allowThird) {
+      throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
+    }
+    const indexCost = Math.min(skill.ranksDeveloped, 1);
+    const cost = skill.development[indexCost];
+    if (this.experience.availableDevelopmentPoints < cost) {
+      throw new ValidationError('Insufficient development points');
+    }
+    skill.ranks += 1;
+    skill.ranksDeveloped += 1;
+    this.experience.availableDevelopmentPoints -= cost;
+  }
+
+  levelDownSkill(skillId: string): void {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranksDeveloped < 1) {
+      throw new ValidationError('Skill cannot be downgraded below 0 ranks');
+    }
+    const indexCost = skill.ranksDeveloped === 1 ? 0 : 1;
+    const cost = skill.development[indexCost];
+    skill.ranks -= 1;
+    skill.ranksDeveloped -= 1;
+    this.experience.availableDevelopmentPoints += cost;
+  }
+
+  deleteSkill(skillId: string) {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranks > skill.ranksDeveloped) {
+      throw new ValidationError('Cannot delete skill with ranks acquired from previous levels');
+    }
+    while (skill.ranksDeveloped > 0) {
+      this.levelDownSkill(skillId);
+    }
+    this.skills = this.skills.filter((s) => s.skillId !== skillId);
+  }
+
   levelUp(force: boolean): void {
     if (this.experience.level >= this.experience.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');
@@ -129,6 +194,7 @@ export class Character extends AggregateRoot {
     }
     this.experience.level += 1;
     this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
+    this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
   toPlainObject(): any {

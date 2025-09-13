@@ -1,21 +1,24 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character, WeaponDevelopmentType } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
-import * as skillCategoryClient from '../../ports/skill-category-client.port';
-import * as skillClient from '../../ports/skill-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
-import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import type { CharacterRepository } from '../../ports/character.repository';
+import type { SkillCategoryClientPort } from '../../ports/skill-category-client.port';
+import type { SkillClientPort } from '../../ports/skill-client.port';
+import type { ProfessionClientPort } from '../../ports/profession-client.port';
+import type { RaceClientPort } from '../../ports/race-client.port';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-    @Inject('SkillClient') private readonly skillClient: skillClient.SkillClientPort,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: skillCategoryClient.SkillCategoryClientPort,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
+    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
+    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
@@ -28,35 +31,24 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     if (this.hasSkillId(character, skillId)) {
       throw new ValidationError(`Skill ${skillId} already exists for character ${characterId}`);
     }
-    const skillInfo = await this.skillClient.getSkillById(skillId);
-    const skillCategoryInfo = await this.skillCategoryClient.getSkillCategoryById(skillInfo.categoryId);
-    if (skillInfo.specializations && skillInfo.specializations.length > 0) {
-      if (!command.specialization || command.specialization.trim().length === 0) {
-        throw new ValidationError(`Specialization is required for skill ${skillId}`);
-      }
-    } else {
-      if (command.specialization && command.specialization.trim().length > 0) {
-        throw new ValidationError(`Specialization is not allowed for skill ${skillId}`);
-      }
+    const [readedSkill, readedProfession, readedRace] = await Promise.all([
+      this.skillClient.getSkillById(skillId),
+      this.professionClient.getProfessionById(character.info.professionId),
+      this.raceClient.getRaceById(character.info.raceId),
+    ]);
+    if (!readedSkill) throw new NotFoundError('Skill', skillId);
+    if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
+    if (!readedRace) throw new NotFoundError('Race', character.info.raceId);
+    const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
+    if (!readedCategory) {
+      throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
     }
 
-    const statistics = [...skillCategoryInfo.bonus, ...skillInfo.bonus];
-    //TODO read from api
-    const racialBonus: number = 0;
-    const skill: CharacterSkill = {
-      skillId: command.skillId,
-      specialization: command.specialization,
-      statistics: statistics,
-      professional: undefined,
-      ranks: command.ranks,
-      statBonus: 0,
-      racialBonus: racialBonus,
-      developmentBonus: 0,
-      professionalBonus: 0,
-      customBonus: command.customBonus || 0,
-      totalBonus: 0,
-    };
-    character.skills.push(skill);
+    const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
+    const devPoints = readedProfession.skillCosts[categoryId] || [];
+    const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
+    const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
+    character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
     this.characterProcessorService.process(character);
     const updated: Character = await this.characterRepository.update(character);
     return updated;
@@ -64,5 +56,22 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
 
   private hasSkillId(character: Character, skillId: string): boolean {
     return character.skills.some((skill) => skill.skillId === skillId);
+  }
+
+  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
+    const combatType = this.mapCombatSkill(skillId);
+    if (combatType) {
+      const index = character.experience.weaponDevelopment.indexOf(combatType);
+      return `combat${index + 1}`;
+    }
+    return categoryId;
+  }
+
+  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
+    if (skillId.startsWith('melee-weapon')) return 'melee';
+    if (skillId.startsWith('ranged-weapon')) return 'ranged';
+    if (skillId === 'shield') return 'shield';
+    if (skillId === 'unarmed-combat') return 'unarmed';
+    return undefined;
   }
 }

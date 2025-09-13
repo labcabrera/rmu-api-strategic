@@ -1,8 +1,8 @@
 export interface RaceClientPort {
-  getRaceById(raceId: string): Promise<RaceResponse>;
+  getRaceById(raceId: string): Promise<Race>;
 }
 
-export interface RaceResponse {
+export interface Race {
   id: string;
   name: string;
   realm: string;
@@ -16,5 +16,6 @@ export interface RaceResponse {
   recoveryMultiplier: number;
   baseHits: number;
   bonusDevPoints: number;
+  skillBonuses: Record<string, number>;
   description: string;
 }

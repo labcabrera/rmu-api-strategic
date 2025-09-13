@@ -38,12 +38,7 @@ import { ResistancesProcessor } from './domain/services/character/processors/res
 import { XPProcessor } from './domain/services/character/processors/xp-processor';
 import { ApiProfessionClientAdapter } from './infrastructure/api-clients/api.profession-client.adapter';
 import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
-import { MongoCharacterLevelDevRepository } from './infrastructure/db/mongo.character-level-dev.repository';
 import { MongoCharacterRepository } from './infrastructure/db/mongo.character.repository';
-import {
-  CharacterLevelDevModel,
-  CharacterLevelDevSchema,
-} from './infrastructure/persistence/models/character-level-dev.model';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model';
 import { CharacterItemController } from './interfaces/http/character-item.controller';
 import { CharacterSkillController } from './interfaces/http/character-skill.controller';
@@ -58,10 +53,7 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     TerminusModule,
     CqrsModule,
     ConfigModule,
-    MongooseModule.forFeature([
-      { name: CharacterModel.name, schema: CharacterSchema },
-      { name: CharacterLevelDevModel.name, schema: CharacterLevelDevSchema },
-    ]),
+    MongooseModule.forFeature([{ name: CharacterModel.name, schema: CharacterSchema }]),
     AuthModule,
     SharedModule,
     GamesModule,
@@ -102,10 +94,6 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
-    },
-    {
-      provide: 'CharacterLevelDevRepository',
-      useClass: MongoCharacterLevelDevRepository,
     },
     {
       provide: 'RaceClient',

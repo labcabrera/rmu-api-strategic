@@ -5,12 +5,12 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import type { RaceClientPort, RaceResponse } from '../../ports/race-client.port';
+import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
 import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
 import { Character, WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import type { ItemClientPort } from '../../ports/item-client.port';
-import type { ProfessionClientPort } from '../../ports/profession-client.port';
+import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
@@ -20,6 +20,7 @@ import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-o
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { read } from 'fs';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -49,13 +50,10 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     if (faction.gameId != game.id) {
       throw new ValidationError(`Faction ${command.factionId} does not belong to game ${command.gameId}`);
     }
-    const raceInfo = await this.fetchRace(command.info.raceId);
-    const processedStatistics = this.processStatistics(raceInfo, command.statistics, game);
-    const skills = await this.processSkills(command, raceInfo);
+    const race = await this.fetchRace(command.info.raceId);
+    const profession = await this.fetchProfession(command.info.professionId);
+    const processedStatistics = this.processStatistics(race, command.statistics, game);
     const items = await this.processItems(command.info, command);
-
-    //TODO add to command
-    const weaponDevelopment: WeaponDevelopmentType[] = ['melee', 'ranged', 'shield', 'unarmed'];
     const character = Character.partialCreate(
       game,
       faction.id,
@@ -63,19 +61,19 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.info,
       command.roleplay,
       command.level,
-      weaponDevelopment,
+      command.weaponDevelopment,
       processedStatistics,
       command.userId,
     );
+    await this.processSkills(character, profession, command, race);
     character.setupRaceBonuses(
-      raceInfo.defaultStatBonus || {},
-      raceInfo.resistances || {},
-      raceInfo.size || 'medium',
-      raceInfo.strideBonus || 0,
-      raceInfo.enduranceBonus || 0,
+      race.defaultStatBonus || {},
+      race.resistances || {},
+      race.size || 'medium',
+      race.strideBonus || 0,
+      race.enduranceBonus || 0,
     );
     //TODO move to aggregate logic
-    character.skills = skills;
     character.items = items;
     this.loadDefaultEquipment(character);
     this.characterProcessorService.process(character);
@@ -84,7 +82,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return created;
   }
 
-  processStatistics(raceInfo: RaceResponse, statistics: CharacterStatistics, game: Game): CharacterStatistics {
+  processStatistics(raceInfo: Race, statistics: CharacterStatistics, game: Game): CharacterStatistics {
     const values = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
     const result: any = {};
     const minStat = game.powerLevel.statRandomMin - 1 || 10;
@@ -126,50 +124,52 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return result;
   }
 
-  async processSkills(command: CreateCharacterCommand, raceInfo: RaceResponse): Promise<CharacterSkill[]> {
+  async processSkills(
+    character: Character,
+    profession: Profession,
+    command: CreateCharacterCommand,
+    raceInfo: Race,
+  ): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
     if (!skills.some((e) => e.skillId === 'body-development')) {
       skills.push({
         skillId: 'body-development',
-        ranks: 0,
-        customBonus: 0,
         specialization: undefined,
       });
     }
     const readedSkills = await this.fetchSkills();
     const readedSkillCategories = await this.fetchSkillCategories();
-    return command.skills.map((e) => {
-      const readedSkill = readedSkills.find((s) => s.id == e.skillId);
+    for (const skill of skills) {
+      const readedSkill = readedSkills.find((s) => s.id == skill.skillId);
       if (!readedSkill) {
-        throw new ValidationError(`Invalid skill identifier '${e.skillId}'`);
+        throw new ValidationError(`Invalid skill identifier '${skill.skillId}'`);
       }
       const readedCategory = readedSkillCategories.find((c) => c.id == readedSkill.categoryId);
+      if (!readedCategory) {
+        throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
+      }
       const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-      const customBonus = e.customBonus ? e.customBonus : 0;
+      const categoryId = this.getSkillDevelopmentCategory(character, skill.skillId, readedCategory.id);
+      const devPoints = profession.skillCosts[categoryId] || [];
       let racialBonus: number;
-      if (e.skillId === 'body-development') {
+      if (skill.skillId === 'body-development') {
         racialBonus = raceInfo.baseHits;
       } else {
         //TODO read from race info
         racialBonus = 0;
       }
-      return {
-        skillId: readedSkill.id,
-        skillCategoryId: readedSkill.categoryId,
-        specialization: e.specialization,
-        attributeBonus: 0,
-        professional: [],
-        ranks: e.ranks,
-        statBonus: 0,
-        racialBonus: racialBonus,
-        developmentBonus: 0,
-        customBonus: customBonus,
-        professionalBonus: 0,
-        totalBonus: 0,
-        statistics: statistics,
-      };
-    });
+      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, racialBonus);
+    }
+  }
+
+  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
+    const combatType = this.mapCombatSkill(skillId);
+    if (combatType) {
+      const index = character.experience.weaponDevelopment.indexOf(combatType);
+      return `combat${index + 1}`;
+    }
+    return categoryId;
   }
 
   async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
@@ -231,7 +231,15 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchRace(raceId: string): Promise<RaceResponse> {
+  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
+    if (skillId.startsWith('melee-weapon')) return 'melee';
+    if (skillId.startsWith('ranged-weapon')) return 'ranged';
+    if (skillId === 'shield') return 'shield';
+    if (skillId === 'unarmed-combat') return 'unarmed';
+    return undefined;
+  }
+
+  async fetchRace(raceId: string): Promise<Race> {
     try {
       return await this.raceClient.getRaceById(raceId);
     } catch (e) {
@@ -267,7 +275,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchProfession(professionId: string): Promise<any> {
+  async fetchProfession(professionId: string): Promise<Profession> {
     try {
       return await this.professionClient.getProfessionById(professionId);
     } catch (e) {

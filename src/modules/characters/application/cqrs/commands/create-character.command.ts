@@ -1,3 +1,4 @@
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
 import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
@@ -10,6 +11,7 @@ export class CreateCharacterCommand {
     public readonly info: CharacterInfo,
     public readonly roleplay: CharacterRoleplayInfo,
     public readonly level: number,
+    public readonly weaponDevelopment: WeaponDevelopmentType[],
     public readonly statistics: CharacterStatistics,
     public readonly strideCustomBonus: number | undefined,
     public readonly enduranceCustomBonus: number | undefined,
@@ -29,8 +31,6 @@ export interface CreateCharacterExperience {
 export interface CreateCharacterSkill {
   skillId: string;
   specialization: string | undefined;
-  ranks: number;
-  customBonus: number | undefined;
 }
 
 export interface CreateCharacterItem {
