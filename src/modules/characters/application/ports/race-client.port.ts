@@ -16,5 +16,6 @@ export interface Race {
   recoveryMultiplier: number;
   baseHits: number;
   bonusDevPoints: number;
+  skillBonuses: Record<string, number>;
   description: string;
 }
