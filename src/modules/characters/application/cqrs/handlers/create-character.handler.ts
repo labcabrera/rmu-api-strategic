@@ -8,7 +8,7 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
 import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { Character, WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import type { ItemClientPort } from '../../ports/item-client.port';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
@@ -150,7 +150,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
       }
       const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-      const categoryId = this.getSkillDevelopmentCategory(character, readedCategory.id);
+      const categoryId = this.getSkillDevelopmentCategory(character, skill.skillId, readedCategory.id);
       const devPoints = profession.skillCosts[categoryId] || [];
       let racialBonus: number;
       if (skill.skillId === 'body-development') {
@@ -163,8 +163,12 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  private getSkillDevelopmentCategory(character: Character, categoryId: string): string {
-    //TODO check order
+  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
+    const combatType = this.mapCombatSkill(skillId);
+    if (combatType) {
+      const index = character.experience.weaponDevelopment.indexOf(combatType);
+      return `combat${index + 1}`;
+    }
     return categoryId;
   }
 
@@ -225,6 +229,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     if (armor && armor.id) {
       character.equipment.body = armor.id;
     }
+  }
+
+  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
+    if (skillId.startsWith('melee-weapon')) return 'melee';
+    if (skillId.startsWith('ranged-weapon')) return 'ranged';
+    if (skillId === 'shield') return 'shield';
+    if (skillId === 'unarmed-combat') return 'unarmed';
+    return undefined;
   }
 
   async fetchRace(raceId: string): Promise<Race> {

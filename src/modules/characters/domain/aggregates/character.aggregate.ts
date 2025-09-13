@@ -144,7 +144,7 @@ export class Character extends AggregateRoot {
     if (skill.ranksDeveloped > 2 && !allowThird) {
       throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
     }
-    const indexCost = Math.min(skill.ranksDeveloped);
+    const indexCost = Math.min(skill.ranksDeveloped, 1);
     const cost = skill.development[indexCost];
     if (this.experience.availableDevelopmentPoints < cost) {
       throw new ValidationError('Insufficient development points');
@@ -162,11 +162,25 @@ export class Character extends AggregateRoot {
     if (skill.ranksDeveloped < 1) {
       throw new ValidationError('Skill cannot be downgraded below 0 ranks');
     }
-    const indexCost = Math.min(skill.ranksDeveloped - 1, 2);
+    const indexCost = skill.ranksDeveloped === 1 ? 0 : 1;
     const cost = skill.development[indexCost];
     skill.ranks -= 1;
     skill.ranksDeveloped -= 1;
     this.experience.availableDevelopmentPoints += cost;
+  }
+
+  deleteSkill(skillId: string) {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranks > skill.ranksDeveloped) {
+      throw new ValidationError('Cannot delete skill with ranks acquired from previous levels');
+    }
+    while (skill.ranksDeveloped > 0) {
+      this.levelDownSkill(skillId);
+    }
+    this.skills = this.skills.filter((s) => s.skillId !== skillId);
   }
 
   levelUp(force: boolean): void {
