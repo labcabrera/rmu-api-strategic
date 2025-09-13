@@ -136,6 +136,39 @@ export class Character extends AggregateRoot {
     //TODO if not commited events add
   }
 
+  levelUpSkill(skillId: string, allowThird: boolean): void {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranksDeveloped > 2 && !allowThird) {
+      throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
+    }
+    const indexCost = Math.min(skill.ranksDeveloped);
+    const cost = skill.development[indexCost];
+    if (this.experience.availableDevelopmentPoints < cost) {
+      throw new ValidationError('Insufficient development points');
+    }
+    skill.ranks += 1;
+    skill.ranksDeveloped += 1;
+    this.experience.availableDevelopmentPoints -= cost;
+  }
+
+  levelDownSkill(skillId: string): void {
+    const skill = this.skills.find((s) => s.skillId === skillId);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranksDeveloped < 1) {
+      throw new ValidationError('Skill cannot be downgraded below 0 ranks');
+    }
+    const indexCost = Math.min(skill.ranksDeveloped - 1, 2);
+    const cost = skill.development[indexCost];
+    skill.ranks -= 1;
+    skill.ranksDeveloped -= 1;
+    this.experience.availableDevelopmentPoints += cost;
+  }
+
   levelUp(force: boolean): void {
     if (this.experience.level >= this.experience.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');

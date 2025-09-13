@@ -4,16 +4,43 @@ import { CharacterSkill } from 'src/modules/characters/domain/value-objects/char
 import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
 
 export class CharacterSkillDto {
+  @ApiProperty({ description: 'Skill identifier', example: 'animal-handling' })
   skillId: string;
+
+  @ApiProperty({ description: 'Specialization', example: 'cats' })
   specialization: string | undefined;
+
+  @ApiProperty({ description: 'Associated statistics', example: ['WIS', 'CHA'] })
   statistics: string[];
+
+  @ApiProperty({ description: 'Development values', example: [1, 2] })
+  development: number[];
+
+  @ApiProperty({ description: 'Professional bonuses' })
   professional: ProfessionalBonusType[] | undefined;
+
+  @ApiProperty({ description: 'Ranks', example: 3 })
   ranks: number;
+
+  @ApiProperty({ description: 'Ranks developed this level', example: 1 })
+  ranksDeveloped: number;
+
+  @ApiProperty({ description: 'Stat bonus', example: 2 })
   statBonus: number;
+
+  @ApiProperty({ description: 'Racial bonus', example: 1 })
   racialBonus: number;
+
+  @ApiProperty({ description: 'Development bonus', example: 2 })
   developmentBonus: number;
+
+  @ApiProperty({ description: 'Professional bonus', example: 3 })
   professionalBonus: number;
+
+  @ApiProperty({ description: 'Custom bonus', example: 5 })
   customBonus: number;
+
+  @ApiProperty({ description: 'Total bonus', example: 10 })
   totalBonus: number;
 
   static fromEntity(skill: CharacterSkill): CharacterSkillDto {
@@ -21,8 +48,10 @@ export class CharacterSkillDto {
     dto.skillId = skill.skillId;
     dto.specialization = skill.specialization;
     dto.statistics = skill.statistics;
+    dto.development = skill.development;
     dto.professional = skill.professional;
     dto.ranks = skill.ranks;
+    dto.ranksDeveloped = skill.ranksDeveloped;
     dto.statBonus = skill.statBonus;
     dto.racialBonus = skill.racialBonus;
     dto.professionalBonus = skill.professionalBonus;

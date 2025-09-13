@@ -20,6 +20,7 @@ import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-o
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { read } from 'fs';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -149,7 +150,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
       }
       const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-      const devPoints = profession.skillCosts[skill.skillId] || [];
+      const categoryId = this.getSkillDevelopmentCategory(character, readedCategory.id);
+      const devPoints = profession.skillCosts[categoryId] || [];
       let racialBonus: number;
       if (skill.skillId === 'body-development') {
         racialBonus = raceInfo.baseHits;
@@ -159,6 +161,11 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       }
       character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, racialBonus);
     }
+  }
+
+  private getSkillDevelopmentCategory(character: Character, categoryId: string): string {
+    //TODO check order
+    return categoryId;
   }
 
   async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
