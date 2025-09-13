@@ -194,6 +194,7 @@ export class Character extends AggregateRoot {
     }
     this.experience.level += 1;
     this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
+    this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
   toPlainObject(): any {
