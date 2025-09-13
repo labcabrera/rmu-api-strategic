@@ -173,42 +173,6 @@ export class CharacterInitiative {
 }
 
 @Schema({ _id: false })
-export class CharacterSkill {
-  @Prop({ required: true })
-  skillId: string;
-
-  @Prop({ type: String, required: false })
-  specialization: string | undefined;
-
-  @Prop({ type: [String], required: true })
-  statistics: string[];
-
-  @Prop({ type: [String], required: false })
-  professional: ProfessionalBonusType[] | undefined;
-
-  @Prop({ required: true })
-  ranks: number;
-
-  @Prop({ required: true })
-  statBonus: number;
-
-  @Prop({ required: true })
-  racialBonus: number;
-
-  @Prop({ required: true })
-  developmentBonus: number;
-
-  @Prop({ required: true })
-  professionalBonus: number;
-
-  @Prop({ required: true })
-  customBonus: number;
-
-  @Prop({ required: true })
-  totalBonus: number;
-}
-
-@Schema({ _id: false })
 export class CharacterXP {
   @Prop({ required: true })
   level: number;

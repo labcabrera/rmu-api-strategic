@@ -31,8 +31,6 @@ export interface CreateCharacterExperience {
 export interface CreateCharacterSkill {
   skillId: string;
   specialization: string | undefined;
-  ranks: number;
-  customBonus: number | undefined;
 }
 
 export interface CreateCharacterItem {

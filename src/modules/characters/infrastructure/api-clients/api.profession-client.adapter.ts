@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 import { TokenService } from 'src/modules/auth/token.service';
-import { ProfessionClientPort, ProfessionResponse } from '../../application/ports/profession-client.port';
+import { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port';
 
 @Injectable()
 export class ApiProfessionClientAdapter implements ProfessionClientPort {
@@ -12,7 +12,7 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
     private readonly configService: ConfigService,
   ) {}
 
-  async getProfessionById(professionId: string): Promise<ProfessionResponse | undefined> {
+  async getProfessionById(professionId: string): Promise<Profession> {
     const token = await this.tokenService.getToken();
     const apiCoreUri = this.configService.get('RMU_API_CORE_URI') as string;
     const uri = `${apiCoreUri}/professions/${professionId}`;
@@ -22,13 +22,10 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
           Authorization: `Bearer ${token}`,
         },
       });
-      return response.data as ProfessionResponse;
+      return response.data as Profession;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        return undefined;
-      } else {
-        throw err;
-      }
+      //TODO add axios error handling
+      throw new Error(`Error fetching profession ${professionId}: ${err}`);
     }
   }
 }

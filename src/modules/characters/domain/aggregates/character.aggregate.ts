@@ -121,6 +121,21 @@ export class Character extends AggregateRoot {
     this.apply(new CharacterCreatedEvent(this));
   }
 
+  addSkill(
+    skillId: string,
+    specialization: string | undefined,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+  ): void {
+    if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
+      throw new ValidationError('Skill with the same specialization already exists');
+    }
+    const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
+    this.skills.push(skill);
+    //TODO if not commited events add
+  }
+
   levelUp(force: boolean): void {
     if (this.experience.level >= this.experience.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');

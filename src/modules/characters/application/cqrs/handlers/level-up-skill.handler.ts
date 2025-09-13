@@ -13,7 +13,7 @@ import * as sc from '../../ports/skill-client.port';
 import { CharacterLevelCalculator } from 'src/modules/characters/domain/services/character-level-calculator';
 import * as scc from '../../ports/skill-category-client.port';
 import { SkillResponse } from '../../ports/skill-client.port';
-import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
+import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
@@ -92,7 +92,7 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
   private getDevCost(
     character: Character,
     skill: SkillResponse,
-    profession: pc.ProfessionResponse,
+    profession: pc.Profession,
     cld: Partial<CharacterLevelDev>,
     command: LevelUpSkillCommand,
   ): number {
@@ -117,19 +117,21 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
   }
 
   private buildCharacterSkillTemplate(command: LevelUpSkillCommand, attributeBonus: string[]): CharacterSkill {
-    return {
-      skillId: command.skillId,
-      specialization: command.specialization,
-      statistics: attributeBonus,
-      professional: undefined,
-      ranks: 1,
-      statBonus: 0,
-      racialBonus: 0,
-      developmentBonus: 0,
-      professionalBonus: 0,
-      customBonus: 0,
-      totalBonus: 0,
-    };
+    return new CharacterSkill(
+      command.skillId,
+      command.specialization,
+      attributeBonus,
+      [],
+      undefined,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    );
   }
 
   private resolveWeapontCategory(skillId: string): WeaponDevelopmentType {

@@ -41,21 +41,25 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     }
 
     const statistics = [...skillCategoryInfo.bonus, ...skillInfo.bonus];
+    //TODO read from profession
+    const development = [1, 2];
     //TODO read from api
     const racialBonus: number = 0;
-    const skill: CharacterSkill = {
-      skillId: command.skillId,
-      specialization: command.specialization,
-      statistics: statistics,
-      professional: undefined,
-      ranks: command.ranks,
-      statBonus: 0,
-      racialBonus: racialBonus,
-      developmentBonus: 0,
-      professionalBonus: 0,
-      customBonus: command.customBonus || 0,
-      totalBonus: 0,
-    };
+    const skill = new CharacterSkill(
+      command.skillId,
+      command.specialization,
+      statistics,
+      development,
+      [], // professional
+      0, // ranks
+      0, // ranks developed this level
+      0, // statBonus
+      racialBonus,
+      0,
+      0,
+      0,
+      0,
+    );
     character.skills.push(skill);
     this.characterProcessorService.process(character);
     const updated: Character = await this.characterRepository.update(character);
