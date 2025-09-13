@@ -53,9 +53,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const processedStatistics = this.processStatistics(raceInfo, command.statistics, game);
     const skills = await this.processSkills(command, raceInfo);
     const items = await this.processItems(command.info, command);
-
-    //TODO add to command
-    const weaponDevelopment: WeaponDevelopmentType[] = ['melee', 'ranged', 'shield', 'unarmed'];
     const character = Character.partialCreate(
       game,
       faction.id,
@@ -63,7 +60,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.info,
       command.roleplay,
       command.level,
-      weaponDevelopment,
+      command.weaponDevelopment,
       processedStatistics,
       command.userId,
     );

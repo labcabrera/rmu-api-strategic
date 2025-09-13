@@ -13,6 +13,7 @@ import {
   CreateCharacterCommand,
   CreateCharacterItem,
 } from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -45,6 +46,10 @@ export class CreateCharacterDto {
   @ApiProperty({ description: 'Character level', example: 1 })
   @IsNumber()
   level: number;
+
+  @ApiProperty({ description: 'Character weapon development', type: [String] })
+  @IsArray()
+  weaponDevelopment: WeaponDevelopmentType[] = [];
 
   @ApiProperty({ description: 'Character movement', type: CharacterStatisticsCreationDto })
   @ValidateNested()
@@ -100,6 +105,7 @@ export class CreateCharacterDto {
       dto.info,
       dto.roleplay,
       dto.level,
+      dto.weaponDevelopment,
       dto.statistics.toEntity(),
       dto.movement.strideCustomBonus,
       dto.endurance.customBonus,

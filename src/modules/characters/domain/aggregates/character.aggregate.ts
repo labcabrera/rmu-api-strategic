@@ -63,6 +63,9 @@ export class Character extends AggregateRoot {
     statistics: CharacterStatistics,
     owner: string,
   ): Character {
+    if (!weaponDevelopment || weaponDevelopment.length !== 4) {
+      throw new ValidationError('Invalid weapon development types');
+    }
     const character = new Character(
       randomUUID(),
       game.id,
