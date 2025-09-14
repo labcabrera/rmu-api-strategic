@@ -5,6 +5,7 @@ import { GamePowerLevel } from 'src/modules/games/domain/value-objects/game-powe
 import { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
+import { GameOptionsDto } from './game-options.dto';
 
 export class GameDto {
   id: string;
@@ -26,33 +27,6 @@ export class GameDto {
     dto.powerLevel = GamePowerLevelDto.fromEntity(entity.powerLevel);
     dto.description = entity.description;
     dto.owner = entity.owner;
-    return dto;
-  }
-}
-
-export class GameOptionsDto {
-  @ApiProperty({ description: 'Experience multiplier', type: Number, default: 1.0, example: 1.0 })
-  @IsNumber()
-  experienceMultiplier: number;
-
-  @ApiProperty({ description: 'Fatigue multiplier', type: Number, default: 1.0, example: 1.0 })
-  @IsNumber()
-  fatigueMultiplier: number;
-
-  @ApiProperty({ description: 'Board scale multiplier', type: Number, default: 1.0, example: 1.0 })
-  @IsNumber()
-  boardScaleMultiplier: number;
-
-  @ApiProperty({ description: 'Game letality (custom bonus to all attacks)', type: Number, default: 0, example: 0 })
-  @IsNumber()
-  letality: number;
-
-  static fromEntity(entity: GameOptions): GameOptionsDto {
-    const dto = new GameOptionsDto();
-    dto.experienceMultiplier = entity.experienceMultiplier;
-    dto.fatigueMultiplier = entity.fatigueMultiplier;
-    dto.boardScaleMultiplier = entity.boardScaleMultiplier;
-    dto.letality = entity.letality;
     return dto;
   }
 }
