@@ -8,7 +8,7 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
 import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
-import { Character, WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import type { ItemClientPort } from '../../ports/item-client.port';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
@@ -18,9 +18,8 @@ import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.po
 import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
 import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
-import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { read } from 'fs';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -101,7 +100,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         potential = random[2];
         temporary = random[1];
       }
-
       let racial = 0;
       if (raceInfo && raceInfo.defaultStatBonus && raceInfo.defaultStatBonus[e]) {
         racial = raceInfo.defaultStatBonus[e];

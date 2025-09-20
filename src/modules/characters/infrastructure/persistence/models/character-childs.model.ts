@@ -1,8 +1,7 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 import { CharacterGender } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 @Schema({ _id: false })
 export class CharacterInfo {

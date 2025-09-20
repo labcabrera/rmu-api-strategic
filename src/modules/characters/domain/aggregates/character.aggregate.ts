@@ -19,11 +19,37 @@ import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent } from '../events/character.events';
 import { ValidationError } from 'src/modules/shared/domain/errors';
+import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 
-export type WeaponDevelopmentType = 'melee' | 'ranged' | 'shield' | 'unarmed';
+export interface CharacterProps {
+  id: string;
+  gameId: string;
+  factionId: string;
+  name: string;
+  info: CharacterInfo;
+  roleplay: CharacterRoleplayInfo;
+  experience: CharacterXP;
+  statistics: CharacterStatistics;
+  movement: CharacterMovement;
+  defense: CharacterDefense;
+  resistances: CharacterResistance[];
+  hp: CharacterHP;
+  endurance: CharacterEndurance;
+  power?: CharacterPower;
+  initiative: CharacterInitiative;
+  skills: CharacterSkill[];
+  items: CharacterItem[];
+  equipment: CharacterEquipment;
+  attacks: CharacterAttack[];
+  status?: CharacterStatus;
+  description?: string;
+  owner: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
 
 export class Character extends AggregateRoot {
-  constructor(
+  private constructor(
     public id: string,
     public gameId: string,
     public factionId: string,
@@ -94,6 +120,36 @@ export class Character extends AggregateRoot {
     );
     character.experience.developmentPoints = game.powerLevel.baseDevPoints || 60;
     character.experience.availableDevelopmentPoints = game.powerLevel.baseDevPoints || 60;
+    return character;
+  }
+
+  static fromProps(props: CharacterProps): Character {
+    const character = new Character(
+      props.id,
+      props.gameId,
+      props.factionId,
+      props.name,
+      props.info,
+      props.roleplay,
+      props.experience,
+      props.statistics,
+      props.movement,
+      props.defense,
+      props.resistances,
+      props.hp,
+      props.endurance,
+      props.power,
+      props.initiative,
+      props.skills,
+      props.items,
+      props.equipment,
+      props.attacks,
+      props.status,
+      props.description,
+      props.owner,
+      props.createdAt,
+      props.updatedAt,
+    );
     return character;
   }
 
@@ -197,8 +253,9 @@ export class Character extends AggregateRoot {
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
-  toPlainObject(): any {
+  toProps(): CharacterProps {
     return {
+      id: this.id,
       gameId: this.gameId,
       factionId: this.factionId,
       name: this.name,

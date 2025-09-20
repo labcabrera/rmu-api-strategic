@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
@@ -48,7 +47,7 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   async update(update: Character): Promise<Character> {
-    const plain = update.toPlainObject();
+    const plain = update.toProps();
     const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
     if (!updated) {
       throw new NotFoundError('Character', update.id);
@@ -67,31 +66,31 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   private mapToEntity(doc: CharacterDocument): Character {
-    return new Character(
-      doc._id,
-      doc.gameId,
-      doc.factionId,
-      doc.name,
-      doc.info,
-      doc.roleplay,
-      doc.experience,
-      doc.statistics,
-      doc.movement,
-      doc.defense,
-      doc.resistances,
-      doc.hp,
-      doc.endurance,
-      doc.power,
-      doc.initiative,
-      doc.skills,
-      doc.items,
-      doc.equipment,
-      doc.attacks,
-      doc.status,
-      doc.description,
-      doc.owner,
-      doc.createdAt,
-      doc.updatedAt,
-    );
+    return Character.fromProps({
+      id: doc._id,
+      gameId: doc.gameId,
+      factionId: doc.factionId,
+      name: doc.name,
+      info: doc.info,
+      roleplay: doc.roleplay,
+      experience: doc.experience,
+      statistics: doc.statistics,
+      movement: doc.movement,
+      defense: doc.defense,
+      resistances: doc.resistances,
+      hp: doc.hp,
+      endurance: doc.endurance,
+      power: doc.power,
+      initiative: doc.initiative,
+      skills: doc.skills,
+      items: doc.items,
+      equipment: doc.equipment,
+      attacks: doc.attacks,
+      status: doc.status,
+      description: doc.description,
+      owner: doc.owner,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    });
   }
 }

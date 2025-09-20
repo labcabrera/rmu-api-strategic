@@ -1,7 +1,7 @@
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
 import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 export class CreateCharacterCommand {
   constructor(

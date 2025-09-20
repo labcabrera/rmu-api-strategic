@@ -1,4 +1,4 @@
-import { WeaponDevelopmentType } from '../aggregates/character.aggregate';
+import { WeaponDevelopmentType } from './weapon-development-type.vo';
 
 export class CharacterXP {
   constructor(

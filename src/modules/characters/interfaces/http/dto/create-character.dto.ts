@@ -13,7 +13,7 @@ import {
   CreateCharacterCommand,
   CreateCharacterItem,
 } from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
