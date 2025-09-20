@@ -7,7 +7,7 @@ import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { UpdateFactionCommand } from '../commands/update-faction.command';
 
 @CommandHandler(UpdateFactionCommand)
-export class UpdateFactionCommandHandler implements ICommandHandler<UpdateFactionCommand, Faction> {
+export class UpdateFactionHandler implements ICommandHandler<UpdateFactionCommand, Faction> {
   constructor(
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
     @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
@@ -18,7 +18,7 @@ export class UpdateFactionCommandHandler implements ICommandHandler<UpdateFactio
     if (!faction) {
       throw new NotFoundError('Faction', command.factionId);
     }
-    faction.update(command.name, command.availableXP, command.availableGold, command.description);
+    faction.update(command.name, command.management, command.shortDescription, command.description);
     const updated = await this.factionRepository.update(command.factionId, faction);
     faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
     return updated;

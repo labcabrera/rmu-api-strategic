@@ -26,20 +26,26 @@ export class CreateFactionDto {
   @Type(() => Number)
   availableXP: number | undefined;
 
+  @ApiProperty({ description: 'Faction short description', example: 'Faction short description' })
+  @IsString()
+  @IsOptional()
+  shortDescription: string | undefined;
+
   @ApiProperty({ description: 'Faction description', example: 'A faction from Mordor' })
   @IsString()
   @IsOptional()
   description: string | undefined;
 
   static toCommand(dto: CreateFactionDto, userId: string, roles: string[]): CreateFactionCommand {
-    const command = new CreateFactionCommand();
-    command.name = dto.name;
-    command.gameId = dto.gameId;
-    command.availableGold = dto.availableGold;
-    command.availableXP = dto.availableXP;
-    command.description = dto.description;
-    command.userId = userId;
-    command.roles = roles;
-    return command;
+    return new CreateFactionCommand(
+      dto.gameId,
+      dto.name,
+      dto.availableGold,
+      dto.availableXP,
+      dto.shortDescription,
+      dto.description,
+      userId,
+      roles,
+    );
   }
 }

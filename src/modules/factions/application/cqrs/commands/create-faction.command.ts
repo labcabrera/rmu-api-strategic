@@ -1,9 +1,12 @@
 export class CreateFactionCommand {
-  gameId: string;
-  name: string;
-  availableGold: number | undefined;
-  availableXP: number | undefined;
-  description: string | undefined;
-  userId: string;
-  roles: string[];
+  constructor(
+    public readonly gameId: string,
+    public readonly name: string,
+    public readonly availableGold: number | undefined,
+    public readonly availableXP: number | undefined,
+    public readonly shortDescription: string | undefined,
+    public readonly description: string | undefined,
+    public readonly userId: string,
+    public readonly roles: string[],
+  ) {}
 }

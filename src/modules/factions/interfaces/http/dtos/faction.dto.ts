@@ -7,7 +7,8 @@ export class FactionDto {
   id: string;
   gameId: string;
   name: string;
-  factionManagement: FactionManagementDto;
+  management: FactionManagementDto;
+  shortDescription: string | undefined;
   description: string | undefined;
   owner: string;
 
@@ -16,8 +17,9 @@ export class FactionDto {
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.name = entity.name;
+    dto.management = FactionManagementDto.fromEntity(entity.management);
+    dto.shortDescription = entity.shortDescription;
     dto.description = entity.description;
-    dto.factionManagement = FactionManagementDto.fromEntity(entity.management);
     dto.owner = entity.owner;
     return dto;
   }
@@ -35,6 +37,10 @@ export class FactionManagementDto {
     dto.availableGold = entity.availableGold;
     dto.availableXP = entity.availableXP;
     return dto;
+  }
+
+  static toEntity(dto: FactionManagementDto): FactionManagement {
+    return new FactionManagement(dto.availableGold, dto.availableXP);
   }
 }
 
