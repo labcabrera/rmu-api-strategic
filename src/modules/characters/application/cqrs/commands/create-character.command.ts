@@ -8,7 +8,7 @@ export class CreateCharacterCommand {
     public readonly gameId: string,
     public readonly factionId: string,
     public readonly name: string,
-    public readonly info: CharacterInfo,
+    public readonly info: Omit<CharacterInfo, 'raceName'>,
     public readonly roleplay: CharacterRoleplayInfo,
     public readonly level: number,
     public readonly weaponDevelopment: WeaponDevelopmentType[],
