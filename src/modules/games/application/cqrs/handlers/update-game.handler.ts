@@ -18,7 +18,13 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
     if (!current) {
       throw new NotFoundError('Game', command.gameId);
     }
-    current.update(command.name, undefined, undefined, command.description);
+    current.update({
+      name: command.name,
+      options: command.options,
+      powerLevel: command.powerLevel,
+      shortDescription: command.shortDescription,
+      description: command.description,
+    });
     const updated = await this.gameRepository.update(current.id, current);
     current.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
     return updated;

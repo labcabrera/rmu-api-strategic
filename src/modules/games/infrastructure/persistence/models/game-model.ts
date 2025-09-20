@@ -28,8 +28,11 @@ export class GameModel {
   @Prop({ required: true })
   powerLevel: GamePowerLevel;
 
-  @Prop({ required: false })
-  description?: string;
+  @Prop({ type: String, required: false })
+  shortDescription: string | undefined;
+
+  @Prop({ type: String, required: false })
+  description?: string | undefined;
 
   @Prop({ required: true })
   owner: string;

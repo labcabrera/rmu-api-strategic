@@ -14,6 +14,7 @@ export interface GameProps {
   status: GameStatus;
   options: GameOptions;
   powerLevel: GamePowerLevel;
+  shortDescription?: string;
   description?: string;
   owner: string;
   createdAt: Date;
@@ -29,6 +30,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     public status: GameStatus,
     public options: GameOptions,
     public powerLevel: GamePowerLevel,
+    public shortDescription: string | undefined,
     public description: string | undefined,
     public owner: string,
     public readonly createdAt: Date,
@@ -37,25 +39,18 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     super();
   }
 
-  static create(
-    name: string,
-    realmId: string,
-    realmName: string,
-    options: GameOptions,
-    powerLevel: GamePowerLevel,
-    description: string | undefined,
-    owner: string,
-  ): Game {
+  static create(props: Omit<GameProps, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Game {
     const game = new Game(
       randomUUID(),
-      name,
-      realmId,
-      realmName,
+      props.name,
+      props.realmId,
+      props.realmName,
       'open',
-      options,
-      powerLevel,
-      description,
-      owner,
+      props.options,
+      props.powerLevel,
+      props.shortDescription,
+      props.description,
+      props.owner,
       new Date(),
       undefined,
     );
@@ -72,6 +67,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       props.status,
       props.options,
       props.powerLevel,
+      props.shortDescription,
       props.description,
       props.owner,
       props.createdAt,
@@ -79,15 +75,12 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     );
   }
 
-  update(
-    name: string | undefined,
-    options: GameOptions | undefined,
-    powerLevel: GamePowerLevel | undefined,
-    description: string | undefined,
-  ): void {
+  update(props: Partial<Omit<GameProps, 'id' | 'status' | 'realmId' | 'realmName' | 'createdAt' | 'updatedAt'>>): void {
+    const { name, options, powerLevel, shortDescription, description } = props;
     if (name) this.name = name;
     if (options) this.options = options;
     if (powerLevel) this.powerLevel = powerLevel;
+    if (shortDescription) this.shortDescription = shortDescription;
     if (description) this.description = description;
     this.updatedAt = new Date();
     this.apply(new GameUpdatedEvent(this));
@@ -102,6 +95,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       status: this.status,
       options: this.options,
       powerLevel: this.powerLevel,
+      shortDescription: this.shortDescription,
       description: this.description,
       owner: this.owner,
       createdAt: this.createdAt,
