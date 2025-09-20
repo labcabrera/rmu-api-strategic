@@ -6,11 +6,26 @@ import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
+export interface GameProps {
+  id: string;
+  name: string;
+  realmId: string;
+  realmName: string;
+  status: GameStatus;
+  options: GameOptions;
+  powerLevel: GamePowerLevel;
+  description?: string;
+  owner: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
 export class Game extends AggregateRoot<DomainEvent<Game>> {
-  constructor(
+  private constructor(
     public readonly id: string,
     public name: string,
-    public realm: string,
+    public realmId: string,
+    public realmName: string,
     public status: GameStatus,
     public options: GameOptions,
     public powerLevel: GamePowerLevel,
@@ -24,7 +39,8 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
 
   static create(
     name: string,
-    realm: string,
+    realmId: string,
+    realmName: string,
     options: GameOptions,
     powerLevel: GamePowerLevel,
     description: string | undefined,
@@ -33,7 +49,8 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     const game = new Game(
       randomUUID(),
       name,
-      realm,
+      realmId,
+      realmName,
       'open',
       options,
       powerLevel,
@@ -44,6 +61,22 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     );
     game.apply(new GameCreatedEvent(game));
     return game;
+  }
+
+  static fromProps(props: GameProps): Game {
+    return new Game(
+      props.id,
+      props.name,
+      props.realmId,
+      props.realmName,
+      props.status,
+      props.options,
+      props.powerLevel,
+      props.description,
+      props.owner,
+      props.createdAt,
+      props.updatedAt,
+    );
   }
 
   update(
@@ -58,5 +91,21 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     if (description) this.description = description;
     this.updatedAt = new Date();
     this.apply(new GameUpdatedEvent(this));
+  }
+
+  toProps(): GameProps {
+    return {
+      id: this.id,
+      name: this.name,
+      realmId: this.realmId,
+      realmName: this.realmName,
+      status: this.status,
+      options: this.options,
+      powerLevel: this.powerLevel,
+      description: this.description,
+      owner: this.owner,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
   }
 }

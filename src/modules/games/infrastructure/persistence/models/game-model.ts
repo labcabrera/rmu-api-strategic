@@ -14,7 +14,10 @@ export class GameModel {
   name: string;
 
   @Prop({ required: true })
-  realm: string;
+  realmId: string;
+
+  @Prop({ required: true })
+  realmName: string;
 
   @Prop({ required: true })
   status: GameStatus;

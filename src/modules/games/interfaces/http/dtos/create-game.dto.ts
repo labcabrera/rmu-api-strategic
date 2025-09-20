@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { GamePowerLevelDto } from './game.dto';
 import { CreateGameCommand } from 'src/modules/games/application/cqrs/commands/create-game.command';
 import { GameOptionsDto } from './game-options.dto';
+import { GamePowerLevelDto } from './game-power-level-dto';
 
 export class CreateGameDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })

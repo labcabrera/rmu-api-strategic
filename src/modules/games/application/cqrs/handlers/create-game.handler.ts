@@ -17,13 +17,14 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
   ) {}
 
   async execute(command: CreateGameCommand): Promise<Game> {
-    const realm = await this.realmClient.getRealmById(command.realm);
+    const realm = await this.realmClient.getRealmById(command.realmId);
     if (!realm) {
       throw new ValidationError('Realm not found');
     }
     const game = Game.create(
       command.name,
-      command.realm,
+      realm.id,
+      realm.name,
       command.options,
       command.powerLevel,
       command.description,

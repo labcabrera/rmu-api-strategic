@@ -4,7 +4,7 @@ import { GamePowerLevel } from 'src/modules/games/domain/value-objects/game-powe
 export class CreateGameCommand {
   constructor(
     public readonly name: string,
-    public readonly realm: string,
+    public readonly realmId: string,
     public readonly options: GameOptions,
     public readonly powerLevel: GamePowerLevel,
     public readonly description: string | undefined,
