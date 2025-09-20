@@ -13,7 +13,7 @@ export class CreateGameDto {
   @ApiProperty({ description: 'Realm identifier from core module', example: 'lotr' })
   @IsString()
   @IsNotEmpty()
-  realm: string;
+  realmId: string;
 
   @ApiProperty({ description: 'Game options', type: GameOptionsDto })
   @IsNotEmpty()
@@ -30,6 +30,6 @@ export class CreateGameDto {
   description: string | undefined;
 
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
-    return new CreateGameCommand(dto.name, dto.realm, dto.options, dto.powerLevel, dto.description, userId, roles);
+    return new CreateGameCommand(dto.name, dto.realmId, dto.options, dto.powerLevel, dto.description, userId, roles);
   }
 }
