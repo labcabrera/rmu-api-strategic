@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { GameOptionsDto, GamePowerLevelDto } from './game.dto';
 import { CreateGameCommand } from 'src/modules/games/application/cqrs/commands/create-game.command';
+import { GameOptionsDto } from './game-options.dto';
+import { GamePowerLevelDto } from './game-power-level-dto';
 
 export class CreateGameDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })
@@ -12,7 +13,7 @@ export class CreateGameDto {
   @ApiProperty({ description: 'Realm identifier from core module', example: 'lotr' })
   @IsString()
   @IsNotEmpty()
-  realm: string;
+  realmId: string;
 
   @ApiProperty({ description: 'Game options', type: GameOptionsDto })
   @IsNotEmpty()
@@ -23,12 +24,29 @@ export class CreateGameDto {
   @IsNotEmpty()
   powerLevel: GamePowerLevelDto;
 
-  @ApiProperty({ description: 'Game description', example: 'A thrilling campaign set in Middle-earth' })
+  @ApiProperty({ description: 'Game short description', example: 'Short game description' })
+  @IsString()
+  @IsOptional()
+  shortDescription: string | undefined;
+
+  @ApiProperty({
+    description: 'Game description',
+    example: 'A thrilling campaign set in Middle-earth with largue text',
+  })
   @IsString()
   @IsOptional()
   description: string | undefined;
 
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
-    return new CreateGameCommand(dto.name, dto.realm, dto.options, dto.powerLevel, dto.description, userId, roles);
+    return new CreateGameCommand(
+      dto.name,
+      dto.realmId,
+      dto.options,
+      dto.powerLevel,
+      dto.shortDescription,
+      dto.description,
+      userId,
+      roles,
+    );
   }
 }

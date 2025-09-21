@@ -1,5 +1,5 @@
 import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.vo';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 export class CharacterXPDto {
   level: number;

@@ -25,6 +25,7 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
       command.gameId,
       command.name,
       new FactionManagement(command.availableGold || 0, command.availableXP || 0),
+      command.shortDescription,
       command.description,
       command.userId,
     );

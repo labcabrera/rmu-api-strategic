@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
-import { Character, WeaponDevelopmentType } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { AddSkillCommand } from '../commands/add-skill.command';
 import type { CharacterRepository } from '../../ports/character.repository';
@@ -9,6 +9,7 @@ import type { SkillCategoryClientPort } from '../../ports/skill-category-client.
 import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import type { RaceClientPort } from '../../ports/race-client.port';
+import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {

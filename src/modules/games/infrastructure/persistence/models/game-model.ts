@@ -14,7 +14,10 @@ export class GameModel {
   name: string;
 
   @Prop({ required: true })
-  realm: string;
+  realmId: string;
+
+  @Prop({ required: true })
+  realmName: string;
 
   @Prop({ required: true })
   status: GameStatus;
@@ -25,8 +28,11 @@ export class GameModel {
   @Prop({ required: true })
   powerLevel: GamePowerLevel;
 
-  @Prop({ required: false })
-  description?: string;
+  @Prop({ type: String, required: false })
+  shortDescription: string | undefined;
+
+  @Prop({ type: String, required: false })
+  description?: string | undefined;
 
   @Prop({ required: true })
   owner: string;

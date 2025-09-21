@@ -17,18 +17,20 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
   ) {}
 
   async execute(command: CreateGameCommand): Promise<Game> {
-    const realm = await this.realmClient.getRealmById(command.realm);
+    const realm = await this.realmClient.getRealmById(command.realmId);
     if (!realm) {
       throw new ValidationError('Realm not found');
     }
-    const game = Game.create(
-      command.name,
-      command.realm,
-      command.options,
-      command.powerLevel,
-      command.description,
-      command.userId,
-    );
+    const game = Game.create({
+      name: command.name,
+      realmId: realm.id,
+      realmName: realm.name,
+      options: command.options,
+      powerLevel: command.powerLevel,
+      shortDescription: command.shortDescription,
+      description: command.description,
+      owner: command.userId,
+    });
     const savedGame = await this.gameRepository.save(game);
     game.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
     return savedGame;

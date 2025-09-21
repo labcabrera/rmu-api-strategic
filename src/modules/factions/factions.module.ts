@@ -15,7 +15,7 @@ import { CreateFactionCommandHandler } from './application/cqrs/handlers/create-
 import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-faction.command.handler';
 import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.query.handler';
 import { GetFactionsQueryHandler } from './application/cqrs/handlers/get-factions.query.handler';
-import { UpdateFactionCommandHandler } from './application/cqrs/handlers/update-faction.command.handler';
+import { UpdateFactionHandler } from './application/cqrs/handlers/update-faction.handler';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { UpdateFactionCommandHandler } from './application/cqrs/handlers/update-
     GetFactionQueryHandler,
     GetFactionsQueryHandler,
     CreateFactionCommandHandler,
-    UpdateFactionCommandHandler,
+    UpdateFactionHandler,
     DeleteFactionCommandHandler,
     AddFactionGoldCommandHandler,
     AddFactionXPCommandHandler,

@@ -2,6 +2,7 @@ import { CharacterRealm } from './character-realm.vo';
 
 export interface CharacterInfo {
   raceId: string;
+  raceName: string;
   professionId: string;
   sizeId: string;
   realmType: CharacterRealm;

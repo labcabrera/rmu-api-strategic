@@ -18,8 +18,11 @@ export class FactionModel {
   @Prop({ type: FactionManagement, required: true })
   management: FactionManagement;
 
-  @Prop({ required: false })
-  description?: string;
+  @Prop({ type: String, required: false })
+  shortDescription: string | undefined;
+
+  @Prop({ type: String, required: false })
+  description: string | undefined;
 
   @Prop({ required: true })
   owner: string;

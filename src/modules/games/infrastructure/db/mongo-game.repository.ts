@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-
 import { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import { Page } from 'src/modules/shared/domain/entities/page.entity';
 import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
@@ -38,7 +37,7 @@ export class MongoGameRepository implements GameRepository {
   }
 
   async save(game: Game): Promise<Game> {
-    const model = new this.gameModel({ ...game, _id: game.id });
+    const model = new this.gameModel({ ...game.toProps(), _id: game.id });
     await model.save();
     return this.mapToEntity(model);
   }
@@ -57,17 +56,18 @@ export class MongoGameRepository implements GameRepository {
   }
 
   private mapToEntity(doc: GameDocument): Game {
-    return new Game(
-      doc._id,
-      doc.name,
-      doc.realm,
-      doc.status,
-      doc.options,
-      doc.powerLevel,
-      doc.description,
-      doc.owner,
-      doc.createdAt,
-      doc.updatedAt,
-    );
+    return Game.fromProps({
+      id: doc._id,
+      name: doc.name,
+      realmId: doc.realmId,
+      realmName: doc.realmName,
+      status: doc.status,
+      options: doc.options,
+      powerLevel: doc.powerLevel,
+      description: doc.description,
+      owner: doc.owner,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    });
   }
 }

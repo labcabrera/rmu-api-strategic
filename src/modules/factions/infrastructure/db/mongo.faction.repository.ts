@@ -51,15 +51,16 @@ export class MongoFactionRepository implements FactionRepository {
   }
 
   private mapToEntity(doc: FactionDocument): Faction {
-    return new Faction(
-      doc._id as string,
-      doc.gameId,
-      doc.name,
-      doc.management,
-      doc.description,
-      doc.owner,
-      doc.createdAt,
-      doc.updatedAt,
-    );
+    return Faction.fromProps({
+      id: doc._id,
+      gameId: doc.gameId,
+      name: doc.name,
+      management: doc.management,
+      shortDescription: doc.shortDescription,
+      description: doc.description,
+      owner: doc.owner,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    });
   }
 }
