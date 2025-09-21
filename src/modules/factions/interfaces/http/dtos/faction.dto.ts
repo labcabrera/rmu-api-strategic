@@ -42,7 +42,7 @@ export class FactionManagementDto {
   }
 
   static toEntity(dto: FactionManagementDto): FactionManagement {
-    return new FactionManagement(dto.availableGold, dto.availableXP);
+    return new FactionManagement(dto.availableXP, dto.availableGold);
   }
 }
 
