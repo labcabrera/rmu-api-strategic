@@ -10,6 +10,7 @@ export class FactionDto {
   management: FactionManagementDto;
   shortDescription: string | undefined;
   description: string | undefined;
+  imageUrl: string | undefined;
   owner: string;
 
   static fromEntity(entity: Faction): FactionDto {
@@ -20,6 +21,7 @@ export class FactionDto {
     dto.management = FactionManagementDto.fromEntity(entity.management);
     dto.shortDescription = entity.shortDescription;
     dto.description = entity.description;
+    dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
     return dto;
   }

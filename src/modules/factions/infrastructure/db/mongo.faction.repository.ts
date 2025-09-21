@@ -58,6 +58,7 @@ export class MongoFactionRepository implements FactionRepository {
       management: doc.management,
       shortDescription: doc.shortDescription,
       description: doc.description,
+      imageUrl: doc.imageUrl,
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

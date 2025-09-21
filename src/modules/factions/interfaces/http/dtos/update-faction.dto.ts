@@ -25,6 +25,11 @@ export class UpdateFactionDto {
   @IsOptional()
   description: string | undefined;
 
+  @ApiProperty({ description: 'Faction image URL', example: 'http://example.com/image.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | undefined;
+
   static toCommand(factionId: string, dto: UpdateFactionDto, userId: string, roles: string[]): UpdateFactionCommand {
     return new UpdateFactionCommand(
       factionId,
@@ -32,6 +37,7 @@ export class UpdateFactionDto {
       dto.management ? FactionManagementDto.toEntity(dto.management) : undefined,
       dto.shortDescription,
       dto.description,
+      dto.imageUrl,
       userId,
       roles,
     );
