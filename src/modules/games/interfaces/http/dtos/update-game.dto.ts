@@ -32,6 +32,11 @@ export class UpdateGameDto {
   @IsOptional()
   description: string | undefined;
 
+  @ApiProperty({ description: 'Game image URL', example: '/foo/bar/image.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | undefined;
+
   static toCommand(gameId: string, dto: UpdateGameDto, userId: string, roles: string[]): UpdateGameCommand {
     return new UpdateGameCommand(
       gameId,
@@ -40,6 +45,7 @@ export class UpdateGameDto {
       dto.powerLevel,
       dto.shortDescription,
       dto.description,
+      dto.imageUrl,
       userId,
       roles,
     );

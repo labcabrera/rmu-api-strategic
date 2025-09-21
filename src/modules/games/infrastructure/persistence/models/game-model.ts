@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { GameOptions, GamePowerLevel } from './game.model-childs';
 import type { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
+import { GameOptions } from './game-options.model';
+import { GamePowerLevel } from './game-power-level.model';
 
 export type GameDocument = GameModel & Document;
 
@@ -33,6 +34,9 @@ export class GameModel {
 
   @Prop({ type: String, required: false })
   description?: string | undefined;
+
+  @Prop({ type: String, required: false })
+  imageUrl?: string | undefined;
 
   @Prop({ required: true })
   owner: string;
