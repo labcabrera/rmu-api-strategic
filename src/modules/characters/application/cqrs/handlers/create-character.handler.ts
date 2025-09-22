@@ -20,6 +20,7 @@ import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-o
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -35,6 +36,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('ItemClient') private readonly itemClient: ItemClientPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -79,6 +81,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     this.characterProcessorService.process(character);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
+    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return created;
   }
 

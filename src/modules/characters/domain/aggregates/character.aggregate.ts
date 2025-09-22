@@ -13,13 +13,14 @@ import { CharacterHP } from '../value-objects/character-hp.vo';
 import { CharacterInitiative } from '../value-objects/character-initiative.vo';
 import { CharacterMovement } from '../value-objects/character-movement.vo';
 import { CharacterXP } from '../value-objects/character-xp.vo';
-import { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
+import { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { CharacterCreatedEvent } from '../events/character.events';
+import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
+import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 
 export interface CharacterProps {
   id: string;
@@ -48,7 +49,7 @@ export interface CharacterProps {
   updatedAt?: Date;
 }
 
-export class Character extends AggregateRoot {
+export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
@@ -177,6 +178,25 @@ export class Character extends AggregateRoot {
     this.apply(new CharacterCreatedEvent(this));
   }
 
+  update(props: {
+    name: string | undefined;
+    description: string | undefined;
+    weight: number | undefined;
+    height: number | undefined;
+    age: number | undefined;
+    gender: CharacterGender | undefined;
+  }) {
+    const { name, description, weight, height, age, gender } = props;
+    if (name) this.name = name;
+    if (description) this.description = description;
+    if (weight !== undefined) this.info.weight = weight;
+    if (height !== undefined) this.info.height = height;
+    if (age !== undefined) this.roleplay.age = age;
+    if (gender !== undefined) this.roleplay.gender = gender;
+    this.updatedAt = new Date();
+    this.apply(new CharacterUpdatedEvent(this));
+  }
+
   addSkill(
     skillId: string,
     specialization: string | undefined,
@@ -253,7 +273,7 @@ export class Character extends AggregateRoot {
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
-  toProps(): CharacterProps {
+  getProps(): CharacterProps {
     return {
       id: this.id,
       gameId: this.gameId,

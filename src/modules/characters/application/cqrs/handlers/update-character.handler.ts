@@ -1,17 +1,18 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
 import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
 import { UpdateCharacterCommand } from '../commands/update-character.command';
+import type { CharacterRepository } from '../../ports/character.repository';
+import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 
 @CommandHandler(UpdateCharacterCommand)
 export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
   async execute(command: UpdateCharacterCommand): Promise<Character> {
@@ -20,17 +21,17 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-    this.bindFields(character, command);
+    character.update({
+      name: command.name,
+      description: command.description,
+      weight: command.info?.weight,
+      height: command.info?.height,
+      age: command.roleplay?.age,
+      gender: command.roleplay?.gender,
+    });
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(character);
-  }
-
-  private bindFields(character: Character, command: UpdateCharacterCommand): void {
-    if (command.name) {
-      character.name = command.name;
-    }
-    if (command.description) {
-      character.description = command.description;
-    }
+    const updated = await this.characterRepository.update(character);
+    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    return updated;
   }
 }

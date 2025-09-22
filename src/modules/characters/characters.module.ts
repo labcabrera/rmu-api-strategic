@@ -47,6 +47,7 @@ import { LevelDownSkillHandler } from './application/cqrs/handlers/level-down-sk
 import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.handler';
 import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.handler';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler';
+import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
 
 @Module({
   imports: [
@@ -114,6 +115,10 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     {
       provide: 'ItemClient',
       useClass: ApiItemClientAdapter,
+    },
+    {
+      provide: 'CharacterEventBus',
+      useClass: KafkaCharacterEventBusAdapter,
     },
   ],
   exports: ['CharacterRepository'],

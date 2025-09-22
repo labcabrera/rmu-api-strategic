@@ -47,7 +47,7 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   async update(update: Character): Promise<Character> {
-    const plain = update.toProps();
+    const plain = update.getProps();
     const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
     if (!updated) {
       throw new NotFoundError('Character', update.id);
