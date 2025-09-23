@@ -209,7 +209,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     }
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
     this.skills.push(skill);
-    //TODO if not commited events add
+    this.apply(new CharacterUpdatedEvent(this));
   }
 
   levelUpSkill(skillId: string, allowThird: boolean): void {

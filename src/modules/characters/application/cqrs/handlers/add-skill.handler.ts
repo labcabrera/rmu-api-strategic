@@ -10,6 +10,7 @@ import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import type { RaceClientPort } from '../../ports/race-client.port';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
@@ -20,6 +21,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('RaceClient') private readonly raceClient: RaceClientPort,
+    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
@@ -31,6 +33,9 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     }
     if (this.hasSkillId(character, skillId)) {
       throw new ValidationError(`Skill ${skillId} already exists for character ${characterId}`);
+    }
+    if (command.ranks > 0 && !command.roles.includes('admin')) {
+      throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
     }
     const [readedSkill, readedProfession, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
@@ -51,7 +56,8 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
     character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character);
+    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
   }
 
