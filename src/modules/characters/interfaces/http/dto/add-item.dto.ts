@@ -13,12 +13,37 @@ export class AddItemDto {
   @IsNotEmpty()
   itemTypeId: string;
 
+  @ApiProperty({ description: 'Item weight', example: 2 })
+  @IsNumber()
+  @IsOptional()
+  weight?: number;
+
+  @ApiProperty({ description: 'Item strength', example: 5 })
+  @IsNumber()
+  @IsOptional()
+  strength?: number;
+
   @ApiProperty({ description: 'Item cost', example: 42 })
   @IsNumber()
   @IsOptional()
   cost: number | undefined;
 
+  @ApiProperty({ description: 'Item amount', example: 1 })
+  @IsNumber()
+  @IsOptional()
+  amount: number | undefined;
+
   static toCommand(characterId: string, dto: AddItemDto, userId: string, roles: string[]): AddItemCommand {
-    return new AddItemCommand(characterId, dto.name, dto.itemTypeId, dto.cost, userId, roles);
+    return new AddItemCommand(
+      characterId,
+      dto.name,
+      dto.itemTypeId,
+      dto.weight,
+      dto.strength,
+      dto.cost,
+      dto.amount,
+      userId,
+      roles,
+    );
   }
 }

@@ -44,6 +44,7 @@ export interface CharacterProps {
   attacks: CharacterAttack[];
   status?: CharacterStatus;
   description?: string;
+  imageUrl?: string;
   owner: string;
   createdAt: Date;
   updatedAt?: Date;
@@ -72,6 +73,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     public attacks: CharacterAttack[],
     public status: CharacterStatus | undefined,
     public description: string | undefined,
+    public imageUrl: string | undefined,
     public owner: string,
     public createdAt: Date,
     public updatedAt: Date | undefined,
@@ -115,6 +117,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       [], // attacks
       'partially_created',
       undefined, // description
+      undefined, // imageUrl
       owner,
       new Date(),
       undefined,
@@ -147,6 +150,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       props.attacks,
       props.status,
       props.description,
+      props.imageUrl,
       props.owner,
       props.createdAt,
       props.updatedAt,
@@ -180,19 +184,21 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   update(props: {
     name: string | undefined;
-    description: string | undefined;
     weight: number | undefined;
     height: number | undefined;
     age: number | undefined;
     gender: CharacterGender | undefined;
+    description: string | undefined;
+    imageUrl: string | undefined;
   }) {
-    const { name, description, weight, height, age, gender } = props;
+    const { name, description, weight, height, age, gender, imageUrl } = props;
     if (name) this.name = name;
     if (description) this.description = description;
     if (weight !== undefined) this.info.weight = weight;
     if (height !== undefined) this.info.height = height;
     if (age !== undefined) this.roleplay.age = age;
     if (gender !== undefined) this.roleplay.gender = gender;
+    if (imageUrl !== undefined) this.imageUrl = imageUrl;
     this.updatedAt = new Date();
     this.apply(new CharacterUpdatedEvent(this));
   }
@@ -271,6 +277,28 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.experience.level += 1;
     this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
+  }
+
+  addItem(item: CharacterItem): void {
+    if (item.stackable) {
+      const amount = item.amount || 1;
+      if (amount < 1) {
+        throw new ValidationError('Item amount must be at least 1');
+      }
+      const existing = this.items.find((i) => i.itemTypeId === item.itemTypeId && i.name === item.name);
+      if (existing) {
+        existing.amount = (existing.amount || 0) + amount;
+      } else {
+        this.items.push(item);
+      }
+    } else {
+      if (item.amount && item.amount > 1) {
+        throw new ValidationError('Non-stackable items cannot have amount greater than 1');
+      }
+      item.amount = undefined;
+      this.items.push(item);
+    }
+    this.apply(new CharacterUpdatedEvent(this));
   }
 
   getProps(): CharacterProps {

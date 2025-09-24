@@ -36,12 +36,26 @@ export class UpdateCharacterDto {
   @IsString()
   description: string | undefined;
 
+  @ApiProperty({ description: 'New character image URL', example: '/images/foo.png', required: false })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | undefined;
+
   static toCommand(
     characterId: string,
     dto: UpdateCharacterDto,
     userId: string,
     roles: string[],
   ): UpdateCharacterCommand {
-    return new UpdateCharacterCommand(characterId, dto.name, dto.description, dto.info, dto.roleplay, userId, roles);
+    return new UpdateCharacterCommand(
+      characterId,
+      dto.name,
+      dto.info,
+      dto.roleplay,
+      dto.description,
+      dto.imageUrl,
+      userId,
+      roles,
+    );
   }
 }

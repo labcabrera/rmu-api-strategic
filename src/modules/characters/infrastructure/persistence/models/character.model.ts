@@ -85,6 +85,9 @@ export class CharacterModel {
   @Prop({ type: String, required: false })
   description: string | undefined;
 
+  @Prop({ type: String, required: false })
+  imageUrl: string | undefined;
+
   @Prop({ type: String, required: true })
   owner: string;
 

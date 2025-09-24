@@ -23,11 +23,12 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     }
     character.update({
       name: command.name,
-      description: command.description,
       weight: command.info?.weight,
       height: command.info?.height,
       age: command.roleplay?.age,
       gender: command.roleplay?.gender,
+      description: command.description,
+      imageUrl: command.imageUrl,
     });
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);

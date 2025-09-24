@@ -88,6 +88,7 @@ export class MongoCharacterRepository implements CharacterRepository {
       attacks: doc.attacks,
       status: doc.status,
       description: doc.description,
+      imageUrl: doc.imageUrl,
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
