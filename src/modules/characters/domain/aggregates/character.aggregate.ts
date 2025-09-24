@@ -324,6 +324,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       attacks: this.attacks,
       status: this.status,
       description: this.description,
+      imageUrl: this.imageUrl,
       owner: this.owner,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

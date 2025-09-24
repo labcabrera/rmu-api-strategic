@@ -75,6 +75,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
+  @ApiProperty({ description: 'Character image URL', example: 'images/foo/bar.png', required: false })
+  imageUrl?: string;
+
   @ApiProperty({ description: 'Character owner', example: 'user-001' })
   owner: string;
 
@@ -99,6 +102,7 @@ export class CharacterDto {
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
     dto.description = entity.description;
+    dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
     return dto;
   }
