@@ -42,12 +42,14 @@ export class EquipmentProcessor {
     const armorManeuverSkillBonus = this.getArmorManeuverSkillBonus(character);
 
     character.equipment.weight = carriedWeight;
-    character.equipment.enc = enc;
+    character.equipment.encumbrancePenalty = enc;
     character.equipment.baseManeuverPenalty = maneuverPenalty;
     character.equipment.maneuverPenalty = Math.min(0, maneuverPenalty + armorManeuverSkillBonus);
     character.equipment.perceptionPenalty = perceptionPenalty;
     character.equipment.rangedPenalty = rangedPenalty;
     character.equipment.movementBaseDifficulty = baseDifficultyCodes[difficultyIndex];
+
+    this.processEncumbrancePenalty(character);
   }
 
   private setDefaultCoins(character: Partial<Character>) {
@@ -67,6 +69,20 @@ export class EquipmentProcessor {
       } as CharacterItem;
       character.items!.push(item);
     }
+  }
+
+  private processEncumbrancePenalty(character: Partial<Character>) {
+    if (!character.info!.height || !character.statistics || !character.statistics.st) {
+      return;
+    }
+    const carriedWeight = character.equipment!.weight || 0;
+    const characterWeight = character.info!.weight || 0;
+    const loadPercent = (carriedWeight / characterWeight) * 100;
+    const st = character.statistics.st.totalBonus || 0;
+    const wa = 15 + 2 * st;
+    const penalty = -Math.floor(loadPercent - wa);
+    character.equipment!.weightAllowance = Math.floor(((wa * characterWeight) / 100) * 100) / 100;
+    character.equipment!.encumbrancePenalty = Math.min(0, penalty);
   }
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {
