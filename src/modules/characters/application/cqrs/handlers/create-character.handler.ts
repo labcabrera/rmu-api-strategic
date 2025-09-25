@@ -68,13 +68,16 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
-    character.setupRaceBonuses(
-      race.stats || {},
-      race.resistances || {},
-      race.sizeId || 'medium',
-      race.strideBonus || 0,
-      race.enduranceBonus || 0,
-    );
+    character.updateRace({
+      raceName: race.name,
+      sizeId: race.sizeId || 'medium',
+      stats: race.stats || {},
+      resistances: race.resistances || {},
+      strideBonus: race.strideBonus || 0,
+      enduranceBonus: race.enduranceBonus || 0,
+      baseHits: race.baseHits || 0,
+      baseAt: race.baseAt || 1,
+    });
     //TODO move to aggregate logic
     character.items = items;
     this.loadDefaultEquipment(character);

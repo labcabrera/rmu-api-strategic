@@ -158,23 +158,40 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     return character;
   }
 
-  setupRaceBonuses(
-    statBonus: Map<string, number>,
-    resistances: Map<string, number>,
-    size: string,
-    strideBonus: number,
-    enduranceBonus: number,
-  ): void {
-    this.movement.strideRacialBonus = strideBonus;
-    for (const [stat, bonus] of Object.entries(statBonus)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      this.statistics[stat].racial = bonus;
+  updateRace(props: {
+    raceName: string | undefined;
+    sizeId: string | undefined;
+    stats: Map<string, number> | undefined;
+    resistances: Map<string, number> | undefined;
+    strideBonus: number | undefined;
+    enduranceBonus: number | undefined;
+    baseHits: number | undefined;
+    baseAt: number | undefined;
+  }) {
+    if (props.raceName) this.info.raceName = props.raceName;
+    if (props.sizeId) this.info.sizeId = props.sizeId;
+    if (props.stats) {
+      for (const [stat, bonus] of Object.entries(props.stats)) {
+        this.statistics[stat as keyof CharacterStatistics].racial = bonus || 0;
+      }
     }
-    for (const [resistance, bonus] of Object.entries(resistances)) {
-      this.setupRacialResistanceBonus(resistance, bonus);
+    if (props.resistances) {
+      for (const [resistance, bonus] of Object.entries(props.resistances)) {
+        this.setupRacialResistanceBonus(resistance, bonus || 0);
+      }
     }
-    this.endurance.racialBonus = enduranceBonus;
-    this.info.sizeId = size;
+    if (props.strideBonus) this.movement.strideRacialBonus = props.strideBonus;
+    if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
+    if (props.baseHits) {
+      const bodyDevSkill = this.skills.find((s) => s.skillId === 'body-development');
+      if (bodyDevSkill) {
+        bodyDevSkill.racialBonus = props.baseHits;
+      }
+    }
+    if (props.baseAt) {
+      this.defense.armor.racialAt = props.baseAt;
+    }
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   finishCreation(): void {
@@ -200,7 +217,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     if (gender !== undefined) this.roleplay.gender = gender;
     if (imageUrl !== undefined) this.imageUrl = imageUrl;
     this.updatedAt = new Date();
-    this.apply(new CharacterUpdatedEvent(this));
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   addSkill(
@@ -298,7 +315,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       item.amount = undefined;
       this.items.push(item);
     }
-    this.apply(new CharacterUpdatedEvent(this));
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   getProps(): CharacterProps {

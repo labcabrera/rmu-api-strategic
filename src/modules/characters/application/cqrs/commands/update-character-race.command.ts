@@ -1,14 +1,17 @@
-import { Race, SexBasedAttribute } from '../../ports/race-client.port';
+import { Race } from '../../ports/race-client.port';
+
+export interface UpdateCharacterRaceCommandProps
+  extends Partial<Omit<Race, 'realmId' | 'realmName' | 'averageHeight' | 'averageWeight' | 'description'>> {
+  characterId: string;
+}
 
 export class UpdateCharacterRaceCommand {
   private constructor(
     public readonly characterId: string,
-    public readonly raceName: string | undefined,
+    public readonly name: string | undefined,
     public readonly sizeId: string | undefined,
     public readonly stats: Map<string, number> | undefined,
     public readonly resistances: Map<string, number> | undefined,
-    public readonly averageHeight: SexBasedAttribute | undefined,
-    public readonly averageWeight: SexBasedAttribute | undefined,
     public readonly strideBonus: number | undefined,
     public readonly enduranceBonus: number | undefined,
     public readonly recoveryMultiplier: number | undefined,
@@ -18,18 +21,13 @@ export class UpdateCharacterRaceCommand {
     public readonly talents: string[] | undefined,
   ) {}
 
-  static create(
-    characterId: string,
-    props: Partial<Omit<Race, 'realmId' | 'realmName' | 'description'>>,
-  ): UpdateCharacterRaceCommand {
+  static create(props: UpdateCharacterRaceCommandProps): UpdateCharacterRaceCommand {
     return new UpdateCharacterRaceCommand(
-      characterId,
+      props.characterId,
       props.name,
       props.sizeId,
       props.stats,
       props.resistances,
-      props.averageHeight,
-      props.averageWeight,
       props.strideBonus,
       props.enduranceBonus,
       props.recoveryMultiplier,

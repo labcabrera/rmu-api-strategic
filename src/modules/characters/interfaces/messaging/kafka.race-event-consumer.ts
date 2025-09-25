@@ -5,11 +5,11 @@ import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import type { CharacterRepository } from '../../application/ports/character.repository';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
-import { UpdateCharacterRaceCommand } from '../../application/cqrs/commands/update-character-race.command';
+import { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command';
 import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
 
-export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommand> {
-  constructor(data: UpdateCharacterRaceCommand) {
+export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {
+  constructor(data: UpdateCharacterRaceCommandProps) {
     super('race-updated', data);
   }
 }
@@ -33,13 +33,23 @@ export class KafkaRaceEventConsumer {
     }
     const raceId = data.id;
     const characters = await this.characterRepository.findByRaceId(raceId);
+    this.logger.log(`Found ${characters.length} characters with raceId ${raceId}`);
     for (const character of characters) {
-      const command = UpdateCharacterRaceCommand.create(character.id, {
+      const commandProps = {
+        characterId: character.id,
         name: data.name as string | undefined,
+        sizeId: data.sizeId as string | undefined,
         stats: data.stats as Map<string, number> | undefined,
         resistances: data.resistances as Map<string, number> | undefined,
-      });
-      const event = new CharacterRaceUpdatedEvent(command);
+        enduranceBonus: data.enduranceBonus as number | undefined,
+        strideBonus: data.strideBonus as number | undefined,
+        recoveryMultiplier: data.recoveryMultiplier as number | undefined,
+        baseHits: data.baseHits as number | undefined,
+        baseDevPoints: data.baseDevPoints as number | undefined,
+        baseAt: data.baseAt as number | undefined,
+        talents: data.talents as string[] | undefined,
+      } as UpdateCharacterRaceCommandProps;
+      const event = new CharacterRaceUpdatedEvent(commandProps);
       await this.kafkaProducerService.emit('internal.rmu-strategic.character.race-updated.v1', event);
     }
   }

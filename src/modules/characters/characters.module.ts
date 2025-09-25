@@ -49,6 +49,8 @@ import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.h
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler';
 import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
 import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-consumer';
+import { KafkaCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer';
+import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler';
 
 @Module({
   imports: [
@@ -61,7 +63,13 @@ import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-
     GamesModule,
     FactionsModule,
   ],
-  controllers: [CharacterController, CharacterSkillController, CharacterItemController, KafkaRaceEventConsumer],
+  controllers: [
+    CharacterController,
+    CharacterSkillController,
+    CharacterItemController,
+    KafkaRaceEventConsumer,
+    KafkaCharacterEventConsumer,
+  ],
   providers: [
     StatProcessor,
     MovementProcessor,
@@ -93,6 +101,7 @@ import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-
     LevelDownSkillHandler,
     SetupProfessionSkillHandler,
     TransferGoldHandler,
+    UpdateCharacterRaceHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
