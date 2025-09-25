@@ -69,9 +69,9 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     );
     await this.processSkills(character, profession, command, race);
     character.setupRaceBonuses(
-      race.defaultStatBonus || {},
+      race.stats || {},
       race.resistances || {},
-      race.size || 'medium',
+      race.sizeId || 'medium',
       race.strideBonus || 0,
       race.enduranceBonus || 0,
     );
@@ -105,8 +105,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         temporary = random[1];
       }
       let racial = 0;
-      if (raceInfo && raceInfo.defaultStatBonus && raceInfo.defaultStatBonus[e]) {
-        racial = raceInfo.defaultStatBonus[e];
+      if (raceInfo && raceInfo.stats && raceInfo.stats[e]) {
+        racial = raceInfo.stats[e];
       }
       const bonus = 0;
       let custom = 0;

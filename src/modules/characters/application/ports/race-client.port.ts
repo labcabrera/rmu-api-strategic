@@ -5,17 +5,25 @@ export interface RaceClientPort {
 export interface Race {
   id: string;
   name: string;
-  realm: string;
-  size: string;
-  defaultStatBonus: Record<string, number>;
-  resistances: Record<string, number>;
-  averageHeight: any;
-  averageWeight: any;
-  strideBonus: number | undefined;
-  enduranceBonus: number | undefined;
+  realmId: string;
+  realmName: string;
+  archetype: string;
+  sizeId: string;
+  stats: Map<string, number>;
+  resistances: Map<string, number>;
+  averageHeight: SexBasedAttribute;
+  averageWeight: SexBasedAttribute;
+  strideBonus: number;
+  enduranceBonus: number;
   recoveryMultiplier: number;
   baseHits: number;
-  bonusDevPoints: number;
-  skillBonuses: Record<string, number>;
+  baseDevPoints: number;
+  baseAt: number;
+  talents: string[];
   description: string;
+}
+
+export interface SexBasedAttribute {
+  male: number;
+  female: number;
 }

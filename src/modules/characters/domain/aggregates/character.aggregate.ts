@@ -159,8 +159,8 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   }
 
   setupRaceBonuses(
-    statBonus: Record<string, number>,
-    resistances: Record<string, number>,
+    statBonus: Map<string, number>,
+    resistances: Map<string, number>,
     size: string,
     strideBonus: number,
     enduranceBonus: number,

@@ -5,8 +5,8 @@ import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices'
 import { DeleteGamesByRealmCommand } from '../../application/cqrs/commands/delete-games-by-realm.command';
 
 @Controller()
-export class StrategicGameKafkaConsumer {
-  private readonly logger = new Logger(StrategicGameKafkaConsumer.name);
+export class KafkaRealmEventConsumer {
+  private readonly logger = new Logger(KafkaRealmEventConsumer.name);
 
   constructor(private readonly commandBus: CommandBus) {}
 

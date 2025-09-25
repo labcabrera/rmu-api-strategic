@@ -53,7 +53,9 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
     const devPoints = readedProfession.skillCosts[categoryId] || [];
     const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-    const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
+    //TODO add to core model
+    //const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
+    const racialBonus = 0;
     character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);

@@ -48,6 +48,7 @@ import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.
 import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.handler';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler';
 import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
+import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-consumer';
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.
     GamesModule,
     FactionsModule,
   ],
-  controllers: [CharacterController, CharacterSkillController, CharacterItemController],
+  controllers: [CharacterController, CharacterSkillController, CharacterItemController, KafkaRaceEventConsumer],
   providers: [
     StatProcessor,
     MovementProcessor,

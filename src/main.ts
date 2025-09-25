@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
@@ -103,6 +102,9 @@ async function bootstrap() {
       client: {
         clientId: clientId,
         brokers: brokers,
+      },
+      consumer: {
+        groupId: app.get(ConfigService).get<string>('RMU_KAFKA_CONSUMER_GROUP_ID')!,
       },
     },
   });
