@@ -240,6 +240,28 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
+  addTrait(traitId: string, isTalent: boolean, tier: number | undefined, cost: number, value: string | undefined) {
+    if (this.traits.find((t) => t.traitId === traitId && t.value === value)) {
+      throw new ValidationError('Trait with the same value already exists');
+    }
+    if (cost > 0 && this.experience.availableDevelopmentPoints < cost) {
+      throw new ValidationError('Insufficient development points to acquire the trait');
+    }
+    this.traits.push(new CharacterTrait(traitId, isTalent, tier, cost, value));
+    this.experience.availableDevelopmentPoints -= cost;
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  deleteTrait(traitId: string, value: string | undefined) {
+    const trait = this.traits.find((t) => t.traitId === traitId && t.value === value);
+    if (!trait) {
+      throw new ValidationError('Trait not found');
+    }
+    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.value === value));
+    this.experience.availableDevelopmentPoints += trait.cost;
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
   levelUpSkill(skillId: string, allowThird: boolean): void {
     const skill = this.skills.find((s) => s.skillId === skillId);
     if (!skill) {

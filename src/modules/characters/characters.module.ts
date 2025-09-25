@@ -51,6 +51,10 @@ import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.
 import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-consumer';
 import { KafkaCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer';
 import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler';
+import { ApiTraitClientAdapter } from './infrastructure/api-clients/api.trait-client.adapter';
+import { AddTraitHandler } from './application/cqrs/handlers/add-trait.handler';
+import { DeleteTraitHandler } from './application/cqrs/handlers/delete-trait.handler';
+import { CharacterTraitController } from './interfaces/http/character-trait.controller';
 
 @Module({
   imports: [
@@ -67,6 +71,7 @@ import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-c
     CharacterController,
     CharacterSkillController,
     CharacterItemController,
+    CharacterTraitController,
     KafkaRaceEventConsumer,
     KafkaCharacterEventConsumer,
   ],
@@ -101,6 +106,8 @@ import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-c
     LevelDownSkillHandler,
     SetupProfessionSkillHandler,
     TransferGoldHandler,
+    AddTraitHandler,
+    DeleteTraitHandler,
     UpdateCharacterRaceHandler,
     {
       provide: 'CharacterRepository',
@@ -125,6 +132,10 @@ import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-c
     {
       provide: 'ItemClient',
       useClass: ApiItemClientAdapter,
+    },
+    {
+      provide: 'TraitClient',
+      useClass: ApiTraitClientAdapter,
     },
     {
       provide: 'CharacterEventBus',
