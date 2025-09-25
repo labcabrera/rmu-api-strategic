@@ -30,7 +30,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     this.validateCommand(command, trait);
     const isTalent = trait.isTalent;
     const cost = this.calculateCost(trait, command.tier);
-    character.addTrait(command.traitId, isTalent, command.tier, cost, command.value);
+    character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization);
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
@@ -52,10 +52,10 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
         `Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`,
       );
     }
-    if (trait.requiresSpecialization && !command.value) {
+    if (trait.requiresSpecialization && !command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} requires a specialization value`);
     }
-    if (!trait.requiresSpecialization && command.value) {
+    if (!trait.requiresSpecialization && command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`);
     }
   }

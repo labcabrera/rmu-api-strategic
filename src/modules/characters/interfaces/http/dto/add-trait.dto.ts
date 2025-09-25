@@ -16,9 +16,9 @@ export class AddTraitDto {
   @ApiProperty({ description: 'Trait value', example: 'body-development' })
   @IsString()
   @IsOptional()
-  value: string | undefined;
+  specialization: string | undefined;
 
   static toCommand(characterId: string, dto: AddTraitDto, userId: string, roles: string[]): AddTraitCommand {
-    return new AddTraitCommand(characterId, dto.traitId, dto.tier, dto.value, userId, roles);
+    return new AddTraitCommand(characterId, dto.traitId, dto.tier, dto.specialization, userId, roles);
   }
 }

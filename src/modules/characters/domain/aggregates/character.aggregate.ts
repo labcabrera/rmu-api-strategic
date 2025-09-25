@@ -240,24 +240,31 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  addTrait(traitId: string, isTalent: boolean, tier: number | undefined, cost: number, value: string | undefined) {
-    if (this.traits.find((t) => t.traitId === traitId && t.value === value)) {
-      throw new ValidationError('Trait with the same value already exists');
+  addTrait(
+    traitId: string,
+    traitName: string,
+    isTalent: boolean,
+    tier: number | undefined,
+    cost: number,
+    specialization: string | undefined,
+  ) {
+    if (this.traits.find((t) => t.traitId === traitId && t.specialization === specialization)) {
+      throw new ValidationError('Trait with the same specialization already exists');
     }
     if (cost > 0 && this.experience.availableDevelopmentPoints < cost) {
       throw new ValidationError('Insufficient development points to acquire the trait');
     }
-    this.traits.push(new CharacterTrait(traitId, isTalent, tier, cost, value));
+    this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization));
     this.experience.availableDevelopmentPoints -= cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  deleteTrait(traitId: string, value: string | undefined) {
-    const trait = this.traits.find((t) => t.traitId === traitId && t.value === value);
+  deleteTrait(traitId: string, specialization: string | undefined) {
+    const trait = this.traits.find((t) => t.traitId === traitId && t.specialization === specialization);
     if (!trait) {
       throw new ValidationError('Trait not found');
     }
-    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.value === value));
+    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.specialization === specialization));
     this.experience.availableDevelopmentPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }

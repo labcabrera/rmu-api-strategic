@@ -6,6 +6,9 @@ export class CharacterTrait {
   traitId: string;
 
   @Prop({ required: true })
+  traitName: string;
+
+  @Prop({ required: true })
   isTalent: boolean;
 
   @Prop({ type: Number, required: false })
@@ -15,5 +18,5 @@ export class CharacterTrait {
   cost: number;
 
   @Prop({ type: String, required: false })
-  value: string | undefined;
+  specialization: string | undefined;
 }

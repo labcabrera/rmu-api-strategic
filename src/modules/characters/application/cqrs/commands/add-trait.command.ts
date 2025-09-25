@@ -3,7 +3,7 @@ export class AddTraitCommand {
     public readonly characterId: string,
     public readonly traitId: string,
     public readonly tier: number | undefined,
-    public readonly value: string | undefined,
+    public readonly specialization: string | undefined,
     public readonly userId: string,
     public readonly roles: string[],
   ) {}
