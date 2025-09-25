@@ -214,6 +214,9 @@ export class CharacterAttack {
 
   @Prop({ required: true })
   bo: number;
+
+  @Prop({ required: true })
+  type: string;
 }
 
 @Schema({ _id: false })

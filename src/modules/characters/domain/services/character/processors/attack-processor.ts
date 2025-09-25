@@ -27,21 +27,19 @@ export class AttackProcessor {
         const skillId = item.weapon.skillId;
         const skill = character.skills.find((e) => e.skillId == skillId);
         const skillBonus = skill ? skill.totalBonus : -25;
+        const ranks = skill ? skill.ranks : 0;
+        const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
         const attack: CharacterAttack = {
           attackName: slot,
           attackTable: item.weapon.attackTable,
           sizeAdjustment: item.weapon.sizeAdjustment,
-          fumbleTable: this.getFumbleTable(),
-          fumble: item.weapon.fumble,
+          fumbleTable: item.weapon.fumbleTable,
+          fumble: fumble,
           bo: skillBonus,
+          type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
         };
         attacks.push(attack);
       }
     }
-  }
-
-  //TODO
-  private getFumbleTable(): string {
-    return 'not-defined-table';
   }
 }

@@ -7,6 +7,7 @@ export class CharacterAttackDto {
   fumbleTable: string;
   fumble: number;
   bo: number;
+  type: string;
 
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
@@ -16,6 +17,7 @@ export class CharacterAttackDto {
     dto.fumbleTable = entity.fumbleTable;
     dto.fumble = entity.fumble;
     dto.bo = entity.bo;
+    dto.type = entity.type;
     return dto;
   }
 }
