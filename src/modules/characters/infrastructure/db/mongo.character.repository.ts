@@ -91,6 +91,7 @@ export class MongoCharacterRepository implements CharacterRepository {
       items: doc.items,
       equipment: doc.equipment,
       attacks: doc.attacks,
+      traits: doc.traits,
       status: doc.status,
       description: doc.description,
       imageUrl: doc.imageUrl,

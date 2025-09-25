@@ -21,6 +21,7 @@ import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/characte
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { CharacterTrait } from '../value-objects/character-trait.vo';
 
 export interface CharacterProps {
   id: string;
@@ -36,18 +37,19 @@ export interface CharacterProps {
   resistances: CharacterResistance[];
   hp: CharacterHP;
   endurance: CharacterEndurance;
-  power?: CharacterPower;
+  power: CharacterPower | undefined;
   initiative: CharacterInitiative;
   skills: CharacterSkill[];
   items: CharacterItem[];
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
-  status?: CharacterStatus;
-  description?: string;
-  imageUrl?: string;
+  traits: CharacterTrait[];
+  status: CharacterStatus;
+  description: string | undefined;
+  imageUrl: string | undefined;
   owner: string;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt: Date | undefined;
 }
 
 export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
@@ -71,7 +73,8 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     public items: CharacterItem[],
     public equipment: CharacterEquipment,
     public attacks: CharacterAttack[],
-    public status: CharacterStatus | undefined,
+    public traits: CharacterTrait[],
+    public status: CharacterStatus,
     public description: string | undefined,
     public imageUrl: string | undefined,
     public owner: string,
@@ -115,6 +118,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       [], // items
       CharacterEquipment.empty(),
       [], // attacks
+      [], // traits
       'partially_created',
       undefined, // description
       undefined, // imageUrl
@@ -148,6 +152,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       props.items,
       props.equipment,
       props.attacks,
+      props.traits,
       props.status,
       props.description,
       props.imageUrl,
@@ -196,7 +201,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   finishCreation(): void {
     this.status = 'created';
-    this.apply(new CharacterCreatedEvent(this));
+    this.apply(new CharacterCreatedEvent(this.getProps()));
   }
 
   update(props: {
@@ -232,7 +237,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     }
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
     this.skills.push(skill);
-    this.apply(new CharacterUpdatedEvent(this));
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   levelUpSkill(skillId: string, allowThird: boolean): void {
@@ -339,6 +344,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       items: this.items,
       equipment: this.equipment,
       attacks: this.attacks,
+      traits: this.traits,
       status: this.status,
       description: this.description,
       imageUrl: this.imageUrl,

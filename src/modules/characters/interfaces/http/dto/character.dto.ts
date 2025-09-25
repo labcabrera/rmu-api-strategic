@@ -16,6 +16,7 @@ import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 import { CharacterResistanceDto } from './character-resistance.dto';
+import { CharacterTraitDto } from './character-trait.dto';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -72,6 +73,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character attacks', type: [CharacterAttackDto] })
   attacks: CharacterAttackDto[];
 
+  @ApiProperty({ description: 'Character talents and flaws', type: [CharacterTraitDto] })
+  traits: CharacterTraitDto[];
+
   @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
@@ -101,6 +105,7 @@ export class CharacterDto {
     dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
+    dto.traits = entity.traits.map((trait) => CharacterTraitDto.fromEntity(trait));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
