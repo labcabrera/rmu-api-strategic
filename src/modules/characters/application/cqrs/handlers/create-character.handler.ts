@@ -255,7 +255,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
   async fetchSkills(): Promise<SkillResponse[]> {
     try {
-      return await this.skillClient.getAllSkills();
+      return (await this.skillClient.getAllSkills()).content;
     } catch (e) {
       this.logger.error(e);
       throw new BadGatewayError(`Error fetching skills`);
