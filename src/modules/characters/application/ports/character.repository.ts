@@ -6,6 +6,8 @@ export interface CharacterRepository {
 
   findByGameId(gameId: string): Promise<Character[]>;
 
+  findByRaceId(raceId: string): Promise<Character[]>;
+
   findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Character>>;
 
   save(entity: Partial<Character>): Promise<Character>;

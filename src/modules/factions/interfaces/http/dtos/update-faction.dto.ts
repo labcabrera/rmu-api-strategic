@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 import { UpdateFactionCommand } from 'src/modules/factions/application/cqrs/commands/update-faction.command';
-import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 import { FactionManagementDto } from './faction.dto';
 
 export class UpdateFactionDto {
@@ -25,6 +23,11 @@ export class UpdateFactionDto {
   @IsOptional()
   description: string | undefined;
 
+  @ApiProperty({ description: 'Faction image URL', example: 'foo/bar/images.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | undefined;
+
   static toCommand(factionId: string, dto: UpdateFactionDto, userId: string, roles: string[]): UpdateFactionCommand {
     return new UpdateFactionCommand(
       factionId,
@@ -32,6 +35,7 @@ export class UpdateFactionDto {
       dto.management ? FactionManagementDto.toEntity(dto.management) : undefined,
       dto.shortDescription,
       dto.description,
+      dto.imageUrl,
       userId,
       roles,
     );

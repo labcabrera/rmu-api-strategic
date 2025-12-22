@@ -65,6 +65,7 @@ export class MongoGameRepository implements GameRepository {
       options: doc.options,
       powerLevel: doc.powerLevel,
       description: doc.description,
+      imageUrl: doc.imageUrl,
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

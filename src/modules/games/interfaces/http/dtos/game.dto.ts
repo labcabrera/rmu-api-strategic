@@ -30,6 +30,9 @@ export class GameDto {
   @ApiProperty({ description: 'Game description', type: String, required: false })
   description: string | undefined;
 
+  @ApiProperty({ description: 'Game image URL', type: String, required: false })
+  imageUrl?: string;
+
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
 
@@ -43,6 +46,7 @@ export class GameDto {
     dto.options = GameOptionsDto.fromEntity(entity.options);
     dto.powerLevel = GamePowerLevelDto.fromEntity(entity.powerLevel);
     dto.description = entity.description;
+    dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
     return dto;
   }

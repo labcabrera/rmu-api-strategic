@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-
 import { TokenService } from '../../../auth/token.service';
 import { SkillCategoryClientPort, SkillCategoryResponse } from '../../application/ports/skill-category-client.port';
 

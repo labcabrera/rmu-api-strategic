@@ -1,38 +1,40 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError } from '../../../../shared/domain/errors';
-import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { UpdateCharacterCommand } from '../commands/update-character.command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { UpdateCharacterRaceCommand } from '../commands/update-character-race.command';
 
-@CommandHandler(UpdateCharacterCommand)
-export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
+@CommandHandler(UpdateCharacterRaceCommand)
+export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {
+  private readonly logger = new Logger(UpdateCharacterRaceHandler.name);
+
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
-  async execute(command: UpdateCharacterCommand): Promise<Character> {
+  async execute(command: UpdateCharacterRaceCommand): Promise<void> {
+    this.logger.log(`Executing UpdateCharacterRaceCommand for characterId: ${command.characterId}`);
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-    character.update({
-      name: command.name,
-      weight: command.info?.weight,
-      height: command.info?.height,
-      age: command.roleplay?.age,
-      gender: command.roleplay?.gender,
-      description: command.description,
-      imageUrl: command.imageUrl,
+    character.updateRace({
+      raceName: command.name,
+      sizeId: command.sizeId,
+      stats: command.stats,
+      resistances: command.resistances,
+      strideBonus: command.strideBonus,
+      enduranceBonus: command.enduranceBonus,
+      baseHits: command.baseHits,
+      baseAt: command.baseAt,
     });
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    await this.characterRepository.update(character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
-    return updated;
   }
 }

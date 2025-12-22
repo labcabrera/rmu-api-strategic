@@ -25,6 +25,11 @@ export class MongoCharacterRepository implements CharacterRepository {
     return characters.map((doc) => this.mapToEntity(doc));
   }
 
+  async findByRaceId(raceId: string): Promise<Character[]> {
+    const characters = await this.characterModel.find({ 'info.raceId': raceId });
+    return characters.map((doc) => this.mapToEntity(doc));
+  }
+
   async deleteByGameId(gameId: string): Promise<void> {
     await this.characterModel.deleteMany({ gameId });
   }
@@ -47,7 +52,7 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   async update(update: Character): Promise<Character> {
-    const plain = update.toProps();
+    const plain = update.getProps();
     const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
     if (!updated) {
       throw new NotFoundError('Character', update.id);
@@ -86,8 +91,10 @@ export class MongoCharacterRepository implements CharacterRepository {
       items: doc.items,
       equipment: doc.equipment,
       attacks: doc.attacks,
+      traits: doc.traits,
       status: doc.status,
       description: doc.description,
+      imageUrl: doc.imageUrl,
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

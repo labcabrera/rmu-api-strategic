@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsOptional } from 'class-validator';
 import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
@@ -10,6 +11,7 @@ export class FactionDto {
   management: FactionManagementDto;
   shortDescription: string | undefined;
   description: string | undefined;
+  imageUrl: string | undefined;
   owner: string;
 
   static fromEntity(entity: Faction): FactionDto {
@@ -20,6 +22,7 @@ export class FactionDto {
     dto.management = FactionManagementDto.fromEntity(entity.management);
     dto.shortDescription = entity.shortDescription;
     dto.description = entity.description;
+    dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
     return dto;
   }
@@ -27,9 +30,11 @@ export class FactionDto {
 
 export class FactionManagementDto {
   @ApiProperty()
+  @IsNumber()
   availableGold: number;
 
   @ApiProperty()
+  @IsNumber()
   availableXP: number;
 
   static fromEntity(entity: FactionManagement): FactionManagementDto {
@@ -40,7 +45,7 @@ export class FactionManagementDto {
   }
 
   static toEntity(dto: FactionManagementDto): FactionManagement {
-    return new FactionManagement(dto.availableGold, dto.availableXP);
+    return new FactionManagement(dto.availableXP, dto.availableGold);
   }
 }
 

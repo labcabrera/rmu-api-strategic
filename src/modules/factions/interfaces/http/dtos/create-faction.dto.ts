@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { CreateFactionCommand } from 'src/modules/factions/application/cqrs/commands/create-faction.command';
+import { FactionManagementDto } from './faction.dto';
 
 export class CreateFactionDto {
   @ApiProperty({ description: 'Strategic game identifier', example: 'strategic-game-01' })
@@ -14,11 +15,11 @@ export class CreateFactionDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Available gold for the faction', type: Number, example: 100 })
+  @ApiProperty({ description: 'Faction management details', type: FactionManagementDto })
+  @Type(() => FactionManagementDto)
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  availableGold: number | undefined;
+  @IsObject()
+  management: FactionManagementDto;
 
   @ApiProperty({ description: 'Available XP for the faction', type: Number, example: 200000 })
   @IsOptional()
@@ -40,8 +41,7 @@ export class CreateFactionDto {
     return new CreateFactionCommand(
       dto.gameId,
       dto.name,
-      dto.availableGold,
-      dto.availableXP,
+      dto.management,
       dto.shortDescription,
       dto.description,
       userId,

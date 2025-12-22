@@ -13,13 +13,15 @@ import { CharacterHP } from '../value-objects/character-hp.vo';
 import { CharacterInitiative } from '../value-objects/character-initiative.vo';
 import { CharacterMovement } from '../value-objects/character-movement.vo';
 import { CharacterXP } from '../value-objects/character-xp.vo';
-import { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
+import { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { CharacterCreatedEvent } from '../events/character.events';
+import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
 import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
+import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { CharacterTrait } from '../value-objects/character-trait.vo';
 
 export interface CharacterProps {
   id: string;
@@ -35,20 +37,22 @@ export interface CharacterProps {
   resistances: CharacterResistance[];
   hp: CharacterHP;
   endurance: CharacterEndurance;
-  power?: CharacterPower;
+  power: CharacterPower | undefined;
   initiative: CharacterInitiative;
   skills: CharacterSkill[];
   items: CharacterItem[];
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
-  status?: CharacterStatus;
-  description?: string;
+  traits: CharacterTrait[];
+  status: CharacterStatus;
+  description: string | undefined;
+  imageUrl: string | undefined;
   owner: string;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt: Date | undefined;
 }
 
-export class Character extends AggregateRoot {
+export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
@@ -69,8 +73,10 @@ export class Character extends AggregateRoot {
     public items: CharacterItem[],
     public equipment: CharacterEquipment,
     public attacks: CharacterAttack[],
-    public status: CharacterStatus | undefined,
+    public traits: CharacterTrait[],
+    public status: CharacterStatus,
     public description: string | undefined,
+    public imageUrl: string | undefined,
     public owner: string,
     public createdAt: Date,
     public updatedAt: Date | undefined,
@@ -112,8 +118,10 @@ export class Character extends AggregateRoot {
       [], // items
       CharacterEquipment.empty(),
       [], // attacks
+      [], // traits
       'partially_created',
       undefined, // description
+      undefined, // imageUrl
       owner,
       new Date(),
       undefined,
@@ -144,8 +152,10 @@ export class Character extends AggregateRoot {
       props.items,
       props.equipment,
       props.attacks,
+      props.traits,
       props.status,
       props.description,
+      props.imageUrl,
       props.owner,
       props.createdAt,
       props.updatedAt,
@@ -153,28 +163,66 @@ export class Character extends AggregateRoot {
     return character;
   }
 
-  setupRaceBonuses(
-    statBonus: Record<string, number>,
-    resistances: Record<string, number>,
-    size: string,
-    strideBonus: number,
-    enduranceBonus: number,
-  ): void {
-    this.movement.strideRacialBonus = strideBonus;
-    for (const [stat, bonus] of Object.entries(statBonus)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      this.statistics[stat].racial = bonus;
+  updateRace(props: {
+    raceName: string | undefined;
+    sizeId: string | undefined;
+    stats: Map<string, number> | undefined;
+    resistances: Map<string, number> | undefined;
+    strideBonus: number | undefined;
+    enduranceBonus: number | undefined;
+    baseHits: number | undefined;
+    baseAt: number | undefined;
+  }) {
+    if (props.raceName) this.info.raceName = props.raceName;
+    if (props.sizeId) this.info.sizeId = props.sizeId;
+    if (props.stats) {
+      for (const [stat, bonus] of Object.entries(props.stats)) {
+        this.statistics[stat as keyof CharacterStatistics].racial = bonus || 0;
+      }
     }
-    for (const [resistance, bonus] of Object.entries(resistances)) {
-      this.setupRacialResistanceBonus(resistance, bonus);
+    if (props.resistances) {
+      for (const [resistance, bonus] of Object.entries(props.resistances)) {
+        this.setupRacialResistanceBonus(resistance, bonus || 0);
+      }
     }
-    this.endurance.racialBonus = enduranceBonus;
-    this.info.sizeId = size;
+    if (props.strideBonus) this.movement.strideRacialBonus = props.strideBonus;
+    if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
+    if (props.baseHits) {
+      const bodyDevSkill = this.skills.find((s) => s.skillId === 'body-development');
+      if (bodyDevSkill) {
+        bodyDevSkill.racialBonus = props.baseHits;
+      }
+    }
+    if (props.baseAt) {
+      this.defense.armor.racialAt = props.baseAt;
+    }
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   finishCreation(): void {
     this.status = 'created';
-    this.apply(new CharacterCreatedEvent(this));
+    this.apply(new CharacterCreatedEvent(this.getProps()));
+  }
+
+  update(props: {
+    name: string | undefined;
+    weight: number | undefined;
+    height: number | undefined;
+    age: number | undefined;
+    gender: CharacterGender | undefined;
+    description: string | undefined;
+    imageUrl: string | undefined;
+  }) {
+    const { name, description, weight, height, age, gender, imageUrl } = props;
+    if (name) this.name = name;
+    if (description) this.description = description;
+    if (weight !== undefined) this.info.weight = weight;
+    if (height !== undefined) this.info.height = height;
+    if (age !== undefined) this.roleplay.age = age;
+    if (gender !== undefined) this.roleplay.gender = gender;
+    if (imageUrl !== undefined) this.imageUrl = imageUrl;
+    this.updatedAt = new Date();
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   addSkill(
@@ -189,7 +237,36 @@ export class Character extends AggregateRoot {
     }
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
     this.skills.push(skill);
-    //TODO if not commited events add
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  addTrait(
+    traitId: string,
+    traitName: string,
+    isTalent: boolean,
+    tier: number | undefined,
+    cost: number,
+    specialization: string | undefined,
+  ) {
+    if (this.traits.find((t) => t.traitId === traitId && t.specialization === specialization)) {
+      throw new ValidationError('Trait with the same specialization already exists');
+    }
+    if (cost > 0 && this.experience.availableDevelopmentPoints < cost) {
+      throw new ValidationError('Insufficient development points to acquire the trait');
+    }
+    this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization));
+    this.experience.availableDevelopmentPoints -= cost;
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  deleteTrait(traitId: string, specialization: string | undefined) {
+    const trait = this.traits.find((t) => t.traitId === traitId && t.specialization === specialization);
+    if (!trait) {
+      throw new ValidationError('Trait not found');
+    }
+    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.specialization === specialization));
+    this.experience.availableDevelopmentPoints += trait.cost;
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   levelUpSkill(skillId: string, allowThird: boolean): void {
@@ -253,7 +330,29 @@ export class Character extends AggregateRoot {
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
-  toProps(): CharacterProps {
+  addItem(item: CharacterItem): void {
+    if (item.stackable) {
+      const amount = item.amount || 1;
+      if (amount < 1) {
+        throw new ValidationError('Item amount must be at least 1');
+      }
+      const existing = this.items.find((i) => i.itemTypeId === item.itemTypeId && i.name === item.name);
+      if (existing) {
+        existing.amount = (existing.amount || 0) + amount;
+      } else {
+        this.items.push(item);
+      }
+    } else {
+      if (item.amount && item.amount > 1) {
+        throw new ValidationError('Non-stackable items cannot have amount greater than 1');
+      }
+      item.amount = undefined;
+      this.items.push(item);
+    }
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  getProps(): CharacterProps {
     return {
       id: this.id,
       gameId: this.gameId,
@@ -274,8 +373,10 @@ export class Character extends AggregateRoot {
       items: this.items,
       equipment: this.equipment,
       attacks: this.attacks,
+      traits: this.traits,
       status: this.status,
       description: this.description,
+      imageUrl: this.imageUrl,
       owner: this.owner,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

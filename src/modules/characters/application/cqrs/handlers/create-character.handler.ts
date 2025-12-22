@@ -20,6 +20,7 @@ import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-o
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -35,6 +36,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('ItemClient') private readonly itemClient: ItemClientPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -66,19 +68,23 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
-    character.setupRaceBonuses(
-      race.defaultStatBonus || {},
-      race.resistances || {},
-      race.size || 'medium',
-      race.strideBonus || 0,
-      race.enduranceBonus || 0,
-    );
+    character.updateRace({
+      raceName: race.name,
+      sizeId: race.sizeId || 'medium',
+      stats: race.stats || {},
+      resistances: race.resistances || {},
+      strideBonus: race.strideBonus || 0,
+      enduranceBonus: race.enduranceBonus || 0,
+      baseHits: race.baseHits || 0,
+      baseAt: race.baseAt || 1,
+    });
     //TODO move to aggregate logic
     character.items = items;
     this.loadDefaultEquipment(character);
     this.characterProcessorService.process(character);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
+    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return created;
   }
 
@@ -102,8 +108,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         temporary = random[1];
       }
       let racial = 0;
-      if (raceInfo && raceInfo.defaultStatBonus && raceInfo.defaultStatBonus[e]) {
-        racial = raceInfo.defaultStatBonus[e];
+      if (raceInfo && raceInfo.stats && raceInfo.stats[e]) {
+        racial = raceInfo.stats[e];
       }
       const bonus = 0;
       let custom = 0;
@@ -249,7 +255,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
   async fetchSkills(): Promise<SkillResponse[]> {
     try {
-      return await this.skillClient.getAllSkills();
+      return (await this.skillClient.getAllSkills()).content;
     } catch (e) {
       this.logger.error(e);
       throw new BadGatewayError(`Error fetching skills`);

@@ -47,6 +47,14 @@ import { LevelDownSkillHandler } from './application/cqrs/handlers/level-down-sk
 import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.handler';
 import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.handler';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler';
+import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
+import { KafkaRaceEventConsumer } from './interfaces/messaging/kafka.race-event-consumer';
+import { KafkaCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer';
+import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler';
+import { ApiTraitClientAdapter } from './infrastructure/api-clients/api.trait-client.adapter';
+import { AddTraitHandler } from './application/cqrs/handlers/add-trait.handler';
+import { DeleteTraitHandler } from './application/cqrs/handlers/delete-trait.handler';
+import { CharacterTraitController } from './interfaces/http/character-trait.controller';
 
 @Module({
   imports: [
@@ -59,7 +67,14 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     GamesModule,
     FactionsModule,
   ],
-  controllers: [CharacterController, CharacterSkillController, CharacterItemController],
+  controllers: [
+    CharacterController,
+    CharacterSkillController,
+    CharacterItemController,
+    CharacterTraitController,
+    KafkaRaceEventConsumer,
+    KafkaCharacterEventConsumer,
+  ],
   providers: [
     StatProcessor,
     MovementProcessor,
@@ -91,6 +106,9 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     LevelDownSkillHandler,
     SetupProfessionSkillHandler,
     TransferGoldHandler,
+    AddTraitHandler,
+    DeleteTraitHandler,
+    UpdateCharacterRaceHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,
@@ -114,6 +132,14 @@ import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.han
     {
       provide: 'ItemClient',
       useClass: ApiItemClientAdapter,
+    },
+    {
+      provide: 'TraitClient',
+      useClass: ApiTraitClientAdapter,
+    },
+    {
+      provide: 'CharacterEventBus',
+      useClass: KafkaCharacterEventBusAdapter,
     },
   ],
   exports: ['CharacterRepository'],

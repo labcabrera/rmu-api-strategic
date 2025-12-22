@@ -14,6 +14,7 @@ import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handl
 import { GetGameHandler } from './application/cqrs/handlers/get-game.handler';
 import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler';
 import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler';
+import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handl
     AuthModule,
     SharedModule,
   ],
-  controllers: [GameController],
+  controllers: [GameController, KafkaRealmEventConsumer],
   providers: [
     GetGameHandler,
     GetGamesHandler,

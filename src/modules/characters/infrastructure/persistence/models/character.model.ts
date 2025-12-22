@@ -16,8 +16,9 @@ import {
 } from './character-childs.model';
 import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
-import { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
+import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 import { CharacterSkill } from './character-skill.model';
+import { CharacterTrait } from './character-trait.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -79,11 +80,17 @@ export class CharacterModel {
   @Prop({ type: [CharacterAttack], required: true })
   attacks: CharacterAttack[];
 
-  @Prop({ type: String, required: false })
-  status: CharacterStatus | undefined;
+  @Prop({ type: [CharacterTrait], required: true })
+  traits: CharacterTrait[];
+
+  @Prop({ type: String, required: true })
+  status: CharacterStatus;
 
   @Prop({ type: String, required: false })
   description: string | undefined;
+
+  @Prop({ type: String, required: false })
+  imageUrl: string | undefined;
 
   @Prop({ type: String, required: true })
   owner: string;
@@ -92,7 +99,7 @@ export class CharacterModel {
   createdAt: Date;
 
   @Prop({ type: Date, required: false })
-  updatedAt?: Date;
+  updatedAt: Date | undefined;
 }
 
 export const CharacterSchema = SchemaFactory.createForClass(CharacterModel);

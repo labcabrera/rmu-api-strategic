@@ -16,6 +16,7 @@ export interface GameProps {
   powerLevel: GamePowerLevel;
   shortDescription?: string;
   description?: string;
+  imageUrl?: string;
   owner: string;
   createdAt: Date;
   updatedAt?: Date;
@@ -32,6 +33,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     public powerLevel: GamePowerLevel,
     public shortDescription: string | undefined,
     public description: string | undefined,
+    public imageUrl: string | undefined,
     public owner: string,
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
@@ -50,6 +52,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       props.powerLevel,
       props.shortDescription,
       props.description,
+      undefined,
       props.owner,
       new Date(),
       undefined,
@@ -69,6 +72,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       props.powerLevel,
       props.shortDescription,
       props.description,
+      props.imageUrl,
       props.owner,
       props.createdAt,
       props.updatedAt,
@@ -76,12 +80,13 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
   }
 
   update(props: Partial<Omit<GameProps, 'id' | 'status' | 'realmId' | 'realmName' | 'createdAt' | 'updatedAt'>>): void {
-    const { name, options, powerLevel, shortDescription, description } = props;
+    const { name, options, powerLevel, shortDescription, description, imageUrl } = props;
     if (name) this.name = name;
     if (options) this.options = options;
     if (powerLevel) this.powerLevel = powerLevel;
     if (shortDescription) this.shortDescription = shortDescription;
     if (description) this.description = description;
+    if (imageUrl) this.imageUrl = imageUrl;
     this.updatedAt = new Date();
     this.apply(new GameUpdatedEvent(this));
   }
@@ -97,6 +102,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       powerLevel: this.powerLevel,
       shortDescription: this.shortDescription,
       description: this.description,
+      imageUrl: this.imageUrl,
       owner: this.owner,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

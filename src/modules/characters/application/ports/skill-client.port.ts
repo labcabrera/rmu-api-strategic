@@ -1,5 +1,7 @@
+import { Page } from 'src/modules/shared/domain/entities/page.entity';
+
 export interface SkillClientPort {
-  getAllSkills(): Promise<SkillResponse[]>;
+  getAllSkills(): Promise<Page<SkillResponse>>;
 
   getSkillById(skillId: string): Promise<SkillResponse>;
 }

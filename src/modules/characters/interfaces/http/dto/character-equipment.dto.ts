@@ -8,7 +8,8 @@ export class CharacterEquipmentDto {
   arms: string | undefined;
   legs: string | undefined;
   weight: number | undefined;
-  encumbrance: number;
+  weightAllowance: number | undefined;
+  encumbrancePenalty: number;
   maneuverPenalty: number;
   baseManeuverPenalty: number;
   rangedPenalty: number;
@@ -24,7 +25,8 @@ export class CharacterEquipmentDto {
     dto.arms = entity.arms;
     dto.legs = entity.legs;
     dto.weight = entity.weight;
-    dto.encumbrance = entity.enc;
+    dto.weightAllowance = entity.weightAllowance;
+    dto.encumbrancePenalty = entity.encumbrancePenalty;
     dto.baseManeuverPenalty = entity.baseManeuverPenalty;
     dto.maneuverPenalty = entity.maneuverPenalty;
     dto.rangedPenalty = entity.rangedPenalty;

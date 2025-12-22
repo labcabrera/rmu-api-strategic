@@ -6,6 +6,6 @@ export class CharacterAttack {
     public fumbleTable: string,
     public fumble: number,
     public bo: number,
-    //TODO flags range/throwable
+    public type: string,
   ) {}
 }
