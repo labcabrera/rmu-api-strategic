@@ -95,7 +95,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         default:
           throw new ValidationError('Invalid item slot');
       }
-      if (command.slot === 'offHand') {
+      if (command.slot === 'offHand' && item.category !== 'shield') {
         const check1h = item.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0;
         if (check1h) {
           throw new ValidationError('Item is not suitable for off-hand slot');
