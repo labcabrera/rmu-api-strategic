@@ -6,7 +6,6 @@ export class CharacterItemWeaponDto {
   skillId: string;
   fumble: number;
   modes: CharacterItemWeaponMode[];
-  activeMode: string;
 
   static fromEntity(entity: CharacterItemWeapon): CharacterItemWeaponDto | undefined {
     if (!entity) return undefined;
@@ -14,7 +13,6 @@ export class CharacterItemWeaponDto {
     dto.skillId = entity.skillId;
     dto.fumble = entity.fumble;
     dto.modes = entity.modes;
-    dto.activeMode = entity.activeMode;
     return dto;
   }
 }

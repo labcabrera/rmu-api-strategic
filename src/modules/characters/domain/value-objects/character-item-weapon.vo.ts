@@ -5,7 +5,6 @@ export class CharacterItemWeapon {
     public readonly skillId: string,
     public readonly fumble: number,
     public readonly modes: CharacterItemWeaponMode[],
-    public readonly activeMode: string,
   ) {}
 
   static isTwoHanded(weapon: CharacterItemWeapon): boolean {

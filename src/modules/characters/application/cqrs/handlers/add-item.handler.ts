@@ -73,7 +73,6 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
       category: readedItem.category,
       carried: true,
       weapon: readedItem.weapon,
-      weaponRange: readedItem.weaponRange,
       armor: readedItem.armor,
       affixes: [],
       info: {

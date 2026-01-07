@@ -1,3 +1,5 @@
+import { CharacterItemWeapon } from '../../domain/value-objects/character-item-weapon.vo';
+
 export interface ItemClientPort {
   getItemById(itemId: string): Promise<ItemResponse>;
 }
@@ -5,22 +7,10 @@ export interface ItemClientPort {
 export interface ItemResponse {
   id: string;
   category: string;
-  weapon: ItemWeaponResponse | undefined;
-  weaponRange: ItemWeaponRangeResponse[] | undefined;
+  weapon: CharacterItemWeapon | undefined;
   armor: ItemArmorResponse | undefined;
   stackable: boolean | undefined;
   info: ItemInfoResponse;
-}
-
-export interface ItemWeaponResponse {
-  attackTable: string;
-  fumbleTable: string;
-  skillId: string;
-  fumble: number;
-  sizeAdjustment: number;
-  requiredHands: number;
-  throwable: boolean;
-  ranges: ItemWeaponRangeResponse[] | undefined;
 }
 
 export interface ItemInfoResponse {

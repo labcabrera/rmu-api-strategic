@@ -11,7 +11,4 @@ export class CharacterItemWeapon {
 
   @Prop({ type: [CharacterItemWeaponMode], required: true })
   modes: CharacterItemWeaponMode[];
-
-  @Prop({ type: String, required: true })
-  activeMode: string;
 }

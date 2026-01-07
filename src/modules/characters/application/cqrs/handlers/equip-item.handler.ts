@@ -6,7 +6,6 @@ import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { EquipItemCommand } from '../commands/equip-item-command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
-import { CharacterItemWeapon } from 'src/modules/characters/domain/value-objects/character-item-weapon.vo';
 import type { CharacterRepository } from '../../ports/character.repository';
 
 @CommandHandler(EquipItemCommand)
@@ -40,9 +39,15 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     equipment.mainHand = equipment.mainHand === command.itemId ? undefined : equipment.mainHand;
     equipment.offHand = equipment.offHand === command.itemId ? undefined : equipment.offHand;
 
-    if (command.slot === 'mainHand' && CharacterItemWeapon.isTwoHanded(item.weapon!)) {
+    if (command.slot === 'mainHand' && item.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0) {
       equipment.offHand = undefined;
+    } else if (command.slot === 'offHand' && character.equipment.mainHand) {
+      const mainHandWeapon = character.items.find((i) => i.id === equipment.mainHand)!;
+      if (mainHandWeapon.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0) {
+        equipment.mainHand = undefined;
+      }
     }
+
     // Set armor type if equipping body armor
     if (slot === 'body' && item.armor && item.armor.at) {
       character.defense.armor.bodyAt = item.armor.at;
@@ -68,16 +73,6 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     } else if (slot === 'legs') {
       equipment.legs = command.itemId;
     }
-
-    // Handle two-handed weapon in main hand
-    if (slot === 'mainHand' && item.weapon && CharacterItemWeapon.isTwoHanded(item.weapon)) {
-      equipment.offHand = undefined;
-    }
-    // Set default armor type when no body armor is equipped
-    // if (!equipment.body) {
-    //   //TODO check racial armor type
-    //   character.defense.armorType = 1;
-    // }
   }
 
   private validateEquipmentData(character: Character, item: CharacterItem, command: EquipItemCommand): void {
@@ -100,8 +95,11 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         default:
           throw new ValidationError('Invalid item slot');
       }
-      if (command.slot === 'offHand' && CharacterItemWeapon.isTwoHanded(item.weapon!)) {
-        throw new ValidationError('Two handed weapons cant be equiped in offHand slot');
+      if (command.slot === 'offHand') {
+        const check1h = item.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0;
+        if (check1h) {
+          throw new ValidationError('Item is not suitable for off-hand slot');
+        }
       }
     }
   }
