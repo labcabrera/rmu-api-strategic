@@ -29,16 +29,18 @@ export class AttackProcessor {
         const skillBonus = skill ? skill.totalBonus : -25;
         const ranks = skill ? skill.ranks : 0;
         const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
-        const attack: CharacterAttack = {
-          attackName: slot,
-          attackTable: item.weapon.attackTable,
-          sizeAdjustment: item.weapon.sizeAdjustment,
-          fumbleTable: item.weapon.fumbleTable,
-          fumble: fumble,
-          bo: skillBonus,
-          type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
-        };
-        attacks.push(attack);
+        item.weapon.modes.forEach((mode) => {
+          const attack: CharacterAttack = {
+            attackName: slot,
+            attackTable: mode.attackTable,
+            sizeAdjustment: mode.sizeAdjustment,
+            fumbleTable: mode.fumbleTable,
+            fumble: fumble,
+            bo: skillBonus,
+            type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
+          };
+          attacks.push(attack);
+        });
       }
     }
   }
