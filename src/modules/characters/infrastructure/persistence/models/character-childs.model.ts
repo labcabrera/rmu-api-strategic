@@ -213,10 +213,16 @@ export class CharacterAttack {
   fumble: number;
 
   @Prop({ required: true })
+  weaponFumble: number;
+
+  @Prop({ required: true })
   bo: number;
 
   @Prop({ required: true })
   type: string;
+
+  @Prop({ required: true })
+  defaultAttack: boolean;
 }
 
 @Schema({ _id: false })
