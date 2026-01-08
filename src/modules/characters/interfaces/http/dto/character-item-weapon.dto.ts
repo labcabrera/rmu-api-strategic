@@ -1,29 +1,18 @@
-import {
-  CharacterItemWeapon,
-  CharacterItemWeaponRange,
-} from 'src/modules/characters/domain/value-objects/character-item.vo';
+import { CharacterItemWeaponMode } from 'src/modules/characters/domain/value-objects/character-item-weapon-mode.vo';
+import { CharacterItemWeaponRange } from 'src/modules/characters/domain/value-objects/character-item-weapon-range.vo';
+import { CharacterItemWeapon } from 'src/modules/characters/domain/value-objects/character-item-weapon.vo';
 
 export class CharacterItemWeaponDto {
-  attackTable: string;
-  fumbleTable: string;
   skillId: string;
   fumble: number;
-  sizeAdjustment: number;
-  requiredHands: number;
-  throwable: boolean;
-  ranges: CharacterItemWeaponRangeDto[] | undefined;
+  modes: CharacterItemWeaponMode[];
 
   static fromEntity(entity: CharacterItemWeapon): CharacterItemWeaponDto | undefined {
     if (!entity) return undefined;
     const dto = new CharacterItemWeaponDto();
-    dto.attackTable = entity.attackTable;
-    dto.fumbleTable = entity.fumbleTable;
     dto.skillId = entity.skillId;
     dto.fumble = entity.fumble;
-    dto.sizeAdjustment = entity.sizeAdjustment;
-    dto.requiredHands = entity.requiredHands;
-    dto.throwable = entity.throwable;
-    dto.ranges = entity.ranges?.map((e) => CharacterItemWeaponRangeDto.fromEntity(e));
+    dto.modes = entity.modes;
     return dto;
   }
 }

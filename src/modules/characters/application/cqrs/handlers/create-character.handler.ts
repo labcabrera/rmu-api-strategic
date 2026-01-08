@@ -186,7 +186,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         const readedItem = await this.itemClient.getItemById(e.itemTypeId);
         const readedWeapon = readedItem.weapon ? readedItem.weapon : undefined;
         const readedArmor = readedItem.armor ? readedItem.armor : undefined;
-        const readedWeaponRange = readedItem.weaponRange ? readedItem.weaponRange : undefined;
         const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
         const itemInfo = {
           length: readedItem.info.length,
@@ -203,7 +202,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
           category: readedItem.category,
           carried: true,
           weapon: readedWeapon,
-          weaponRange: readedWeaponRange,
           armor: readedArmor,
           affixes: [],
           info: itemInfo,

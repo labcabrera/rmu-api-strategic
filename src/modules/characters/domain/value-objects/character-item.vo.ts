@@ -1,3 +1,5 @@
+import { CharacterItemWeapon } from './character-item-weapon.vo';
+
 export class CharacterItem {
   constructor(
     public id: string,
@@ -6,7 +8,6 @@ export class CharacterItem {
     public category: string,
     public carried: boolean,
     public weapon: CharacterItemWeapon | undefined,
-    public weaponRange: CharacterItemWeaponRange[] | undefined,
     public armor: CharacterItemArmor | undefined,
     public affixes: CharacterItemAffix[] | undefined,
     public info: CharacterItemInfo,
@@ -14,29 +15,6 @@ export class CharacterItem {
     public amount: number | undefined,
     public description: string | undefined,
   ) {}
-}
-
-export interface CharacterItemWeapon {
-  attackTable: string;
-  fumbleTable: string;
-  skillId: string;
-  fumble: number;
-  sizeAdjustment: number;
-  requiredHands: number;
-  throwable: boolean;
-  ranges: CharacterItemWeaponRange[] | undefined;
-}
-
-export interface CharacterItemWeaponRange {
-  from: number;
-  to: number;
-  bonus: number;
-}
-
-export interface CharacterItemWeaponRange {
-  from: number;
-  to: number;
-  bonus: number;
 }
 
 export interface CharacterItemArmor {

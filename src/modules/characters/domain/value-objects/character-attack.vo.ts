@@ -5,7 +5,9 @@ export class CharacterAttack {
     public sizeAdjustment: number,
     public fumbleTable: string,
     public fumble: number,
+    public weaponFumble: number,
     public bo: number,
     public type: string,
+    public defaultAttack: boolean,
   ) {}
 }
