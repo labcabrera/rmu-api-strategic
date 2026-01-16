@@ -48,8 +48,8 @@ export class MongoCharacterRepository implements CharacterRepository {
 
   async save(request: Character): Promise<Character> {
     const payload: any = { ...request, _id: request.id };
-    if (request.factionId) {
-      payload.factionId = { id: request.factionId.id, name: request.factionId.name };
+    if (request.faction) {
+      payload.faction = { id: request.faction.id, name: request.faction.name };
     }
     const model = new this.characterModel(payload);
     await model.save();
@@ -58,8 +58,8 @@ export class MongoCharacterRepository implements CharacterRepository {
 
   async update(update: Character): Promise<Character> {
     const plain: any = update.getProps();
-    if (plain.factionId) {
-      plain.factionId = { id: plain.factionId.id, name: plain.factionId.name };
+    if (plain.faction) {
+      plain.faction = { id: plain.faction.id, name: plain.faction.name };
     }
     const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
     if (!updated) {
@@ -82,7 +82,7 @@ export class MongoCharacterRepository implements CharacterRepository {
     return Character.fromProps({
       id: doc._id,
       gameId: doc.gameId,
-      factionId: new NamedId(doc.factionId.id, doc.factionId.name),
+      faction: new NamedId(doc.faction.id, doc.faction.name),
       name: doc.name,
       info: doc.info,
       roleplay: doc.roleplay,

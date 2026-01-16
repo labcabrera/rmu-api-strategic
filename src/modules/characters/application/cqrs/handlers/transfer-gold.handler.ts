@@ -27,9 +27,9 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     if (!character) {
       throw new NotFoundError('Character', characterId);
     }
-    const faction = await this.factionRepository.findById(character.factionId.id);
+    const faction = await this.factionRepository.findById(character.faction.id);
     if (!faction) {
-      throw new NotFoundError('Faction', character.factionId.id);
+      throw new NotFoundError('Faction', character.faction.id);
     }
     faction.management.availableGold -= command.amount;
     const goldCoins = character.items.find((item) => item.itemTypeId === 'gold-coin');

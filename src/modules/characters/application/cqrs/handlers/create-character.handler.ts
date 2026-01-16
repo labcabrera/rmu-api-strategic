@@ -44,11 +44,11 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const game = await this.gameRepository.findById(command.gameId);
     if (!game) throw new ValidationError(`Game with id ${command.gameId} not found`);
 
-    const faction = await this.factionRepository.findById(command.factionId);
-    if (!faction) throw new ValidationError(`Faction with id ${command.factionId} not found`);
+    const faction = await this.factionRepository.findById(command.faction);
+    if (!faction) throw new ValidationError(`Faction with id ${command.faction} not found`);
 
     if (faction.gameId != game.id) {
-      throw new ValidationError(`Faction ${command.factionId} does not belong to game ${command.gameId}`);
+      throw new ValidationError(`Faction ${command.faction} does not belong to game ${command.gameId}`);
     }
 
     const race = await this.fetchRace(command.info.raceId);

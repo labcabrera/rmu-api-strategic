@@ -27,7 +27,7 @@ import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
 export interface CharacterProps {
   id: string;
   gameId: string;
-  factionId: NamedId;
+  faction: NamedId;
   name: string;
   info: CharacterInfo;
   roleplay: CharacterRoleplayInfo;
@@ -57,7 +57,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
-    public factionId: NamedId,
+    public faction: NamedId,
     public name: string,
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
@@ -87,7 +87,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   static partialCreate(
     game: Game,
-    factionId: NamedId,
+    faction: NamedId,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,
@@ -102,7 +102,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     const character = new Character(
       randomUUID(),
       game.id,
-      factionId,
+      faction,
       name,
       info,
       roleplay,
@@ -136,7 +136,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     const character = new Character(
       props.id,
       props.gameId,
-      props.factionId,
+      props.faction,
       props.name,
       props.info,
       props.roleplay,
@@ -357,7 +357,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     return {
       id: this.id,
       gameId: this.gameId,
-      factionId: this.factionId,
+      faction: this.faction,
       name: this.name,
       info: this.info,
       roleplay: this.roleplay,

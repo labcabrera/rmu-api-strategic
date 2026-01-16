@@ -6,7 +6,7 @@ import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objec
 export class CreateCharacterCommand {
   constructor(
     public readonly gameId: string,
-    public readonly factionId: string,
+    public readonly faction: string,
     public readonly name: string,
     public readonly info: Omit<CharacterInfo, 'raceName'>,
     public readonly roleplay: CharacterRoleplayInfo,

@@ -32,7 +32,7 @@ export class CharacterModel {
   gameId: string;
 
   @Prop({ type: NamedIdModel, required: true })
-  factionId: NamedIdModel;
+  faction: NamedIdModel;
 
   @Prop({ required: true })
   name: string;

@@ -26,7 +26,7 @@ export class CharacterDto {
   gameId: string;
 
   @ApiProperty({ description: 'Faction of the character', type: NamedIdDto })
-  factionId: NamedIdDto;
+  faction: NamedIdDto;
 
   @ApiProperty({ description: 'Name of the character', example: 'Sauron' })
   name: string;
@@ -89,7 +89,7 @@ export class CharacterDto {
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;
-    dto.factionId = { id: entity.factionId.id, name: entity.factionId.name };
+    dto.faction = { id: entity.faction.id, name: entity.faction.name };
     dto.name = entity.name;
     dto.info = entity.info;
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
