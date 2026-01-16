@@ -22,11 +22,12 @@ import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
+import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
 
 export interface CharacterProps {
   id: string;
   gameId: string;
-  factionId: string;
+  factionId: NamedId;
   name: string;
   info: CharacterInfo;
   roleplay: CharacterRoleplayInfo;
@@ -56,7 +57,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
-    public factionId: string,
+    public factionId: NamedId,
     public name: string,
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
@@ -86,7 +87,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   static partialCreate(
     game: Game,
-    factionId: string,
+    factionId: NamedId,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,

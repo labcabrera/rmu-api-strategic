@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { PaginationDto } from '../../../../shared/infrastructure/controller/dto';
+import { PaginationDto, NamedIdDto } from '../../../../shared/infrastructure/controller/dto';
 import { CharacterDefenseDto } from './character-defense.dto';
 import { CharacterEnduranceDto } from './character-endurance.dto';
 import { CharacterEquipmentDto } from './character-equipment.dto';
@@ -25,8 +25,8 @@ export class CharacterDto {
   @ApiProperty({ description: 'Strategic game identifier', example: 'game-001' })
   gameId: string;
 
-  @ApiProperty({ description: 'Faction identifier of the character', example: 'faction-mordor' })
-  factionId: string;
+  @ApiProperty({ description: 'Faction of the character', type: NamedIdDto })
+  factionId: NamedIdDto;
 
   @ApiProperty({ description: 'Name of the character', example: 'Sauron' })
   name: string;
@@ -89,7 +89,7 @@ export class CharacterDto {
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;
-    dto.factionId = entity.factionId;
+    dto.factionId = { id: entity.factionId.id, name: entity.factionId.name };
     dto.name = entity.name;
     dto.info = entity.info;
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);

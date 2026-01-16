@@ -6,6 +6,7 @@ import { NotFoundError } from '../../../shared/domain/errors';
 import { RsqlParser } from '../../../shared/infrastructure/messaging/rsql-parser';
 import { CharacterRepository } from '../../application/ports/character.repository';
 import { Character } from '../../domain/aggregates/character.aggregate';
+import { NamedId } from '../../../shared/domain/entities/named-id.entity';
 import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
 
 @Injectable()
@@ -46,13 +47,20 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   async save(request: Character): Promise<Character> {
-    const model = new this.characterModel({ ...request, _id: request.id });
+    const payload: any = { ...request, _id: request.id };
+    if (request.factionId) {
+      payload.factionId = { id: request.factionId.id, name: request.factionId.name };
+    }
+    const model = new this.characterModel(payload);
     await model.save();
     return this.mapToEntity(model);
   }
 
   async update(update: Character): Promise<Character> {
-    const plain = update.getProps();
+    const plain: any = update.getProps();
+    if (plain.factionId) {
+      plain.factionId = { id: plain.factionId.id, name: plain.factionId.name };
+    }
     const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
     if (!updated) {
       throw new NotFoundError('Character', update.id);
@@ -74,7 +82,7 @@ export class MongoCharacterRepository implements CharacterRepository {
     return Character.fromProps({
       id: doc._id,
       gameId: doc.gameId,
-      factionId: doc.factionId,
+      factionId: new NamedId(doc.factionId.id, doc.factionId.name),
       name: doc.name,
       info: doc.info,
       roleplay: doc.roleplay,
