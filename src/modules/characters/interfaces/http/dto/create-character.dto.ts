@@ -98,20 +98,11 @@ export class CreateCharacterDto {
       name: item.name,
       itemTypeId: item.itemTypeId,
     }));
-    const infoForCommand: any = {
-      raceId: dto.info && (dto.info as any).race ? (dto.info as any).race.id : (dto.info as any).raceId,
-      professionId: dto.info.professionId,
-      sizeId: dto.info.sizeId,
-      realmType: dto.info.realmType,
-      height: dto.info.height,
-      weight: dto.info.weight,
-    };
-
     return new CreateCharacterCommand(
       dto.gameId,
       dto.factionId,
       dto.name,
-      infoForCommand,
+      CreateCharacterInfoDto.toCommand(dto.info),
       dto.roleplay,
       dto.level,
       dto.weaponDevelopment,

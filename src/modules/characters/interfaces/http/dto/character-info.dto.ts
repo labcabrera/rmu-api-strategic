@@ -6,7 +6,7 @@ import { NamedIdDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { Type } from 'class-transformer';
 
 export class CharacterInfoDto {
-  @ApiProperty({ description: 'Race identifier' })
+  @ApiProperty({ description: 'Race identifier', type: NamedIdDto })
   @ValidateNested()
   @Type(() => NamedIdDto)
   @IsNotEmpty()
@@ -42,6 +42,7 @@ export class CharacterInfoDto {
     dto.race = { id: entity.race.id, name: entity.race.name };
     dto.professionId = entity.professionId;
     dto.sizeId = entity.sizeId;
+    dto.realmType = entity.realmType;
     dto.height = entity.height;
     dto.weight = entity.weight;
     return dto;

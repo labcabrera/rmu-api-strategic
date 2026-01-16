@@ -1,4 +1,3 @@
-import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
 import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
@@ -24,13 +23,15 @@ export class CreateCharacterCommand {
   ) {}
 }
 
-export interface CreateCharacterInfo {
-  raceId: string;
-  professionId: string;
-  sizeId: string;
-  realmType: CharacterRealm;
-  height: number;
-  weight: number;
+export class CreateCharacterInfo {
+  constructor(
+    public readonly raceId: string,
+    public readonly professionId: string,
+    public readonly sizeId: string,
+    public readonly realmType: CharacterRealm,
+    public readonly height: number,
+    public readonly weight: number,
+  ) {}
 }
 
 export interface CreateCharacterExperience {
