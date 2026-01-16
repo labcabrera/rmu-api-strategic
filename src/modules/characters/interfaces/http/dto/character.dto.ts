@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-
 import { PaginationDto, NamedIdDto } from '../../../../shared/infrastructure/controller/dto';
 import { CharacterDefenseDto } from './character-defense.dto';
 import { CharacterEnduranceDto } from './character-endurance.dto';
@@ -11,12 +10,12 @@ import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
 import { CharacterStatisticsDto } from './character-statistics.dto';
 import { CharacterXPDto } from './character-xp.dto';
-import * as characterEntity from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 import { CharacterResistanceDto } from './character-resistance.dto';
 import { CharacterTraitDto } from './character-trait.dto';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -85,13 +84,13 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character owner', example: 'user-001' })
   owner: string;
 
-  static fromEntity(entity: characterEntity.Character) {
+  static fromEntity(entity: Character) {
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };
     dto.name = entity.name;
-    dto.info = CharacterInfoDto.fromEntity(entity.info as any);
+    dto.info = CharacterInfoDto.fromEntity(entity.info);
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
     dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);

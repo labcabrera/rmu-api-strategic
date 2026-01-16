@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber } from 'class-validator';
 import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';

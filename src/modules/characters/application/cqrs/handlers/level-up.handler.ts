@@ -1,17 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
+import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
 import { LevelUpCommand } from '../commands/level-up.command';
+import type { CharacterRepository } from '../../ports/character.repository';
 
 @CommandHandler(LevelUpCommand)
 export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
   ) {}
 
   async execute(command: LevelUpCommand): Promise<Character> {
