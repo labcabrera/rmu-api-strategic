@@ -174,7 +174,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     baseHits: number | undefined;
     baseAt: number | undefined;
   }) {
-    if (props.raceName) this.info.raceName = props.raceName;
+    if (props.raceName) this.info.race = new NamedId(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {

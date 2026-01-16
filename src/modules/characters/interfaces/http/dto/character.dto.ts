@@ -91,7 +91,7 @@ export class CharacterDto {
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };
     dto.name = entity.name;
-    dto.info = entity.info;
+    dto.info = CharacterInfoDto.fromEntity(entity.info as any);
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
     dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);

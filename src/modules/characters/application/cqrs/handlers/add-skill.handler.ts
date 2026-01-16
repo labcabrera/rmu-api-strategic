@@ -40,11 +40,11 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const [readedSkill, readedProfession, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
       this.professionClient.getProfessionById(character.info.professionId),
-      this.raceClient.getRaceById(character.info.raceId),
+      this.raceClient.getRaceById(character.info.race.id),
     ]);
     if (!readedSkill) throw new NotFoundError('Skill', skillId);
     if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
-    if (!readedRace) throw new NotFoundError('Race', character.info.raceId);
+    if (!readedRace) throw new NotFoundError('Race', character.info.race.id);
     const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
     if (!readedCategory) {
       throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);

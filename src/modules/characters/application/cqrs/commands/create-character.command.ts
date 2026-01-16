@@ -1,4 +1,5 @@
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
+import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
 import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
@@ -8,7 +9,7 @@ export class CreateCharacterCommand {
     public readonly gameId: string,
     public readonly faction: string,
     public readonly name: string,
-    public readonly info: Omit<CharacterInfo, 'raceName'>,
+    public readonly info: CreateCharacterInfo,
     public readonly roleplay: CharacterRoleplayInfo,
     public readonly level: number,
     public readonly weaponDevelopment: WeaponDevelopmentType[],
@@ -21,6 +22,15 @@ export class CreateCharacterCommand {
     public readonly userId: string,
     public readonly roles: string[],
   ) {}
+}
+
+export interface CreateCharacterInfo {
+  raceId: string;
+  professionId: string;
+  sizeId: string;
+  realmType: CharacterRealm;
+  height: number;
+  weight: number;
 }
 
 export interface CreateCharacterExperience {

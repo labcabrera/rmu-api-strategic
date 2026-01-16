@@ -27,7 +27,7 @@ export class MongoCharacterRepository implements CharacterRepository {
   }
 
   async findByRaceId(raceId: string): Promise<Character[]> {
-    const characters = await this.characterModel.find({ 'info.raceId': raceId });
+    const characters = await this.characterModel.find({ 'info.race.id': raceId });
     return characters.map((doc) => this.mapToEntity(doc));
   }
 

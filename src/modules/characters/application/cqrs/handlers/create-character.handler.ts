@@ -54,7 +54,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
     const processedStatistics = this.processStatistics(race, command.statistics, game);
-    const info = { ...command.info, raceName: race.name } as CharacterInfo;
+    const info: CharacterInfo = {
+      race: new NamedId(race.id, race.name),
+      professionId: command.info.professionId,
+      sizeId: command.info.sizeId,
+      realmType: command.info.realmType,
+      height: command.info.height,
+      weight: command.info.weight,
+    };
     const items = await this.processItems(info, command);
     const character = Character.partialCreate(
       game,

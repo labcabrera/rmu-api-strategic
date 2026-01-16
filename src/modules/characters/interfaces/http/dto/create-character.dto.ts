@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
-import { CharacterInfoDto } from './character-info.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
 import { CharacterItemCreationDto } from './character-item.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
@@ -14,6 +13,7 @@ import {
   CreateCharacterItem,
 } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import { CreateCharacterInfoDto } from './create-character-info.dto';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -31,11 +31,11 @@ export class CreateCharacterDto {
   @IsNotEmpty()
   factionId: string;
 
-  @ApiProperty({ description: 'Character information', type: CharacterInfoDto })
+  @ApiProperty({ description: 'Character information', type: CreateCharacterInfoDto })
   @ValidateNested()
-  @Type(() => CharacterInfoDto)
+  @Type(() => CreateCharacterInfoDto)
   @IsObject()
-  info: CharacterInfoDto;
+  info: CreateCharacterInfoDto;
 
   @ApiProperty({ description: 'Character roleplay info', type: CharacterRoleplayInfoDto })
   @ValidateNested()
@@ -98,11 +98,20 @@ export class CreateCharacterDto {
       name: item.name,
       itemTypeId: item.itemTypeId,
     }));
+    const infoForCommand: any = {
+      raceId: dto.info && (dto.info as any).race ? (dto.info as any).race.id : (dto.info as any).raceId,
+      professionId: dto.info.professionId,
+      sizeId: dto.info.sizeId,
+      realmType: dto.info.realmType,
+      height: dto.info.height,
+      weight: dto.info.weight,
+    };
+
     return new CreateCharacterCommand(
       dto.gameId,
       dto.factionId,
       dto.name,
-      dto.info,
+      infoForCommand,
       dto.roleplay,
       dto.level,
       dto.weaponDevelopment,
