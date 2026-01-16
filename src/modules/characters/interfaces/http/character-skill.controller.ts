@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
@@ -16,6 +28,7 @@ import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-sk
 import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command';
 import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command';
 import type { AuthRequest } from 'src/modules/shared/infrastructure/controller/auth-request';
+import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -92,14 +105,19 @@ export class CharacterSkillController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Patch(':id/skills/:skillId/professional')
+  @Put(':id/skills/:skillId/professional')
   @ApiOperation({ operationId: 'makeProfessionalSkill', summary: 'Make skill professional' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async makeProfessionalSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Request() req: AuthRequest) {
-    this.logger.debug(`Leveling down character ${id} skill ${skillId} for user ${req.user.id}`);
-    const command = new SetUpProfessionalSkillCommand(id, skillId, req.user.id, req.user.roles);
+  async makeProfessionalSkill(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Body() dto: UpdateProfessionalSkillDto,
+    @Request() req: AuthRequest,
+  ) {
+    this.logger.debug(`Updating professional skill for character ${id} and skill ${skillId} for user ${req.user.id}`);
+    const command = UpdateProfessionalSkillDto.toCommand(id, skillId, dto, req.user.id, req.user.roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
