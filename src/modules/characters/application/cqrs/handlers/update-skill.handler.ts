@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { NotFoundError } from '../../../../shared/domain/errors';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/character.repository';
@@ -17,14 +17,13 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
   async execute(command: UpdateSkillCommand): Promise<Character> {
     const characterId = command.characterId;
     const skillId = command.skillId;
+
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     const skill = character.skills.find((skill) => skill.skillId === skillId) || null;
-    if (!skill) {
-      throw new Error(`Skill ${skillId} not found for character ${characterId}`);
-    }
+    if (!skill) throw new ValidationError(`Skill ${skillId} not found for character ${characterId}`);
+
     if (command.customBonus !== undefined) {
       skill.customBonus = command.customBonus;
     }

@@ -17,13 +17,13 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
 
   async execute(command: LevelUpSkillCommand): Promise<Character> {
     const characterId = command.characterId;
+
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     //TODO add to game model
     const allowThird = true;
-    character.levelUpSkill(command.skillId, allowThird);
+    character.levelUpSkill(command.skillId, command.specialization, allowThird);
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);
     //TODO propagate events

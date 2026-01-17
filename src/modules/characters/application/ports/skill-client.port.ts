@@ -10,5 +10,5 @@ export interface SkillResponse {
   id: string;
   categoryId: string;
   bonus: string[];
-  specializations: string[];
+  specialization: string | undefined;
 }

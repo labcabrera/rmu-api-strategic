@@ -270,11 +270,10 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  levelUpSkill(skillId: string, allowThird: boolean): void {
-    const skill = this.skills.find((s) => s.skillId === skillId);
-    if (!skill) {
-      throw new ValidationError('Skill not found');
-    }
+  levelUpSkill(skillId: string, specialization: string | undefined, allowThird: boolean): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
     if (skill.ranksDeveloped > 2 && !allowThird) {
       throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
     }
@@ -288,8 +287,8 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.experience.availableDevelopmentPoints -= cost;
   }
 
-  levelDownSkill(skillId: string): void {
-    const skill = this.skills.find((s) => s.skillId === skillId);
+  levelDownSkill(skillId: string, specialization: string | undefined): void {
+    const skill = this.findSkill(skillId, specialization);
     if (!skill) {
       throw new ValidationError('Skill not found');
     }
@@ -303,18 +302,31 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.experience.availableDevelopmentPoints += cost;
   }
 
-  deleteSkill(skillId: string) {
-    const skill = this.skills.find((s) => s.skillId === skillId);
-    if (!skill) {
-      throw new ValidationError('Skill not found');
-    }
+  deleteSkill(skillId: string, specialization: string | undefined): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
     if (skill.ranks > skill.ranksDeveloped) {
       throw new ValidationError('Cannot delete skill with ranks acquired from previous levels');
     }
     while (skill.ranksDeveloped > 0) {
-      this.levelDownSkill(skillId);
+      this.levelDownSkill(skillId, specialization);
     }
-    this.skills = this.skills.filter((s) => s.skillId !== skillId);
+    this.removeSkill(skillId, specialization);
+  }
+
+  findSkill(skillId: string, specialization: string | undefined): CharacterSkill | undefined {
+    return this.skills.find(
+      (s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true),
+    );
+  }
+
+  removeSkill(skillId: string, specialization: string | undefined): void {
+    if (specialization) {
+      this.skills = this.skills.filter((s) => s.skillId !== skillId || s.specialization !== specialization);
+    } else {
+      this.skills = this.skills.filter((s) => s.skillId !== skillId);
+    }
   }
 
   levelUp(force: boolean): void {
