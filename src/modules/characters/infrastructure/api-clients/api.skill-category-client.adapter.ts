@@ -26,12 +26,12 @@ export class ApiSkillCategoryClientAdapter implements SkillCategoryClientPort {
   async getAllSkillCategories(): Promise<SkillCategoryResponse[]> {
     const token = await this.tokenService.getToken();
     const apiCoreUri = this.configService.get('RMU_API_CORE_URI') as string;
-    const uri = `${apiCoreUri}/skill-categories`;
+    const uri = `${apiCoreUri}/skill-categories?page=0&size=100`;
     const response = await axios.get(uri, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data as SkillCategoryResponse[];
+    return response.data.content as SkillCategoryResponse[];
   }
 }
