@@ -109,6 +109,7 @@ export class CharacterController {
   }
 
   @Post(':id/xp')
+  @HttpCode(200)
   @ApiBody({ type: AddXPDto })
   @ApiOperation({ operationId: 'addXP', summary: 'Add XP to a character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
