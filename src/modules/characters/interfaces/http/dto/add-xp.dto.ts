@@ -1,7 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
 import { AddXPCommand } from 'src/modules/characters/application/cqrs/commands/add-xp.command';
 
 export class AddXPDto {
+  @ApiProperty({ description: 'Amount of XP to add', example: 500 })
   @IsNumber()
   xp: number;
 
