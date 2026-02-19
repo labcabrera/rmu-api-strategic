@@ -31,7 +31,7 @@ export class HealthController {
       () => this.memory.checkRSS('memory_rss', 350 * 1024 * 1024),
       async (): Promise<HealthIndicatorResult> => {
         const rmuApiCoreUri = this.config.get<string>('RMU_API_CORE_URI');
-        const healthUri = `${rmuApiCoreUri}/health`;
+        const healthUri = `${rmuApiCoreUri}/v1/health`;
         return await this.http.pingCheck('rmu-api-core', healthUri);
       },
     ]);
