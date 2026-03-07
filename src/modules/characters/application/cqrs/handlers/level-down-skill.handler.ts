@@ -15,11 +15,11 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
 
   async execute(command: LevelDownSkillCommand): Promise<Character> {
     const characterId = command.characterId;
+
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
-    character.levelDownSkill(command.skillId);
+    if (!character) throw new NotFoundError('Character', characterId);
+
+    character.levelDownSkill(command.skillId, command.specialization);
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);
     //TODO propagate events

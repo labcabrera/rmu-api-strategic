@@ -22,11 +22,12 @@ import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
+import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
 
 export interface CharacterProps {
   id: string;
   gameId: string;
-  factionId: string;
+  faction: NamedId;
   name: string;
   info: CharacterInfo;
   roleplay: CharacterRoleplayInfo;
@@ -56,7 +57,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
-    public factionId: string,
+    public faction: NamedId,
     public name: string,
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
@@ -86,7 +87,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   static partialCreate(
     game: Game,
-    factionId: string,
+    faction: NamedId,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,
@@ -101,7 +102,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     const character = new Character(
       randomUUID(),
       game.id,
-      factionId,
+      faction,
       name,
       info,
       roleplay,
@@ -135,7 +136,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     const character = new Character(
       props.id,
       props.gameId,
-      props.factionId,
+      props.faction,
       props.name,
       props.info,
       props.roleplay,
@@ -173,7 +174,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     baseHits: number | undefined;
     baseAt: number | undefined;
   }) {
-    if (props.raceName) this.info.raceName = props.raceName;
+    if (props.raceName) this.info.race = new NamedId(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {
@@ -269,11 +270,10 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  levelUpSkill(skillId: string, allowThird: boolean): void {
-    const skill = this.skills.find((s) => s.skillId === skillId);
-    if (!skill) {
-      throw new ValidationError('Skill not found');
-    }
+  levelUpSkill(skillId: string, specialization: string | undefined, allowThird: boolean): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
     if (skill.ranksDeveloped > 2 && !allowThird) {
       throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
     }
@@ -287,8 +287,8 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.experience.availableDevelopmentPoints -= cost;
   }
 
-  levelDownSkill(skillId: string): void {
-    const skill = this.skills.find((s) => s.skillId === skillId);
+  levelDownSkill(skillId: string, specialization: string | undefined): void {
+    const skill = this.findSkill(skillId, specialization);
     if (!skill) {
       throw new ValidationError('Skill not found');
     }
@@ -302,18 +302,31 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.experience.availableDevelopmentPoints += cost;
   }
 
-  deleteSkill(skillId: string) {
-    const skill = this.skills.find((s) => s.skillId === skillId);
-    if (!skill) {
-      throw new ValidationError('Skill not found');
-    }
+  deleteSkill(skillId: string, specialization: string | undefined): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
     if (skill.ranks > skill.ranksDeveloped) {
       throw new ValidationError('Cannot delete skill with ranks acquired from previous levels');
     }
     while (skill.ranksDeveloped > 0) {
-      this.levelDownSkill(skillId);
+      this.levelDownSkill(skillId, specialization);
     }
-    this.skills = this.skills.filter((s) => s.skillId !== skillId);
+    this.removeSkill(skillId, specialization);
+  }
+
+  findSkill(skillId: string, specialization: string | undefined): CharacterSkill | undefined {
+    return this.skills.find(
+      (s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true),
+    );
+  }
+
+  removeSkill(skillId: string, specialization: string | undefined): void {
+    if (specialization) {
+      this.skills = this.skills.filter((s) => s.skillId !== skillId || s.specialization !== specialization);
+    } else {
+      this.skills = this.skills.filter((s) => s.skillId !== skillId);
+    }
   }
 
   levelUp(force: boolean): void {
@@ -356,7 +369,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     return {
       id: this.id,
       gameId: this.gameId,
-      factionId: this.factionId,
+      faction: this.faction,
       name: this.name,
       info: this.info,
       roleplay: this.roleplay,

@@ -1,4 +1,4 @@
-import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
+import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
 import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
@@ -6,9 +6,9 @@ import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objec
 export class CreateCharacterCommand {
   constructor(
     public readonly gameId: string,
-    public readonly factionId: string,
+    public readonly faction: string,
     public readonly name: string,
-    public readonly info: Omit<CharacterInfo, 'raceName'>,
+    public readonly info: CreateCharacterInfo,
     public readonly roleplay: CharacterRoleplayInfo,
     public readonly level: number,
     public readonly weaponDevelopment: WeaponDevelopmentType[],
@@ -20,6 +20,17 @@ export class CreateCharacterCommand {
     public readonly items: CreateCharacterItem[],
     public readonly userId: string,
     public readonly roles: string[],
+  ) {}
+}
+
+export class CreateCharacterInfo {
+  constructor(
+    public readonly raceId: string,
+    public readonly professionId: string,
+    public readonly sizeId: string,
+    public readonly realmType: CharacterRealm,
+    public readonly height: number,
+    public readonly weight: number,
   ) {}
 }
 

@@ -5,11 +5,8 @@ import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objec
 
 @Schema({ _id: false })
 export class CharacterInfo {
-  @Prop({ required: true })
-  raceId: string;
-
-  @Prop({ required: true })
-  raceName: string;
+  @Prop({ type: Object, required: true })
+  race: any; // will be NamedIdModel shape { id, name }
 
   @Prop({ required: true })
   professionId: string;

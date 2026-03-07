@@ -71,3 +71,11 @@ export class PaginationDto {
   })
   totalPages: number;
 }
+
+export class NamedIdDto {
+  @ApiProperty({ description: 'Identifier', example: 'faction-001' })
+  id: string;
+
+  @ApiProperty({ description: 'Name', example: 'Mordor' })
+  name: string;
+}

@@ -21,6 +21,7 @@ import { CharacterInfo } from 'src/modules/characters/domain/value-objects/chara
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -41,24 +42,30 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
     const game = await this.gameRepository.findById(command.gameId);
-    if (!game) {
-      throw new ValidationError(`Game with id ${command.gameId} not found`);
-    }
-    const faction = await this.factionRepository.findById(command.factionId);
-    if (!faction) {
-      throw new ValidationError(`Faction with id ${command.factionId} not found`);
-    }
+    if (!game) throw new ValidationError(`Game with id ${command.gameId} not found`);
+
+    const faction = await this.factionRepository.findById(command.faction);
+    if (!faction) throw new ValidationError(`Faction with id ${command.faction} not found`);
+
     if (faction.gameId != game.id) {
-      throw new ValidationError(`Faction ${command.factionId} does not belong to game ${command.gameId}`);
+      throw new ValidationError(`Faction ${command.faction} does not belong to game ${command.gameId}`);
     }
+
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
     const processedStatistics = this.processStatistics(race, command.statistics, game);
-    const info = { ...command.info, raceName: race.name } as CharacterInfo;
+    const info: CharacterInfo = {
+      race: new NamedId(race.id, race.name),
+      professionId: command.info.professionId,
+      sizeId: command.info.sizeId,
+      realmType: command.info.realmType,
+      height: command.info.height,
+      weight: command.info.weight,
+    };
     const items = await this.processItems(info, command);
     const character = Character.partialCreate(
       game,
-      faction.id,
+      new NamedId(faction.id, faction.name),
       command.name,
       info,
       command.roleplay,

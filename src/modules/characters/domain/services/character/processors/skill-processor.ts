@@ -40,10 +40,14 @@ export class SkillProcessor {
   }
 
   private getProfessionalBonus(character: Partial<Character>, skill: CharacterSkill): number {
+    let bonus = 0;
     if (skill.professional && skill.professional.includes('professional')) {
-      return Math.min(30, skill.ranks);
+      bonus = Math.min(30, skill.ranks);
     }
-    return 0;
+    if (skill.professional && skill.professional.includes('knack')) {
+      bonus += 5;
+    }
+    return bonus;
   }
 
   private getRankBonus(ranks: number): number {

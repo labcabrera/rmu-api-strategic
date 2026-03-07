@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
+import { NamedIdDto } from 'src/modules/shared/infrastructure/controller/dto';
+import { Type } from 'class-transformer';
 
 export class CharacterInfoDto {
-  @ApiProperty({ description: 'Race identifier', example: 'ork' })
-  @IsString()
+  @ApiProperty({ description: 'Race identifier', type: NamedIdDto })
+  @ValidateNested()
+  @Type(() => NamedIdDto)
   @IsNotEmpty()
-  raceId: string;
+  race: NamedIdDto;
 
   @ApiProperty({ description: 'Profession identifier', example: 'rogue' })
   @IsString()
@@ -36,9 +39,10 @@ export class CharacterInfoDto {
 
   static fromEntity(entity: CharacterInfo): CharacterInfoDto {
     const dto = new CharacterInfoDto();
-    dto.raceId = entity.raceId;
+    dto.race = { id: entity.race.id, name: entity.race.name };
     dto.professionId = entity.professionId;
     dto.sizeId = entity.sizeId;
+    dto.realmType = entity.realmType;
     dto.height = entity.height;
     dto.weight = entity.weight;
     return dto;
