@@ -1,20 +1,10 @@
-import { Page } from 'src/modules/shared/domain/entities/page';
 import { Character } from '../../domain/aggregates/character.aggregate';
+import { BaseRepository } from 'src/modules/shared/application/ports/base-repository';
 
-export interface CharacterRepository {
-  findById(id: string): Promise<Character | null>;
-
+export interface CharacterRepository extends BaseRepository<Character> {
   findByGameId(gameId: string): Promise<Character[]>;
 
   findByRaceId(raceId: string): Promise<Character[]>;
-
-  findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Character>>;
-
-  save(entity: Partial<Character>): Promise<Character>;
-
-  update(entity: Character): Promise<Character>;
-
-  deleteById(id: string): Promise<Character | null>;
 
   deleteByGameId(gameId: string): Promise<void>;
 }

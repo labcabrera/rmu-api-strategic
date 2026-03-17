@@ -61,7 +61,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const racialBonus = 0;
     character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
   }

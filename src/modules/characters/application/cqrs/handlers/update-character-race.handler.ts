@@ -34,7 +34,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
       baseAt: command.baseAt,
     });
     this.characterProcessorService.process(character);
-    await this.characterRepository.update(character);
+    await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
   }
 }

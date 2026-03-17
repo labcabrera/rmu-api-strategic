@@ -20,7 +20,7 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
     }
     character.levelUp(command.force);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     //TODO propagate events
     return updated;
   }

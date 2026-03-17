@@ -67,7 +67,7 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     }
 
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     await this.factionRepository.update(faction.id, faction);
     return updated;
   }

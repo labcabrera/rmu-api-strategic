@@ -47,7 +47,7 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
     const item = this.buildItem(readedItem, command, character.info.weight);
     character.addItem(item);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(character);
+    return await this.characterRepository.update(character.id, character);
   }
 
   private getWeight(item: CharacterItem): number {

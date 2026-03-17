@@ -22,6 +22,6 @@ export class AddXPHandler implements ICommandHandler<AddXPCommand, Character> {
     }
     character.experience.xp += command.xp;
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(character);
+    return await this.characterRepository.update(character.id, character);
   }
 }

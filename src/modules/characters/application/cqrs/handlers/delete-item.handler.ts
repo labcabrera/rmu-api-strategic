@@ -26,7 +26,7 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand, Cha
     character.items = character.items.filter((item) => item.id !== itemId);
     this.cleanupEquipedItem(character.equipment, itemId);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     return updated;
   }
 

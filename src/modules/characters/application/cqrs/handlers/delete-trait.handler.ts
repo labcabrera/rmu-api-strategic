@@ -24,7 +24,7 @@ export class DeleteTraitHandler implements ICommandHandler<DeleteTraitCommand, C
 
     character.deleteTrait(command.traitId, command.value);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
   }

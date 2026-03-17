@@ -21,7 +21,7 @@ export class DeleteGamesByRealmHandler implements ICommandHandler<DeleteGamesByR
     this.logger.log(`Found ${games.length} games for realm ${command.realmId}`);
     await Promise.all(
       games.map((game) => {
-        const deleteGameCommand = new DeleteGameCommand(game.id, `Deleted realm ${command.realmId}`, command.userId, command.roles);
+        const deleteGameCommand = new DeleteGameCommand(game.id, command.userId, command.roles);
         return this.commandBus.execute(deleteGameCommand);
       }),
     );

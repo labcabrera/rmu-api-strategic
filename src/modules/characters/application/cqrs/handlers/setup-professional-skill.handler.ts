@@ -27,7 +27,7 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
     this.validateCount(command.types, skill, character);
     skill.professional = command.types;
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(character);
+    const updated: Character = await this.characterRepository.update(character.id, character);
     return updated;
   }
 
