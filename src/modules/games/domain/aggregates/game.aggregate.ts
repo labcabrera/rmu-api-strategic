@@ -1,30 +1,14 @@
-import { AggregateRoot } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events';
 import { GameOptions } from '../value-objects/game-options.vo';
 import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { GameProps } from './game-props';
 
-export interface GameProps {
-  id: string;
-  name: string;
-  realmId: string;
-  realmName: string;
-  status: GameStatus;
-  options: GameOptions;
-  powerLevel: GamePowerLevel;
-  shortDescription?: string;
-  description?: string;
-  imageUrl?: string;
-  owner: string;
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
-export class Game extends AggregateRoot<DomainEvent<Game>> {
+export class Game extends BaseAggregateRoot<GameProps> {
   private constructor(
-    public readonly id: string,
+    id: string,
     public name: string,
     public realmId: string,
     public realmName: string,
@@ -38,7 +22,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
-    super();
+    super(id);
   }
 
   static create(props: Omit<GameProps, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Game {
@@ -91,7 +75,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     this.apply(new GameUpdatedEvent(this));
   }
 
-  toProps(): GameProps {
+  getProps(): GameProps {
     return {
       id: this.id,
       name: this.name,
