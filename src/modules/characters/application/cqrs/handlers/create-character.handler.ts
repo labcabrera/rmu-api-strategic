@@ -22,6 +22,7 @@ import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objec
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { CharacterCreatedEvent } from 'src/modules/characters/domain/events/character.events';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -91,7 +92,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     this.characterProcessorService.process(character);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
     return created;
   }
 
@@ -136,12 +137,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return result;
   }
 
-  async processSkills(
-    character: Character,
-    profession: Profession,
-    command: CreateCharacterCommand,
-    raceInfo: Race,
-  ): Promise<void> {
+  async processSkills(character: Character, profession: Profession, command: CreateCharacterCommand, raceInfo: Race): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
     if (!skills.some((e) => e.skillId === 'body-development')) {
