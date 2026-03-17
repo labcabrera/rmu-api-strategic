@@ -5,6 +5,7 @@ import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 import { GameProps } from './game-props';
+import { AccessType } from 'src/modules/shared/domain/entities/access-type';
 
 export class Game extends BaseAggregateRoot<GameProps> {
   private constructor(
@@ -19,6 +20,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
     public description: string | undefined,
     public imageUrl: string | undefined,
     public owner: string,
+    public accessType: AccessType,
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
@@ -38,6 +40,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       props.description,
       undefined,
       props.owner,
+      props.accessType,
       new Date(),
       undefined,
     );
@@ -58,6 +61,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       props.description,
       props.imageUrl,
       props.owner,
+      props.accessType,
       props.createdAt,
       props.updatedAt,
     );
@@ -88,6 +92,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,
+      accessType: this.accessType,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

@@ -30,6 +30,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       description: doc.description,
       imageUrl: doc.imageUrl,
       owner: doc.owner,
+      accessType: doc.accessType,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });
