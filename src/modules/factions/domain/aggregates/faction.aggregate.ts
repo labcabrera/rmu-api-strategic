@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events';
 import { FactionManagement } from '../value-objects/faction-management.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 export interface FactionProps {
   id: string;

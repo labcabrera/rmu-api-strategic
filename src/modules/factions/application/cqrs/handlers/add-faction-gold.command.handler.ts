@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
-import { ForbiddenError, NotFoundError } from 'src/modules/shared/domain/errors';
 import type { FactionRepository } from '../../ports/faction.repository';
 import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { AddFactionGoldCommand } from '../commands/add-faction-gold.command';
+import { ForbiddenError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(AddFactionGoldCommand)
 export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionGoldCommand, Faction> {
@@ -20,9 +20,8 @@ export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionG
       );
     }
     const faction = await this.factionRepository.findById(command.factionId);
-    if (!faction) {
-      throw new NotFoundError('Faction', command.factionId);
-    }
+    if (!faction) throw new NotFoundError('Faction', command.factionId);
+
     faction.addGold(command.gold);
     const updated = await this.factionRepository.update(command.factionId, faction);
     faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));

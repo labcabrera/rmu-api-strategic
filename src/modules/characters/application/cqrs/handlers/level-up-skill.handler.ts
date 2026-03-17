@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
 import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {

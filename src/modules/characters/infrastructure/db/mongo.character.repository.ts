@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
-import { Page } from '../../../shared/domain/entities/page.entity';
-import { NotFoundError } from '../../../shared/domain/errors';
-import { RsqlParser } from '../../../shared/infrastructure/messaging/rsql-parser';
 import { CharacterRepository } from '../../application/ports/character.repository';
 import { Character } from '../../domain/aggregates/character.aggregate';
-import { NamedId } from '../../../shared/domain/entities/named-id.entity';
 import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
+import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { Page } from 'src/modules/shared/domain/entities/page';
 
 @Injectable()
 export class MongoCharacterRepository implements CharacterRepository {
@@ -82,7 +82,7 @@ export class MongoCharacterRepository implements CharacterRepository {
     return Character.fromProps({
       id: doc._id,
       gameId: doc.gameId,
-      faction: new NamedId(doc.faction.id, doc.faction.name),
+      faction: new NamedEntity(doc.faction.id, doc.faction.name),
       name: doc.name,
       info: doc.info,
       roleplay: doc.roleplay,

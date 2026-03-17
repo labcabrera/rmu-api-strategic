@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
-import { RsqlParser } from 'src/modules/shared/infrastructure/messaging/rsql-parser';
 import { GameModel, GameDocument } from '../persistence/models/game-model';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { NotFoundError } from 'src/modules/shared/domain/errors';
+import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
+import { Page } from 'src/modules/shared/domain/entities/page';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class MongoGameRepository implements GameRepository {
@@ -44,9 +44,7 @@ export class MongoGameRepository implements GameRepository {
 
   async update(id: string, request: Partial<Game>): Promise<Game> {
     const updatedRace = await this.gameModel.findByIdAndUpdate(id, { $set: request }, { new: true });
-    if (!updatedRace) {
-      throw new NotFoundError('Race', id);
-    }
+    if (!updatedRace) throw new NotFoundError('Race', id);
     return this.mapToEntity(updatedRace);
   }
 

@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { TraitClientPort } from '../../ports/trait-client.port';
 import { DeleteTraitCommand } from '../commands/delete-trait.command';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(DeleteTraitCommand)
 export class DeleteTraitHandler implements ICommandHandler<DeleteTraitCommand, Character> {
@@ -20,9 +20,8 @@ export class DeleteTraitHandler implements ICommandHandler<DeleteTraitCommand, C
   async execute(command: DeleteTraitCommand): Promise<Character> {
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     character.deleteTrait(command.traitId, command.value);
     this.characterProcessorService.process(character);
     const updated = await this.characterRepository.update(character);

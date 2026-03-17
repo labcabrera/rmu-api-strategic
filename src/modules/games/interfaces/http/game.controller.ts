@@ -12,8 +12,6 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { GameDto, GamePageDto } from './dtos/game.dto';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
-import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GetGameQuery } from '../../application/cqrs/queries/get-game.query';
 import { Game } from '../../domain/aggregates/game.aggregate';
 import { GetGamesQuery } from '../../application/cqrs/queries/get-games.query';
@@ -22,6 +20,9 @@ import { UpdateGameDto } from './dtos/update-game.dto';
 import { CreateGameCommand } from '../../application/cqrs/commands/create-game.command';
 import { DeleteGameCommand } from '../../application/cqrs/commands/delete-game.command';
 import { UpdateGameCommand } from '../../application/cqrs/commands/update-game.command';
+import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
+import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { Page } from 'src/modules/shared/domain/entities/page';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/strategic-games')

@@ -1,4 +1,4 @@
-import { Page } from '../../../shared/domain/entities/page.entity';
+import { Page } from 'src/modules/shared/domain/entities/page';
 import { Character } from '../../domain/aggregates/character.aggregate';
 
 export interface CharacterRepository {

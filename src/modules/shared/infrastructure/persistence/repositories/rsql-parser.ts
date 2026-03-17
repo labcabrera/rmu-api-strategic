@@ -6,7 +6,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { parse } from '@rsql/parser';
-import { InvalidSearchExpression } from '../../domain/errors';
+import { InvalidSearchExpression } from 'src/modules/shared/domain/errors/errors';
 
 type MongoQuery = Record<string, any>;
 
@@ -18,16 +18,14 @@ export class RsqlParser {
     if (!rsql || rsql.trim() === '') {
       return {};
     }
-    this.logger.debug(`Converting RSQL to MongoDB query: ${rsql}`);
+    this.logger.verbose(`Converting RSQL to MongoDB query: ${rsql}`);
     try {
       const node: any = parse(rsql);
       const result = this.processNode(node);
-      this.logger.debug(`Converted MongoDB query: ${JSON.stringify(result)}`);
+      this.logger.verbose(`Converted MongoDB query: ${JSON.stringify(result)}`);
       return result;
     } catch (error) {
-      throw new InvalidSearchExpression(
-        `Invalid RSQL query: ${rsql}. ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      throw new InvalidSearchExpression(`Invalid RSQL query: ${rsql}. ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

@@ -1,18 +1,17 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
 import { SetUpProfessionalSkillCommand } from '../commands/setup-professional-skill.command';
 import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-skill.model';
+import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(SetUpProfessionalSkillCommand)
 export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfessionalSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
   ) {}
 
   async execute(command: SetUpProfessionalSkillCommand): Promise<Character> {

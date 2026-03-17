@@ -1,7 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { AddItemCommand } from '../commands/add-item.comand';
@@ -9,6 +8,7 @@ import { CharacterItem } from 'src/modules/characters/domain/value-objects/chara
 import type { ItemClientPort, ItemResponse } from '../../ports/item-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(AddItemCommand)
 export class AddItemHandler implements ICommandHandler<AddItemCommand, Character> {

@@ -18,16 +18,16 @@ import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
-import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
-import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 export interface CharacterProps {
   id: string;
   gameId: string;
-  faction: NamedId;
+  faction: NamedEntity;
   name: string;
   info: CharacterInfo;
   roleplay: CharacterRoleplayInfo;
@@ -57,7 +57,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   private constructor(
     public id: string,
     public gameId: string,
-    public faction: NamedId,
+    public faction: NamedEntity,
     public name: string,
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
@@ -87,7 +87,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
 
   static partialCreate(
     game: Game,
-    faction: NamedId,
+    faction: NamedEntity,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,
@@ -174,7 +174,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     baseHits: number | undefined;
     baseAt: number | undefined;
   }) {
-    if (props.raceName) this.info.race = new NamedId(this.info.race.id, props.raceName);
+    if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {

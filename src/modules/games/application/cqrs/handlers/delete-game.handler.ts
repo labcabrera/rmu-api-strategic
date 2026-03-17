@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from 'src/modules/shared/domain/errors';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import { DeleteGameCommand } from '../commands/delete-game.command';
 import { GameDeletedEvent } from 'src/modules/games/domain/events/game.events';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(DeleteGameCommand)
 export class DeleteGameHandler implements ICommandHandler<DeleteGameCommand> {

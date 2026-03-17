@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterAttack } from '../../../value-objects/character-attack.vo';
-import { DomainError } from 'src/modules/shared/domain/errors';
 import { CharacterItemWeapon } from '../../../value-objects/character-item-weapon.vo';
 import { CharacterItemWeaponMode } from '../../../value-objects/character-item-weapon-mode.vo';
+import { DomainError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class AttackProcessor {

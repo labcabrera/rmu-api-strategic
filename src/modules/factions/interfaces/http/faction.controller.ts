@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -14,8 +13,6 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
-import { ErrorDto, PagedQueryDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query';
 import { Faction } from '../../domain/aggregates/faction.aggregate';
 import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query';
@@ -29,6 +26,9 @@ import { AddFactionXPDto } from './dtos/add-faction-xp.dto';
 import { AddFactionXPCommand } from '../../application/cqrs/commands/add-faction-xp.command';
 import { AddFactionGoldCommand } from '../../application/cqrs/commands/add-faction-gold.command';
 import { AddFactionGoldDto } from './dtos/add-faction-gold.dto';
+import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
+import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { Page } from 'src/modules/shared/domain/entities/page';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/factions')

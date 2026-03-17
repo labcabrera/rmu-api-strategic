@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { NotFoundError } from 'src/modules/shared/domain/errors';
 import { UpdateGameCommand } from '../commands/update-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(UpdateGameCommand)
 export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Game> {

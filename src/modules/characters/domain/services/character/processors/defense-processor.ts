@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ValidationError } from 'src/modules/shared/domain/errors';
 import { CharacterItem } from '../../../value-objects/character-item.vo';
 import { Character } from '../../../aggregates/character.aggregate';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class DefenseProcessor {

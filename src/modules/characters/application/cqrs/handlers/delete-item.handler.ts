@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import * as characterRepository from '../../ports/character.repository';
 import { DeleteItemCommand } from '../commands/delete-item.command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand, Character> {
@@ -16,14 +16,13 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand, Cha
 
   async execute(command: DeleteItemCommand): Promise<Character> {
     const { characterId, itemId } = command;
+
     const character = await this.characterRepository.findById(characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     const item = character.items.find((item) => item.id === itemId);
-    if (!item) {
-      throw new NotFoundError('Character Item', itemId);
-    }
+    if (!item) throw new NotFoundError('Character Item', itemId);
+
     character.items = character.items.filter((item) => item.id !== itemId);
     this.cleanupEquipedItem(character.equipment, itemId);
     this.characterProcessorService.process(character);

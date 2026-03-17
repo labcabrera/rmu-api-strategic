@@ -1,5 +1,5 @@
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
+import { Page } from 'src/modules/shared/domain/entities/page';
 
 export interface GameRepository {
   findById(id: string): Promise<Game | null>;
