@@ -6,6 +6,7 @@ import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import type { RealmClientPort } from '../../ports/realm-client.port';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { GameGuardPort } from '../../ports/game-guard.port';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
@@ -13,14 +14,16 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
     @Inject('GameRepository') private readonly gameRepository: GameRepository,
     @Inject('RealmClient') private readonly realmClient: RealmClientPort,
     @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
+    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: CreateGameCommand): Promise<Game> {
+    this.gameGuard.checkCreate(command.roles);
+
     const realm = await this.realmClient.getRealmById(command.realmId);
-    if (!realm) {
-      throw new ValidationError('Realm not found');
-    }
+    if (!realm) throw new ValidationError('Realm not found');
+
     const game = Game.create({
       name: command.name,
       realmId: realm.id,

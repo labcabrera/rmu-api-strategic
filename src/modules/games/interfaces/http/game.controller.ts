@@ -1,15 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { GameDto, GamePageDto } from './dtos/game.dto';
 import { GetGameQuery } from '../../application/cqrs/queries/get-game.query';
@@ -38,8 +30,9 @@ export class GameController {
   @ApiOkResponse({ type: GameDto })
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   async findById(@Param('id') id: string, @Request() req) {
-    const user = req.user!;
-    const query = new GetGameQuery(id, user.id as string, user.roles as string[]);
+    const userId = req.user!.id as string;
+    const roles = req.user!.roles as string[];
+    const query = new GetGameQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetGameQuery, Game>(query);
     return GameDto.fromEntity(entity);
   }
@@ -50,8 +43,9 @@ export class GameController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Invalid RSQL query', type: ErrorDto })
   async find(@Query() dto: PagedQueryDto, @Request() req) {
-    const user = req.user!;
-    const query = new GetGamesQuery(dto.q, dto.page, dto.size, user.id as string, user.roles as string[]);
+    const userId = req.user!.id as string;
+    const roles = req.user!.roles as string[];
+    const query = new GetGamesQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetGamesQuery, Page<Game>>(query);
     const mapped = page.content.map((game) => GameDto.fromEntity(game));
     return new Page<GameDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
@@ -63,8 +57,9 @@ export class GameController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   async create(@Body() createGameDto: CreateGameDto, @Request() req) {
-    const user = req.user!;
-    const command = CreateGameDto.toCommand(createGameDto, user.id as string, user.roles as string[]);
+    const userId = req.user!.id as string;
+    const roles = req.user!.roles as string[];
+    const command = CreateGameDto.toCommand(createGameDto, userId, roles);
     const game = await this.commandBus.execute<CreateGameCommand, Game>(command);
     return GameDto.fromEntity(game);
   }
@@ -76,8 +71,9 @@ export class GameController {
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
   async updateGame(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto, @Request() req) {
-    const user = req.user!;
-    const command = UpdateGameDto.toCommand(id, updateGameDto, user.id as string, user.roles as string[]);
+    const userId = req.user!.id as string;
+    const roles = req.user!.roles as string[];
+    const command = UpdateGameDto.toCommand(id, updateGameDto, userId, roles);
     const game = await this.commandBus.execute<UpdateGameCommand, Game>(command);
     return GameDto.fromEntity(game);
   }
@@ -87,7 +83,9 @@ export class GameController {
   @ApiOperation({ operationId: 'deleteGame', summary: 'Delete game by id' })
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   async delete(@Param('id') id: string, @Request() req) {
-    const command = new DeleteGameCommand(id, undefined, req.user!.id as string, req.user!.roles as string[]);
+    const userId = req.user!.id as string;
+    const roles = req.user!.roles as string[];
+    const command = new DeleteGameCommand(id, userId, roles);
     await this.commandBus.execute(command);
   }
 }
