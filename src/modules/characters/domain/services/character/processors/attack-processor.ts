@@ -4,6 +4,7 @@ import { CharacterAttack } from '../../../value-objects/character-attack.vo';
 import { CharacterItemWeapon } from '../../../value-objects/character-item-weapon.vo';
 import { CharacterItemWeaponMode } from '../../../value-objects/character-item-weapon-mode.vo';
 import { DomainError } from 'src/modules/shared/domain/errors/errors';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 
 @Injectable()
 export class AttackProcessor {
@@ -27,7 +28,7 @@ export class AttackProcessor {
       //TODO check attack shield
       if (item?.weapon) {
         const skillId = item.weapon.skillId;
-        const skill = character.skills.find((e) => e.skillId == skillId);
+        const skill = this.getWeaponSkill(character, item.weapon);
         const skillBonus = skill ? skill.totalBonus : -25;
         const ranks = skill ? skill.ranks : 0;
         const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
@@ -73,5 +74,15 @@ export class AttackProcessor {
       default:
         throw new DomainError('Unsupported character size');
     }
+  }
+
+  private getWeaponSkill(character: Partial<Character>, weapon: CharacterItemWeapon): CharacterSkill | undefined {
+    const skillId = weapon.skillId;
+    if (skillId.indexOf('@') > -1) {
+      const baseSkillId = skillId.split('@')[0];
+      const specialization = skillId.split('@')[1];
+      return character.skills!.find((e) => e.skillId == baseSkillId && e.specialization == specialization);
+    }
+    throw new DomainError('Unsupported weapon skill format');
   }
 }
