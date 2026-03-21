@@ -48,10 +48,10 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     if (command.tier && trait.maxTier && command.tier > trait.maxTier) {
       throw new ValidationError(`Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`);
     }
-    if (trait.requiresSpecialization && !command.specialization) {
+    if (trait.specialization && !command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} requires a specialization value`);
     }
-    if (!trait.requiresSpecialization && command.specialization) {
+    if (!trait.specialization && command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`);
     }
   }

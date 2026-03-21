@@ -7,7 +7,7 @@ export interface TraitResponse {
   name: string;
   category: string;
   isTalent: boolean;
-  requiresSpecialization: boolean;
+  specialization: string | null;
   isTierBased: boolean;
   maxTier: number | null;
   adquisitionCost: number | null;
