@@ -1,29 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import {
-  Body,
-  Controller,
-  Delete,
-  HttpCode,
-  Logger,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Query,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-  ApiBody,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-  ApiQuery,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { Character } from '../../domain/aggregates/character.aggregate';
 import { AddSkillDto } from './dto/add-skill.dto';
@@ -67,12 +45,7 @@ export class CharacterSkillController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateSkill(
-    @Param('id') id: string,
-    @Param('skillId') skillId: string,
-    @Body() dto: UpdateSkillDto,
-    @Request() req,
-  ) {
+  async updateSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: UpdateSkillDto, @Request() req) {
     this.logger.debug(`Updating character ${id} skill  ${skillId} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
@@ -149,7 +122,8 @@ export class CharacterSkillController {
     this.logger.debug(`Updating professional skill for character ${id} and skill ${skillId} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
-    const command = UpdateProfessionalSkillDto.toCommand(id, skillId, dto, userId, roles);
+    const specialization = req.query.specialization as string | undefined;
+    const command = UpdateProfessionalSkillDto.toCommand(id, skillId, specialization, dto, userId, roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
