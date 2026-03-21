@@ -8,12 +8,12 @@ export class DeleteTraitDto {
   @IsNotEmpty()
   traitId: string;
 
-  @ApiProperty({ description: 'Trait value', example: 'body-development' })
+  @ApiProperty({ description: 'Trait specialization', example: 'body-development', required: false })
   @IsString()
   @IsOptional()
-  value: string | undefined;
+  specialization: string | undefined;
 
   static toCommand(characterId: string, dto: DeleteTraitDto, userId: string, roles: string[]): DeleteTraitCommand {
-    return new DeleteTraitCommand(characterId, dto.traitId, dto.value, userId, roles);
+    return new DeleteTraitCommand(characterId, dto.traitId, dto.specialization, userId, roles);
   }
 }
