@@ -22,36 +22,31 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
   async execute(command: AddItemCommand): Promise<Character> {
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     const readedItem = await this.itemClient.getItemById(command.itemTypeId);
-    if (command.amount && command.amount < 1) {
-      throw new ValidationError(`Amount must be greater than 0`);
-    }
+    if (command.amount && command.amount < 1) throw new ValidationError(`Amount must be greater than 0`);
+
     if (command.amount && command.amount > 1 && !readedItem.stackable) {
       throw new ValidationError(`Item ${readedItem.id} is not stackable, amount must be 1 or undefined`);
     }
+
     const cost = this.getCost(readedItem, command);
     const amount = command.amount || 1;
-    const totalCost = cost ? cost * amount : 0;
+    const totalCost = Math.round((cost ? cost * amount : 0) * 1e3) / 1e3;
     if (cost) {
-      const goldItem = character.items.find((i) => i.itemTypeId === 'gold-coin');
-      if (goldItem!.amount! < totalCost) {
+      const goldItem: CharacterItem = character.items.find((i) => i.itemTypeId === 'gold-coin')!;
+      if (goldItem.amount! < totalCost) {
         throw new ValidationError(
-          `Character does not have enough gold to purchase the item. Cost: ${totalCost}, Available: ${goldItem!.amount}`,
+          `Character does not have enough gold to purchase the item. Cost: ${totalCost}, Available: ${goldItem.amount}`,
         );
       }
-      goldItem!.amount! -= totalCost;
+      goldItem.amount = Math.round((goldItem.amount! - totalCost) * 1e3) / 1e3;
     }
     const item = this.buildItem(readedItem, command, character.info.weight);
     character.addItem(item);
     this.characterProcessorService.process(character);
     return await this.characterRepository.update(character.id, character);
-  }
-
-  private getWeight(item: CharacterItem): number {
-    return item.info.weight;
   }
 
   private getCost(readedItem: ItemResponse, command: AddItemCommand): number | undefined {
