@@ -29,7 +29,7 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
     const readedItem = await this.itemClient.getItemById(command.itemTypeId);
     if (command.amount && command.amount < 1) throw new ValidationError(`Amount must be greater than 0`);
 
-    if (command.amount && command.amount > 1 && !readedItem.stackable) {
+    if (command.amount && command.amount > 1 && readedItem.info.stackable !== true) {
       throw new ValidationError(`Item ${readedItem.id} is not stackable, amount must be 1 or undefined`);
     }
 
@@ -98,7 +98,7 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
         weight: command.weight || weight || 0,
       },
       description: '',
-      stackable: readedItem.stackable,
+      stackable: readedItem.info.stackable,
       amount: command.amount || undefined,
     };
   }

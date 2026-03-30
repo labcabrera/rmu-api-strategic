@@ -208,7 +208,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
           armor: readedArmor,
           affixes: [],
           info: itemInfo,
-          stackable: readedItem.stackable,
+          stackable: readedItem.info.stackable,
           amount: undefined,
           description: undefined,
         } as CharacterItem;
