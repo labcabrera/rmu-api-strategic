@@ -14,10 +14,8 @@ export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionG
   ) {}
 
   async execute(command: AddFactionGoldCommand): Promise<Faction> {
-    if (!command.roles.includes('faction-management')) {
-      throw new ForbiddenError(
-        'You do not have permission to add gold to this faction. Required faction-management role.',
-      );
+    if (!command.roles.includes('faction-management') && command.gold > 0) {
+      throw new ForbiddenError('You do not have permission to add gold to this faction. Required faction-management role.');
     }
     const faction = await this.factionRepository.findById(command.factionId);
     if (!faction) throw new NotFoundError('Faction', command.factionId);

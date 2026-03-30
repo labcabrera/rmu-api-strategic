@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
@@ -9,6 +9,8 @@ import type { ItemClientPort, ItemResponse } from '../../ports/item-client.port'
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { AddFactionGoldCommand } from 'src/modules/factions/application/cqrs/commands/add-faction-gold.command';
+import { diff } from 'util';
 
 @CommandHandler(AddItemCommand)
 export class AddItemHandler implements ICommandHandler<AddItemCommand, Character> {
@@ -17,6 +19,7 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemClient') private readonly itemClient: ItemClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject() private commandBus: CommandBus,
   ) {}
 
   async execute(command: AddItemCommand): Promise<Character> {
@@ -35,14 +38,34 @@ export class AddItemHandler implements ICommandHandler<AddItemCommand, Character
     const amount = command.amount || 1;
     const totalCost = Math.round((cost ? cost * amount : 0) * 1e3) / 1e3;
     if (cost) {
-      const goldItem: CharacterItem = character.items.find((i) => i.itemTypeId === 'gold-coin')!;
-      if (goldItem.amount! < totalCost) {
-        throw new ValidationError(
-          `Character does not have enough gold to purchase the item. Cost: ${totalCost}, Available: ${goldItem.amount}`,
-        );
+      const goldItem = character.items.find((i) => i.itemTypeId === 'gold-coin');
+      let characterCost = 0;
+      let factionCost = 0;
+
+      if (goldItem) {
+        const characterAvailableGold = goldItem.amount || 0;
+        const diff = Math.round((characterAvailableGold - totalCost) * 1e3) / 1e3;
+        if (diff < 0) {
+          // Character does not have enough gold, need to take from faction
+          characterCost = characterAvailableGold;
+          factionCost = totalCost - characterAvailableGold;
+        }
+      } else {
+        characterCost = totalCost;
       }
-      goldItem.amount = Math.round((goldItem.amount! - totalCost) * 1e3) / 1e3;
+      if (factionCost > 0) {
+        try {
+          const cmd = new AddFactionGoldCommand(character.faction.id, -factionCost, command.userId, command.roles);
+          await this.commandBus.execute(cmd);
+        } catch {
+          throw new ValidationError(`Character's faction does not have enough gold`);
+        }
+      }
+      if (characterCost > 0) {
+        goldItem!.amount = Math.round((goldItem!.amount! - characterCost) * 1e3) / 1e3;
+      }
     }
+
     const item = this.buildItem(readedItem, command, character.info.weight);
     character.addItem(item);
     this.characterProcessorService.process(character);
