@@ -10,7 +10,6 @@ import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { AddFactionGoldCommand } from 'src/modules/factions/application/cqrs/commands/add-faction-gold.command';
-import { diff } from 'util';
 
 @CommandHandler(AddItemCommand)
 export class AddItemHandler implements ICommandHandler<AddItemCommand, Character> {
