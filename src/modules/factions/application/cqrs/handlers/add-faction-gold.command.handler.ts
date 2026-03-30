@@ -19,7 +19,6 @@ export class AddFactionGoldCommandHandler implements ICommandHandler<AddFactionG
     }
     const faction = await this.factionRepository.findById(command.factionId);
     if (!faction) throw new NotFoundError('Faction', command.factionId);
-
     faction.addGold(command.gold);
     const updated = await this.factionRepository.update(command.factionId, faction);
     faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));

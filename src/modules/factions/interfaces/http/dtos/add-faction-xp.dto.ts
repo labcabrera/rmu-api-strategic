@@ -8,11 +8,6 @@ export class AddFactionXPDto {
   xp: number;
 
   static toCommand(factionId: string, dto: AddFactionXPDto, userId: string, roles: string[]): AddFactionXPCommand {
-    const command = new AddFactionXPCommand();
-    command.factionId = factionId;
-    command.xp = dto.xp;
-    command.userId = userId;
-    command.roles = roles;
-    return command;
+    return new AddFactionXPCommand(factionId, dto.xp, userId, roles);
   }
 }

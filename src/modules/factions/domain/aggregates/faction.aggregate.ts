@@ -106,10 +106,11 @@ export class Faction extends AggregateRoot<DomainEvent<Faction>> {
   }
 
   addGold(amount: number) {
-    if (amount <= 0 && -amount > this.management.availableGold) {
+    const newGold = Math.round((this.management.availableGold + amount) * 1e3) / 1e3;
+    if (newGold < 0) {
       throw new ValidationError('Can not remove more gold than available');
     }
-    this.management.availableGold += amount;
+    this.management.availableGold = newGold;
     this.updatedAt = new Date();
     this.apply(new FactionUpdatedEvent(this));
   }
