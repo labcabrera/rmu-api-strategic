@@ -1,16 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TerminusModule } from '@nestjs/terminus';
-
 import { AuthModule } from 'src/modules/auth/auth.module';
-import { HealthController } from './infrastructure/controller/health.controller';
 import { KafkaProducerService } from './infrastructure/messaging/kafka-producer.service';
-import { RsqlParser } from './infrastructure/messaging/rsql-parser';
-import { HttpModule } from '@nestjs/axios';
+import { HealthController } from './interfaces/http/health.controller';
+import { TerminusModule } from '@nestjs/terminus';
+import { RsqlParser } from './infrastructure/persistence/repositories/rsql-parser';
 
 @Module({
-  imports: [TerminusModule, CqrsModule, ConfigModule, HttpModule, AuthModule],
+  imports: [TerminusModule, CqrsModule, ConfigModule, AuthModule],
   controllers: [HealthController],
   providers: [RsqlParser, KafkaProducerService],
   exports: [RsqlParser, KafkaProducerService],

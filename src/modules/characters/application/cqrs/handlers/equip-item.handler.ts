@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { EquipItemCommand } from '../commands/equip-item-command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
@@ -22,13 +22,12 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     if (!character) throw new NotFoundError('Character', characterId);
 
     const item: CharacterItem = character.items.find((e) => e.id === command.itemId) as CharacterItem;
-    if (!item) {
-      throw new ValidationError(`Item not found: ${command.itemId}`);
-    }
+    if (!item) throw new ValidationError(`Item not found: ${command.itemId}`);
+
     this.validateEquipmentData(character, item, command);
     this.equip(character, item, command);
     this.characterProcessorService.process(character);
-    return await this.characterRepository.update(character);
+    return await this.characterRepository.update(character.id, character);
   }
 
   private equip(character: Character, item: CharacterItem, command: EquipItemCommand): void {

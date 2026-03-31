@@ -7,7 +7,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { DomainExceptionFilter } from './modules/shared/infrastructure/controller/domain-exception.filter';
+import { DomainExceptionFilter } from './modules/shared/interfaces/http/domain-exception.filter';
 
 function configureOpenApi(app: INestApplication<any>) {
   const openApiConfig = new DocumentBuilder()
@@ -77,7 +77,21 @@ function configureOpenApi(app: INestApplication<any>) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const rawLevel = process.env.LOG_LEVEL || 'info';
+  const levelMap: Record<string, string> = {
+    error: 'error',
+    warn: 'warn',
+    info: 'log',
+    log: 'log',
+    debug: 'debug',
+    verbose: 'verbose',
+  };
+  const ordered = ['error', 'warn', 'log', 'debug', 'verbose'];
+  const mapped = levelMap[rawLevel.toLowerCase()] ?? 'log';
+  const maxIndex = ordered.indexOf(mapped) >= 0 ? ordered.indexOf(mapped) : ordered.indexOf('log');
+  const enabledLogger = ordered.slice(0, maxIndex + 1) as any;
+
+  const app = await NestFactory.create(AppModule, { logger: enabledLogger });
 
   app.enableCors();
 

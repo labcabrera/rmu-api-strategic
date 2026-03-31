@@ -9,7 +9,6 @@ export interface ItemResponse {
   category: string;
   weapon: CharacterItemWeapon | undefined;
   armor: ItemArmorResponse | undefined;
-  stackable: boolean | undefined;
   info: ItemInfoResponse;
 }
 
@@ -24,6 +23,7 @@ export interface ItemInfoResponse {
   weight: number | undefined;
   weightPercent: number | undefined;
   productionHours: number | undefined;
+  stackable: boolean | undefined;
 }
 
 export interface ItemArmorResponse {

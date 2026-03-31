@@ -15,6 +15,7 @@ import { GetGameHandler } from './application/cqrs/handlers/get-game.handler';
 import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler';
 import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler';
 import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
+import { GameGuardAdapter } from './infrastructure/security/game-guard.adapter';
 
 @Module({
   imports: [
@@ -42,6 +43,10 @@ import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-even
     {
       provide: 'GameEventProducer',
       useClass: KafkaGameEventBusAdapter,
+    },
+    {
+      provide: 'GameGuardPort',
+      useClass: GameGuardAdapter,
     },
   ],
   exports: ['GameRepository'],

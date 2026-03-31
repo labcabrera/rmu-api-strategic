@@ -1,11 +1,15 @@
 import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
 
-export class SetUpProfessionalSkillCommand {
+export class SetUpProfessionalSkillCommand extends AuthenticatedCommand {
   constructor(
     public readonly characterId: string,
     public readonly skillId: string,
+    public readonly specialization: string | undefined,
     public readonly types: ProfessionalBonusType[],
-    public readonly userId: string,
-    public readonly roles: string[],
-  ) {}
+    userId: string,
+    roles: string[],
+  ) {
+    super(userId, roles);
+  }
 }

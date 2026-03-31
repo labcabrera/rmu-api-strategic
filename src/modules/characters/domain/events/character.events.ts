@@ -1,5 +1,5 @@
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
-import { CharacterProps } from '../aggregates/character.aggregate';
+import { CharacterProps } from '../aggregates/character-props';
 
 export class CharacterCreatedEvent extends DomainEvent<CharacterProps> {
   constructor(data: CharacterProps) {

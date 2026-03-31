@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { LevelDownSkillCommand } from '../commands/level-down-skill.command';
 import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(LevelDownSkillCommand)
 export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillCommand, Character> {
@@ -21,7 +21,7 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
 
     character.levelDownSkill(command.skillId, command.specialization);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     //TODO propagate events
     return updated;
   }

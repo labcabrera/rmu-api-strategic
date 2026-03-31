@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events';
 import { FactionManagement } from '../value-objects/faction-management.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 export interface FactionProps {
   id: string;
@@ -106,10 +106,11 @@ export class Faction extends AggregateRoot<DomainEvent<Faction>> {
   }
 
   addGold(amount: number) {
-    if (amount <= 0 && -amount > this.management.availableGold) {
+    const newGold = Math.round((this.management.availableGold + amount) * 1e3) / 1e3;
+    if (newGold < 0) {
       throw new ValidationError('Can not remove more gold than available');
     }
-    this.management.availableGold += amount;
+    this.management.availableGold = newGold;
     this.updatedAt = new Date();
     this.apply(new FactionUpdatedEvent(this));
   }

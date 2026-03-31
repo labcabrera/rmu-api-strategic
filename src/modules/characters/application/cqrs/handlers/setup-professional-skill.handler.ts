@@ -1,18 +1,17 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import * as characterRepository from '../../ports/character.repository';
 import { SetUpProfessionalSkillCommand } from '../commands/setup-professional-skill.command';
 import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-skill.model';
+import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(SetUpProfessionalSkillCommand)
 export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfessionalSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
   ) {}
 
   async execute(command: SetUpProfessionalSkillCommand): Promise<Character> {
@@ -22,13 +21,13 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
 
     if (!character) throw new NotFoundError('Character', characterId);
 
-    const skill = character.skills.find((skill) => skill.skillId === skillId) || null;
+    const skill = character.skills.find((skill) => skill.skillId === skillId && skill.specialization === command.specialization) || null;
     if (!skill) throw new Error(`Skill ${skillId} not found for character ${characterId}`);
 
     this.validateCount(command.types, skill, character);
     skill.professional = command.types;
     this.characterProcessorService.process(character);
-    const updated: Character = await this.characterRepository.update(character);
+    const updated: Character = await this.characterRepository.update(character.id, character);
     return updated;
   }
 

@@ -8,11 +8,6 @@ export class AddFactionGoldDto {
   gold: number;
 
   static toCommand(factionId: string, dto: AddFactionGoldDto, userId: string, roles: string[]): AddFactionGoldCommand {
-    const command = new AddFactionGoldCommand();
-    command.factionId = factionId;
-    command.gold = dto.gold;
-    command.userId = userId;
-    command.roles = roles;
-    return command;
+    return new AddFactionGoldCommand(factionId, dto.gold, userId, roles);
   }
 }

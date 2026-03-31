@@ -1,88 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { Model } from 'mongoose';
-import { Page } from '../../../shared/domain/entities/page.entity';
-import { NotFoundError } from '../../../shared/domain/errors';
-import { RsqlParser } from '../../../shared/infrastructure/messaging/rsql-parser';
 import { CharacterRepository } from '../../application/ports/character.repository';
 import { Character } from '../../domain/aggregates/character.aggregate';
-import { NamedId } from '../../../shared/domain/entities/named-id.entity';
 import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
+import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
 
 @Injectable()
-export class MongoCharacterRepository implements CharacterRepository {
-  constructor(
-    @InjectModel(CharacterModel.name) private characterModel: Model<CharacterDocument>,
-    private rsqlParser: RsqlParser,
-  ) {}
-
-  async findById(id: string): Promise<Character | null> {
-    const readed = await this.characterModel.findById(id);
-    return readed ? this.mapToEntity(readed) : null;
+export class MongoCharacterRepository extends MongoBaseRepository<Character, CharacterDocument> implements CharacterRepository {
+  constructor(@InjectModel(CharacterModel.name) characterModel: Model<CharacterDocument>, rsqlParser: RsqlParser) {
+    super(characterModel, rsqlParser);
   }
 
   async findByGameId(gameId: string): Promise<Character[]> {
-    const characters = await this.characterModel.find({ gameId });
+    const characters = await this.model.find({ gameId });
     return characters.map((doc) => this.mapToEntity(doc));
   }
 
   async findByRaceId(raceId: string): Promise<Character[]> {
-    const characters = await this.characterModel.find({ 'info.race.id': raceId });
+    const characters = await this.model.find({ 'info.race.id': raceId });
     return characters.map((doc) => this.mapToEntity(doc));
   }
 
   async deleteByGameId(gameId: string): Promise<void> {
-    await this.characterModel.deleteMany({ gameId });
+    await this.model.deleteMany({ gameId });
   }
 
-  async findByRsql(rsql: string, page: number, size: number): Promise<Page<Character>> {
-    const skip = page * size;
-    const mongoQuery = this.rsqlParser.parse(rsql);
-    const [charactersDocs, totalElements] = await Promise.all([
-      this.characterModel.find(mongoQuery).skip(skip).limit(size).sort({ name: 1 }),
-      this.characterModel.countDocuments(mongoQuery),
-    ]);
-    const content = charactersDocs.map((doc) => this.mapToEntity(doc));
-    return new Page<Character>(content, page, size, totalElements);
-  }
-
-  async save(request: Character): Promise<Character> {
-    const payload: any = { ...request, _id: request.id };
-    if (request.faction) {
-      payload.faction = { id: request.faction.id, name: request.faction.name };
-    }
-    const model = new this.characterModel(payload);
-    await model.save();
-    return this.mapToEntity(model);
-  }
-
-  async update(update: Character): Promise<Character> {
-    const plain: any = update.getProps();
-    if (plain.faction) {
-      plain.faction = { id: plain.faction.id, name: plain.faction.name };
-    }
-    const updated = await this.characterModel.findByIdAndUpdate({ _id: update.id }, { $set: plain }, { new: true });
-    if (!updated) {
-      throw new NotFoundError('Character', update.id);
-    }
-    return this.mapToEntity(updated);
-  }
-
-  async deleteById(id: string): Promise<Character | null> {
-    const result = await this.characterModel.findByIdAndDelete(id);
-    return result ? this.mapToEntity(result) : null;
-  }
-
-  async existsById(id: string): Promise<boolean> {
-    const exists = await this.characterModel.exists({ _id: id });
-    return exists !== null;
-  }
-
-  private mapToEntity(doc: CharacterDocument): Character {
+  protected mapToEntity(doc: CharacterDocument): Character {
     return Character.fromProps({
       id: doc._id,
       gameId: doc.gameId,
-      faction: new NamedId(doc.faction.id, doc.faction.name),
+      faction: new NamedEntity(doc.faction.id, doc.faction.name),
       name: doc.name,
       info: doc.info,
       roleplay: doc.roleplay,

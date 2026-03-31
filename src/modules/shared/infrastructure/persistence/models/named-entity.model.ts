@@ -1,7 +1,7 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 
 @Schema({ _id: false })
-export class NamedIdModel {
+export class NamedEntity {
   @Prop({ required: true })
   id: string;
 

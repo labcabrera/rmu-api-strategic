@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ValidationError } from '../../../../../shared/domain/errors';
 import { Character } from '../../../aggregates/character.aggregate';
 import { Stat } from '../../../value-objects/character-statistics.vo';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class StatProcessor {
