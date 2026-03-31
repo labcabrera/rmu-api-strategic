@@ -19,10 +19,11 @@ export class UpdateProfessionalSkillDto {
   static toCommand(
     characterId: string,
     skillId: string,
+    specialization: string | undefined,
     dto: UpdateProfessionalSkillDto,
     userId: string,
     roles: string[],
   ) {
-    return new SetUpProfessionalSkillCommand(characterId, skillId, dto.types || [], userId, roles);
+    return new SetUpProfessionalSkillCommand(characterId, skillId, specialization, dto.types || [], userId, roles);
   }
 }

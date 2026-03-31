@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { PaginationDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { GameOptionsDto } from './game-options.dto';
 import { GamePowerLevelDto } from './game-power-level-dto';
+import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
 
 export class GameDto {
   @ApiProperty({ description: 'Game identifier', type: String })

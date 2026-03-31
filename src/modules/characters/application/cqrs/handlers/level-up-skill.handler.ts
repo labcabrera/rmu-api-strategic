@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
 import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
@@ -25,7 +25,7 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
     const allowThird = true;
     character.levelUpSkill(command.skillId, command.specialization, allowThird);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     //TODO propagate events
     return updated;
   }

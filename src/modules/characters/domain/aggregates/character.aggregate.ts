@@ -1,4 +1,3 @@
-import { AggregateRoot } from '@nestjs/cqrs';
 import { CharacterAttack } from '../value-objects/character-attack.vo';
 import { CharacterInfo } from '../value-objects/character-info.vo';
 import { CharacterItem } from '../value-objects/character-item.vo';
@@ -18,46 +17,18 @@ import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
-import { ValidationError } from 'src/modules/shared/domain/errors';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
-import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { CharacterProps } from './character-props';
 
-export interface CharacterProps {
-  id: string;
-  gameId: string;
-  faction: NamedId;
-  name: string;
-  info: CharacterInfo;
-  roleplay: CharacterRoleplayInfo;
-  experience: CharacterXP;
-  statistics: CharacterStatistics;
-  movement: CharacterMovement;
-  defense: CharacterDefense;
-  resistances: CharacterResistance[];
-  hp: CharacterHP;
-  endurance: CharacterEndurance;
-  power: CharacterPower | undefined;
-  initiative: CharacterInitiative;
-  skills: CharacterSkill[];
-  items: CharacterItem[];
-  equipment: CharacterEquipment;
-  attacks: CharacterAttack[];
-  traits: CharacterTrait[];
-  status: CharacterStatus;
-  description: string | undefined;
-  imageUrl: string | undefined;
-  owner: string;
-  createdAt: Date;
-  updatedAt: Date | undefined;
-}
-
-export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
+export class Character extends BaseAggregateRoot<CharacterProps> {
   private constructor(
-    public id: string,
+    id: string,
     public gameId: string,
-    public faction: NamedId,
+    public faction: NamedEntity,
     public name: string,
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
@@ -82,12 +53,12 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     public createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
-    super();
+    super(id);
   }
 
   static partialCreate(
     game: Game,
-    faction: NamedId,
+    faction: NamedEntity,
     name: string,
     info: CharacterInfo,
     roleplay: CharacterRoleplayInfo,
@@ -174,7 +145,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     baseHits: number | undefined;
     baseAt: number | undefined;
   }) {
-    if (props.raceName) this.info.race = new NamedId(this.info.race.id, props.raceName);
+    if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {
@@ -226,13 +197,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  addSkill(
-    skillId: string,
-    specialization: string | undefined,
-    statistics: string[],
-    development: number[],
-    racialBonus: number,
-  ): void {
+  addSkill(skillId: string, specialization: string | undefined, statistics: string[], development: number[], racialBonus: number): void {
     if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }
@@ -316,9 +281,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
   }
 
   findSkill(skillId: string, specialization: string | undefined): CharacterSkill | undefined {
-    return this.skills.find(
-      (s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true),
-    );
+    return this.skills.find((s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true));
   }
 
   removeSkill(skillId: string, specialization: string | undefined): void {
@@ -334,9 +297,7 @@ export class Character extends AggregateRoot<DomainEvent<CharacterProps>> {
       throw new ValidationError('Insufficient experience points to level up');
     }
     if (this.experience.availableDevelopmentPoints > 0 && !force) {
-      throw new ValidationError(
-        'Character has unused development points. To level up regardless of points, use the option force=true',
-      );
+      throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
     }
     this.experience.level += 1;
     this.experience.availableDevelopmentPoints = this.experience.developmentPoints;

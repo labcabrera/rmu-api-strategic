@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
 import { CharacterEventBusPort } from '../../application/ports/character-event-bus.port';
-import { CharacterProps } from '../../domain/aggregates/character.aggregate';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { CharacterProps } from '../../domain/aggregates/character-props';
 
 @Injectable()
 export class KafkaCharacterEventBusAdapter implements CharacterEventBusPort {

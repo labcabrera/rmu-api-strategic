@@ -19,7 +19,7 @@ import { CharacterEquipment } from './character-equipment.model';
 import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 import { CharacterSkill } from './character-skill.model';
 import { CharacterTrait } from './character-trait.model';
-import { NamedIdModel } from 'src/modules/shared/infrastructure/named-id.model';
+import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/models/named-entity.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -31,8 +31,8 @@ export class CharacterModel {
   @Prop({ required: true })
   gameId: string;
 
-  @Prop({ type: NamedIdModel, required: true })
-  faction: NamedIdModel;
+  @Prop({ type: NamedEntity, required: true })
+  faction: NamedEntity;
 
   @Prop({ required: true })
   name: string;

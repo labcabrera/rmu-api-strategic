@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 import type { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
 import { GameOptions } from './game-options.model';
 import { GamePowerLevel } from './game-power-level.model';
+import type { AccessType } from 'src/modules/shared/domain/entities/access-type';
 
 export type GameDocument = GameModel & Document;
 
@@ -38,13 +39,16 @@ export class GameModel {
   @Prop({ type: String, required: false })
   imageUrl?: string | undefined;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   owner: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
+  accessType: AccessType;
+
+  @Prop({ type: Date, required: true })
   createdAt: Date;
 
-  @Prop({ required: false })
+  @Prop({ type: Date, required: false })
   updatedAt?: Date;
 }
 

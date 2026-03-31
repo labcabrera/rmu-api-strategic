@@ -1,8 +1,8 @@
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { CharacterRealm } from './character-realm.vo';
-import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
 
 export interface CharacterInfo {
-  race: NamedId;
+  race: NamedEntity;
   professionId: string;
   sizeId: string;
   realmType: CharacterRealm;

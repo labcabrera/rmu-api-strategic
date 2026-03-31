@@ -1,16 +1,6 @@
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
+import { BaseRepository } from 'src/modules/shared/application/ports/base-repository';
 
-export interface GameRepository {
-  findById(id: string): Promise<Game | null>;
-
+export interface GameRepository extends BaseRepository<Game> {
   findByRealm(realmId: string): Promise<Game[]>;
-
-  findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Game>>;
-
-  save(game: Game): Promise<Game>;
-
-  update(gameId: string, game: Partial<Game>): Promise<Game>;
-
-  deleteById(id: string): Promise<Game | null>;
 }

@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { UpdateCharacterCommand } from '../commands/update-character.command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(UpdateCharacterCommand)
 export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
@@ -18,9 +18,8 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
   async execute(command: UpdateCharacterCommand): Promise<Character> {
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     character.update({
       name: command.name,
       weight: command.info?.weight,
@@ -31,7 +30,7 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
       imageUrl: command.imageUrl,
     });
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
   }

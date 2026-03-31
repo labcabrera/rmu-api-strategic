@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { FactionDeletedEvent } from 'src/modules/factions/domain/events/faction.events';
-import { NotFoundError } from 'src/modules/shared/domain/errors';
 import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import type { FactionRepository } from '../../ports/faction.repository';
 import { DeleteFactionCommand } from '../commands/delete-faction.command';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(DeleteFactionCommand)
 export class DeleteFactionCommandHandler implements ICommandHandler<DeleteFactionCommand> {

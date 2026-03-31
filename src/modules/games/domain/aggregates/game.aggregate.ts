@@ -1,30 +1,15 @@
-import { AggregateRoot } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events';
 import { GameOptions } from '../value-objects/game-options.vo';
 import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { GameProps } from './game-props';
+import { AccessType } from 'src/modules/shared/domain/entities/access-type';
 
-export interface GameProps {
-  id: string;
-  name: string;
-  realmId: string;
-  realmName: string;
-  status: GameStatus;
-  options: GameOptions;
-  powerLevel: GamePowerLevel;
-  shortDescription?: string;
-  description?: string;
-  imageUrl?: string;
-  owner: string;
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
-export class Game extends AggregateRoot<DomainEvent<Game>> {
+export class Game extends BaseAggregateRoot<GameProps> {
   private constructor(
-    public readonly id: string,
+    id: string,
     public name: string,
     public realmId: string,
     public realmName: string,
@@ -35,10 +20,11 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     public description: string | undefined,
     public imageUrl: string | undefined,
     public owner: string,
+    public accessType: AccessType,
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
-    super();
+    super(id);
   }
 
   static create(props: Omit<GameProps, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Game {
@@ -54,6 +40,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       props.description,
       undefined,
       props.owner,
+      props.accessType,
       new Date(),
       undefined,
     );
@@ -74,6 +61,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       props.description,
       props.imageUrl,
       props.owner,
+      props.accessType,
       props.createdAt,
       props.updatedAt,
     );
@@ -91,7 +79,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
     this.apply(new GameUpdatedEvent(this));
   }
 
-  toProps(): GameProps {
+  getProps(): GameProps {
     return {
       id: this.id,
       name: this.name,
@@ -104,6 +92,7 @@ export class Game extends AggregateRoot<DomainEvent<Game>> {
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,
+      accessType: this.accessType,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

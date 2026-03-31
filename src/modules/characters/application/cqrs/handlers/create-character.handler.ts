@@ -3,7 +3,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
@@ -21,7 +20,9 @@ import { CharacterInfo } from 'src/modules/characters/domain/value-objects/chara
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import { NamedId } from 'src/modules/shared/domain/entities/named-id.entity';
+import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { CharacterCreatedEvent } from 'src/modules/characters/domain/events/character.events';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -55,7 +56,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const profession = await this.fetchProfession(command.info.professionId);
     const processedStatistics = this.processStatistics(race, command.statistics, game);
     const info: CharacterInfo = {
-      race: new NamedId(race.id, race.name),
+      race: new NamedEntity(race.id, race.name),
       professionId: command.info.professionId,
       sizeId: command.info.sizeId,
       realmType: command.info.realmType,
@@ -65,7 +66,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const items = await this.processItems(info, command);
     const character = Character.partialCreate(
       game,
-      new NamedId(faction.id, faction.name),
+      new NamedEntity(faction.id, faction.name),
       command.name,
       info,
       command.roleplay,
@@ -91,7 +92,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     this.characterProcessorService.process(character);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
     return created;
   }
 
@@ -136,12 +137,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return result;
   }
 
-  async processSkills(
-    character: Character,
-    profession: Profession,
-    command: CreateCharacterCommand,
-    raceInfo: Race,
-  ): Promise<void> {
+  async processSkills(character: Character, profession: Profession, command: CreateCharacterCommand, raceInfo: Race): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
     if (!skills.some((e) => e.skillId === 'body-development')) {
@@ -212,7 +208,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
           armor: readedArmor,
           affixes: [],
           info: itemInfo,
-          stackable: readedItem.stackable,
+          stackable: readedItem.info.stackable,
           amount: undefined,
           description: undefined,
         } as CharacterItem;

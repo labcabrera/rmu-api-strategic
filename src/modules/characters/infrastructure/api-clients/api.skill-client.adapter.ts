@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { TokenService } from '../../../auth/token.service';
 import { SkillClientPort, SkillResponse } from '../../application/ports/skill-client.port';
-import { Page } from 'src/modules/shared/domain/entities/page.entity';
+import { Page } from 'src/modules/shared/domain/entities/page';
 
 @Injectable()
 export class ApiSkillClientAdapter implements SkillClientPort {

@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { AddTraitCommand } from '../commands/add-trait.command';
 import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.port';
+import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
@@ -20,19 +20,17 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
   async execute(command: AddTraitCommand): Promise<Character> {
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
-    if (!character) {
-      throw new NotFoundError('Character', characterId);
-    }
+    if (!character) throw new NotFoundError('Character', characterId);
+
     const trait = await this.traitClient.getTraitById(command.traitId);
-    if (!trait) {
-      throw new NotFoundError('Trait', command.traitId);
-    }
+    if (!trait) throw new NotFoundError('Trait', command.traitId);
+
     this.validateCommand(command, trait);
     const isTalent = trait.isTalent;
     const cost = this.calculateCost(trait, command.tier);
     character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization);
     this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
   }
@@ -48,14 +46,12 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
       throw new ValidationError(`Trait ${command.traitId} is not tier based, tier must be undefined`);
     }
     if (command.tier && trait.maxTier && command.tier > trait.maxTier) {
-      throw new ValidationError(
-        `Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`,
-      );
+      throw new ValidationError(`Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`);
     }
-    if (trait.requiresSpecialization && !command.specialization) {
+    if (trait.specialization && !command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} requires a specialization value`);
     }
-    if (!trait.requiresSpecialization && command.specialization) {
+    if (!trait.specialization && command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`);
     }
   }

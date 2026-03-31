@@ -1,15 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { NotFoundError } from '../../../../shared/domain/errors';
-import * as characterRepository from '../../ports/character.repository';
 import { DeleteCharacterCommand } from '../commands/delete-character.command';
+import type { CharacterRepository } from '../../ports/character.repository';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCommand> {
-  constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: characterRepository.CharacterRepository,
-  ) {}
+  constructor(@Inject('CharacterRepository') private readonly characterRepository: CharacterRepository) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
     const character = await this.characterRepository.findById(command.characterId);

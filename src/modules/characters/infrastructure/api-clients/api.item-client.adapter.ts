@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-
 import { TokenService } from '../../../auth/token.service';
 import { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port';
-import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors';
+import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class ApiItemClientAdapter implements ItemClientPort {

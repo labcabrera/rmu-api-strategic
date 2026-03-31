@@ -2,15 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
-import { NamedIdDto } from 'src/modules/shared/infrastructure/controller/dto';
 import { Type } from 'class-transformer';
+import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 
 export class CharacterInfoDto {
-  @ApiProperty({ description: 'Race identifier', type: NamedIdDto })
+  @ApiProperty({ description: 'Race identifier', type: NamedEntityDto })
   @ValidateNested()
-  @Type(() => NamedIdDto)
+  @Type(() => NamedEntityDto)
   @IsNotEmpty()
-  race: NamedIdDto;
+  race: NamedEntityDto;
 
   @ApiProperty({ description: 'Profession identifier', example: 'rogue' })
   @IsString()
