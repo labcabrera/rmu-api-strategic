@@ -13,6 +13,8 @@ export class GetCharactersHandler implements IQueryHandler<GetCharactersQuery, P
 
   async execute(query: GetCharactersQuery): Promise<Page<Character>> {
     this.logger.debug('Finding characters with query: ', query.rsql);
-    return await this.characterRepository.findByRsql(query.rsql, query.page, query.size);
+    const filter = undefined;
+    const sort = { name: 1 };
+    return await this.characterRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

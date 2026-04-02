@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
 import { CharacterItemCreationDto } from './character-item.dto';
@@ -8,10 +8,7 @@ import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import {
-  CreateCharacterCommand,
-  CreateCharacterItem,
-} from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { CreateCharacterCommand, CreateCharacterItem } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
 
@@ -87,6 +84,11 @@ export class CreateCharacterDto {
   @IsArray()
   items: CharacterItemCreationDto[] | undefined;
 
+  @ApiProperty({ description: 'Character image URL', example: 'https://example.com/images/character.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
     const skills = dto.skills!.map((skill) => ({
       skillId: skill.skillId,
@@ -112,6 +114,7 @@ export class CreateCharacterDto {
       dto.initiative.customBonus,
       skills,
       items,
+      dto.imageUrl,
       userId,
       roles,
     );

@@ -65,6 +65,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     level: number,
     weaponDevelopment: WeaponDevelopmentType[],
     statistics: CharacterStatistics,
+    imageUrl: string | undefined,
     owner: string,
   ): Character {
     if (!weaponDevelopment || weaponDevelopment.length !== 4) {

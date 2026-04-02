@@ -73,6 +73,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.level,
       command.weaponDevelopment,
       processedStatistics,
+      command.imageUrl,
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
