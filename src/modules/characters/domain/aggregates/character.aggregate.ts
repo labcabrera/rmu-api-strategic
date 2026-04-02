@@ -94,7 +94,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       [], // traits
       'partially_created',
       undefined, // description
-      undefined, // imageUrl
+      imageUrl,
       owner,
       new Date(),
       undefined,
