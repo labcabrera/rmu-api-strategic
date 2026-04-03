@@ -71,8 +71,10 @@ export class AttackProcessor {
         return 0;
       case 'big':
         return 1;
+      case 'small':
+        return -1;
       default:
-        throw new DomainError('Unsupported character size');
+        throw new DomainError('Unsupported character size ' + character.info!.sizeId);
     }
   }
 
