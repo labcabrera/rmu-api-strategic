@@ -11,9 +11,7 @@ export class EquipmentProcessor {
     if (!character.items || character.items.length === 0 || !character.equipment) {
       return;
     }
-    const tmpCarriedWeight = character.items
-      .filter((item) => item.carried)
-      .reduce((sum, item) => sum + item.info.weight, 0);
+    const tmpCarriedWeight = character.items.filter((item) => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
     this.sortItems(character);
@@ -38,6 +36,8 @@ export class EquipmentProcessor {
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
       difficultyIndex = Math.max(difficultyIndex, baseDifficultyCodes.indexOf(armorItems.armor!.baseDifficulty));
     });
+    // round maneuverPenalty to 0 decimals
+    maneuverPenalty = Math.round(maneuverPenalty);
 
     const armorManeuverSkillBonus = this.getArmorManeuverSkillBonus(character);
 
