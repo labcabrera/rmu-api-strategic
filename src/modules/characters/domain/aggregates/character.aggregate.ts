@@ -84,7 +84,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       CharacterHP.empty(),
       CharacterEndurance.empty(),
       undefined, // power
-      CharacterInitiative.empty(),
+      new CharacterInitiative({}),
       [], // skills
       CharacterEquipment.empty(),
       [], // attacks

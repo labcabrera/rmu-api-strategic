@@ -158,14 +158,8 @@ export class CharacterPower {
 
 @Schema({ _id: false })
 export class CharacterInitiative {
-  @Prop({ required: true })
-  baseBonus: number;
-
-  @Prop({ required: true })
-  customBonus: number;
-
-  @Prop({ required: true })
-  penaltyBonus: number;
+  @Prop({ type: Map, required: true })
+  modifiers: Record<string, number>;
 
   @Prop({ required: true })
   totalBonus: number;
