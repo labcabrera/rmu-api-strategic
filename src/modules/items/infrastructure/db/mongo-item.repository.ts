@@ -41,7 +41,6 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       armor: doc.armor,
       affixes: doc.affixes,
       info: doc.info,
-      stackable: doc.stackable,
       amount: doc.amount,
       description: doc.description,
       createdAt: doc.createdAt,

@@ -16,7 +16,6 @@ export interface ItemProps {
   weapon: ItemWeapon | null;
   armor: ItemArmor | null;
   affixes: ItemAffix[];
-  stackable: boolean;
   amount: number | null;
   info: ItemInfo;
   description: string | null;

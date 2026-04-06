@@ -65,12 +65,12 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       weapon: itemType.weapon,
       armor: itemType.armor,
       affixes: command.affixes || [],
-      stackable: false, // TODO itemType.stackable,
       amount: command.amount,
       info: {
         length: itemType.info.length,
         weight: weight,
         strength: itemType.info.strength,
+        stackable: itemType.info.stackable || false,
       },
       description: command.description,
       accessType: 'public', //TODO

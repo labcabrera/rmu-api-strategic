@@ -12,11 +12,15 @@ export class ItemInfoDto {
   @ApiProperty({ description: 'Weapon modes', type: [ItemWeaponModeDto], required: true })
   strength: number | null;
 
+  @ApiProperty({ description: 'Whether the item is stackable', type: Boolean, required: true, example: false })
+  stackable: boolean;
+
   static fromEntity(entity: ItemInfo): ItemInfoDto {
     const dto = new ItemInfoDto();
     dto.length = entity.length;
     dto.weight = entity.weight;
     dto.strength = entity.strength;
+    dto.stackable = entity.stackable;
     return dto;
   }
 }

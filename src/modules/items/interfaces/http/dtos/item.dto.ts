@@ -21,20 +21,34 @@ export class ItemDto {
   @ApiProperty({ description: 'Item type identifier', type: String, required: true, example: 'arming-sword' })
   itemTypeId: string;
 
+  @ApiProperty({ description: 'Game name', type: String, required: true, example: 'Narsil' })
+  name: string;
+
   @ApiProperty({ description: 'Item category', type: String, required: true, example: 'weapon' })
   category: string;
 
   @ApiProperty({ description: 'Whether the item is currently carried by a character', type: Boolean, required: true, example: true })
   carried: boolean;
 
-  @ApiProperty({ description: 'Game name', type: String, required: true, example: 'Narsil' })
-  name: string;
+  @ApiProperty({ description: 'Weapon details if the item is a weapon', type: ItemWeaponDto, required: false })
+  weapon: ItemWeaponDto | null;
 
   @ApiProperty({ description: 'Armor details if the item is armor', type: ItemArmorDto, required: false })
   armor: ItemArmorDto | null;
 
-  @ApiProperty({ description: 'Weapon details if the item is a weapon', type: ItemWeaponDto, required: false })
-  weapon: ItemWeaponDto | null;
+  @ApiProperty({ description: 'Whether the item is stackable', type: Boolean, required: true, example: false })
+  stackable: boolean;
+
+  @ApiProperty({ description: 'Amount of items in the stack if stackable', type: Number, required: false, example: 10 })
+  amount: number | null;
+
+  @ApiProperty({
+    description: 'Item description',
+    type: String,
+    required: false,
+    example: 'A legendary sword forged in the fires of Mount Doom.',
+  })
+  description: string | null;
 
   @ApiProperty({ description: 'Item information', type: ItemInfoDto, required: true })
   info: ItemInfoDto;

@@ -10,4 +10,7 @@ export class ItemInfo {
 
   @Prop({ type: Number, required: false })
   strength: number | null;
+
+  @Prop({ type: Boolean, required: true })
+  stackable: boolean;
 }

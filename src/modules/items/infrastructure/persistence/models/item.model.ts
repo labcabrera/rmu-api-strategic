@@ -46,9 +46,6 @@ export class ItemModel {
   @Prop({ type: ItemInfo, required: true })
   info: ItemInfo;
 
-  @Prop({ type: Boolean, required: true })
-  stackable: boolean;
-
   @Prop({ type: Number, required: false })
   amount: number | null;
 
