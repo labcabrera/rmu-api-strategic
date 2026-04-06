@@ -70,7 +70,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       const characterGoldItem = await this.itemRepository.findByCharacterIdAndItemTypeId(command.characterId, goldCoin);
       if (characterGoldItem) {
         characterGoldItem.addAmount(-characterCost);
-        await this.itemRepository.save(characterGoldItem);
+        await this.itemRepository.update(characterGoldItem.id, characterGoldItem);
       }
     }
 
