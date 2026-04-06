@@ -14,6 +14,7 @@ export class CreateItemCommand extends AuthenticatedCommand {
     public readonly info: ItemInfo | null,
     public readonly amount: number | null,
     public readonly description: string | null,
+    public readonly cost: number | null,
     userId: string,
     roles: string[],
   ) {

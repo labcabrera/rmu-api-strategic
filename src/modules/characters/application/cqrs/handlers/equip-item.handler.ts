@@ -1,18 +1,20 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { EquipItemCommand } from '../commands/equip-item-command';
 import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -21,8 +23,8 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
-    const item: CharacterItem = character.items.find((e) => e.id === command.itemId) as CharacterItem;
-    if (!item) throw new ValidationError(`Item not found: ${command.itemId}`);
+    const item = await this.itemRepository.findById(command.itemId);
+    if (!item) throw new NotFoundError('Item', command.itemId);
 
     this.validateEquipmentData(character, item, command);
     this.equip(character, item, command);
@@ -30,7 +32,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     return await this.characterRepository.update(character.id, character);
   }
 
-  private equip(character: Character, item: CharacterItem, command: EquipItemCommand): void {
+  private equip(character: Character, item: Item, command: EquipItemCommand): void {
     item.carried = true;
     const slot = command.slot;
     const equipment: CharacterEquipment = character.equipment;
@@ -41,10 +43,11 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     if (command.slot === 'mainHand' && item.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0) {
       equipment.offHand = undefined;
     } else if (command.slot === 'offHand' && character.equipment.mainHand) {
-      const mainHandWeapon = character.items.find((i) => i.id === equipment.mainHand)!;
-      if (mainHandWeapon.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0) {
-        equipment.mainHand = undefined;
-      }
+      //TODO
+      // const mainHandWeapon = character.items.find((i) => i.id === equipment.mainHand)!;
+      // if (mainHandWeapon.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0) {
+      //   equipment.mainHand = undefined;
+      // }
     }
 
     // Set armor type if equipping body armor
@@ -74,7 +77,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     }
   }
 
-  private validateEquipmentData(character: Character, item: CharacterItem, command: EquipItemCommand): void {
+  private validateEquipmentData(character: Character, item: Item, command: EquipItemCommand): void {
     if (command.slot) {
       switch (command.slot) {
         case 'mainHand':

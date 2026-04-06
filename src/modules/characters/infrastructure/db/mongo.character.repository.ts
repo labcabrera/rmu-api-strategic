@@ -46,7 +46,6 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       power: doc.power,
       initiative: doc.initiative,
       skills: doc.skills,
-      items: doc.items,
       equipment: doc.equipment,
       attacks: doc.attacks,
       traits: doc.traits,

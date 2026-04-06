@@ -3,12 +3,11 @@ import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
-import { CharacterItemCreationDto } from './character-item.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CreateCharacterCommand, CreateCharacterItem } from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { CreateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
 

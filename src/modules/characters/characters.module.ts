@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -52,6 +52,7 @@ import { ApiTraitClientAdapter } from './infrastructure/api-clients/api.trait-cl
 import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-client.adapter';
 import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
 import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
+import { ItemsModule } from '../items/items.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-cl
     SharedModule,
     GamesModule,
     FactionsModule,
+    forwardRef(() => ItemsModule),
   ],
   controllers: [
     CharacterController,

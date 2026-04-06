@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
@@ -15,6 +15,8 @@ import { ItemGuardAdapter } from './infrastructure/security/game-guard.adapter';
 import { KafkaItemEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
 import { KafkaItemEventBusAdapter } from './infrastructure/messaging/kafka.item-event-bus.adapter';
 import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
+import { FactionsModule } from '../factions/factions.module';
+import { CharactersModule } from '../characters/characters.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-clie
     MongooseModule.forFeature([{ name: ItemModel.name, schema: ItemSchema }]),
     AuthModule,
     SharedModule,
+    FactionsModule,
+    forwardRef(() => CharactersModule),
   ],
   controllers: [ItemController, KafkaItemEventConsumer],
   providers: [
@@ -44,10 +48,10 @@ import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-clie
       useClass: ItemGuardAdapter,
     },
     {
-      provide: 'ItemClient',
+      provide: 'ItemClientPort',
       useClass: ApiItemClientAdapter,
     },
   ],
-  exports: ['ItemRepository', 'ItemClient'],
+  exports: ['ItemRepository', 'ItemClientPort'],
 })
 export class ItemsModule {}

@@ -1,6 +1,5 @@
 import { CharacterAttack } from '../value-objects/character-attack.vo';
 import { CharacterInfo } from '../value-objects/character-info.vo';
-import { CharacterItem } from '../value-objects/character-item.vo';
 import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
 import { CharacterSkill } from '../value-objects/character-skill.vo';
@@ -42,7 +41,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     public power: CharacterPower | undefined,
     public initiative: CharacterInitiative,
     public skills: CharacterSkill[],
-    public items: CharacterItem[],
     public equipment: CharacterEquipment,
     public attacks: CharacterAttack[],
     public traits: CharacterTrait[],
@@ -88,7 +86,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       undefined, // power
       CharacterInitiative.empty(),
       [], // skills
-      [], // items
       CharacterEquipment.empty(),
       [], // attacks
       [], // traits
@@ -122,7 +119,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       props.power,
       props.initiative,
       props.skills,
-      props.items,
       props.equipment,
       props.attacks,
       props.traits,
@@ -305,28 +301,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
-  addItem(item: CharacterItem): void {
-    if (item.stackable) {
-      const amount = item.amount || 1;
-      if (amount < 1) {
-        throw new ValidationError('Item amount must be at least 1');
-      }
-      const existing = this.items.find((i) => i.itemTypeId === item.itemTypeId && i.name === item.name);
-      if (existing) {
-        existing.amount = (existing.amount || 0) + amount;
-      } else {
-        this.items.push(item);
-      }
-    } else {
-      if (item.amount && item.amount > 1) {
-        throw new ValidationError('Non-stackable items cannot have amount greater than 1');
-      }
-      item.amount = undefined;
-      this.items.push(item);
-    }
-    this.apply(new CharacterUpdatedEvent(this.getProps()));
-  }
-
   getProps(): CharacterProps {
     return {
       id: this.id,
@@ -345,7 +319,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       power: this.power,
       initiative: this.initiative,
       skills: this.skills,
-      items: this.items,
       equipment: this.equipment,
       attacks: this.attacks,
       traits: this.traits,

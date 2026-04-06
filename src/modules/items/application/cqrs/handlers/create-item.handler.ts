@@ -10,6 +10,8 @@ import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
 import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
 import { ItemProps } from 'src/modules/items/domain/aggregates/item-props';
+import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @CommandHandler(CreateItemCommand)
 export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Item> {
@@ -19,7 +21,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
     @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
-    @Inject() private readonly itemClientPort: ItemClientPort,
+    @Inject('ItemClientPort') private readonly itemClientPort: ItemClientPort,
   ) {}
 
   async execute(command: CreateItemCommand): Promise<Item> {
@@ -28,16 +30,23 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     const itemType = await this.itemClientPort.getItemById(command.itemTypeId);
     if (!itemType) throw new ValidationError(`Invalid item type ${command.itemTypeId}`);
 
+    let faction: Faction | null = null;
+    let character: Character | null = null;
+
     if (command.factionId) {
       if (command.characterId) throw new ValidationError(`Cannot specify both factionId and characterId`);
-      const faction = await this.factionRepository.findById(command.factionId);
+      faction = await this.factionRepository.findById(command.factionId);
       if (!faction) throw new ValidationError(`Invalid faction ${command.factionId}`);
     }
 
     if (command.characterId) {
       if (command.factionId) throw new ValidationError(`Cannot specify both factionId and characterId`);
-      const character = await this.characterRepository.findById(command.characterId);
+      character = await this.characterRepository.findById(command.characterId);
       if (!character) throw new ValidationError(`Invalid character ${command.characterId}`);
+    }
+
+    if (command.amount) {
+      //TODO update faction/character gold and check if they have enough
     }
 
     const itemProps: Omit<ItemProps, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -48,23 +57,21 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       name: command.name || itemType.id,
       category: itemType.category,
       carried: command.carried || false,
-      weapon: null, //itemType.weapon,
-      armor: null, //itemType.armor,
+      weapon: itemType.weapon,
+      armor: itemType.armor,
       affixes: command.affixes || [],
       stackable: false, // TODO itemType.stackable,
       amount: command.amount,
       info: {
-        length: 0, //itemType.info.length,
-        weight: 0, //itemType.info.weight,
+        length: itemType.info.length,
+        weight: itemType.info.weight || 0,
         strength: itemType.info.strength,
       },
       description: command.description,
       accessType: 'public', //TODO
       owner: command.userId,
     };
-
     const item = Item.create(itemProps);
-
     const savedItem = await this.itemRepository.save(item);
     item.getUncommittedEvents().forEach((event) => this.itemEventBus.publish(event));
     return savedItem;
