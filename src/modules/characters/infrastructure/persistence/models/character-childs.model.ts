@@ -220,6 +220,9 @@ export class CharacterAttack {
 
   @Prop({ required: true })
   defaultAttack: boolean;
+
+  @Prop({ type: Number, required: false })
+  meleeRange: number | null;
 }
 
 @Schema({ _id: false })

@@ -10,6 +10,7 @@ export class CharacterAttackDto {
   bo: number;
   type: string;
   defaultAttack: boolean;
+  meleeRange: number | null;
 
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
@@ -22,6 +23,7 @@ export class CharacterAttackDto {
     dto.bo = entity.bo;
     dto.type = entity.type;
     dto.defaultAttack = entity.defaultAttack;
+    dto.meleeRange = entity.meleeRange;
     return dto;
   }
 }

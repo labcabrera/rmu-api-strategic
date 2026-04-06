@@ -36,6 +36,7 @@ export class AttackProcessor {
         const ranks = skill ? skill.ranks : 0;
         const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
         this.getAvailableModes(character, item.weapon).forEach((mode) => {
+          const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
           const attack: CharacterAttack = {
             attackName: slot,
@@ -47,11 +48,18 @@ export class AttackProcessor {
             bo: totalBonus,
             type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
             defaultAttack: true,
+            meleeRange: meleeRange,
           };
           attacks.push(attack);
         });
       }
     }
+  }
+  private getMeleeRange(character: Character, mode: ItemWeaponMode, item: Item): number | null {
+    if (mode.attackTypes?.includes('melee')) {
+      return character.info.height / 2 + (item.info?.length || 0);
+    }
+    return null;
   }
 
   private getAvailableModes(character: Character, weapon: ItemWeapon): ItemWeaponMode[] {
@@ -92,7 +100,10 @@ export class AttackProcessor {
   }
 
   private getOffHandPenalty(character: Character): number {
-    //TODO check trait and offhand type
+    if (character.traits?.some((t) => t.traitId === 'ambidextrous')) {
+      return 0;
+    }
+    //TODO check offhand type
     return -10;
   }
 }
