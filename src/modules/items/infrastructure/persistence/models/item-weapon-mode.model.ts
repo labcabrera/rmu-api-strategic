@@ -19,5 +19,5 @@ export class ItemWeaponMode {
   sizeAdjustment: number;
 
   @Prop({ type: [ItemWeaponRange], required: false })
-  ranges: ItemWeaponRange[] | undefined;
+  ranges: ItemWeaponRange[] | null;
 }

@@ -7,6 +7,6 @@ export class ItemWeaponMode {
     public readonly attackTable: string,
     public readonly fumbleTable: string,
     public readonly sizeAdjustment: number,
-    public readonly ranges: ItemWeaponRange[] | undefined,
+    public readonly ranges: ItemWeaponRange[] | null,
   ) {}
 }
