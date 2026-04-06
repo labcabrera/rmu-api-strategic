@@ -2,25 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { Stat } from '../../../value-objects/character-statistics.vo';
+import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 
 @Injectable()
 export class SkillProcessor {
-  process(character: Partial<Character>): void {
-    if (!character.skills || !character.statistics) {
-      return;
-    }
-    character.skills.forEach((skill: CharacterSkill) => this.updateSkill(character, skill));
+  process(character: Character, items: Item[]): void {
+    character.skills.forEach((skill: CharacterSkill) => this.updateSkill(character, skill, items));
     character.skills.sort((a: CharacterSkill, b: CharacterSkill) => a.skillId.localeCompare(b.skillId));
   }
 
-  private updateSkill(character: Partial<Character>, skill: CharacterSkill): void {
+  private updateSkill(character: Character, skill: CharacterSkill, items: Item[]): void {
     const ranks = skill.ranks;
     const statBonus = this.getStatBonus(character, skill.statistics);
     const racialBonus = skill.racialBonus || 0;
     const developmentBonus = this.getRankBonus(ranks);
-    const professionalBonus = this.getProfessionalBonus(character, skill);
+    const professionalBonus = this.getProfessionalBonus(skill);
+
     const traitBonus = this.getTraitBonus(character, skill);
-    const customBonus = traitBonus;
+    const armorPenaltyBonus = this.getArmorPenaltyBonus(character, skill, items);
+    const customBonus = traitBonus + armorPenaltyBonus;
+
     const totalBonus = statBonus + racialBonus + professionalBonus + developmentBonus + customBonus;
 
     skill.professionalBonus = professionalBonus;
@@ -41,7 +42,7 @@ export class SkillProcessor {
     return result;
   }
 
-  private getProfessionalBonus(character: Partial<Character>, skill: CharacterSkill): number {
+  private getProfessionalBonus(skill: CharacterSkill): number {
     let bonus = 0;
     if (skill.professional && skill.professional.includes('professional')) {
       bonus = Math.min(30, skill.ranks);
@@ -52,11 +53,7 @@ export class SkillProcessor {
     return bonus;
   }
 
-  private getRankBonus(ranks: number): number {
-    return ranks > 0 ? ranks * 5 : -20;
-  }
-
-  private getTraitBonus(character: Partial<Character>, skill: CharacterSkill): number {
+  private getTraitBonus(character: Character, skill: CharacterSkill): number {
     if (!character.traits || character.traits.length === 0) {
       return 0;
     }
@@ -78,5 +75,20 @@ export class SkillProcessor {
       }
     }
     return modifier;
+  }
+
+  private getArmorPenaltyBonus(character: Character, skill: CharacterSkill, items: Item[]): number {
+    if (skill.skillId === 'perception' && character.equipment.head) {
+      const headItem = items.find((item) => item.id === character.equipment.head && item.armor);
+      return headItem ? headItem.armor!.perception : 0;
+    } else if (skill.skillId === 'ranged-weapon' && character.equipment.arms) {
+      const bodyItem = items.find((item) => item.id === character.equipment.arms && item.armor);
+      return bodyItem ? bodyItem.armor!.rangedPenalty : 0;
+    }
+    return 0;
+  }
+
+  private getRankBonus(ranks: number): number {
+    return ranks > 0 ? ranks * 5 : -20;
   }
 }
