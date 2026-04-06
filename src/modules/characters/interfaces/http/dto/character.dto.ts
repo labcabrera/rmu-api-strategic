@@ -4,7 +4,6 @@ import { CharacterEnduranceDto } from './character-endurance.dto';
 import { CharacterEquipmentDto } from './character-equipment.dto';
 import { CharacterHPDto } from './character-hp.dto';
 import { CharacterInitiativeDto } from './character-initiative.dto';
-import { CharacterItemDto } from './character-item.dto';
 import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
 import { CharacterStatisticsDto } from './character-statistics.dto';
@@ -64,9 +63,6 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character skills', type: [CharacterSkillDto] })
   skills: CharacterSkillDto[];
 
-  @ApiProperty({ description: 'Character items', type: [CharacterItemDto] })
-  items: CharacterItemDto[];
-
   @ApiProperty({ description: 'Character equipment', type: CharacterEquipmentDto })
   equipment: CharacterEquipmentDto;
 
@@ -102,7 +98,6 @@ export class CharacterDto {
     dto.hp = CharacterHPDto.fromEntity(entity.hp);
     dto.initiative = CharacterInitiativeDto.fromEntity(entity.initiative);
     dto.skills = entity.skills.map((skill) => CharacterSkillDto.fromEntity(skill));
-    dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
     dto.traits = entity.traits.map((trait) => CharacterTraitDto.fromEntity(trait));

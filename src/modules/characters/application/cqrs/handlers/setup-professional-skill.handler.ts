@@ -6,12 +6,14 @@ import { SetUpProfessionalSkillCommand } from '../commands/setup-professional-sk
 import { CharacterSkill } from 'src/modules/characters/infrastructure/persistence/models/character-skill.model';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(SetUpProfessionalSkillCommand)
 export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfessionalSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}
 
   async execute(command: SetUpProfessionalSkillCommand): Promise<Character> {
@@ -26,7 +28,8 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
 
     this.validateCount(command.types, skill, character);
     skill.professional = command.types;
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(characterId);
+    this.characterProcessorService.process(character, items);
     const updated: Character = await this.characterRepository.update(character.id, character);
     return updated;
   }

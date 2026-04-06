@@ -3,18 +3,18 @@ import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Qu
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Character } from '../../domain/aggregates/character.aggregate';
 import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto } from './dto/character.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
-import { AddSkillCommand } from '../../application/cqrs/commands/add-skill.command';
-import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill-command';
-import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command';
-import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command';
-import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command';
-import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command';
 import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto';
 import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { AddSkillCommand } from 'src/modules/characters/application/cqrs/commands/add-skill.command';
+import { DeleteSkillCommand } from 'src/modules/characters/application/cqrs/commands/delete-skill-command';
+import { LevelDownSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-down-skill.command';
+import { LevelUpSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-up-skill.command';
+import { SetUpProfessionalSkillCommand } from 'src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
+import { UpdateSkillCommand } from 'src/modules/characters/application/cqrs/commands/update-skill.command';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

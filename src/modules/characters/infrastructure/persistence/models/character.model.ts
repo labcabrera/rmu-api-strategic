@@ -14,7 +14,6 @@ import {
   CharacterStatistics,
   CharacterXP,
 } from './character-childs.model';
-import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
 import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 import { CharacterSkill } from './character-skill.model';
@@ -71,9 +70,6 @@ export class CharacterModel {
 
   @Prop({ type: [CharacterSkill], required: true })
   skills: CharacterSkill[];
-
-  @Prop({ type: [CharacterItem], required: true })
-  items: CharacterItem[];
 
   @Prop({ type: CharacterEquipment, required: true })
   equipment: CharacterEquipment;

@@ -3,12 +3,11 @@ import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CharacterEnduranceCreationDto } from './character-endurance.dto';
 import { CharacterInitiativeCreationDto } from './character-initiative.dto';
-import { CharacterItemCreationDto } from './character-item.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatisticsCreationDto } from './character-statistics.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CreateCharacterCommand, CreateCharacterItem } from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { CreateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
 
@@ -78,12 +77,6 @@ export class CreateCharacterDto {
   @IsArray()
   skills: CharacterSkillCreationDto[] | undefined;
 
-  @ApiProperty({ description: 'Character items', type: [CharacterItemCreationDto] })
-  @ValidateNested({ each: true })
-  @Type(() => CharacterItemCreationDto)
-  @IsArray()
-  items: CharacterItemCreationDto[] | undefined;
-
   @ApiProperty({ description: 'Character image URL', example: 'https://example.com/images/character.png' })
   @IsString()
   @IsOptional()
@@ -95,10 +88,6 @@ export class CreateCharacterDto {
       ranks: skill.ranks,
       customBonus: skill.customBonus,
       specialization: skill.specialization,
-    }));
-    const items: CreateCharacterItem[] = dto.items!.map((item) => ({
-      name: item.name,
-      itemTypeId: item.itemTypeId,
     }));
     return new CreateCharacterCommand(
       dto.gameId,
@@ -113,7 +102,6 @@ export class CreateCharacterDto {
       dto.endurance.customBonus,
       dto.initiative.customBonus,
       skills,
-      items,
       dto.imageUrl,
       userId,
       roles,

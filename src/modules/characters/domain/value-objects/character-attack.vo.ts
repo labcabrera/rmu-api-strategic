@@ -9,5 +9,6 @@ export class CharacterAttack {
     public bo: number,
     public type: string,
     public defaultAttack: boolean,
+    public meleeRange: number | null,
   ) {}
 }

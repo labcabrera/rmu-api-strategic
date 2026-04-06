@@ -11,6 +11,7 @@ import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
 import { XPProcessor } from './character/processors/xp-processor';
 import { ResistancesProcessor } from './character/processors/resistances-processor';
+import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 
 @Injectable()
 export class CharacterProcessorService {
@@ -27,15 +28,15 @@ export class CharacterProcessorService {
     private readonly resistancesProcessor: ResistancesProcessor,
   ) {}
 
-  process(character: Partial<Character>): void {
+  process(character: Character, items: Item[]): void {
     this.statProcessor.process(character);
     this.movementProcessor.process(character);
     this.initiativeProcessor.process(character);
     this.skillProcessor.process(character);
-    this.attackProcessor.process(character);
-    this.equipmentProcessor.process(character);
+    this.attackProcessor.process(character, items);
+    this.equipmentProcessor.process(character, items);
     this.hpProcessor.process(character);
-    this.defenseProcessor.process(character);
+    this.defenseProcessor.process(character, items);
     this.resistancesProcessor.process(character);
     this.xpProcessor.process(character);
   }

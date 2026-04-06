@@ -6,12 +6,14 @@ import { UpdateCharacterCommand } from '../commands/update-character.command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(UpdateCharacterCommand)
 export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
 
@@ -29,7 +31,8 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
       description: command.description,
       imageUrl: command.imageUrl,
     });
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(characterId);
+    this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;

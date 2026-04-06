@@ -6,7 +6,6 @@ import { CharacterEquipment } from '../value-objects/character-equipment.vo';
 import { CharacterHP } from '../value-objects/character-hp.vo';
 import { CharacterInfo } from '../value-objects/character-info.vo';
 import { CharacterInitiative } from '../value-objects/character-initiative.vo';
-import { CharacterItem } from '../value-objects/character-item.vo';
 import { CharacterMovement } from '../value-objects/character-movement.vo';
 import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
@@ -34,7 +33,6 @@ export interface CharacterProps {
   power: CharacterPower | undefined;
   initiative: CharacterInitiative;
   skills: CharacterSkill[];
-  items: CharacterItem[];
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
   traits: CharacterTrait[];

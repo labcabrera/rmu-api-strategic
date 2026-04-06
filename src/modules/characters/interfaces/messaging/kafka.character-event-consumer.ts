@@ -1,9 +1,9 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import type { CharacterRepository } from '../../application/ports/character.repository';
 import { CharacterRaceUpdatedEvent } from './kafka.race-event-consumer';
 import { CommandBus } from '@nestjs/cqrs';
-import { UpdateCharacterRaceCommand } from '../../application/cqrs/commands/update-character-race.command';
+import { UpdateCharacterRaceCommand } from 'src/modules/characters/application/cqrs/commands/update-character-race.command';
+import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
 
 @Controller()
 export class KafkaCharacterEventConsumer {
