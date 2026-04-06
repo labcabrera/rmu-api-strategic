@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
 import { ItemWeaponDto } from './item-weapon.dto';
+import { ItemInfoDto } from './item-info.dto';
 
 export class ItemDto {
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })
@@ -19,11 +20,20 @@ export class ItemDto {
   @ApiProperty({ description: 'Item type identifier', type: String, required: true, example: 'arming-sword' })
   itemTypeId: string;
 
+  @ApiProperty({ description: 'Item category', type: String, required: true, example: 'weapon' })
+  category: string;
+
+  @ApiProperty({ description: 'Whether the item is currently carried by a character', type: Boolean, required: true, example: true })
+  carried: boolean;
+
   @ApiProperty({ description: 'Game name', type: String, required: true, example: 'Narsil' })
   name: string;
 
   @ApiProperty({ description: 'Weapon details if the item is a weapon', type: ItemWeaponDto, required: false })
   weapon: ItemWeaponDto | null;
+
+  @ApiProperty({ description: 'Item information', type: ItemInfoDto, required: true })
+  info: ItemInfoDto;
 
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
@@ -35,8 +45,11 @@ export class ItemDto {
     dto.factionId = entity.factionId;
     dto.characterId = entity.characterId;
     dto.itemTypeId = entity.itemTypeId;
+    dto.category = entity.category;
+    dto.carried = entity.carried;
     dto.name = entity.name;
     dto.weapon = entity.weapon ? ItemWeaponDto.fromEntity(entity.weapon) : null;
+    dto.info = ItemInfoDto.fromEntity(entity.info);
     dto.owner = entity.owner;
     return dto;
   }
