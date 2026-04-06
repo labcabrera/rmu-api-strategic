@@ -29,6 +29,8 @@ export class CreateItemDto {
   name: string | null;
 
   @ApiProperty({ description: 'Amount of items (for stackable items)', example: '10', required: false })
+  @IsNumber()
+  @IsOptional()
   amount: number | null;
 
   @ApiProperty({

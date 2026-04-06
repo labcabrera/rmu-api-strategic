@@ -8,6 +8,8 @@ import { ItemAffix } from '../value-objects/item-affix.vo';
 import { ItemInfo } from '../value-objects/item-info.vo';
 import { AccessType } from 'src/modules/shared/domain/entities/access-type';
 
+export const goldCoin = 'gold-coin';
+
 export class Item extends BaseAggregateRoot<ItemProps> {
   private constructor(
     public id: string,
@@ -88,6 +90,19 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     //TODO
     this.updatedAt = new Date();
     this.apply(new ItemUpdatedEvent(this));
+  }
+
+  addAmount(amount: number): void {
+    if (this.itemTypeId !== goldCoin && !Number.isInteger(amount)) {
+      throw new Error('Amount must be an integer for non-gold coin items');
+    }
+    if (this.info.stackable) {
+      this.amount = (this.amount || 0) + amount;
+      this.updatedAt = new Date();
+      this.apply(new ItemUpdatedEvent(this));
+    } else {
+      throw new Error('Cannot add amount to non-stackable item');
+    }
   }
 
   getProps(): ItemProps {
