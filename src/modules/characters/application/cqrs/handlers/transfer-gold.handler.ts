@@ -32,45 +32,44 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     const faction = await this.factionRepository.findById(character.faction.id);
     if (!faction) throw new NotFoundError('Faction', character.faction.id);
 
-    faction.management.availableGold -= command.amount;
-
-    const goldCoinItem: Item | null = await this.itemRepository.findByCharacterIdAndItemTypeId(character.id, GOLD_COIN);
+    const goldCoinItem = await this.getOrCreateGoldCoinItem(character);
     const goldCoins = goldCoinItem ? goldCoinItem.amount || 0 : 0;
 
-    if (command.amount < 0) {
-      if (!goldCoins) {
-        throw new NotFoundError('Gold coins', character.id);
-      }
-      if (goldCoins < command.amount) {
-        throw new ValidationError(`Insufficient gold coins: ${goldCoins}`);
-      }
-    } else {
-      if (!goldCoinItem) {
-        const createItemCommand = new CreateItemCommand(
-          character.gameId,
-          null,
-          character.id,
-          GOLD_COIN,
-          'Gold coins',
-          true,
-          null,
-          null,
-          command.amount,
-          null,
-          null,
-          command.userId,
-          command.roles,
-        );
-        await this.commandBus.execute(createItemCommand);
-      } else {
-        goldCoinItem.amount = (goldCoinItem.amount || 0) + command.amount;
-        //TODO command
-        await this.itemRepository.update(goldCoinItem.id, goldCoinItem);
-      }
-    }
+    if (command.amount < 0 && goldCoins < command.amount) throw new ValidationError(`Insufficient gold coins: ${goldCoins}`);
 
-    const updated = await this.characterRepository.update(character.id, character);
+    goldCoinItem.amount = (goldCoinItem.amount || 0) + command.amount;
+    faction.management.availableGold -= command.amount;
+
+    if (goldCoinItem.amount < 0) throw new ValidationError(`Gold coin amount cannot be negative: ${goldCoinItem.amount}`);
+    if (faction.management.availableGold < 0)
+      throw new ValidationError(`Faction's available gold cannot be negative: ${faction.management.availableGold}`);
+
+    await this.itemRepository.update(goldCoinItem.id, goldCoinItem);
     await this.factionRepository.update(faction.id, faction);
-    return updated;
+
+    return character;
+  }
+
+  private async getOrCreateGoldCoinItem(character: Character): Promise<Item> {
+    const current: Item | null = await this.itemRepository.findByCharacterIdAndItemTypeId(character.id, GOLD_COIN);
+    if (current) {
+      return current;
+    }
+    const createItemCommand = new CreateItemCommand(
+      character.gameId,
+      null,
+      character.id,
+      GOLD_COIN,
+      'Gold coins',
+      true,
+      null,
+      null,
+      0,
+      null,
+      null,
+      character.id,
+      ['rmu-admin'],
+    );
+    return await this.commandBus.execute(createItemCommand);
   }
 }
