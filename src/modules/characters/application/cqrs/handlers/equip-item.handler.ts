@@ -28,7 +28,8 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
     this.validateEquipmentData(character, item, command);
     this.equip(character, item, command);
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(character.id);
+    this.characterProcessorService.process(character, items);
 
     if (!item.carried) {
       await this.itemRepository.updateCarriedStatus(item.id, true);

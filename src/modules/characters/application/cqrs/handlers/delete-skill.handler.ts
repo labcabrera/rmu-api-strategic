@@ -5,12 +5,14 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import { DeleteSkillCommand } from '../commands/delete-skill-command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(DeleteSkillCommand)
 export class DeleteSkillHandler implements ICommandHandler<DeleteSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}
 
   async execute(command: DeleteSkillCommand): Promise<Character> {
@@ -18,7 +20,8 @@ export class DeleteSkillHandler implements ICommandHandler<DeleteSkillCommand, C
     if (!character) throw new NotFoundError('Character', command.characterId);
 
     character.deleteSkill(command.skillId, command.specialization);
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(character.id);
+    this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
     //TODO propagate events
     return updated;

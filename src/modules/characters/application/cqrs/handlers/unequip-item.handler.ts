@@ -6,12 +6,14 @@ import { EquipItemCommand } from '../commands/equip-item-command';
 import { UnequipItemCommand } from '../commands/unequip-item-command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError, NotModifiedError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(UnequipItemCommand)
 export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -24,7 +26,8 @@ export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, C
       throw new NotModifiedError(`No item equipped in slot ${command.slot}`);
     }
     character.equipment[command.slot] = undefined;
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(characterId);
+    this.characterProcessorService.process(character, items);
     return await this.characterRepository.update(character.id, character);
   }
 }

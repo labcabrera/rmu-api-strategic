@@ -5,12 +5,14 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import { UpdateSkillCommand } from '../commands/update-skill.command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(UpdateSkillCommand)
 export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}
 
   async execute(command: UpdateSkillCommand): Promise<Character> {
@@ -27,7 +29,8 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
       skill.customBonus = command.customBonus;
     }
     skill.ranks = command.ranks || skill.ranks;
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(characterId);
+    this.characterProcessorService.process(character, items);
     const updated: Character = await this.characterRepository.update(character.id, character);
     return updated;
   }

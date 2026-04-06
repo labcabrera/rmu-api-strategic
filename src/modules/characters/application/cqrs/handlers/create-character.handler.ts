@@ -82,7 +82,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       baseHits: race.baseHits || 0,
       baseAt: race.baseAt || 1,
     });
-    this.characterProcessorService.process(character);
+    this.characterProcessorService.process(character, []);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
     this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
