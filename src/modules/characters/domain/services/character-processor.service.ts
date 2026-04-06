@@ -33,10 +33,10 @@ export class CharacterProcessorService {
     this.movementProcessor.process(character);
     this.initiativeProcessor.process(character);
     this.skillProcessor.process(character);
-    this.attackProcessor.process(character);
+    this.attackProcessor.process(character, items);
     this.equipmentProcessor.process(character, items);
     this.hpProcessor.process(character);
-    this.defenseProcessor.process(character);
+    this.defenseProcessor.process(character, items);
     this.resistancesProcessor.process(character);
     this.xpProcessor.process(character);
   }

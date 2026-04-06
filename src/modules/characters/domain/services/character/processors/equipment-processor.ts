@@ -16,7 +16,9 @@ export class EquipmentProcessor {
     if (character.equipment.head) armorIds.push(character.equipment.head);
     if (character.equipment.arms) armorIds.push(character.equipment.arms);
     if (character.equipment.legs) armorIds.push(character.equipment.legs);
+
     const armors = items.filter((item) => armorIds.includes(item.id));
+
     let enc = 0;
     let maneuverPenalty = 0;
     let perceptionPenalty = 0;

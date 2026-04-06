@@ -12,9 +12,9 @@ import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -31,9 +31,8 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
 
-    if (!item.carried) {
-      await this.itemRepository.updateCarriedStatus(item.id, true);
-    }
+    await this.itemRepository.updateCarriedStatus(item.id, true);
+
     return await this.characterRepository.update(character.id, character);
   }
 

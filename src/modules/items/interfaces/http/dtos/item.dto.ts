@@ -3,6 +3,7 @@ import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
 import { ItemWeaponDto } from './item-weapon.dto';
 import { ItemInfoDto } from './item-info.dto';
+import { ItemArmorDto } from './item-armor.dto';
 
 export class ItemDto {
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })
@@ -29,6 +30,9 @@ export class ItemDto {
   @ApiProperty({ description: 'Game name', type: String, required: true, example: 'Narsil' })
   name: string;
 
+  @ApiProperty({ description: 'Armor details if the item is armor', type: ItemArmorDto, required: false })
+  armor: ItemArmorDto | null;
+
   @ApiProperty({ description: 'Weapon details if the item is a weapon', type: ItemWeaponDto, required: false })
   weapon: ItemWeaponDto | null;
 
@@ -48,6 +52,7 @@ export class ItemDto {
     dto.category = entity.category;
     dto.carried = entity.carried;
     dto.name = entity.name;
+    dto.armor = entity.armor ? ItemArmorDto.fromEntity(entity.armor) : null;
     dto.weapon = entity.weapon ? ItemWeaponDto.fromEntity(entity.weapon) : null;
     dto.info = ItemInfoDto.fromEntity(entity.info);
     dto.owner = entity.owner;

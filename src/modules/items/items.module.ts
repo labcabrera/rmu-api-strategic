@@ -17,6 +17,7 @@ import { KafkaItemEventBusAdapter } from './infrastructure/messaging/kafka.item-
 import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
 import { FactionsModule } from '../factions/factions.module';
 import { CharactersModule } from '../characters/characters.module';
+import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { CharactersModule } from '../characters/characters.module';
     GetItemsHandler,
     CreateItemHandler,
     UpdateItemHandler,
-    GetItemHandler,
+    DeleteItemHandler,
     {
       provide: 'ItemRepository',
       useClass: MongoItemRepository,

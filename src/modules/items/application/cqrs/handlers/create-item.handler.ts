@@ -39,10 +39,15 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       if (!faction) throw new ValidationError(`Invalid faction ${command.factionId}`);
     }
 
+    let weight = itemType.info.weight || 0;
     if (command.characterId) {
       if (command.factionId) throw new ValidationError(`Cannot specify both factionId and characterId`);
       character = await this.characterRepository.findById(command.characterId);
       if (!character) throw new ValidationError(`Invalid character ${command.characterId}`);
+      if (itemType.armor && itemType.armor.enc) {
+        weight = (itemType.armor.enc * character.info.weight) / 100;
+        weight = Math.round(weight * 100) / 100; // round to 2 decimals
+      }
     }
 
     if (command.amount) {
@@ -64,7 +69,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       amount: command.amount,
       info: {
         length: itemType.info.length,
-        weight: itemType.info.weight || 0,
+        weight: weight,
         strength: itemType.info.strength,
       },
       description: command.description,

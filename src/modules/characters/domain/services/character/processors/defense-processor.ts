@@ -5,32 +5,28 @@ import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 
 @Injectable()
 export class DefenseProcessor {
-  process(character: Partial<Character>): void {
-    this.processArmor(character);
+  process(character: Character, items: Item[]): void {
+    this.processArmor(character, items);
     this.processDefensiveBonus(character);
   }
 
-  private processArmor(character: Partial<Character>): void {
-    // if (!character.equipment || !character.items || !character.defense) {
-    //   return;
-    // }
-    // const eq = character.equipment;
-    // const items = character.items;
-    // const racialAt = character.defense.armor.racialAt;
-    // const armor = character.defense.armor;
-    // armor.bodyAt = this.getItemArmorTypeOrDefault(eq.body, items, racialAt);
-    // armor.headAt = this.getItemArmorTypeOrDefault(eq.head, items, racialAt);
-    // armor.armsAt = this.getItemArmorTypeOrDefault(eq.arms, items, racialAt);
-    // armor.legsAt = this.getItemArmorTypeOrDefault(eq.legs, items, racialAt);
-    // if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
-    //   armor.at = armor.bodyAt;
-    //   armor.bodyAt = undefined;
-    //   armor.headAt = undefined;
-    //   armor.armsAt = undefined;
-    //   armor.legsAt = undefined;
-    // } else {
-    //   armor.at = undefined;
-    // }
+  private processArmor(character: Character, items: Item[]): void {
+    const eq = character.equipment;
+    const racialAt = character.defense.armor.racialAt;
+    const armor = character.defense.armor;
+    armor.bodyAt = this.getItemArmorTypeOrDefault(eq.body, items, racialAt);
+    armor.headAt = this.getItemArmorTypeOrDefault(eq.head, items, racialAt);
+    armor.armsAt = this.getItemArmorTypeOrDefault(eq.arms, items, racialAt);
+    armor.legsAt = this.getItemArmorTypeOrDefault(eq.legs, items, racialAt);
+    if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
+      armor.at = armor.bodyAt;
+      armor.bodyAt = undefined;
+      armor.headAt = undefined;
+      armor.armsAt = undefined;
+      armor.legsAt = undefined;
+    } else {
+      armor.at = undefined;
+    }
   }
 
   private getItemArmorTypeOrDefault(itemId: string | undefined, items: Item[], defaultAt: number): number {

@@ -17,7 +17,6 @@ export interface ItemInfoResponse {
   length: number | null;
   strength: number | null;
   weight: number | null;
-  weightPercent: number | undefined;
   productionHours: number | undefined;
   stackable: boolean | undefined;
 }
