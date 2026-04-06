@@ -18,6 +18,11 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
     return items.map((doc) => this.mapToEntity(doc));
   }
 
+  async findByCharacterIdAndItemTypeId(characterId: string, itemTypeId: string): Promise<Item | null> {
+    const doc = await this.model.findOne({ characterId, itemTypeId });
+    return doc ? this.mapToEntity(doc) : null;
+  }
+
   async updateCarriedStatus(itemId: string, carried: boolean): Promise<Item> {
     const update = { carried, updatedAt: new Date() };
     const updated = await this.model.findByIdAndUpdate(itemId, update, { new: true });

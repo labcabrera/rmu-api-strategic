@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { CreateItemCommand } from '../commands/create-item.command';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import type { ItemRepository } from '../../ports/item.repository';
@@ -15,6 +15,8 @@ import { Character } from 'src/modules/characters/domain/aggregates/character.ag
 
 @CommandHandler(CreateItemCommand)
 export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Item> {
+  private readonly logger = new Logger(CreateItemHandler.name);
+
   constructor(
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
@@ -33,13 +35,27 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     let faction: Faction | null = null;
     let character: Character | null = null;
 
+    let weight = itemType.info.weight || 0;
+    const unitaryCost = command.cost || itemType.info.cost?.average || 0;
+    const totalCost = Math.round(unitaryCost * (command.amount || 1) * 1000) / 1000; // round to 3 decimals
+
+    const characterGoldItem = await this.itemRepository.findByCharacterIdAndItemTypeId(command.characterId, 'gold-coin');
+    let factionCost = 0;
+    let characterCost = 0;
+
+    //TODO check if faction/character can afford the item and update their gold
+    console.warn(`TODO check if faction/character can afford the item and update their gold. Cost: ${totalCost}`);
+
     if (command.factionId) {
       if (command.characterId) throw new ValidationError(`Cannot specify both factionId and characterId`);
       faction = await this.factionRepository.findById(command.factionId);
       if (!faction) throw new ValidationError(`Invalid faction ${command.factionId}`);
+      if (totalCost > faction.management.availableGold) {
+        throw new ValidationError(`Faction cannot afford the item. Required: ${totalCost}, Available: ${faction.management.availableGold}`);
+      }
+      factionCost = totalCost;
     }
 
-    let weight = itemType.info.weight || 0;
     if (command.characterId) {
       if (command.factionId) throw new ValidationError(`Cannot specify both factionId and characterId`);
       character = await this.characterRepository.findById(command.characterId);
@@ -48,6 +64,18 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         weight = (itemType.armor.enc * character.info.weight) / 100;
         weight = Math.round(weight * 100) / 100; // round to 2 decimals
       }
+      let characterAvailableGold = 0;
+      if (characterGoldItem) {
+        characterAvailableGold = characterAvailableGold = characterGoldItem.amount || 0;
+      }
+      characterCost = Math.min(totalCost, characterAvailableGold);
+      factionCost = characterCost - characterAvailableGold;
+    }
+
+    if (faction && factionCost > 0) {
+      //TODO use command
+      faction.addGold(-factionCost);
+      await this.factionRepository.update(faction.id, faction);
     }
 
     if (command.amount) {
@@ -76,6 +104,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       accessType: 'public', //TODO
       owner: command.userId,
     };
+
     const item = Item.create(itemProps);
     const savedItem = await this.itemRepository.save(item);
     item.getUncommittedEvents().forEach((event) => this.itemEventBus.publish(event));

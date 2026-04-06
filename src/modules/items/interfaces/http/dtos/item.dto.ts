@@ -36,9 +36,6 @@ export class ItemDto {
   @ApiProperty({ description: 'Armor details if the item is armor', type: ItemArmorDto, required: false })
   armor: ItemArmorDto | null;
 
-  @ApiProperty({ description: 'Whether the item is stackable', type: Boolean, required: true, example: false })
-  stackable: boolean;
-
   @ApiProperty({ description: 'Amount of items in the stack if stackable', type: Number, required: false, example: 10 })
   amount: number | null;
 
@@ -66,8 +63,9 @@ export class ItemDto {
     dto.category = entity.category;
     dto.carried = entity.carried;
     dto.name = entity.name;
-    dto.armor = entity.armor ? ItemArmorDto.fromEntity(entity.armor) : null;
     dto.weapon = entity.weapon ? ItemWeaponDto.fromEntity(entity.weapon) : null;
+    dto.armor = entity.armor ? ItemArmorDto.fromEntity(entity.armor) : null;
+    dto.amount = entity.amount;
     dto.info = ItemInfoDto.fromEntity(entity.info);
     dto.owner = entity.owner;
     return dto;

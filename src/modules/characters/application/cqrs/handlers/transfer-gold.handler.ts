@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { TransferGoldCommand } from '../commands/transfer-gold.command';
@@ -8,6 +8,7 @@ import type { FactionRepository } from 'src/modules/factions/application/ports/f
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { CreateItemCommand } from 'src/modules/items/application/cqrs/commands/create-item.command';
 
 const GOLD_COIN = 'gold-coin';
 
@@ -18,6 +19,7 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject() private readonly commandBus: CommandBus,
   ) {}
 
   async execute(command: TransferGoldCommand): Promise<Character> {
@@ -32,53 +34,43 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
 
     faction.management.availableGold -= command.amount;
 
-    throw new Error('Not implemented');
+    const goldCoinItem: Item | null = await this.itemRepository.findByCharacterIdAndItemTypeId(character.id, GOLD_COIN);
+    const goldCoins = goldCoinItem ? goldCoinItem.amount || 0 : 0;
 
-    // const goldCoinItem: Item | null = this.itemRepository
-    //   .findByRsql(`characterId==${character.id};itemTypeId==${GOLD_COIN}`, 0, 10)
-    //   .then((page) => page.content)
-    //   .then((items) => (items.length > 0 ? items[0] : null));
-    // const goldCoins = goldCoinItem ? goldCoinItem.amount || 0 : 0;
+    if (command.amount < 0) {
+      if (!goldCoins) {
+        throw new NotFoundError('Gold coins', character.id);
+      }
+      if (goldCoins < command.amount) {
+        throw new ValidationError(`Insufficient gold coins: ${goldCoins}`);
+      }
+    } else {
+      if (!goldCoinItem) {
+        const createItemCommand = new CreateItemCommand(
+          character.gameId,
+          null,
+          character.id,
+          GOLD_COIN,
+          'Gold coins',
+          true,
+          null,
+          null,
+          command.amount,
+          null,
+          null,
+          command.userId,
+          command.roles,
+        );
+        await this.commandBus.execute(createItemCommand);
+      } else {
+        goldCoinItem.amount = (goldCoinItem.amount || 0) + command.amount;
+        //TODO command
+        await this.itemRepository.update(goldCoinItem.id, goldCoinItem);
+      }
+    }
 
-    // if (command.amount < 0) {
-    //   if (!goldCoins) {
-    //     throw new NotFoundError('Gold coins', character.id);
-    //   }
-    //   if (goldCoins < command.amount) {
-    //     throw new ValidationError(`Insufficient gold coins: ${goldCoins}`);
-    //   }
-    // }
-    // if (goldCoins) {
-    // if (!goldCoins) {
-    //   goldCoinItem!.amount = 0;
-    // }
-    // goldCoins += command.amount;
-    // } else {
-    // const goldCoins = {
-    //   id: randomUUID(),
-    //   name: 'Gold coins',
-    //   itemTypeId: 'gold-coin',
-    //   category: 'coins',
-    //   carried: true,
-    //   info: {
-    //     weight: 0,
-    //   },
-    //   stackable: true,
-    //   amount: command.amount,
-    // } as CharacterItem;
-    // character.items.push(goldCoins);
-    // }
-
-    // if (faction.management.availableGold < 0) {
-    //   throw new ValidationError(`Insuficient faction gold`);
-    // }
-    // if (goldCoins!.amount! < 0) {
-    //   throw new ValidationError(`Insuficient character gold amount`);
-    // }
-
-    // this.characterProcessorService.process(character);
-    // const updated = await this.characterRepository.update(character.id, character);
-    // await this.factionRepository.update(faction.id, faction);
-    // return updated;
+    const updated = await this.characterRepository.update(character.id, character);
+    await this.factionRepository.update(faction.id, faction);
+    return updated;
   }
 }

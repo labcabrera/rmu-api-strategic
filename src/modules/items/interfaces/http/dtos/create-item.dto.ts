@@ -28,7 +28,14 @@ export class CreateItemDto {
   @IsOptional()
   name: string | null;
 
-  @ApiProperty({ description: 'Item cost in gold coints', example: '0.42', required: false })
+  @ApiProperty({ description: 'Amount of items (for stackable items)', example: '10', required: false })
+  amount: number | null;
+
+  @ApiProperty({
+    description: 'Item cost in gold coints. If item is stackable cost is for each single item',
+    example: '0.42',
+    required: false,
+  })
   @IsNumber()
   @IsOptional()
   cost: number | null;
@@ -48,7 +55,7 @@ export class CreateItemDto {
       null, // carried is not provided in the DTO, defaulting to null
       null, // affixes are not provided in the DTO, defaulting to null
       null, // info is not provided in the DTO, defaulting to null
-      null, // amount is not provided in the DTO, defaulting to null
+      dto.amount,
       dto.description,
       dto.cost,
       userId,
