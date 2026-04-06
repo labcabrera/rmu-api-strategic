@@ -1,4 +1,4 @@
-import { CharacterItemWeapon } from '../../domain/value-objects/character-item-weapon.vo';
+import { CharacterItemWeapon } from '../../../characters/domain/value-objects/character-item-weapon.vo';
 
 export interface ItemClientPort {
   getItemById(itemId: string): Promise<ItemResponse>;
@@ -18,9 +18,9 @@ export interface ItemInfoResponse {
     average: number | undefined;
     max: number | undefined;
   };
-  length: number | undefined;
-  strength: number | undefined;
-  weight: number | undefined;
+  length: number | null;
+  strength: number | null;
+  weight: number | null;
   weightPercent: number | undefined;
   productionHours: number | undefined;
   stackable: boolean | undefined;

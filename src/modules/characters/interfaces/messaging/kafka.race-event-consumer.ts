@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import type { CharacterRepository } from '../../application/ports/character.repository';
+import { UpdateCharacterRaceCommandProps } from 'src/modules/characters/application/cqrs/commands/update-character-race.command';
+import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
-import { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command';
 import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
 
 export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {

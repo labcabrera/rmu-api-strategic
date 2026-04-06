@@ -1,45 +1,24 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Logger,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-  ApiBody,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query';
-import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query';
-import { Character } from '../../domain/aggregates/character.aggregate';
 import { CharacterDto, CharacterPageDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AddXPDto } from './dto/add-xp.dto';
 import { UpdateCharacterDto } from './dto/update-character-dto';
-import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command';
-import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command';
-import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command';
-import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command';
-import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command';
 import { LevelUpQueryDto } from './dto/level-up-query.dto';
 import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
 import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
 import { Page } from 'src/modules/shared/domain/entities/page';
+import { AddXPCommand } from 'src/modules/characters/application/cqrs/commands/add-xp.command';
+import { CreateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { DeleteCharacterCommand } from 'src/modules/characters/application/cqrs/commands/delete-character.command';
+import { LevelUpCommand } from 'src/modules/characters/application/cqrs/commands/level-up.command';
+import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
+import { GetCharacterQuery } from 'src/modules/characters/application/cqrs/queries/get-character.query';
+import { GetCharactersQuery } from 'src/modules/characters/application/cqrs/queries/get-characters.query';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

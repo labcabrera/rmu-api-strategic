@@ -78,12 +78,6 @@ export class CreateCharacterDto {
   @IsArray()
   skills: CharacterSkillCreationDto[] | undefined;
 
-  @ApiProperty({ description: 'Character items', type: [CharacterItemCreationDto] })
-  @ValidateNested({ each: true })
-  @Type(() => CharacterItemCreationDto)
-  @IsArray()
-  items: CharacterItemCreationDto[] | undefined;
-
   @ApiProperty({ description: 'Character image URL', example: 'https://example.com/images/character.png' })
   @IsString()
   @IsOptional()
@@ -95,10 +89,6 @@ export class CreateCharacterDto {
       ranks: skill.ranks,
       customBonus: skill.customBonus,
       specialization: skill.specialization,
-    }));
-    const items: CreateCharacterItem[] = dto.items!.map((item) => ({
-      name: item.name,
-      itemTypeId: item.itemTypeId,
     }));
     return new CreateCharacterCommand(
       dto.gameId,
@@ -113,7 +103,6 @@ export class CreateCharacterDto {
       dto.endurance.customBonus,
       dto.initiative.customBonus,
       skills,
-      items,
       dto.imageUrl,
       userId,
       roles,

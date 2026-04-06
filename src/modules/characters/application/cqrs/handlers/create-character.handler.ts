@@ -2,13 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { randomUUID } from 'crypto';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CreateCharacterCommand } from '../commands/create-character.command';
-import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import type { ItemClientPort } from '../../ports/item-client.port';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
@@ -36,7 +33,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('ItemClient') private readonly itemClient: ItemClientPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
@@ -63,7 +59,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       height: command.info.height,
       weight: command.info.weight,
     };
-    const items = await this.processItems(info, command);
     const character = Character.partialCreate(
       game,
       new NamedEntity(faction.id, faction.name),
@@ -87,9 +82,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       baseHits: race.baseHits || 0,
       baseAt: race.baseAt || 1,
     });
-    //TODO move to aggregate logic
-    character.items = items;
-    this.loadDefaultEquipment(character);
     this.characterProcessorService.process(character);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
@@ -181,63 +173,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return categoryId;
   }
 
-  async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
-    if (!command.items || command.items.length == 0) {
-      return [];
-    }
-    return Promise.all(
-      command.items.map(async (e) => {
-        const readedItem = await this.itemClient.getItemById(e.itemTypeId);
-        const readedWeapon = readedItem.weapon ? readedItem.weapon : undefined;
-        const readedArmor = readedItem.armor ? readedItem.armor : undefined;
-        const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
-        const itemInfo = {
-          length: readedItem.info.length,
-          strength: readedItem.info.strength,
-          weight: readedItem.info.weight,
-        };
-        if (!itemInfo.weight && readedItem.info.weightPercent) {
-          itemInfo.weight = readedItem.info.weightPercent * characterInfo.weight;
-        }
-        return {
-          id: randomUUID(),
-          name: name,
-          itemTypeId: e.itemTypeId,
-          category: readedItem.category,
-          carried: true,
-          weapon: readedWeapon,
-          armor: readedArmor,
-          affixes: [],
-          info: itemInfo,
-          stackable: readedItem.info.stackable,
-          amount: undefined,
-          description: undefined,
-        } as CharacterItem;
-      }),
-    );
-  }
-
-  loadDefaultEquipment(character: Partial<Character>): void {
-    if (!character.items || !character.equipment) {
-      return;
-    }
-    const weapon = character.items.find((e) => e.category === 'weapon');
-    const shield = character.items.find((e) => e.category === 'shield');
-    const armor = character.items.find((e) => e.category === 'armor');
-    if (weapon && weapon.id) {
-      character.equipment.mainHand = weapon.id;
-    }
-    if (shield && shield.id) {
-      character.equipment.offHand = shield.id;
-    }
-    if (shield && shield.id) {
-      character.equipment.offHand = shield.id;
-    }
-    if (armor && armor.id) {
-      character.equipment.body = armor.id;
-    }
-  }
-
   private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
     if (skillId.startsWith('melee-weapon')) return 'melee';
     if (skillId.startsWith('ranged-weapon')) return 'ranged';
@@ -246,7 +181,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return undefined;
   }
 
-  async fetchRace(raceId: string): Promise<Race> {
+  private async fetchRace(raceId: string): Promise<Race> {
     try {
       return await this.raceClient.getRaceById(raceId);
     } catch (e) {
@@ -255,7 +190,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchSkills(): Promise<SkillResponse[]> {
+  private async fetchSkills(): Promise<SkillResponse[]> {
     try {
       return (await this.skillClient.getAllSkills()).content;
     } catch (e) {
@@ -264,7 +199,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
+  private async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
     try {
       return await this.skillCategoryClient.getAllSkillCategories();
     } catch (e) {
@@ -273,16 +208,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchItem(itemId: string): Promise<any> {
-    try {
-      return await this.itemClient.getItemById(itemId);
-    } catch (e) {
-      this.logger.error(e);
-      throw new ValidationError(`Item with id ${itemId} not found.`);
-    }
-  }
-
-  async fetchProfession(professionId: string): Promise<Profession> {
+  private async fetchProfession(professionId: string): Promise<Profession> {
     try {
       return await this.professionClient.getProfessionById(professionId);
     } catch (e) {

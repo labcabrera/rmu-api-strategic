@@ -2,13 +2,13 @@ import { Body, Controller, Delete, HttpCode, Logger, Param, Post, Request, UseGu
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Character } from '../../domain/aggregates/character.aggregate';
 import { CharacterDto } from './dto/character.dto';
 import { AddTraitDto } from './dto/add-trait.dto';
-import { AddTraitCommand } from '../../application/cqrs/commands/add-trait.command';
 import { DeleteTraitDto } from './dto/delete-trait.dto';
-import { DeleteTraitCommand } from '../../application/cqrs/commands/delete-trait.command';
 import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { AddTraitCommand } from 'src/modules/characters/application/cqrs/commands/add-trait.command';
+import { DeleteTraitCommand } from 'src/modules/characters/application/cqrs/commands/delete-trait.command';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

@@ -17,7 +17,6 @@ export class CreateCharacterCommand {
     public readonly enduranceCustomBonus: number | undefined,
     public readonly initiativeCustomBonus: number | undefined,
     public readonly skills: CreateCharacterSkill[],
-    public readonly items: CreateCharacterItem[],
     public readonly imageUrl: string | undefined,
     public readonly userId: string,
     public readonly roles: string[],
