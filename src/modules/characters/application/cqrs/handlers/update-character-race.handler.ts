@@ -34,6 +34,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
       enduranceBonus: command.enduranceBonus,
       baseHits: command.baseHits,
       baseAt: command.baseAt,
+      skillBonuses: command.skillBonuses,
     });
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);

@@ -19,6 +19,7 @@ export class UpdateCharacterRaceCommand {
     public readonly baseDevPoints: number | undefined,
     public readonly baseAt: number | undefined,
     public readonly talents: string[] | undefined,
+    public readonly skillBonuses: any[] | undefined,
   ) {}
 
   static create(props: UpdateCharacterRaceCommandProps): UpdateCharacterRaceCommand {
@@ -35,6 +36,7 @@ export class UpdateCharacterRaceCommand {
       props.baseDevPoints,
       props.baseAt,
       props.talents,
+      props.skillBonuses,
     );
   }
 }

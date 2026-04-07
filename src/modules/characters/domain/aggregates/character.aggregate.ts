@@ -141,6 +141,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     enduranceBonus: number | undefined;
     baseHits: number | undefined;
     baseAt: number | undefined;
+    skillBonuses: any[] | undefined;
   }) {
     if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;

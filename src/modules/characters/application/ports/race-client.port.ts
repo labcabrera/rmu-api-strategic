@@ -22,6 +22,7 @@ export interface Race {
   baseDevPoints: number;
   baseAt: number;
   talents: string[];
+  skillBonuses: any[];
   description: string;
 }
 
