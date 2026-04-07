@@ -10,5 +10,6 @@ export class CharacterAttack {
     public type: string,
     public defaultAttack: boolean,
     public meleeRange: number | null,
+    public boModifiers: Record<string, number>,
   ) {}
 }

@@ -217,6 +217,9 @@ export class CharacterAttack {
 
   @Prop({ type: Number, required: false })
   meleeRange: number | null;
+
+  @Prop({ type: Map, required: true })
+  boModifiers: Record<string, number>;
 }
 
 @Schema({ _id: false })

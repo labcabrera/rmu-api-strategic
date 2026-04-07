@@ -11,6 +11,7 @@ export class CharacterAttackDto {
   type: string;
   defaultAttack: boolean;
   meleeRange: number | null;
+  boModifiers: Record<string, number>;
 
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
@@ -24,6 +25,7 @@ export class CharacterAttackDto {
     dto.type = entity.type;
     dto.defaultAttack = entity.defaultAttack;
     dto.meleeRange = entity.meleeRange;
+    dto.boModifiers = entity.boModifiers;
     return dto;
   }
 }

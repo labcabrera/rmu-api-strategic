@@ -32,9 +32,16 @@ export class AttackProcessor {
         const skillId = item.weapon.skillId;
         const skill = this.getWeaponSkill(character, item.weapon);
         const skillBonus = skill ? skill.totalBonus : -25;
-        const totalBonus = slot === 'offHand' ? skillBonus + this.getOffHandPenalty(character) : skillBonus;
+        const boModifiers: Record<string, number> = {};
+        boModifiers['skill'] = skillBonus;
+        if (slot === 'offHand') {
+          this.getOffHandPenalty(character, boModifiers);
+        }
+        const totalBonus = Object.values(boModifiers).reduce((sum, bonus) => sum + bonus, 0);
+
         const ranks = skill ? skill.ranks : 0;
         const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
+
         this.getAvailableModes(character, item.weapon).forEach((mode) => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
@@ -49,6 +56,7 @@ export class AttackProcessor {
             type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
             defaultAttack: true,
             meleeRange: meleeRange,
+            boModifiers: boModifiers,
           };
           attacks.push(attack);
         });
@@ -99,11 +107,11 @@ export class AttackProcessor {
     throw new DomainError('Unsupported weapon skill format');
   }
 
-  private getOffHandPenalty(character: Character): number {
+  private getOffHandPenalty(character: Character, modifiers: Record<string, number>) {
+    //TODO check light off-hand weapon
+    modifiers['offHand'] = -20;
     if (character.traits?.some((t) => t.traitId === 'ambidextrous')) {
-      return 0;
+      modifiers['ambidextrous'] = 20;
     }
-    //TODO check offhand type
-    return -10;
   }
 }
