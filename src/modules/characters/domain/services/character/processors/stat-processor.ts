@@ -1,21 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { Stat, STAT_KEYS } from '../../../value-objects/character-statistics.vo';
+import { CharacterStat, STAT_KEYS } from '../../../value-objects/character-stat.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class StatProcessor {
   process(character: Character): void {
     for (const key of STAT_KEYS) {
-      const stat = character.statistics[key];
-      this.processStat(stat);
+      const prev = character.statistics[key];
+      const processed = this.processStat(prev);
+      character.statistics[key] = processed;
     }
   }
 
-  private processStat(stat: Stat): void {
+  private processStat(stat: CharacterStat) {
     const bonus = this.getBonus(stat.temporary);
-    stat.bonus = bonus;
-    stat.totalBonus = bonus + stat.racial + stat.custom;
+    const modifiers = { ...stat.modifiers, stat: bonus };
+    return new CharacterStat(stat.potential, stat.temporary, modifiers);
   }
 
   private getBonus(temporary: number | undefined): number {

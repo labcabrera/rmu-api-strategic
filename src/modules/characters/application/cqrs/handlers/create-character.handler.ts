@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
-import { CreateCharacterCommand } from '../commands/create-character.command';
+import { CharacterStatCreation, CreateCharacterCommand } from '../commands/create-character.command';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
@@ -12,9 +10,8 @@ import type { GameRepository } from 'src/modules/games/application/ports/game.re
 import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
 import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
 import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
-import { CharacterStatistics, Stat, STAT_KEYS } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { CharacterStat, STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
@@ -33,8 +30,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -51,7 +48,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
 
-    const processedStatistics = this.processStatistics(race, command.statistics, game);
+    const processedStatistics = this.processStatistics(race, command.statistics);
     const info: CharacterInfo = {
       race: new NamedEntity(race.id, race.name),
       professionId: command.info.professionId,
@@ -91,42 +88,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return created;
   }
 
-  processStatistics(raceInfo: Race, statistics: CharacterStatistics, game: Game): CharacterStatistics {
-    const result: any = {};
-    const minStat = game.powerLevel.statRandomMin - 1 || 10;
-    const multiplier = 100 - minStat;
+  processStatistics(raceInfo: Race, statistics: Record<StatKey, CharacterStatCreation>): Record<StatKey, CharacterStat> {
+    const result = {} as Record<StatKey, CharacterStat>;
     STAT_KEYS.forEach((e) => {
-      const value: Stat = statistics[e];
-      let potential = value ? value.potential : undefined;
-      let temporary = value ? value.temporary : undefined;
-      if (!potential && !temporary) {
-        const random: number[] = [];
-        // Discard rolls < 10
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.sort();
-        potential = random[2];
-        temporary = random[1];
-      }
-      let racial = 0;
-      if (raceInfo && raceInfo.stats && raceInfo.stats[e]) {
-        racial = raceInfo.stats[e];
-      }
-      const bonus = 0;
-      let custom = 0;
-      if (statistics && value && value.custom) {
-        custom = value.custom;
-      }
-      const total = bonus + racial + custom;
-      result[e] = {
-        potential: potential,
-        temporary: temporary,
-        bonus: bonus,
-        racial: racial,
-        custom: custom,
-        totalBonus: total,
-      };
+      const potential = statistics[e].potential;
+      const temporary = statistics[e].temporary;
+      const racial = raceInfo.stats ? raceInfo.stats[e] || 0 : 0;
+      const stat = new CharacterStat(potential, temporary, { racial } as Record<string, number>);
+      result[e] = stat;
     });
     return result;
   }

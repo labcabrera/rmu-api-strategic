@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
-import { Stat } from '../../../value-objects/character-statistics.vo';
+import { CharacterStat } from '../../../value-objects/character-stat.vo';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 
 @Injectable()
@@ -34,7 +34,7 @@ export class SkillProcessor {
   private getStatBonus(character: Partial<Character>, statistics: string[]): number {
     let result = 0;
     statistics?.forEach((stat) => {
-      const statValue = character.statistics![stat] as Stat;
+      const statValue = character.statistics![stat] as CharacterStat;
       if (statValue?.totalBonus) {
         result += statValue.totalBonus;
       }

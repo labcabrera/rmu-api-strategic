@@ -11,7 +11,7 @@ import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
 import { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStatistics } from '../value-objects/character-statistics.vo';
+import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
 import { CharacterXP } from '../value-objects/character-xp.vo';
@@ -24,7 +24,7 @@ export interface CharacterProps {
   info: CharacterInfo;
   roleplay: CharacterRoleplayInfo;
   experience: CharacterXP;
-  statistics: CharacterStatistics;
+  statistics: Record<StatKey, CharacterStat>;
   movement: CharacterMovement;
   defense: CharacterDefense;
   resistances: CharacterResistance[];

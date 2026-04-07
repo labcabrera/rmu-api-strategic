@@ -1,6 +1,6 @@
 import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
 import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
-import { CharacterStatistics } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 
 export class CreateCharacterCommand {
@@ -12,11 +12,18 @@ export class CreateCharacterCommand {
     public readonly roleplay: CharacterRoleplayInfo,
     public readonly level: number,
     public readonly weaponDevelopment: WeaponDevelopmentType[],
-    public readonly statistics: CharacterStatistics,
+    public readonly statistics: Record<StatKey, CharacterStatCreation>,
     public readonly skills: CreateCharacterSkill[],
     public readonly imageUrl: string | undefined,
     public readonly userId: string,
     public readonly roles: string[],
+  ) {}
+}
+
+export class CharacterStatCreation {
+  constructor(
+    public readonly potential: number,
+    public readonly temporary: number,
   ) {}
 }
 

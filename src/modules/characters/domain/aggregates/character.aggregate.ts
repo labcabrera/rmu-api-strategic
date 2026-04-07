@@ -3,7 +3,7 @@ import { CharacterInfo } from '../value-objects/character-info.vo';
 import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
 import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStatistics, StatKey } from '../value-objects/character-statistics.vo';
+import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
 import { CharacterDefense } from '../value-objects/character-defense.vo';
 import { CharacterEndurance } from '../value-objects/character-endurance.vo';
 import { CharacterEquipment } from '../value-objects/character-equipment.vo';
@@ -32,7 +32,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
     public experience: CharacterXP,
-    public statistics: CharacterStatistics,
+    public statistics: Record<StatKey, CharacterStat>,
     public movement: CharacterMovement,
     public defense: CharacterDefense,
     public resistances: CharacterResistance[],
@@ -62,7 +62,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     roleplay: CharacterRoleplayInfo,
     level: number,
     weaponDevelopment: WeaponDevelopmentType[],
-    statistics: CharacterStatistics,
+    statistics: Record<StatKey, CharacterStat>,
     imageUrl: string | undefined,
     owner: string,
   ): Character {
@@ -146,7 +146,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {
-        this.statistics[stat as keyof CharacterStatistics].racial = bonus || 0;
+        const statKey = stat as StatKey;
+        const prev = this.statistics[statKey];
+        this.statistics[statKey] = new CharacterStat(prev.potential || 0, prev.temporary || 0, { ...prev.modifiers, racial: bonus || 0 });
       }
     }
     if (props.resistances) {

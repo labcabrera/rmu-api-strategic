@@ -11,7 +11,6 @@ import {
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
-  CharacterStatistics,
   CharacterXP,
 } from './character-childs.model';
 import { CharacterEquipment } from './character-equipment.model';
@@ -19,6 +18,8 @@ import type { CharacterStatus } from 'src/modules/characters/domain/value-object
 import { CharacterSkill } from './character-skill.model';
 import { CharacterTrait } from './character-trait.model';
 import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/models/named-entity.model';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { CharacterStat, CharacterStatSchema } from './character-stat.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -45,8 +46,8 @@ export class CharacterModel {
   @Prop({ type: CharacterXP, required: true })
   experience: CharacterXP;
 
-  @Prop({ type: CharacterStatistics, required: true })
-  statistics: CharacterStatistics;
+  @Prop({ type: Map, of: CharacterStatSchema, required: true })
+  statistics: Record<StatKey, CharacterStat>;
 
   @Prop({ type: CharacterMovement, required: true })
   movement: CharacterMovement;

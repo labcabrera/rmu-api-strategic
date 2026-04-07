@@ -6,7 +6,7 @@ import { CharacterHPDto } from './character-hp.dto';
 import { CharacterInitiativeDto } from './character-initiative.dto';
 import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
-import { StatDto } from './character-statistics.dto';
+import { CharacterStatDto } from './character-stat.dto';
 import { CharacterXPDto } from './character-xp.dto';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
@@ -16,7 +16,7 @@ import { CharacterTraitDto } from './character-trait.dto';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -41,7 +41,7 @@ export class CharacterDto {
   experience: CharacterXPDto;
 
   @ApiProperty({ description: 'Character statistics', type: Object })
-  statistics: Record<StatKey, StatDto>;
+  statistics: Record<StatKey, CharacterStatDto>;
 
   @ApiProperty({ description: 'Character movement', type: CharacterMovementDto })
   movement: CharacterMovementDto;
@@ -83,9 +83,9 @@ export class CharacterDto {
   owner: string;
 
   static fromEntity(entity: Character) {
-    const statistics: Record<StatKey, StatDto> = {} as Record<StatKey, StatDto>;
+    const statistics: Record<StatKey, CharacterStatDto> = {} as Record<StatKey, CharacterStatDto>;
     for (const key in entity.statistics) {
-      statistics[key as StatKey] = StatDto.fromEntity(entity.statistics[key as StatKey]);
+      statistics[key as StatKey] = CharacterStatDto.fromEntity(entity.statistics[key as StatKey]);
     }
 
     const dto = new CharacterDto();
