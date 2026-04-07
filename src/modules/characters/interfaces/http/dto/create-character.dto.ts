@@ -1,15 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CharacterEnduranceCreationDto } from './character-endurance.dto';
-import { CharacterInitiativeCreationDto } from './character-initiative.dto';
 import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
-import { CharacterStatisticsCreationDto } from './character-statistics.dto';
+import { StatCreationDto } from './character-statistics.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 import { CreateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
+import { Stat, StatKey } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -33,11 +32,10 @@ export class CreateCharacterDto {
   @IsObject()
   info: CreateCharacterInfoDto;
 
-  @ApiProperty({ description: 'Character roleplay info', type: CharacterRoleplayInfoDto })
+  @ApiProperty({ description: 'Character movement' })
   @ValidateNested()
-  @Type(() => CharacterRoleplayInfoDto)
   @IsObject()
-  roleplay: CharacterRoleplayInfoDto;
+  statistics: Record<StatKey, StatCreationDto>;
 
   @ApiProperty({ description: 'Character level', example: 1 })
   @IsNumber()
@@ -47,29 +45,11 @@ export class CreateCharacterDto {
   @IsArray()
   weaponDevelopment: WeaponDevelopmentType[] = [];
 
-  @ApiProperty({ description: 'Character movement', type: CharacterStatisticsCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterStatisticsCreationDto)
-  @IsObject()
-  statistics: CharacterStatisticsCreationDto;
-
   @ApiProperty({ description: 'Character movement', type: CharacterMovementCreationDto })
   @ValidateNested()
   @Type(() => CharacterMovementCreationDto)
   @IsObject()
   movement: CharacterMovementCreationDto;
-
-  @ApiProperty({ description: 'Character endurance', type: CharacterEnduranceCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterEnduranceCreationDto)
-  @IsObject()
-  endurance: CharacterEnduranceCreationDto;
-
-  @ApiProperty({ description: 'Character initiative', type: CharacterInitiativeCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterInitiativeCreationDto)
-  @IsObject()
-  initiative: CharacterInitiativeCreationDto;
 
   @ApiProperty({ description: 'Character skills', type: [CharacterSkillCreationDto] })
   @ValidateNested({ each: true })
@@ -77,12 +57,25 @@ export class CreateCharacterDto {
   @IsArray()
   skills: CharacterSkillCreationDto[] | undefined;
 
+  @ApiProperty({ description: 'Character roleplay info', type: CharacterRoleplayInfoDto })
+  @ValidateNested()
+  @Type(() => CharacterRoleplayInfoDto)
+  @IsObject()
+  roleplay: CharacterRoleplayInfoDto;
+
   @ApiProperty({ description: 'Character image URL', example: 'https://example.com/images/character.png' })
   @IsString()
   @IsOptional()
   imageUrl?: string;
 
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
+    const stats = Object.entries(dto.statistics).reduce(
+      (acc, [key, value]) => {
+        acc[key as StatKey] = value.toEntity();
+        return acc;
+      },
+      {} as Record<StatKey, Stat>,
+    );
     const skills = dto.skills!.map((skill) => ({
       skillId: skill.skillId,
       ranks: skill.ranks,
@@ -97,10 +90,7 @@ export class CreateCharacterDto {
       dto.roleplay,
       dto.level,
       dto.weaponDevelopment,
-      dto.statistics.toEntity(),
-      dto.movement.strideCustomBonus,
-      dto.endurance.customBonus,
-      dto.initiative.customBonus,
+      stats,
       skills,
       dto.imageUrl,
       userId,

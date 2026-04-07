@@ -6,7 +6,7 @@ import { CharacterHPDto } from './character-hp.dto';
 import { CharacterInitiativeDto } from './character-initiative.dto';
 import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
-import { CharacterStatisticsDto } from './character-statistics.dto';
+import { StatDto } from './character-statistics.dto';
 import { CharacterXPDto } from './character-xp.dto';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
@@ -16,6 +16,7 @@ import { CharacterTraitDto } from './character-trait.dto';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -39,8 +40,8 @@ export class CharacterDto {
   @ApiProperty({ description: 'Level and experience points of the character', type: CharacterXPDto })
   experience: CharacterXPDto;
 
-  @ApiProperty({ description: 'Character statistics', type: CharacterStatisticsDto })
-  statistics: CharacterStatisticsDto;
+  @ApiProperty({ description: 'Character statistics', type: Object })
+  statistics: Record<StatKey, StatDto>;
 
   @ApiProperty({ description: 'Character movement', type: CharacterMovementDto })
   movement: CharacterMovementDto;
@@ -82,6 +83,11 @@ export class CharacterDto {
   owner: string;
 
   static fromEntity(entity: Character) {
+    const statistics: Record<StatKey, StatDto> = {} as Record<StatKey, StatDto>;
+    for (const key in entity.statistics) {
+      statistics[key as StatKey] = StatDto.fromEntity(entity.statistics[key as StatKey]);
+    }
+
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;
@@ -90,7 +96,7 @@ export class CharacterDto {
     dto.info = CharacterInfoDto.fromEntity(entity.info);
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
-    dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);
+    dto.statistics = statistics;
     dto.movement = CharacterMovementDto.fromEntity(entity.movement);
     dto.defense = CharacterDefenseDto.fromEntity(entity.defense);
     dto.resistances = entity.resistances.map((resistance) => CharacterResistanceDto.fromEntity(resistance));

@@ -1,24 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { Stat } from '../../../value-objects/character-statistics.vo';
+import { Stat, STAT_KEYS } from '../../../value-objects/character-statistics.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class StatProcessor {
-  process(character: Partial<Character>): void {
-    if (!character.statistics) {
-      return;
+  process(character: Character): void {
+    for (const key of STAT_KEYS) {
+      const stat = character.statistics[key];
+      this.processStat(stat);
     }
-    this.processStat(character.statistics.ag);
-    this.processStat(character.statistics.co);
-    this.processStat(character.statistics.em);
-    this.processStat(character.statistics.in);
-    this.processStat(character.statistics.me);
-    this.processStat(character.statistics.pr);
-    this.processStat(character.statistics.qu);
-    this.processStat(character.statistics.re);
-    this.processStat(character.statistics.sd);
-    this.processStat(character.statistics.st);
   }
 
   private processStat(stat: Stat): void {

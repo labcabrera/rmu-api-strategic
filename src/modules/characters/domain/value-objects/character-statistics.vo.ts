@@ -1,3 +1,7 @@
+export type StatKey = 'ag' | 'co' | 'em' | 'in' | 'me' | 'pr' | 'qu' | 're' | 'sd' | 'st';
+
+export const STAT_KEYS: StatKey[] = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
+
 export class Stat {
   constructor(
     public potential: number,
@@ -9,15 +13,4 @@ export class Stat {
   ) {}
 }
 
-export class CharacterStatistics {
-  ag: Stat;
-  co: Stat;
-  em: Stat;
-  in: Stat;
-  me: Stat;
-  pr: Stat;
-  qu: Stat;
-  re: Stat;
-  sd: Stat;
-  st: Stat;
-}
+export type CharacterStatistics = Record<StatKey, Stat>;
