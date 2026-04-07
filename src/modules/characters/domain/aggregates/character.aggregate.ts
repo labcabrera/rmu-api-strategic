@@ -3,7 +3,7 @@ import { CharacterInfo } from '../value-objects/character-info.vo';
 import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
 import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStatistics } from '../value-objects/character-statistics.vo';
+import { CharacterStatistics, StatKey } from '../value-objects/character-statistics.vo';
 import { CharacterDefense } from '../value-objects/character-defense.vo';
 import { CharacterEndurance } from '../value-objects/character-endurance.vo';
 import { CharacterEquipment } from '../value-objects/character-equipment.vo';
@@ -135,7 +135,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   updateRace(props: {
     raceName: string | undefined;
     sizeId: string | undefined;
-    stats: Map<string, number> | undefined;
+    stats: Record<StatKey, number> | undefined;
     resistances: Map<string, number> | undefined;
     strideBonus: number | undefined;
     enduranceBonus: number | undefined;

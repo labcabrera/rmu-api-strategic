@@ -12,7 +12,7 @@ import type { GameRepository } from 'src/modules/games/application/ports/game.re
 import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
 import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
 import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
-import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { CharacterStatistics, Stat, STAT_KEYS } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
@@ -50,6 +50,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
+
     const processedStatistics = this.processStatistics(race, command.statistics, game);
     const info: CharacterInfo = {
       race: new NamedEntity(race.id, race.name),
@@ -72,6 +73,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
+
     character.updateRace({
       raceName: race.name,
       sizeId: race.sizeId || 'medium',
@@ -90,12 +92,11 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
   }
 
   processStatistics(raceInfo: Race, statistics: CharacterStatistics, game: Game): CharacterStatistics {
-    const values = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
     const result: any = {};
     const minStat = game.powerLevel.statRandomMin - 1 || 10;
     const multiplier = 100 - minStat;
-    values.forEach((e) => {
-      const value: Stat = statistics[e] as Stat;
+    STAT_KEYS.forEach((e) => {
+      const value: Stat = statistics[e];
       let potential = value ? value.potential : undefined;
       let temporary = value ? value.temporary : undefined;
       if (!potential && !temporary) {
