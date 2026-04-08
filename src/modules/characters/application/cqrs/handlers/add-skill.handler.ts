@@ -34,8 +34,9 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
-    if (this.hasSkillId(character, skillId, specialization))
-      throw new ValidationError(`Skill ${skillId} already exists for character ${characterId}`);
+    if (character.findSkill(skillId, specialization)) {
+      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
+    }
 
     if (command.ranks > 0 && !command.roles.includes('admin')) {
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
@@ -59,9 +60,17 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
     const devPoints = readedProfession.skillCosts[categoryId] || [];
     const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
+
     //TODO add to core model
-    //const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
-    const racialBonus = 0;
+    let racialBonus = 0;
+    if (readedRace.skillBonuses) {
+      const skillBonus = readedRace.skillBonuses.find(
+        (bonus) => bonus.skillId === skillId && (bonus.specialization === specialization || (!bonus.specialization && !specialization)),
+      );
+      if (skillBonus) {
+        racialBonus = skillBonus.bonus;
+      }
+    }
     character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
@@ -69,10 +78,6 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const updated = await this.characterRepository.update(character.id, character);
     character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
     return updated;
-  }
-
-  private hasSkillId(character: Character, skillId: string, specialization: string | null): boolean {
-    return character.skills.some((skill) => skill.skillId === skillId && skill.specialization === specialization);
   }
 
   private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {

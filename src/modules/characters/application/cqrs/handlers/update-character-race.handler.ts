@@ -8,6 +8,7 @@ import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
+import { CharacterUpdatedEvent } from 'src/modules/characters/domain/events/character.events';
 
 @CommandHandler(UpdateCharacterRaceCommand)
 export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {
@@ -26,15 +27,21 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     this.logger.log(`Executing UpdateCharacterRaceCommand for characterId: ${command.characterId}`);
     const characterId = command.characterId;
 
-    const character = await this.characterRepository.findById(command.characterId);
+    let character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
     for (const skillBonus of command.skillBonuses || []) {
-      const skill = character.findSkill(skillBonus.skillId, skillBonus.specialization);
+      const skill = character!.findSkill(skillBonus.skillId, skillBonus.specialization);
       if (!skill) {
+        this.logger.log(`Adding new skill ${skillBonus.skillId}:${skillBonus.specialization}`);
         const command = new AddSkillCommand(characterId, skillBonus.skillId, skillBonus.specialization, 0, 'system', ['rmu-admin']);
-        await this.commandBus.execute(command);
+        character = await this.commandBus.execute(command);
       }
+    }
+
+    if (!character) {
+      this.logger.error(`Character with id ${characterId} not found after attempting to add missing skills.`);
+      throw new NotFoundError('Character', characterId);
     }
 
     character.updateRace({
@@ -51,6 +58,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
     await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    this.logger.log(`Character ${characterId} updated with new race values`);
+    this.characterEventBus.publish(new CharacterUpdatedEvent(character.getProps()));
   }
 }
