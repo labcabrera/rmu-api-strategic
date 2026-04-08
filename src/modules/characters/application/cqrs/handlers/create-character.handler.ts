@@ -102,6 +102,17 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         specialization: null,
       });
     }
+    raceInfo.skillBonuses?.forEach((bonus) => {
+      const current = skills.find(
+        (s) => s.skillId === bonus.skillId && (s.specialization === bonus.specialization || bonus.specialization === null),
+      );
+      if (!current) {
+        skills.push({
+          skillId: bonus.skillId,
+          specialization: bonus.specialization,
+        });
+      }
+    });
     const readedSkills = await this.fetchSkills();
     const readedSkillCategories = await this.fetchSkillCategories();
     for (const skill of skills) {
@@ -116,14 +127,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
       const categoryId = this.getSkillDevelopmentCategory(character, skill.skillId, readedCategory.id);
       const devPoints = profession.skillCosts[categoryId] || [];
-      let racialBonus: number;
-      if (skill.skillId === 'body-development') {
-        racialBonus = raceInfo.baseHits;
-      } else {
-        //TODO read from race info
-        racialBonus = 0;
-      }
-      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, racialBonus);
+      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, 0);
     }
   }
 

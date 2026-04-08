@@ -70,7 +70,7 @@ export class CharacterSkillController {
   async levelUpSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Leveling up character ${id} skill  ${skillId} for user ${req.user.id}`);
@@ -97,7 +97,7 @@ export class CharacterSkillController {
   async levelDownSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Leveling down character ${id} skill ${skillId} for user ${req.user.id}`);
@@ -137,7 +137,7 @@ export class CharacterSkillController {
   async deleteSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Deleting character ${id} skill ${skillId} for user ${req.user.id}`);

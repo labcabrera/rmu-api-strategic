@@ -22,8 +22,14 @@ export interface Race {
   baseDevPoints: number;
   baseAt: number;
   talents: string[];
-  skillBonuses: any[];
+  skillBonuses: RaceSkillBonus[];
   description: string;
+}
+
+export interface RaceSkillBonus {
+  skillId: string;
+  specialization: string | null;
+  bonus: number;
 }
 
 export interface SexBasedAttribute {

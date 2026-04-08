@@ -176,11 +176,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       skill.racialBonus = 0;
     });
     skillBonuses.forEach((bonus) => {
-      const skill = this.findSkill(bonus.skillId, bonus.specialization || undefined);
+      const skill = this.findSkill(bonus.skillId, bonus.specialization);
       if (skill) {
         skill.racialBonus = bonus.bonus;
       } else {
-        this.skills.push(CharacterSkill.empty(bonus.skillId, bonus.specialization || null, [], [], bonus.bonus));
+        throw new ValidationError(
+          `Skill with id ${bonus.skillId} and specialization ${bonus.specialization} not found for racial bonus application`,
+        );
       }
     });
   }
@@ -249,7 +251,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  levelUpSkill(skillId: string, specialization: string | undefined, allowThird: boolean): void {
+  levelUpSkill(skillId: string, specialization: string | null, allowThird: boolean): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
@@ -266,7 +268,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.experience.availableDevelopmentPoints -= cost;
   }
 
-  levelDownSkill(skillId: string, specialization: string | undefined): void {
+  levelDownSkill(skillId: string, specialization: string | null): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) {
       throw new ValidationError('Skill not found');
@@ -281,7 +283,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.experience.availableDevelopmentPoints += cost;
   }
 
-  deleteSkill(skillId: string, specialization: string | undefined): void {
+  deleteSkill(skillId: string, specialization: string | null): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
@@ -294,11 +296,14 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.removeSkill(skillId, specialization);
   }
 
-  findSkill(skillId: string, specialization: string | undefined): CharacterSkill | undefined {
-    return this.skills.find((s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true));
+  findSkill(skillId: string, specialization: string | null): CharacterSkill | null {
+    const found = this.skills.find(
+      (s) => s.skillId === skillId && (s.specialization === specialization || (!s.specialization && !specialization)),
+    );
+    return found || null;
   }
 
-  removeSkill(skillId: string, specialization: string | undefined): void {
+  removeSkill(skillId: string, specialization: string | null): void {
     if (specialization) {
       this.skills = this.skills.filter((s) => s.skillId !== skillId || s.specialization !== specialization);
     } else {
