@@ -16,7 +16,7 @@ export class StatProcessor {
   private processStat(stat: CharacterStat) {
     const bonus = this.getBonus(stat.temporary);
     const modifiers = { ...stat.modifiers, stat: bonus };
-    return new CharacterStat(stat.potential, stat.temporary, modifiers);
+    return CharacterStat.fromModifiers(stat.potential, stat.temporary, modifiers);
   }
 
   private getBonus(temporary: number | undefined): number {

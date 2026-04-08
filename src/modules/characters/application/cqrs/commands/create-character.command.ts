@@ -45,7 +45,7 @@ export interface CreateCharacterExperience {
 
 export interface CreateCharacterSkill {
   skillId: string;
-  specialization: string | undefined;
+  specialization: string | null;
 }
 
 export interface CreateCharacterItem {

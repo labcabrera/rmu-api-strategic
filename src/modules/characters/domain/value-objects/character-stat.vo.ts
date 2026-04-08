@@ -9,10 +9,15 @@ export class CharacterStat {
   public modifiers: Record<StatModifierKey, number>;
   public totalBonus: number;
 
-  constructor(potential: number, temporary: number, modifiers: Record<StatModifierKey, number>) {
+  constructor(potential: number, temporary: number, modifiers: Record<StatModifierKey, number>, totalBonus: number) {
     this.potential = potential;
     this.temporary = temporary;
     this.modifiers = modifiers;
-    this.totalBonus = Object.values(modifiers).reduce((sum, bonus) => sum + bonus, 0);
+    this.totalBonus = totalBonus;
+  }
+
+  static fromModifiers(potential: number, temporary: number, modifiers: Record<StatModifierKey, number>): CharacterStat {
+    const totalBonus = Object.values(modifiers).reduce((sum, bonus) => sum + bonus, 0);
+    return new CharacterStat(potential, temporary, modifiers, totalBonus);
   }
 }

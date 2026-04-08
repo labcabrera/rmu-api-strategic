@@ -7,7 +7,7 @@ export class CharacterSkill {
   skillId: string;
 
   @Prop({ type: String, required: false })
-  specialization: string | undefined;
+  specialization: string | null;
 
   @Prop({ type: [String], required: true })
   statistics: string[];
@@ -16,7 +16,7 @@ export class CharacterSkill {
   development: number[];
 
   @Prop({ type: [String], required: false })
-  professional: ProfessionalBonusType[] | undefined;
+  professional: ProfessionalBonusType[] | null;
 
   @Prop({ required: true })
   ranks: number;

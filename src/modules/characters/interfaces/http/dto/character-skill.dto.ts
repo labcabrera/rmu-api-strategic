@@ -8,7 +8,7 @@ export class CharacterSkillDto {
   skillId: string;
 
   @ApiProperty({ description: 'Specialization', example: 'cats' })
-  specialization: string | undefined;
+  specialization: string | null;
 
   @ApiProperty({ description: 'Associated statistics', example: ['WIS', 'CHA'] })
   statistics: string[];
@@ -17,7 +17,7 @@ export class CharacterSkillDto {
   development: number[];
 
   @ApiProperty({ description: 'Professional bonuses' })
-  professional: ProfessionalBonusType[] | undefined;
+  professional: ProfessionalBonusType[] | null;
 
   @ApiProperty({ description: 'Ranks', example: 3 })
   ranks: number;
@@ -71,23 +71,17 @@ export class CharacterSkillCreationDto {
   @ApiProperty({ description: 'Specialization', example: 'cats' })
   @IsString()
   @IsOptional()
-  specialization: string | undefined;
+  specialization: string | null;
 
   @ApiProperty({ description: 'Ranks', example: 3 })
   @IsNumber()
   ranks: number;
-
-  @ApiProperty({ description: 'Custom bonus', example: 5 })
-  @IsNumber()
-  @IsOptional()
-  customBonus: number;
 
   static fromEntity(skill: CharacterSkill): CharacterSkillCreationDto {
     const dto = new CharacterSkillCreationDto();
     dto.skillId = skill.skillId;
     dto.specialization = skill.specialization;
     dto.ranks = skill.ranks;
-    dto.customBonus = skill.customBonus;
     return dto;
   }
 }

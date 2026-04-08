@@ -22,6 +22,7 @@ import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 import { CharacterProps } from './character-props';
+import { SkillBonus } from '../value-objects/skill-bonus.vo';
 
 export class Character extends BaseAggregateRoot<CharacterProps> {
   private constructor(
@@ -141,15 +142,19 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     enduranceBonus: number | undefined;
     baseHits: number | undefined;
     baseAt: number | undefined;
-    skillBonuses: any[] | undefined;
+    skillBonuses: SkillBonus[];
   }) {
+    if (props.baseHits) {
+      props.skillBonuses.push({ skillId: 'body-development', specialization: null, bonus: props.baseHits });
+    }
     if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {
         const statKey = stat as StatKey;
         const prev = this.statistics[statKey];
-        this.statistics[statKey] = new CharacterStat(prev.potential || 0, prev.temporary || 0, { ...prev.modifiers, racial: bonus || 0 });
+        const statModifiers = { ...prev.modifiers, racial: bonus || 0 };
+        this.statistics[statKey] = CharacterStat.fromModifiers(prev.potential, prev.temporary, statModifiers);
       }
     }
     if (props.resistances) {
@@ -159,16 +164,25 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     if (props.strideBonus) this.movement.strideRacialBonus = props.strideBonus;
     if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
-    if (props.baseHits) {
-      const bodyDevSkill = this.skills.find((s) => s.skillId === 'body-development');
-      if (bodyDevSkill) {
-        bodyDevSkill.racialBonus = props.baseHits;
-      }
-    }
     if (props.baseAt) {
       this.defense.armor.racialAt = props.baseAt;
     }
+    this.updateRaceSkillBonuses(props.skillBonuses || []);
     this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  private updateRaceSkillBonuses(skillBonuses: SkillBonus[]) {
+    this.skills.forEach((skill) => {
+      skill.racialBonus = 0;
+    });
+    skillBonuses.forEach((bonus) => {
+      const skill = this.findSkill(bonus.skillId, bonus.specialization || undefined);
+      if (skill) {
+        skill.racialBonus = bonus.bonus;
+      } else {
+        this.skills.push(CharacterSkill.empty(bonus.skillId, bonus.specialization || null, [], [], bonus.bonus));
+      }
+    });
   }
 
   finishCreation(): void {
@@ -197,7 +211,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  addSkill(skillId: string, specialization: string | undefined, statistics: string[], development: number[], racialBonus: number): void {
+  addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {
     if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }

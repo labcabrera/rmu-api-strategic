@@ -71,7 +71,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     return updated;
   }
 
-  private hasSkillId(character: Character, skillId: string, specialization: string | undefined): boolean {
+  private hasSkillId(character: Character, skillId: string, specialization: string | null): boolean {
     return character.skills.some((skill) => skill.skillId === skillId && skill.specialization === specialization);
   }
 
@@ -84,7 +84,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     return categoryId;
   }
 
-  private validateSpecialization(skill: SkillResponse, specialization: string | undefined): void {
+  private validateSpecialization(skill: SkillResponse, specialization: string | null): void {
     if (skill.specialization) {
       if (!specialization) {
         throw new ValidationError(`Skill ${skill.id} requires a specialization`);

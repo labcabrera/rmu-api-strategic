@@ -49,14 +49,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const profession = await this.fetchProfession(command.info.professionId);
 
     const processedStatistics = this.processStatistics(race, command.statistics);
-    const info: CharacterInfo = {
-      race: new NamedEntity(race.id, race.name),
-      professionId: command.info.professionId,
-      sizeId: command.info.sizeId,
-      realmType: command.info.realmType,
-      height: command.info.height,
-      weight: command.info.weight,
-    };
+    const info = this.getCharacterInfo(command, race);
     const character = Character.partialCreate(
       game,
       new NamedEntity(faction.id, faction.name),
@@ -80,12 +73,13 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       enduranceBonus: race.enduranceBonus || 0,
       baseHits: race.baseHits || 0,
       baseAt: race.baseAt || 1,
+      skillBonuses: race.skillBonuses || [],
     });
     this.characterProcessorService.process(character, []);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
     this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
-    return created;
+    return character;
   }
 
   processStatistics(raceInfo: Race, statistics: Record<StatKey, CharacterStatCreation>): Record<StatKey, CharacterStat> {
@@ -93,8 +87,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     STAT_KEYS.forEach((e) => {
       const potential = statistics[e].potential;
       const temporary = statistics[e].temporary;
-      const racial = raceInfo.stats ? raceInfo.stats[e] || 0 : 0;
-      const stat = new CharacterStat(potential, temporary, { racial } as Record<string, number>);
+      const stat = CharacterStat.fromModifiers(potential, temporary, {} as Record<string, number>);
       result[e] = stat;
     });
     return result;
@@ -106,7 +99,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     if (!skills.some((e) => e.skillId === 'body-development')) {
       skills.push({
         skillId: 'body-development',
-        specialization: undefined,
+        specialization: null,
       });
     }
     const readedSkills = await this.fetchSkills();
@@ -132,6 +125,17 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       }
       character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, racialBonus);
     }
+  }
+
+  private getCharacterInfo(command: CreateCharacterCommand, race: Race): CharacterInfo {
+    return {
+      race: new NamedEntity(race.id, race.name),
+      professionId: command.info.professionId,
+      sizeId: command.info.sizeId,
+      realmType: command.info.realmType,
+      height: command.info.height,
+      weight: command.info.weight,
+    };
   }
 
   private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {

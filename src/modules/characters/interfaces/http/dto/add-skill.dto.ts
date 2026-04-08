@@ -11,18 +11,13 @@ export class AddSkillDto {
   @ApiProperty({ description: 'Skill specialization', example: 'cats' })
   @IsString()
   @IsOptional()
-  specialization: string;
+  specialization: string | null;
 
   @ApiProperty({ description: 'Skill ranks', example: 1 })
   @IsNumber()
   ranks: number;
 
-  @ApiProperty({ description: 'Custom bonus', example: 0 })
-  @IsNumber()
-  @IsOptional()
-  customBonus: number | undefined;
-
   static toCommand(characterId: string, dto: AddSkillDto, userId: string, roles: string[]) {
-    return new AddSkillCommand(characterId, dto.skillId, dto.specialization, dto.ranks, dto.customBonus, userId, roles);
+    return new AddSkillCommand(characterId, dto.skillId, dto.specialization, dto.ranks, userId, roles);
   }
 }

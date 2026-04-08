@@ -16,7 +16,7 @@ import { CharacterTraitDto } from './character-trait.dto';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -84,10 +84,9 @@ export class CharacterDto {
 
   static fromEntity(entity: Character) {
     const statistics: Record<StatKey, CharacterStatDto> = {} as Record<StatKey, CharacterStatDto>;
-    for (const key in entity.statistics) {
-      statistics[key as StatKey] = CharacterStatDto.fromEntity(entity.statistics[key as StatKey]);
+    for (const key of STAT_KEYS) {
+      statistics[key] = CharacterStatDto.fromEntity(entity.statistics[key]);
     }
-
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;

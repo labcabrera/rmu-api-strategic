@@ -25,7 +25,7 @@ export class KafkaRaceEventConsumer {
 
   @EventPattern('internal.rmu-core.race.updated.v1')
   async handleRaceUpdated(@Payload() event: any, @Ctx() context: KafkaContext) {
-    this.logger.log(`Received event on topic ${context.getTopic()}: ${JSON.stringify(event)}`);
+    this.logger.log(`Received race updated event on topic ${context.getTopic()}: ${event.data.id}: ${event.data.name}`);
     const data = event.data;
     if (!data || !data.id) {
       this.logger.error(`Event data is missing or does not contain an id: ${JSON.stringify(event)}`);

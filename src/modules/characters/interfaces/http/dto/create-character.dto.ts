@@ -72,7 +72,6 @@ export class CreateCharacterDto {
     const skills = dto.skills!.map((skill) => ({
       skillId: skill.skillId,
       ranks: skill.ranks,
-      customBonus: skill.customBonus,
       specialization: skill.specialization,
     }));
     const statistics: Record<StatKey, CharacterStatCreation> = Object.fromEntries(

@@ -16,7 +16,7 @@ export class KafkaCharacterEventConsumer {
 
   @EventPattern('internal.rmu-strategic.character.race-updated.v1')
   async handleRaceUpdated(@Payload() event: CharacterRaceUpdatedEvent, @Ctx() context: KafkaContext) {
-    this.logger.log(`Received event on topic ${context.getTopic()}: ${JSON.stringify(event)}`);
+    this.logger.log(`Received race updated event on ${context.getTopic()} for race ${event.data.id}: ${event.data.name}`);
     const command = UpdateCharacterRaceCommand.create(event.data);
     await this.commandBus.execute<UpdateCharacterRaceCommand, void>(command);
   }
