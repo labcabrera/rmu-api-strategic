@@ -9,6 +9,7 @@ export interface ItemResponse {
   category: string;
   weapon: ItemWeapon | null;
   armor: ItemArmorResponse | null;
+  shield: ItemShieldResponse | null;
   info: ItemInfoResponse;
 }
 
@@ -35,6 +36,11 @@ export interface ItemArmorResponse {
   rangedPenalty: number;
   perception: number;
   baseDifficulty: string;
+}
+
+export interface ItemShieldResponse {
+  db: number;
+  blockCount: number;
 }
 
 export interface ItemWeaponRangeResponse {

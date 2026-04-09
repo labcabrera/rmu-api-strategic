@@ -4,6 +4,7 @@ import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
 import { ItemWeaponDto } from './item-weapon.dto';
 import { ItemInfoDto } from './item-info.dto';
 import { ItemArmorDto } from './item-armor.dto';
+import { ItemShieldDto } from './item-shield.dto';
 
 export class ItemDto {
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })
@@ -36,6 +37,9 @@ export class ItemDto {
   @ApiProperty({ description: 'Armor details if the item is armor', type: ItemArmorDto, required: false })
   armor: ItemArmorDto | null;
 
+  @ApiProperty({ description: 'Shield details if the item is a shield', type: ItemShieldDto, required: false })
+  shield: ItemShieldDto | null;
+
   @ApiProperty({ description: 'Amount of items in the stack if stackable', type: Number, required: false, example: 10 })
   amount: number | null;
 
@@ -65,6 +69,7 @@ export class ItemDto {
     dto.name = entity.name;
     dto.weapon = entity.weapon ? ItemWeaponDto.fromEntity(entity.weapon) : null;
     dto.armor = entity.armor ? ItemArmorDto.fromEntity(entity.armor) : null;
+    dto.shield = entity.shield ? ItemShieldDto.fromEntity(entity.shield) : null;
     dto.amount = entity.amount;
     dto.info = ItemInfoDto.fromEntity(entity.info);
     dto.owner = entity.owner;

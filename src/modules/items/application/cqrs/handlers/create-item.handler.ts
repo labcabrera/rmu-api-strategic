@@ -99,7 +99,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     let weight = itemType.info.weight || 0;
     if (character && itemType.armor && itemType.armor.enc) {
       weight = (itemType.armor.enc * character.info.weight) / 100;
-      weight = Math.round(weight * 100) / 100; // round to 2 decimals
+      weight = Math.round(weight * 100) / 100;
     }
 
     let existingItem: Item | null = null;
@@ -121,7 +121,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         carried: command.carried || false,
         weapon: itemType.weapon,
         armor: itemType.armor,
-        shield: null, //TODO
+        shield: itemType.shield,
         affixes: command.affixes || [],
         amount: command.amount,
         info: {
