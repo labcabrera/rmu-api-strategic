@@ -121,6 +121,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         carried: command.carried || false,
         weapon: itemType.weapon,
         armor: itemType.armor,
+        shield: null, //TODO
         affixes: command.affixes || [],
         amount: command.amount,
         info: {

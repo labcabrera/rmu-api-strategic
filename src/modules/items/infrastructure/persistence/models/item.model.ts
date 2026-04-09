@@ -5,6 +5,7 @@ import { ItemWeapon } from './item-weapon.model';
 import { ItemArmor } from './item-armor.model';
 import { ItemAffix } from './item-affix.model';
 import { ItemInfo } from './item-info';
+import { ItemShield } from './item-shield.model';
 
 export type ItemDocument = ItemModel & Document;
 
@@ -39,6 +40,9 @@ export class ItemModel {
 
   @Prop({ type: ItemArmor, required: false })
   armor: ItemArmor | null;
+
+  @Prop({ type: ItemShield, required: false })
+  shield: ItemShield | null;
 
   @Prop({ type: [ItemAffix], required: true })
   affixes: ItemAffix[];

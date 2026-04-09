@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import {
   CharacterAttack,
-  CharacterDefense,
   CharacterEndurance,
   CharacterHP,
   CharacterInfo,
@@ -20,6 +19,7 @@ import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/model
 import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 import { CharacterStat, CharacterStatSchema } from './character-stat.model';
 import { CharacterMovement } from './character-movement.model';
+import { CharacterDefense } from './character-defense.model';
 
 export type CharacterDocument = CharacterModel & Document;
 

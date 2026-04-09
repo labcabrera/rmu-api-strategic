@@ -7,6 +7,7 @@ import { ItemArmor } from '../value-objects/item-armor.vo';
 import { ItemAffix } from '../value-objects/item-affix.vo';
 import { ItemInfo } from '../value-objects/item-info.vo';
 import { AccessType } from 'src/modules/shared/domain/entities/access-type';
+import { ItemShield } from '../value-objects/item-shield.vo';
 
 export const goldCoin = 'gold-coin';
 
@@ -22,6 +23,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     public carried: boolean,
     public weapon: ItemWeapon | null,
     public armor: ItemArmor | null,
+    public shield: ItemShield | null,
     public affixes: ItemAffix[],
     public info: ItemInfo,
     public amount: number | null,
@@ -46,6 +48,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.carried,
       props.weapon,
       props.armor,
+      props.shield,
       props.affixes,
       props.info,
       props.amount,
@@ -71,6 +74,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.carried,
       props.weapon,
       props.armor,
+      props.shield,
       props.affixes,
       props.info,
       props.amount,
@@ -117,6 +121,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       carried: this.carried,
       weapon: this.weapon,
       armor: this.armor,
+      shield: this.shield,
       affixes: this.affixes,
       info: this.info,
       amount: this.amount,

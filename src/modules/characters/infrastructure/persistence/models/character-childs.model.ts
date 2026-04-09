@@ -70,36 +70,6 @@ export class CharacterStatistics {
 }
 
 @Schema({ _id: false })
-export class CharacterArmor {
-  @Prop({ type: Number, required: false })
-  at: number | undefined;
-
-  @Prop({ type: Number, required: true })
-  racialAt: number;
-
-  @Prop({ type: Number, required: false })
-  bodyAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  headAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  armsAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  legsAt: number | undefined;
-}
-
-@Schema({ _id: false })
-export class CharacterDefense {
-  @Prop({ required: true })
-  defensiveBonus: number;
-
-  @Prop({ type: CharacterArmor, required: true })
-  armor: CharacterArmor;
-}
-
-@Schema({ _id: false })
 export class CharacterHP {
   @Prop({ required: true })
   max: number;

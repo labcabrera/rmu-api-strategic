@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { off } from 'process';
+import { CharacterShield } from '../../../value-objects/character-defense.vo';
 
 @Injectable()
 export class DefenseProcessor {
@@ -20,12 +22,12 @@ export class DefenseProcessor {
     armor.legsAt = this.getItemArmorTypeOrDefault(slots['legs'], items, racialAt);
     if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
       armor.at = armor.bodyAt;
-      armor.bodyAt = undefined;
-      armor.headAt = undefined;
-      armor.armsAt = undefined;
-      armor.legsAt = undefined;
+      armor.bodyAt = null;
+      armor.headAt = null;
+      armor.armsAt = null;
+      armor.legsAt = null;
     } else {
-      armor.at = undefined;
+      armor.at = null;
     }
   }
 
@@ -46,5 +48,17 @@ export class DefenseProcessor {
     }
     const quBonus = character.statistics?.qu.totalBonus || 0;
     character.defense.defensiveBonus = quBonus * 3;
+  }
+
+  private processShield(character: Character, items: Item[]): void {
+    character.defense.shield = null;
+    const slots = character.equipment.slots || {};
+    if (!slots['offhand']) {
+      const offHand = items.find((item) => item.id === slots['offhand']);
+      if (offHand && offHand.shield) {
+        //TODO
+        character.defense.shield = new CharacterShield(15, 2);
+      }
+    }
   }
 }
