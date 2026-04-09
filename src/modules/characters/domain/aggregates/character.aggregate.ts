@@ -328,6 +328,16 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 
+  unequipItem(itemId: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const equippedSlot = Object.entries(this.equipment.slots).find(([_, item]) => item === itemId);
+    if (!equippedSlot) {
+      throw new ValidationError('Item not equipped');
+    }
+    const slotName = equippedSlot[0];
+    this.equipment.slots[slotName] = null;
+  }
+
   getProps(): CharacterProps {
     return {
       id: this.id,

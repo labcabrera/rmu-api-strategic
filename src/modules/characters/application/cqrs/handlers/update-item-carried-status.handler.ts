@@ -24,11 +24,10 @@ export class UpdateItemCarriedStatusHandler implements ICommandHandler<UpdateIte
     const item = await this.itemRepository.findById(command.itemId);
     if (!item) throw new ValidationError(`Item with id ${command.itemId} not found`);
 
-    // if (item.carried === command.carried) throw new NotModifiedError(`Item carried status is already set to: ${command.carried}`);
     if (command.carried === false) {
-      for (const slot of ['mainHand', 'offHand', 'body', 'head', 'legs', 'arms']) {
-        if (character.equipment[slot] == item.id) {
-          character.equipment[slot] = undefined;
+      for (const slot of Object.keys(character.equipment.slots) as Array<keyof typeof character.equipment.slots>) {
+        if (character.equipment.slots[slot] === item.id) {
+          character.equipment.slots[slot] = null;
         }
       }
     }

@@ -11,13 +11,13 @@ export class DefenseProcessor {
   }
 
   private processArmor(character: Character, items: Item[]): void {
-    const eq = character.equipment;
     const racialAt = character.defense.armor.racialAt;
     const armor = character.defense.armor;
-    armor.bodyAt = this.getItemArmorTypeOrDefault(eq.body, items, racialAt);
-    armor.headAt = this.getItemArmorTypeOrDefault(eq.head, items, racialAt);
-    armor.armsAt = this.getItemArmorTypeOrDefault(eq.arms, items, racialAt);
-    armor.legsAt = this.getItemArmorTypeOrDefault(eq.legs, items, racialAt);
+    const slots = character.equipment.slots || {};
+    armor.bodyAt = this.getItemArmorTypeOrDefault(slots['body'], items, racialAt);
+    armor.headAt = this.getItemArmorTypeOrDefault(slots['head'], items, racialAt);
+    armor.armsAt = this.getItemArmorTypeOrDefault(slots['arms'], items, racialAt);
+    armor.legsAt = this.getItemArmorTypeOrDefault(slots['legs'], items, racialAt);
     if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
       armor.at = armor.bodyAt;
       armor.bodyAt = undefined;
@@ -29,7 +29,7 @@ export class DefenseProcessor {
     }
   }
 
-  private getItemArmorTypeOrDefault(itemId: string | undefined, items: Item[], defaultAt: number): number {
+  private getItemArmorTypeOrDefault(itemId: string | null, items: Item[], defaultAt: number): number {
     if (!itemId) {
       return defaultAt;
     }

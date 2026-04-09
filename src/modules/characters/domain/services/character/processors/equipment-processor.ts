@@ -1,21 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
 
 const baseDifficultyCodes = ['c', 's', 'r', 'e', 'l', 'm', 'h', 'vh', 'xh', 'sf', 'a', 'ni'];
 
 @Injectable()
 export class EquipmentProcessor {
   process(character: Character, items: Item[]): void {
+    if (!character.equipment) {
+      character.equipment = CharacterEquipment.empty();
+    }
+    if (!character.equipment.slots) {
+      character.equipment.slots = {} as Record<string, string>;
+    }
+
     const tmpCarriedWeight = items.filter((item) => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
 
+    const slots = character.equipment.slots || {};
     const armorIds = [] as string[];
-    if (character.equipment.body) armorIds.push(character.equipment.body);
-    if (character.equipment.head) armorIds.push(character.equipment.head);
-    if (character.equipment.arms) armorIds.push(character.equipment.arms);
-    if (character.equipment.legs) armorIds.push(character.equipment.legs);
+    if (slots['body']) armorIds.push(slots['body']);
+    if (slots['head']) armorIds.push(slots['head']);
+    if (slots['arms']) armorIds.push(slots['arms']);
+    if (slots['legs']) armorIds.push(slots['legs']);
 
     const armors = items.filter((item) => armorIds.includes(item.id));
 

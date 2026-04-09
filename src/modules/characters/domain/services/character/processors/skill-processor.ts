@@ -78,11 +78,16 @@ export class SkillProcessor {
   }
 
   private getArmorPenaltyBonus(character: Character, skill: CharacterSkill, items: Item[]): number {
-    if (skill.skillId === 'perception' && character.equipment.head) {
-      const headItem = items.find((item) => item.id === character.equipment.head && item.armor);
+    if (!character.equipment || !character.equipment.slots) {
+      return 0;
+    }
+    const headItemId = character.equipment.slots['head'] || null;
+    const armsItemId = character.equipment.slots['arms'] || null;
+    if (skill.skillId === 'perception' && headItemId) {
+      const headItem = items.find((item) => item.id === headItemId && item.armor);
       return headItem ? headItem.armor!.perception : 0;
-    } else if (skill.skillId === 'ranged-weapon' && character.equipment.arms) {
-      const bodyItem = items.find((item) => item.id === character.equipment.arms && item.armor);
+    } else if (skill.skillId === 'ranged-weapon' && armsItemId) {
+      const bodyItem = items.find((item) => item.id === armsItemId && item.armor);
       return bodyItem ? bodyItem.armor!.rangedPenalty : 0;
     }
     return 0;

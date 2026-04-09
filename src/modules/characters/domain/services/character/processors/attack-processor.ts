@@ -10,7 +10,7 @@ import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 @Injectable()
 export class AttackProcessor {
   process(character: Character, items: Item[]): void {
-    if (!character.equipment) {
+    if (!character.equipment || !character.equipment.slots) {
       //TODO process unarmed attack
       return;
     }
@@ -71,7 +71,7 @@ export class AttackProcessor {
   }
 
   private getAvailableModes(character: Character, weapon: ItemWeapon): ItemWeaponMode[] {
-    const offHandEquiped = character.equipment.offHand;
+    const offHandEquiped = character.equipment.slots['offHand'] || null;
     const hasTwoHandedMode = weapon.modes.find((m) => m.type === 'two-hands');
     return weapon.modes.filter((m) => {
       if (offHandEquiped && m.type === 'two-hands') {
