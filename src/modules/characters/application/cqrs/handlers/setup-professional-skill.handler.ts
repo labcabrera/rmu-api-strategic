@@ -23,7 +23,7 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
 
     if (!character) throw new NotFoundError('Character', characterId);
 
-    const skill = character.skills.find((skill) => skill.skillId === skillId && skill.specialization === command.specialization) || null;
+    const skill = character.findSkill(skillId, command.specialization);
     if (!skill) throw new Error(`Skill ${skillId} not found for character ${characterId}`);
 
     this.validateCount(command.types, skill, character);

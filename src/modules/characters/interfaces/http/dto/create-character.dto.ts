@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CharacterMovementCreationDto } from './character-movement-dto';
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatCreationDto } from './character-stat.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
@@ -44,12 +43,6 @@ export class CreateCharacterDto {
   @ApiProperty({ description: 'Character weapon development', type: [String] })
   @IsArray()
   weaponDevelopment: WeaponDevelopmentType[] = [];
-
-  @ApiProperty({ description: 'Character movement', type: CharacterMovementCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterMovementCreationDto)
-  @IsObject()
-  movement: CharacterMovementCreationDto;
 
   @ApiProperty({ description: 'Character skills', type: [CharacterSkillCreationDto] })
   @ValidateNested({ each: true })

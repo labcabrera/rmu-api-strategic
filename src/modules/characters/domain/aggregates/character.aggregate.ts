@@ -162,7 +162,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         this.setupRacialResistanceBonus(resistance, bonus || 0);
       }
     }
-    if (props.strideBonus) this.movement.strideRacialBonus = props.strideBonus;
+    if (props.strideBonus !== undefined) {
+      if (!this.movement.modifiers) {
+        this.movement.modifiers = {} as Record<string, number>;
+      }
+      this.movement.modifiers['racial'] = props.strideBonus;
+    }
     if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
     if (props.baseAt) {
       this.defense.armor.racialAt = props.baseAt;

@@ -70,21 +70,6 @@ export class CharacterStatistics {
 }
 
 @Schema({ _id: false })
-export class CharacterMovement {
-  @Prop({ required: true })
-  baseMovementRate: number;
-
-  @Prop({ required: true })
-  strideRacialBonus: number;
-
-  @Prop({ required: true })
-  strideQuBonus: number;
-
-  @Prop({ required: true })
-  strideCustomBonus: number;
-}
-
-@Schema({ _id: false })
 export class CharacterArmor {
   @Prop({ type: Number, required: false })
   at: number | undefined;

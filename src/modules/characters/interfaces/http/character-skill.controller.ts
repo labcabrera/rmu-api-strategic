@@ -122,7 +122,7 @@ export class CharacterSkillController {
     this.logger.debug(`Updating professional skill for character ${id} and skill ${skillId} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
-    const specialization = req.query.specialization as string | undefined;
+    const specialization = req.query.specialization as string | null;
     const command = UpdateProfessionalSkillDto.toCommand(id, skillId, specialization, dto, userId, roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);

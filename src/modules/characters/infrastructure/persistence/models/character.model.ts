@@ -7,7 +7,6 @@ import {
   CharacterHP,
   CharacterInfo,
   CharacterInitiative,
-  CharacterMovement,
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
@@ -20,6 +19,7 @@ import { CharacterTrait } from './character-trait.model';
 import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/models/named-entity.model';
 import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 import { CharacterStat, CharacterStatSchema } from './character-stat.model';
+import { CharacterMovement } from './character-movement.model';
 
 export type CharacterDocument = CharacterModel & Document;
 

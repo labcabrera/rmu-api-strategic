@@ -19,7 +19,7 @@ export class UpdateProfessionalSkillDto {
   static toCommand(
     characterId: string,
     skillId: string,
-    specialization: string | undefined,
+    specialization: string | null,
     dto: UpdateProfessionalSkillDto,
     userId: string,
     roles: string[],

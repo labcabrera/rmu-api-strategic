@@ -5,7 +5,7 @@ export class SetUpProfessionalSkillCommand extends AuthenticatedCommand {
   constructor(
     public readonly characterId: string,
     public readonly skillId: string,
-    public readonly specialization: string | undefined,
+    public readonly specialization: string | null,
     public readonly types: ProfessionalBonusType[],
     userId: string,
     roles: string[],

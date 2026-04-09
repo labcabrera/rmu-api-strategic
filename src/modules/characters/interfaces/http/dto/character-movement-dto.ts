@@ -1,25 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber } from 'class-validator';
 import { CharacterMovement } from 'src/modules/characters/domain/value-objects/character-movement.vo';
 
 export class CharacterMovementDto {
   baseMovementRate: number;
-  strideRacialBonus: number;
-  strideQuBonus: number;
-  strideCustomBonus: number;
+  modifiers: Record<string, number>;
+  maxPace: string;
 
   static fromEntity(movement: CharacterMovement): CharacterMovementDto {
     const dto = new CharacterMovementDto();
     dto.baseMovementRate = movement.baseMovementRate;
-    dto.strideRacialBonus = movement.strideRacialBonus;
-    dto.strideQuBonus = movement.strideQuBonus;
+    dto.modifiers = movement.modifiers;
+    dto.maxPace = movement.maxPace;
     return dto;
   }
-}
-
-export class CharacterMovementCreationDto {
-  @ApiProperty({ description: 'Stride custom bonus', example: 1 })
-  @IsNumber()
-  @IsNotEmpty()
-  strideCustomBonus: number;
 }
