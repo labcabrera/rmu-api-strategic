@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { off } from 'process';
 import { CharacterShield } from '../../../value-objects/character-defense.vo';
 
 @Injectable()
@@ -10,6 +9,7 @@ export class DefenseProcessor {
   process(character: Character, items: Item[]): void {
     this.processArmor(character, items);
     this.processDefensiveBonus(character);
+    this.processShield(character, items);
   }
 
   private processArmor(character: Character, items: Item[]): void {
@@ -32,9 +32,8 @@ export class DefenseProcessor {
   }
 
   private getItemArmorTypeOrDefault(itemId: string | null, items: Item[], defaultAt: number): number {
-    if (!itemId) {
-      return defaultAt;
-    }
+    if (!itemId) return defaultAt;
+
     const item = items.find((e) => e.id == itemId);
     if (!item || !item.armor || !item.armor.at) {
       throw new ValidationError('Invalid armor item');
@@ -42,22 +41,18 @@ export class DefenseProcessor {
     return item.armor.at;
   }
 
-  private processDefensiveBonus(character: Partial<Character>): void {
-    if (!character.defense) {
-      return;
-    }
+  private processDefensiveBonus(character: Character): void {
     const quBonus = character.statistics?.qu.totalBonus || 0;
     character.defense.defensiveBonus = quBonus * 3;
   }
 
   private processShield(character: Character, items: Item[]): void {
     character.defense.shield = null;
-    const slots = character.equipment.slots || {};
-    if (!slots['offhand']) {
-      const offHand = items.find((item) => item.id === slots['offhand']);
+    const offHandId: string | null = character.equipment.slots['offHand'] || null;
+    if (offHandId) {
+      const offHand = items.find((item) => item.id === offHandId);
       if (offHand && offHand.shield) {
-        //TODO
-        character.defense.shield = new CharacterShield(15, 2);
+        character.defense.shield = new CharacterShield(offHand.shield.db, offHand.shield.blockCount);
       }
     }
   }
