@@ -24,6 +24,8 @@ import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-agg
 import { CharacterProps } from './character-props';
 import { SkillBonus } from '../value-objects/skill-bonus.vo';
 
+export const UNRANKED_SKILL_BONUS = -20;
+
 export class Character extends BaseAggregateRoot<CharacterProps> {
   private constructor(
     id: string,
@@ -220,7 +222,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
 
   getSkillBonus(skillId: string, specialization: string | null): number {
     const skill = this.findSkill(skillId, specialization);
-    return skill ? skill.totalBonus : -20;
+    return skill ? skill.totalBonus : UNRANKED_SKILL_BONUS;
   }
 
   addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {

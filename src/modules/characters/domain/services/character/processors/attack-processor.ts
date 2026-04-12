@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Character } from '../../../aggregates/character.aggregate';
+import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.aggregate';
 import { CharacterAttack } from '../../../value-objects/character-attack.vo';
 import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
@@ -84,7 +84,7 @@ export class AttackProcessor {
     if (skill) {
       modifiers['skill'] = skill.totalBonus;
     } else {
-      modifiers['skill'] = -20;
+      modifiers['skill'] = UNRANKED_SKILL_BONUS;
     }
     if (slot === 'offHand') {
       this.getOffHandPenalty(character, modifiers);

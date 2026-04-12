@@ -28,4 +28,5 @@ export class CharacterAttack {
       props.meleeRange,
       props.boModifiers,
     );
+  }
 }
