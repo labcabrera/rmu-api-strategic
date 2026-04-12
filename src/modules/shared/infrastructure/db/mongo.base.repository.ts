@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { FilterQuery, Model } from 'mongoose';
 import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
 import { Page } from 'src/modules/shared/domain/entities/page';
@@ -30,7 +32,7 @@ export abstract class MongoBaseRepository<E extends BaseAggregateRoot<any>, D> {
       mongoQuery = { $and: [rsqlParsed, filter] };
     }
 
-    this.logger.debug(`Executing MongoDB query: ${JSON.stringify(mongoQuery)} with pagination: page=${page}, size=${size}`);
+    this.logger.verbose(`Executing MongoDB query: ${JSON.stringify(mongoQuery)} with pagination: page=${page}, size=${size}`);
 
     const [docs, totalElements] = await Promise.all([
       this.model
@@ -45,22 +47,17 @@ export abstract class MongoBaseRepository<E extends BaseAggregateRoot<any>, D> {
   }
 
   async save(entity: E): Promise<E> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const props = entity.getProps();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { id, ...rest } = props;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const model = new this.model({ ...rest, _id: id });
     await model.save();
     return this.mapToEntity(model);
   }
 
   async update(entityId: string, partialEntity: Partial<E>): Promise<E> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const props = partialEntity.getProps ? partialEntity.getProps() : partialEntity;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, ...rest } = props;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const update = { $set: rest } as any;
     const updatedEntity = await this.model.findByIdAndUpdate(entityId, update, { new: true });
     if (!updatedEntity) throw new NotFoundError('Entity', entityId);

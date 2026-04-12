@@ -1,16 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterAttack } from '../../../value-objects/character-attack.vo';
-import { DomainError } from 'src/modules/shared/domain/errors/errors';
+import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
 import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
+
+const SHIELD_FUMBLE = 4;
 
 @Injectable()
 export class AttackProcessor {
+  private readonly logger = new Logger(AttackProcessor.name);
+
   process(character: Character, items: Item[]): void {
     if (!character.equipment || !character.equipment.slots) {
+      this.logger.warn(`Character ${character.id} has no equipment slots defined, skipping attack processing`);
       //TODO process unarmed attack
       return;
     }
@@ -20,15 +26,17 @@ export class AttackProcessor {
     character.attacks = attacks;
   }
 
-  private calculateAttackBonusSlot(character: Character, attacks: CharacterAttack[], slot: string, items: Item[]): void {
+  private calculateAttackBonusSlot(character: Character, attacks: CharacterAttack[], slot: EquipmentSlot, items: Item[]): void {
     if (!items || !character.skills) {
       return;
     }
-    const equipment = character.equipment;
-    if (equipment[slot]) {
-      const item = items.find((e) => e.id == equipment[slot]);
-      //TODO check attack shield
-      if (item?.weapon) {
+    const slotItemId = character.equipment.slots[slot];
+    if (slotItemId) {
+      const item = items.find((e) => e.id == slotItemId);
+      if (!item) {
+        throw new ValidationError(`Item with id ${slotItemId} not found for character ${character.id} in slot ${slot}`);
+      }
+      if (item.weapon) {
         const skillId = item.weapon.skillId;
         const skill = this.getWeaponSkill(character, item.weapon);
         const skillBonus = skill ? skill.totalBonus : -25;
@@ -38,10 +46,8 @@ export class AttackProcessor {
           this.getOffHandPenalty(character, boModifiers);
         }
         const totalBonus = Object.values(boModifiers).reduce((sum, bonus) => sum + bonus, 0);
-
         const ranks = skill ? skill.ranks : 0;
         const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
-
         this.getAvailableModes(character, item.weapon).forEach((mode) => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
@@ -60,12 +66,28 @@ export class AttackProcessor {
           };
           attacks.push(attack);
         });
+      } else if (item.shield) {
+        const skillBonus = character.getSkillBonus('shield', null);
+        const attack: CharacterAttack = {
+          attackName: slot,
+          attackTable: 'shield',
+          sizeAdjustment: 0,
+          fumbleTable: 'shield',
+          fumble: SHIELD_FUMBLE,
+          weaponFumble: SHIELD_FUMBLE,
+          bo: skillBonus,
+          type: 'melee',
+          defaultAttack: true,
+          meleeRange: Math.round((character.info.height / 2) * 100) / 100,
+          boModifiers: { skill: skillBonus },
+        };
+        attacks.push(attack);
       }
     }
   }
   private getMeleeRange(character: Character, mode: ItemWeaponMode, item: Item): number | null {
     if (mode.attackTypes?.includes('melee')) {
-      return character.info.height / 2 + (item.info?.length || 0);
+      return Math.round((character.info.height / 2 + (item.info?.length || 0)) * 100) / 100;
     }
     return null;
   }

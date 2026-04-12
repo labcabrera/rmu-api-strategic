@@ -218,6 +218,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
+  getSkillBonus(skillId: string, specialization: string | null) {
+    const skill = this.findSkill(skillId, specialization);
+    return skill ? skill.totalBonus : -20;
+  }
+
   addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {
     if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
