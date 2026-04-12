@@ -7,6 +7,7 @@ import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weap
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
+import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
 
 const SHIELD_FUMBLE = 4;
 
@@ -44,6 +45,7 @@ export class AttackProcessor {
         this.getAvailableModes(character, item.weapon).forEach((mode) => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
+          const ranges = mode.ranges ? mode.ranges.map((r) => new CharacterAttackRange(r.from, r.to, r.bonus)) : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
             attackTable: mode.attackTable,
@@ -54,6 +56,7 @@ export class AttackProcessor {
             type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
             defaultAttack: true,
             meleeRange: meleeRange,
+            ranges: ranges,
             boModifiers: boModifiers,
           });
           attacks.push(attack);
@@ -72,6 +75,7 @@ export class AttackProcessor {
           type: 'melee',
           defaultAttack: true,
           meleeRange: Math.round((character.info.height / 2) * 100) / 100,
+          ranges: null,
           boModifiers: boModifiers,
         });
         attacks.push(attack);

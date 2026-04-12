@@ -1,3 +1,5 @@
+import { CharacterAttackRange } from './character-attack-range.vo';
+
 export class CharacterAttack {
   constructor(
     public attackName: string,
@@ -10,6 +12,7 @@ export class CharacterAttack {
     public type: string,
     public defaultAttack: boolean,
     public meleeRange: number | null,
+    public ranges: CharacterAttackRange[] | null,
     public boModifiers: Record<string, number>,
   ) {}
 
@@ -26,6 +29,7 @@ export class CharacterAttack {
       props.type,
       props.defaultAttack,
       props.meleeRange,
+      props.ranges,
       props.boModifiers,
     );
   }
