@@ -218,7 +218,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  getSkillBonus(skillId: string, specialization: string | null) {
+  getSkillBonus(skillId: string, specialization: string | null): number {
     const skill = this.findSkill(skillId, specialization);
     return skill ? skill.totalBonus : -20;
   }

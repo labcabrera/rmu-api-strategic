@@ -2,11 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterAttack } from '../../../value-objects/character-attack.vo';
 import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
 import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 
 const SHIELD_FUMBLE = 4;
 
@@ -38,58 +38,80 @@ export class AttackProcessor {
       }
       if (item.weapon) {
         const skillId = item.weapon.skillId;
-        const skill = this.getWeaponSkill(character, item.weapon);
-        const skillBonus = skill ? skill.totalBonus : -25;
-        const boModifiers: Record<string, number> = {};
-        boModifiers['skill'] = skillBonus;
-        if (slot === 'offHand') {
-          this.getOffHandPenalty(character, boModifiers);
-        }
-        const totalBonus = Object.values(boModifiers).reduce((sum, bonus) => sum + bonus, 0);
-        const ranks = skill ? skill.ranks : 0;
-        const fumble = Math.max(1, item.weapon.fumble - Math.floor(ranks / 5));
+        const skill = this.getWeaponSkillBonus(character, item.weapon);
+        const boModifiers = this.getBoModifiers(skill, character, slot);
+        const fumble = this.getFumble(item.weapon.fumble, skill);
         this.getAvailableModes(character, item.weapon).forEach((mode) => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
-          const attack: CharacterAttack = {
+          const attack = CharacterAttack.fromProps({
             attackName: slot,
             attackTable: mode.attackTable,
             sizeAdjustment: sizeAdjustment,
             fumbleTable: mode.fumbleTable,
             fumble: fumble,
             weaponFumble: item.weapon!.fumble,
-            bo: totalBonus,
             type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
             defaultAttack: true,
             meleeRange: meleeRange,
             boModifiers: boModifiers,
-          };
+          });
           attacks.push(attack);
         });
       } else if (item.shield) {
-        const skillBonus = character.getSkillBonus('shield', null);
-        const attack: CharacterAttack = {
+        const skill = character.findSkill('shield', null);
+        const boModifiers = this.getBoModifiers(skill, character, slot);
+        const fumble = this.getFumble(SHIELD_FUMBLE, skill);
+        const attack = CharacterAttack.fromProps({
           attackName: slot,
           attackTable: 'shield',
           sizeAdjustment: 0,
           fumbleTable: 'shield',
-          fumble: SHIELD_FUMBLE,
+          fumble: fumble,
           weaponFumble: SHIELD_FUMBLE,
-          bo: skillBonus,
           type: 'melee',
           defaultAttack: true,
           meleeRange: Math.round((character.info.height / 2) * 100) / 100,
-          boModifiers: { skill: skillBonus },
-        };
+          boModifiers: boModifiers,
+        });
         attacks.push(attack);
       }
     }
   }
+
+  private getBoModifiers(skill: CharacterSkill | null, character: Character, slot: EquipmentSlot): Record<string, number> {
+    const modifiers: Record<string, number> = {};
+    if (skill) {
+      modifiers['skill'] = skill.totalBonus;
+    } else {
+      modifiers['skill'] = -20;
+    }
+    if (slot === 'offHand') {
+      this.getOffHandPenalty(character, modifiers);
+    }
+    return modifiers;
+  }
+
+  private getFumble(baseFumble: number, skill: CharacterSkill | null): number {
+    const ranks = skill ? skill.ranks : 0;
+    return Math.max(1, baseFumble - Math.floor(ranks / 5));
+  }
+
   private getMeleeRange(character: Character, mode: ItemWeaponMode, item: Item): number | null {
     if (mode.attackTypes?.includes('melee')) {
       return Math.round((character.info.height / 2 + (item.info?.length || 0)) * 100) / 100;
     }
     return null;
+  }
+
+  private getModifiers(character: Character, weapon: ItemWeapon): Record<string, number> {
+    const modifiers: Record<string, number> = {};
+    const skill = this.getWeaponSkillBonus(character, weapon);
+    modifiers['skill'] = skill ? skill.totalBonus : -25;
+    if (character.equipment.slots['offHand']) {
+      this.getOffHandPenalty(character, modifiers);
+    }
+    return modifiers;
   }
 
   private getAvailableModes(character: Character, weapon: ItemWeapon): ItemWeaponMode[] {
@@ -119,12 +141,12 @@ export class AttackProcessor {
     }
   }
 
-  private getWeaponSkill(character: Character, weapon: ItemWeapon): CharacterSkill | undefined {
+  private getWeaponSkillBonus(character: Character, weapon: ItemWeapon): CharacterSkill | null {
     const skillId = weapon.skillId;
     if (skillId.indexOf('@') > -1) {
       const baseSkillId = skillId.split('@')[0];
       const specialization = skillId.split('@')[1];
-      return character.skills.find((e) => e.skillId == baseSkillId && e.specialization == specialization);
+      return character.findSkill(baseSkillId, specialization);
     }
     throw new DomainError('Unsupported weapon skill format');
   }
