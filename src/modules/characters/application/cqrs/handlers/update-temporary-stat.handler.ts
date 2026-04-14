@@ -23,13 +23,7 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     if (!stat) {
       throw new ValidationError(`Stat ${command.stat} not found for character ${command.characterId}`);
     }
-
-    const temporary = character.statistics[command.stat].temporary;
-    const potential = character.statistics[command.stat].potential;
-    const newTemporary = Math.min(potential, temporary + command.value);
-
-    character.statistics[command.stat].temporary = newTemporary;
-
+    character.updateTemporaryStat(command.stat, command.value);
     const items = await this.itemRepository.findByCharacterId(command.characterId);
     this.characterProcessorService.process(character, items);
     await this.characterRepository.update(character.id, character);

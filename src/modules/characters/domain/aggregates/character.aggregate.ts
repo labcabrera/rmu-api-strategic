@@ -347,6 +347,23 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.equipment.slots[slotName] = null;
   }
 
+  updateTemporaryStat(stat: StatKey, value: number) {
+    if (this.experience.availableStatLevelUp < 1 && this.experience.availableDevPoints < 4) {
+      throw new ValidationError('No available temporary stat level ups or development points to increase the stat');
+    }
+    const c = this.statistics[stat];
+    if (!c) {
+      throw new ValidationError('Stat not found');
+    }
+    const newValue = Math.min(c.potential, c.temporary + value);
+    c.temporary = newValue;
+    if (this.experience.availableStatLevelUp > 0) {
+      this.experience.availableStatLevelUp -= 1;
+    } else {
+      this.experience.developedStatLevelUp += 1;
+    }
+  }
+
   getProps(): CharacterProps {
     return {
       id: this.id,

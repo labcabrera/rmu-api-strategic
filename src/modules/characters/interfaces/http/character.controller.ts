@@ -138,7 +138,7 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUpTemporaryStat(@Param('id') id: string, @Query() dto: UpdateTemporaryStatDto, @Request() req) {
+  async levelUpTemporaryStat(@Param('id') id: string, @Body() dto: UpdateTemporaryStatDto, @Request() req) {
     this.logger.debug(`Leveling up character stat: ${id} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
