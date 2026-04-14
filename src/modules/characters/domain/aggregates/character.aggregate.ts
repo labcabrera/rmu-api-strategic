@@ -332,6 +332,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     this.experience.level += 1;
     this.experience.availableDevPoints = this.experience.devPoints;
+    this.experience.availableStatLevelUp = this.experience.level > 1 ? 2 : 0;
+    this.experience.developedStatLevelUp = 0;
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 

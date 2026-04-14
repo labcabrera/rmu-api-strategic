@@ -132,7 +132,7 @@ export class CharacterController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Patch(':id/level-up')
+  @Patch(':id/stats/temporary')
   @HttpCode(200)
   @ApiOperation({ operationId: 'levelUpTemporaryStat', summary: 'Level up temporary stat' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })

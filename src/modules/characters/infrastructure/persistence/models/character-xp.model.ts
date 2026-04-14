@@ -22,5 +22,11 @@ export class CharacterXP {
   availableRaceDevPoints: number;
 
   @Prop({ required: true })
+  availableStatLevelUp: number;
+
+  @Prop({ required: true })
+  developedStatLevelUp: number;
+
+  @Prop({ required: true })
   weaponDevelopment: WeaponDevelopmentType[];
 }
