@@ -11,12 +11,14 @@ import type { RaceClientPort } from '../../ports/race-client.port';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
@@ -32,12 +34,14 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
-    if (this.hasSkillId(character, skillId, specialization))
-      throw new ValidationError(`Skill ${skillId} already exists for character ${characterId}`);
+    if (character.findSkill(skillId, specialization)) {
+      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
+    }
 
     if (command.ranks > 0 && !command.roles.includes('admin')) {
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
     }
+
     const [readedSkill, readedProfession, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
       this.professionClient.getProfessionById(character.info.professionId),
@@ -56,18 +60,24 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
     const devPoints = readedProfession.skillCosts[categoryId] || [];
     const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-    //TODO add to core model
-    //const racialBonus = readedRace.skillBonuses?.[skillId] || 0;
-    const racialBonus = 0;
-    character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
-    this.characterProcessorService.process(character);
-    const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
-    return updated;
-  }
 
-  private hasSkillId(character: Character, skillId: string, specialization: string | undefined): boolean {
-    return character.skills.some((skill) => skill.skillId === skillId && skill.specialization === specialization);
+    //TODO add to core model
+    let racialBonus = 0;
+    if (readedRace.skillBonuses) {
+      const skillBonus = readedRace.skillBonuses.find(
+        bonus => bonus.skillId === skillId && (bonus.specialization === specialization || (!bonus.specialization && !specialization)),
+      );
+      if (skillBonus) {
+        racialBonus = skillBonus.bonus;
+      }
+    }
+    character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
+
+    const items = await this.itemRepository.findByCharacterId(character.id);
+    this.characterProcessorService.process(character, items);
+    const updated = await this.characterRepository.update(character.id, character);
+    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
+    return updated;
   }
 
   private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
@@ -79,7 +89,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     return categoryId;
   }
 
-  private validateSpecialization(skill: SkillResponse, specialization: string | undefined): void {
+  private validateSpecialization(skill: SkillResponse, specialization: string | null): void {
     if (skill.specialization) {
       if (!specialization) {
         throw new ValidationError(`Skill ${skill.id} requires a specialization`);

@@ -25,7 +25,7 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
       imageUrl: command.imageUrl,
     });
     const updated = await this.factionRepository.update(command.factionId, faction);
-    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
+    faction.getUncommittedEvents().forEach(event => this.factionEventBus.publish(event));
     return updated;
   }
 }

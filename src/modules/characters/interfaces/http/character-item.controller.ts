@@ -1,19 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, Request, UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Character } from '../../domain/aggregates/character.aggregate';
-import { AddItemDto } from './dto/add-item.dto';
 import { CharacterDto } from './dto/character.dto';
 import { EquipItemDto } from './dto/equip-item.dto';
 import { TransferGoldDto } from './dto/transfer-faction-gold.dto';
-import { AddItemCommand } from '../../application/cqrs/commands/add-item.comand';
-import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command';
-import { EquipItemCommand } from '../../application/cqrs/commands/equip-item-command';
-import { TransferGoldCommand } from '../../application/cqrs/commands/transfer-gold.command';
-import { UnequipItemCommand } from '../../application/cqrs/commands/unequip-item-command';
-import { UpdateItemCarriedStatusCommand } from '../../application/cqrs/commands/update-item-carried-status.command';
 import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { UpdateItemCarriedStatusCommand } from 'src/modules/characters/application/cqrs/commands/update-item-carried-status.command';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { TransferGoldCommand } from 'src/modules/characters/application/cqrs/commands/transfer-gold.command';
+import { UnequipItemCommand } from 'src/modules/characters/application/cqrs/commands/unequip-item-command';
+import { EquipItemCommand } from 'src/modules/characters/application/cqrs/commands/equip-item-command';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -21,37 +19,7 @@ import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
 export class CharacterItemController {
   private readonly logger = new Logger(CharacterItemController.name);
 
-  constructor(
-    private commandBus: CommandBus,
-    private queryBus: QueryBus,
-  ) {}
-
-  @Post(':id/items')
-  @ApiBody({ type: AddItemDto })
-  @ApiOperation({ operationId: 'addItem', summary: 'Add a new item to a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addItem(@Param('id') id: string, @Body() dto: AddItemDto, @Request() req) {
-    this.logger.debug(`Adding character ${id} item ${dto.itemTypeId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
-    const command = AddItemDto.toCommand(id, dto, userId, roles);
-    const entity = await this.commandBus.execute<AddItemCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
-
-  @Delete(':id/items/:itemId')
-  @ApiOperation({ operationId: 'deleteItem', summary: 'Delete an item from a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async deleteItem(@Param('id') id: string, @Param('itemId') itemId: string, @Request() req) {
-    this.logger.debug(`Deleting character ${id} item ${itemId} for user ${req.user.id}`);
-    const command = new DeleteItemCommand(id, itemId, req.user.id, req.user.roles);
-    const entity = await this.commandBus.execute<DeleteItemCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
-  }
+  constructor(private commandBus: CommandBus) {}
 
   @Put(':id/items/:itemId/carried/:carried')
   @ApiBody({ type: EquipItemDto })
@@ -59,15 +27,8 @@ export class CharacterItemController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateCarriedStatus(
-    @Param('id') id: string,
-    @Param('itemId') itemId: string,
-    @Param('carried') carried: boolean,
-    @Request() req,
-  ) {
-    this.logger.debug(
-      `Updating carried status for character ${id} item ${itemId} to ${carried} for user ${req.user.id}`,
-    );
+  async updateCarriedStatus(@Param('id') id: string, @Param('itemId') itemId: string, @Param('carried') carried: boolean, @Request() req) {
+    this.logger.debug(`Updating carried status for character ${id} item ${itemId} to ${carried} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
     const command = new UpdateItemCarriedStatusCommand(id, itemId, carried, userId, roles);

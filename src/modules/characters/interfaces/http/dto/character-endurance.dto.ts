@@ -29,9 +29,3 @@ export class CharacterEnduranceDto {
     return dto;
   }
 }
-
-export class CharacterEnduranceCreationDto {
-  @ApiProperty({ description: 'Custom bonus', example: 5, default: 0 })
-  @IsNumber()
-  customBonus: number;
-}

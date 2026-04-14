@@ -1,3 +1,4 @@
+import { SkillBonus } from 'src/modules/characters/domain/value-objects/skill-bonus.vo';
 import { Race } from '../../ports/race-client.port';
 
 export interface UpdateCharacterRaceCommandProps
@@ -10,7 +11,7 @@ export class UpdateCharacterRaceCommand {
     public readonly characterId: string,
     public readonly name: string | undefined,
     public readonly sizeId: string | undefined,
-    public readonly stats: Map<string, number> | undefined,
+    public readonly stats: Record<string, number> | undefined,
     public readonly resistances: Map<string, number> | undefined,
     public readonly strideBonus: number | undefined,
     public readonly enduranceBonus: number | undefined,
@@ -19,6 +20,7 @@ export class UpdateCharacterRaceCommand {
     public readonly baseDevPoints: number | undefined,
     public readonly baseAt: number | undefined,
     public readonly talents: string[] | undefined,
+    public readonly skillBonuses: SkillBonus[] | undefined,
   ) {}
 
   static create(props: UpdateCharacterRaceCommandProps): UpdateCharacterRaceCommand {
@@ -35,6 +37,7 @@ export class UpdateCharacterRaceCommand {
       props.baseDevPoints,
       props.baseAt,
       props.talents,
+      props.skillBonuses,
     );
   }
 }

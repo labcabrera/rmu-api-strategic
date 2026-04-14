@@ -3,18 +3,18 @@ import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Qu
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Character } from '../../domain/aggregates/character.aggregate';
 import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto } from './dto/character.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
-import { AddSkillCommand } from '../../application/cqrs/commands/add-skill.command';
-import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill-command';
-import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command';
-import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command';
-import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command';
-import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command';
 import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto';
 import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
+import { AddSkillCommand } from 'src/modules/characters/application/cqrs/commands/add-skill.command';
+import { DeleteSkillCommand } from 'src/modules/characters/application/cqrs/commands/delete-skill-command';
+import { LevelDownSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-down-skill.command';
+import { LevelUpSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-up-skill.command';
+import { SetUpProfessionalSkillCommand } from 'src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
+import { UpdateSkillCommand } from 'src/modules/characters/application/cqrs/commands/update-skill.command';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -70,7 +70,7 @@ export class CharacterSkillController {
   async levelUpSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Leveling up character ${id} skill  ${skillId} for user ${req.user.id}`);
@@ -97,7 +97,7 @@ export class CharacterSkillController {
   async levelDownSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Leveling down character ${id} skill ${skillId} for user ${req.user.id}`);
@@ -122,7 +122,7 @@ export class CharacterSkillController {
     this.logger.debug(`Updating professional skill for character ${id} and skill ${skillId} for user ${req.user.id}`);
     const userId = req.user.id as string;
     const roles = req.user.roles as string[];
-    const specialization = req.query.specialization as string | undefined;
+    const specialization = req.query.specialization as string | null;
     const command = UpdateProfessionalSkillDto.toCommand(id, skillId, specialization, dto, userId, roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -137,7 +137,7 @@ export class CharacterSkillController {
   async deleteSkill(
     @Param('id') id: string,
     @Param('skillId') skillId: string,
-    @Query('specialization') specialization: string | undefined,
+    @Query('specialization') specialization: string | null,
     @Request() req,
   ) {
     this.logger.debug(`Deleting character ${id} skill ${skillId} for user ${req.user.id}`);

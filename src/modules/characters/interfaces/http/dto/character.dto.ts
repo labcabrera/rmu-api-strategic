@@ -4,10 +4,9 @@ import { CharacterEnduranceDto } from './character-endurance.dto';
 import { CharacterEquipmentDto } from './character-equipment.dto';
 import { CharacterHPDto } from './character-hp.dto';
 import { CharacterInitiativeDto } from './character-initiative.dto';
-import { CharacterItemDto } from './character-item.dto';
 import { CharacterMovementDto } from './character-movement-dto';
 import { CharacterSkillDto } from './character-skill.dto';
-import { CharacterStatisticsDto } from './character-statistics.dto';
+import { CharacterStatDto } from './character-stat.dto';
 import { CharacterXPDto } from './character-xp.dto';
 import { CharacterInfoDto } from './character-info.dto';
 import { CharacterAttackDto } from './character-attack.dto';
@@ -17,6 +16,7 @@ import { CharacterTraitDto } from './character-trait.dto';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
+import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -40,8 +40,8 @@ export class CharacterDto {
   @ApiProperty({ description: 'Level and experience points of the character', type: CharacterXPDto })
   experience: CharacterXPDto;
 
-  @ApiProperty({ description: 'Character statistics', type: CharacterStatisticsDto })
-  statistics: CharacterStatisticsDto;
+  @ApiProperty({ description: 'Character statistics', type: Object })
+  statistics: Record<StatKey, CharacterStatDto>;
 
   @ApiProperty({ description: 'Character movement', type: CharacterMovementDto })
   movement: CharacterMovementDto;
@@ -64,9 +64,6 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character skills', type: [CharacterSkillDto] })
   skills: CharacterSkillDto[];
 
-  @ApiProperty({ description: 'Character items', type: [CharacterItemDto] })
-  items: CharacterItemDto[];
-
   @ApiProperty({ description: 'Character equipment', type: CharacterEquipmentDto })
   equipment: CharacterEquipmentDto;
 
@@ -86,6 +83,10 @@ export class CharacterDto {
   owner: string;
 
   static fromEntity(entity: Character) {
+    const statistics: Record<StatKey, CharacterStatDto> = {} as Record<StatKey, CharacterStatDto>;
+    for (const key of STAT_KEYS) {
+      statistics[key] = CharacterStatDto.fromEntity(entity.statistics[key]);
+    }
     const dto = new CharacterDto();
     dto.id = entity.id;
     dto.gameId = entity.gameId;
@@ -94,18 +95,17 @@ export class CharacterDto {
     dto.info = CharacterInfoDto.fromEntity(entity.info);
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
-    dto.statistics = CharacterStatisticsDto.fromEntity(entity.statistics);
+    dto.statistics = statistics;
     dto.movement = CharacterMovementDto.fromEntity(entity.movement);
     dto.defense = CharacterDefenseDto.fromEntity(entity.defense);
-    dto.resistances = entity.resistances.map((resistance) => CharacterResistanceDto.fromEntity(resistance));
+    dto.resistances = entity.resistances.map(resistance => CharacterResistanceDto.fromEntity(resistance));
     dto.endurance = CharacterEnduranceDto.fromEntity(entity.endurance);
     dto.hp = CharacterHPDto.fromEntity(entity.hp);
     dto.initiative = CharacterInitiativeDto.fromEntity(entity.initiative);
-    dto.skills = entity.skills.map((skill) => CharacterSkillDto.fromEntity(skill));
-    dto.items = entity.items.map((item) => CharacterItemDto.fromEntity(item));
+    dto.skills = entity.skills.map(skill => CharacterSkillDto.fromEntity(skill));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
-    dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
-    dto.traits = entity.traits.map((trait) => CharacterTraitDto.fromEntity(trait));
+    dto.attacks = entity.attacks.map(attack => CharacterAttackDto.fromEntity(attack));
+    dto.traits = entity.traits.map(trait => CharacterTraitDto.fromEntity(trait));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;

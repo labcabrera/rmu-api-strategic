@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import { EquipItemCommand } from 'src/modules/characters/application/cqrs/commands/equip-item-command';
+import type { EquipmentSlot } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 
 export class EquipItemDto {
   @IsString()
@@ -8,7 +9,7 @@ export class EquipItemDto {
 
   @IsString()
   @IsNotEmpty()
-  slot: string;
+  slot: EquipmentSlot;
 
   static toCommand(characterId: string, dto: EquipItemDto, userId: string, userRoles: string[]) {
     return new EquipItemCommand(characterId, dto.itemId, dto.slot, userId, userRoles);

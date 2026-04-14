@@ -70,51 +70,6 @@ export class CharacterStatistics {
 }
 
 @Schema({ _id: false })
-export class CharacterMovement {
-  @Prop({ required: true })
-  baseMovementRate: number;
-
-  @Prop({ required: true })
-  strideRacialBonus: number;
-
-  @Prop({ required: true })
-  strideQuBonus: number;
-
-  @Prop({ required: true })
-  strideCustomBonus: number;
-}
-
-@Schema({ _id: false })
-export class CharacterArmor {
-  @Prop({ type: Number, required: false })
-  at: number | undefined;
-
-  @Prop({ type: Number, required: true })
-  racialAt: number;
-
-  @Prop({ type: Number, required: false })
-  bodyAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  headAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  armsAt: number | undefined;
-
-  @Prop({ type: Number, required: false })
-  legsAt: number | undefined;
-}
-
-@Schema({ _id: false })
-export class CharacterDefense {
-  @Prop({ required: true })
-  defensiveBonus: number;
-
-  @Prop({ type: CharacterArmor, required: true })
-  armor: CharacterArmor;
-}
-
-@Schema({ _id: false })
 export class CharacterHP {
   @Prop({ required: true })
   max: number;
@@ -158,68 +113,11 @@ export class CharacterPower {
 
 @Schema({ _id: false })
 export class CharacterInitiative {
-  @Prop({ required: true })
-  baseBonus: number;
-
-  @Prop({ required: true })
-  customBonus: number;
-
-  @Prop({ required: true })
-  penaltyBonus: number;
+  @Prop({ type: Map, required: true })
+  modifiers: Record<string, number>;
 
   @Prop({ required: true })
   totalBonus: number;
-}
-
-@Schema({ _id: false })
-export class CharacterXP {
-  @Prop({ required: true })
-  level: number;
-
-  @Prop({ required: true })
-  availableLevel: number;
-
-  @Prop({ required: true })
-  xp: number;
-
-  @Prop({ required: true })
-  developmentPoints: number;
-
-  @Prop({ required: true })
-  availableDevelopmentPoints: number;
-
-  @Prop({ required: true })
-  weaponDevelopment: WeaponDevelopmentType[];
-}
-
-@Schema({ _id: false })
-export class CharacterAttack {
-  @Prop({ required: true })
-  attackName: string;
-
-  @Prop({ required: true })
-  attackTable: string;
-
-  @Prop({ required: true })
-  sizeAdjustment: number;
-
-  @Prop({ required: true })
-  fumbleTable: string;
-
-  @Prop({ required: true })
-  fumble: number;
-
-  @Prop({ required: true })
-  weaponFumble: number;
-
-  @Prop({ required: true })
-  bo: number;
-
-  @Prop({ required: true })
-  type: string;
-
-  @Prop({ required: true })
-  defaultAttack: boolean;
 }
 
 @Schema({ _id: false })

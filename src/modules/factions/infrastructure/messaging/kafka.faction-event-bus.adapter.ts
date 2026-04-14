@@ -12,7 +12,7 @@ export class KafkaFactionEventBusAdapter implements FactionEventBusPort {
   constructor(private readonly kafkaProducerService: KafkaProducerService) {}
 
   publish(event: DomainEvent<Faction>): void {
-    this.kafkaProducerService.emit(`internal.rmu-strategic.faction.${event.eventType}.v1`, event).catch((err) => {
+    this.kafkaProducerService.emit(`internal.rmu-strategic.faction.${event.eventType}.v1`, event).catch(err => {
       this.logger.error('Error publishing event to Kafka', err);
     });
   }

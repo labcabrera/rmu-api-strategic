@@ -1,25 +1,25 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import {
-  CharacterAttack,
-  CharacterDefense,
   CharacterEndurance,
   CharacterHP,
   CharacterInfo,
   CharacterInitiative,
-  CharacterMovement,
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
-  CharacterStatistics,
-  CharacterXP,
 } from './character-childs.model';
-import { CharacterItem } from './character-item.model';
 import { CharacterEquipment } from './character-equipment.model';
 import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
 import { CharacterSkill } from './character-skill.model';
 import { CharacterTrait } from './character-trait.model';
 import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/models/named-entity.model';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { CharacterStat, CharacterStatSchema } from './character-stat.model';
+import { CharacterMovement } from './character-movement.model';
+import { CharacterDefense } from './character-defense.model';
+import { CharacterAttack } from './character-attack.model';
+import { CharacterXP } from './character-xp.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -46,8 +46,8 @@ export class CharacterModel {
   @Prop({ type: CharacterXP, required: true })
   experience: CharacterXP;
 
-  @Prop({ type: CharacterStatistics, required: true })
-  statistics: CharacterStatistics;
+  @Prop({ type: Map, of: CharacterStatSchema, required: true })
+  statistics: Record<StatKey, CharacterStat>;
 
   @Prop({ type: CharacterMovement, required: true })
   movement: CharacterMovement;
@@ -71,9 +71,6 @@ export class CharacterModel {
 
   @Prop({ type: [CharacterSkill], required: true })
   skills: CharacterSkill[];
-
-  @Prop({ type: [CharacterItem], required: true })
-  items: CharacterItem[];
 
   @Prop({ type: CharacterEquipment, required: true })
   equipment: CharacterEquipment;

@@ -27,7 +27,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
       imageUrl: command.imageUrl,
     });
     const updated = await this.gameRepository.update(current.id, current);
-    current.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
+    current.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
     return updated;
   }
 }

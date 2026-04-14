@@ -59,7 +59,7 @@ export class FactionController {
     const user = req.user!;
     const query = new GetFactionsQuery(dto.q, dto.page, dto.size, user.id as string, user.roles as string[]);
     const page = await this.queryBus.execute<GetFactionsQuery, Page<Faction>>(query);
-    const mapped = page.content.map((faction) => FactionDto.fromEntity(faction));
+    const mapped = page.content.map(faction => FactionDto.fromEntity(faction));
     return new Page<FactionDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 

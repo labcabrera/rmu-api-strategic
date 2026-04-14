@@ -1,12 +1,7 @@
-import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import { CharacterEquipment, EquipmentSlot } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
 
 export class CharacterEquipmentDto {
-  mainHand: string | undefined;
-  offHand: string | undefined;
-  body: string | undefined;
-  head: string | undefined;
-  arms: string | undefined;
-  legs: string | undefined;
+  slots: Record<EquipmentSlot, string | null>;
   weight: number | undefined;
   weightAllowance: number | undefined;
   encumbrancePenalty: number;
@@ -18,12 +13,7 @@ export class CharacterEquipmentDto {
 
   static fromEntity(entity: CharacterEquipment): CharacterEquipmentDto {
     const dto = new CharacterEquipmentDto();
-    dto.mainHand = entity.mainHand;
-    dto.offHand = entity.offHand;
-    dto.body = entity.body;
-    dto.head = entity.head;
-    dto.arms = entity.arms;
-    dto.legs = entity.legs;
+    dto.slots = entity.slots || {};
     dto.weight = entity.weight;
     dto.weightAllowance = entity.weightAllowance;
     dto.encumbrancePenalty = entity.encumbrancePenalty;

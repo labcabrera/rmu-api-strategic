@@ -11,7 +11,7 @@ export class KafkaCharacterEventBusAdapter implements CharacterEventBusPort {
   constructor(private readonly kafkaProducerService: KafkaProducerService) {}
 
   publish(event: DomainEvent<CharacterProps>): void {
-    this.kafkaProducerService.emit(`internal.rmu-strategic.character.${event.eventType}.v1`, event).catch((err) => {
+    this.kafkaProducerService.emit(`internal.rmu-strategic.character.${event.eventType}.v1`, event).catch(err => {
       this.logger.error('Error publishing event to Kafka', err);
     });
   }

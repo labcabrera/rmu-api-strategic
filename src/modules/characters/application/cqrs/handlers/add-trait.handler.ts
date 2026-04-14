@@ -7,12 +7,14 @@ import type { CharacterEventBusPort } from '../../ports/character-event-bus.port
 import { AddTraitCommand } from '../commands/add-trait.command';
 import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.port';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
   constructor(
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
   ) {}
@@ -29,9 +31,10 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     const isTalent = trait.isTalent;
     const cost = this.calculateCost(trait, command.tier);
     character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization);
-    this.characterProcessorService.process(character);
+    const items = await this.itemRepository.findByCharacterId(character.id);
+    this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
     return updated;
   }
 

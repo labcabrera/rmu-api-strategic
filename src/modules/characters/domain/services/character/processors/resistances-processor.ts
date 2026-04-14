@@ -7,7 +7,7 @@ import { CharacterResistance } from '../../../value-objects/character-resistance
 export class ResistancesProcessor {
   process(character: Partial<Character>): void {
     this.setDefaultResistances(character);
-    character.resistances!.map((r) => this.calculateResistances(character, r.resistance));
+    character.resistances!.map(r => this.calculateResistances(character, r.resistance));
   }
 
   private setDefaultResistances(character: Partial<Character>): void {
@@ -15,8 +15,8 @@ export class ResistancesProcessor {
       character.resistances = [];
     }
     const defaultResistances = ['physical', 'fear', 'channeling', 'essence', 'mentalism'];
-    defaultResistances.forEach((resistance) => {
-      let resistanceEntry = character.resistances?.find((r) => r.resistance === resistance);
+    defaultResistances.forEach(resistance => {
+      let resistanceEntry = character.resistances?.find(r => r.resistance === resistance);
       if (!resistanceEntry) {
         resistanceEntry = {
           resistance: resistance,
@@ -31,7 +31,7 @@ export class ResistancesProcessor {
   }
 
   private calculateResistances(character: Partial<Character>, resistance: string): void {
-    let re = character.resistances?.find((r) => r.resistance === resistance);
+    let re = character.resistances?.find(r => r.resistance === resistance);
     if (!re) {
       re = {
         resistance: resistance,

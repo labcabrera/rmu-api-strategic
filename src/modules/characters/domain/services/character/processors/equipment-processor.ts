@@ -1,36 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { CharacterItem } from '../../../value-objects/character-item.vo';
+import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
 
 const baseDifficultyCodes = ['c', 's', 'r', 'e', 'l', 'm', 'h', 'vh', 'xh', 'sf', 'a', 'ni'];
 
 @Injectable()
 export class EquipmentProcessor {
-  process(character: Partial<Character>): void {
-    this.setDefaultCoins(character);
-    if (!character.items || character.items.length === 0 || !character.equipment) {
-      return;
+  process(character: Character, items: Item[]): void {
+    if (!character.equipment) {
+      character.equipment = CharacterEquipment.empty();
     }
-    const tmpCarriedWeight = character.items
-      .filter((item) => item.carried)
-      .reduce((sum, item) => sum + item.info.weight, 0);
+    if (!character.equipment.slots) {
+      character.equipment.slots = {} as Record<string, string>;
+    }
+
+    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
-    this.sortItems(character);
 
+    const slots = character.equipment.slots || {};
     const armorIds = [] as string[];
-    if (character.equipment.body) armorIds.push(character.equipment.body);
-    if (character.equipment.head) armorIds.push(character.equipment.head);
-    if (character.equipment.arms) armorIds.push(character.equipment.arms);
-    if (character.equipment.legs) armorIds.push(character.equipment.legs);
+    if (slots['body']) armorIds.push(slots['body']);
+    if (slots['head']) armorIds.push(slots['head']);
+    if (slots['arms']) armorIds.push(slots['arms']);
+    if (slots['legs']) armorIds.push(slots['legs']);
 
-    const armors = character.items.filter((item) => armorIds.includes(item.id));
+    const armors = items.filter(item => armorIds.includes(item.id));
+
     let enc = 0;
     let maneuverPenalty = 0;
     let perceptionPenalty = 0;
     let rangedPenalty = 0;
     let difficultyIndex = 0;
-    armors.forEach((armorItems) => {
+    armors.forEach(armorItems => {
       //TODO change name
       enc += armorItems.armor!.enc || 0;
       maneuverPenalty += armorItems.armor!.maneuver || 0;
@@ -38,9 +41,9 @@ export class EquipmentProcessor {
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
       difficultyIndex = Math.max(difficultyIndex, baseDifficultyCodes.indexOf(armorItems.armor!.baseDifficulty));
     });
-
+    // round maneuverPenalty to 0 decimals
+    maneuverPenalty = Math.round(maneuverPenalty);
     const armorManeuverSkillBonus = this.getArmorManeuverSkillBonus(character);
-
     character.equipment.weight = carriedWeight;
     character.equipment.encumbrancePenalty = enc;
     character.equipment.baseManeuverPenalty = maneuverPenalty;
@@ -48,27 +51,7 @@ export class EquipmentProcessor {
     character.equipment.perceptionPenalty = perceptionPenalty;
     character.equipment.rangedPenalty = rangedPenalty;
     character.equipment.movementBaseDifficulty = baseDifficultyCodes[difficultyIndex];
-
     this.processEncumbrancePenalty(character);
-  }
-
-  private setDefaultCoins(character: Partial<Character>) {
-    const goldCoins = character.items?.find((item) => item.itemTypeId === 'gold-coin');
-    if (!goldCoins) {
-      const item = {
-        id: 'gold-coin',
-        name: 'Gold Coins',
-        itemTypeId: 'gold-coin',
-        category: 'coins',
-        carried: true,
-        info: {
-          weight: 0,
-        },
-        stackable: true,
-        amount: 0,
-      } as CharacterItem;
-      character.items!.push(item);
-    }
   }
 
   private processEncumbrancePenalty(character: Partial<Character>) {
@@ -87,23 +70,11 @@ export class EquipmentProcessor {
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {
     if (character.skills) {
-      const skill = character.skills.find((s) => s.skillId === 'armor-maneuver');
+      const skill = character.skills.find(s => s.skillId === 'armor-maneuver');
       if (skill) {
         return skill.totalBonus || 0;
       }
     }
     return 0;
-  }
-
-  private sortItems(character: Partial<Character>) {
-    const categoryOrder = ['weapon', 'shield', 'armor', 'clothes', 'coins'];
-    character.items!.sort((a, b) => {
-      const aCatIdx = categoryOrder.indexOf(a.category);
-      const bCatIdx = categoryOrder.indexOf(b.category);
-      if (aCatIdx !== -1 && bCatIdx !== -1) {
-        if (aCatIdx !== bCatIdx) return aCatIdx - bCatIdx;
-      }
-      return a.name.localeCompare(b.name);
-    });
   }
 }

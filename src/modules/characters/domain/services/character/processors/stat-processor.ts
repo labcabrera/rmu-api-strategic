@@ -1,30 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { Stat } from '../../../value-objects/character-statistics.vo';
+import { CharacterStat, STAT_KEYS } from '../../../value-objects/character-stat.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 
 @Injectable()
 export class StatProcessor {
-  process(character: Partial<Character>): void {
-    if (!character.statistics) {
-      return;
+  process(character: Character): void {
+    for (const key of STAT_KEYS) {
+      const prev = character.statistics[key];
+      const processed = this.processStat(prev);
+      character.statistics[key] = processed;
     }
-    this.processStat(character.statistics.ag);
-    this.processStat(character.statistics.co);
-    this.processStat(character.statistics.em);
-    this.processStat(character.statistics.in);
-    this.processStat(character.statistics.me);
-    this.processStat(character.statistics.pr);
-    this.processStat(character.statistics.qu);
-    this.processStat(character.statistics.re);
-    this.processStat(character.statistics.sd);
-    this.processStat(character.statistics.st);
   }
 
-  private processStat(stat: Stat): void {
+  private processStat(stat: CharacterStat) {
     const bonus = this.getBonus(stat.temporary);
-    stat.bonus = bonus;
-    stat.totalBonus = bonus + stat.racial + stat.custom;
+    const modifiers = { ...stat.modifiers, stat: bonus };
+    return CharacterStat.fromModifiers(stat.potential, stat.temporary, modifiers);
   }
 
   private getBonus(temporary: number | undefined): number {

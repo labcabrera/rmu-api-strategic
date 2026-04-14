@@ -1,10 +1,9 @@
 import { CharacterAttack } from '../value-objects/character-attack.vo';
 import { CharacterInfo } from '../value-objects/character-info.vo';
-import { CharacterItem } from '../value-objects/character-item.vo';
 import { CharacterPower } from '../value-objects/character-power.vo';
 import { CharacterResistance } from '../value-objects/character-resistances.vo';
 import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStatistics } from '../value-objects/character-statistics.vo';
+import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
 import { CharacterDefense } from '../value-objects/character-defense.vo';
 import { CharacterEndurance } from '../value-objects/character-endurance.vo';
 import { CharacterEquipment } from '../value-objects/character-equipment.vo';
@@ -23,6 +22,9 @@ import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 import { CharacterProps } from './character-props';
+import { SkillBonus } from '../value-objects/skill-bonus.vo';
+
+export const UNRANKED_SKILL_BONUS = -20;
 
 export class Character extends BaseAggregateRoot<CharacterProps> {
   private constructor(
@@ -33,7 +35,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     public info: CharacterInfo,
     public roleplay: CharacterRoleplayInfo,
     public experience: CharacterXP,
-    public statistics: CharacterStatistics,
+    public statistics: Record<StatKey, CharacterStat>,
     public movement: CharacterMovement,
     public defense: CharacterDefense,
     public resistances: CharacterResistance[],
@@ -42,7 +44,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     public power: CharacterPower | undefined,
     public initiative: CharacterInitiative,
     public skills: CharacterSkill[],
-    public items: CharacterItem[],
     public equipment: CharacterEquipment,
     public attacks: CharacterAttack[],
     public traits: CharacterTrait[],
@@ -64,7 +65,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     roleplay: CharacterRoleplayInfo,
     level: number,
     weaponDevelopment: WeaponDevelopmentType[],
-    statistics: CharacterStatistics,
+    statistics: Record<StatKey, CharacterStat>,
+    imageUrl: string | undefined,
     owner: string,
   ): Character {
     if (!weaponDevelopment || weaponDevelopment.length !== 4) {
@@ -85,21 +87,20 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       CharacterHP.empty(),
       CharacterEndurance.empty(),
       undefined, // power
-      CharacterInitiative.empty(),
+      new CharacterInitiative({}),
       [], // skills
-      [], // items
       CharacterEquipment.empty(),
       [], // attacks
       [], // traits
       'partially_created',
       undefined, // description
-      undefined, // imageUrl
+      imageUrl,
       owner,
       new Date(),
       undefined,
     );
-    character.experience.developmentPoints = game.powerLevel.baseDevPoints || 60;
-    character.experience.availableDevelopmentPoints = game.powerLevel.baseDevPoints || 60;
+    character.experience.devPoints = game.powerLevel.baseDevPoints || 60;
+    character.experience.availableDevPoints = game.powerLevel.baseDevPoints || 60;
     return character;
   }
 
@@ -121,7 +122,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       props.power,
       props.initiative,
       props.skills,
-      props.items,
       props.equipment,
       props.attacks,
       props.traits,
@@ -138,18 +138,25 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   updateRace(props: {
     raceName: string | undefined;
     sizeId: string | undefined;
-    stats: Map<string, number> | undefined;
+    stats: Record<StatKey, number> | undefined;
     resistances: Map<string, number> | undefined;
     strideBonus: number | undefined;
     enduranceBonus: number | undefined;
     baseHits: number | undefined;
     baseAt: number | undefined;
+    skillBonuses: SkillBonus[];
   }) {
+    if (props.baseHits) {
+      props.skillBonuses.push({ skillId: 'body-development', specialization: null, bonus: props.baseHits });
+    }
     if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
     if (props.sizeId) this.info.sizeId = props.sizeId;
     if (props.stats) {
       for (const [stat, bonus] of Object.entries(props.stats)) {
-        this.statistics[stat as keyof CharacterStatistics].racial = bonus || 0;
+        const statKey = stat as StatKey;
+        const prev = this.statistics[statKey];
+        const statModifiers = { ...prev.modifiers, racial: bonus || 0 };
+        this.statistics[statKey] = CharacterStat.fromModifiers(prev.potential, prev.temporary, statModifiers);
       }
     }
     if (props.resistances) {
@@ -157,18 +164,34 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         this.setupRacialResistanceBonus(resistance, bonus || 0);
       }
     }
-    if (props.strideBonus) this.movement.strideRacialBonus = props.strideBonus;
-    if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
-    if (props.baseHits) {
-      const bodyDevSkill = this.skills.find((s) => s.skillId === 'body-development');
-      if (bodyDevSkill) {
-        bodyDevSkill.racialBonus = props.baseHits;
+    if (props.strideBonus !== undefined) {
+      if (!this.movement.modifiers) {
+        this.movement.modifiers = {} as Record<string, number>;
       }
+      this.movement.modifiers['racial'] = props.strideBonus;
     }
+    if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
     if (props.baseAt) {
       this.defense.armor.racialAt = props.baseAt;
     }
+    this.updateRaceSkillBonuses(props.skillBonuses || []);
     this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  private updateRaceSkillBonuses(skillBonuses: SkillBonus[]) {
+    this.skills.forEach(skill => {
+      skill.racialBonus = 0;
+    });
+    skillBonuses.forEach(bonus => {
+      const skill = this.findSkill(bonus.skillId, bonus.specialization);
+      if (skill) {
+        skill.racialBonus = bonus.bonus;
+      } else {
+        throw new ValidationError(
+          `Skill with id ${bonus.skillId} and specialization ${bonus.specialization} not found for racial bonus application`,
+        );
+      }
+    });
   }
 
   finishCreation(): void {
@@ -197,8 +220,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  addSkill(skillId: string, specialization: string | undefined, statistics: string[], development: number[], racialBonus: number): void {
-    if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
+  getSkillBonus(skillId: string, specialization: string | null): number {
+    const skill = this.findSkill(skillId, specialization);
+    return skill ? skill.totalBonus : UNRANKED_SKILL_BONUS;
+  }
+
+  addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {
+    if (this.skills.find(s => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
@@ -214,28 +242,28 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     cost: number,
     specialization: string | undefined,
   ) {
-    if (this.traits.find((t) => t.traitId === traitId && t.specialization === specialization)) {
+    if (this.traits.find(t => t.traitId === traitId && t.specialization === specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
-    if (cost > 0 && this.experience.availableDevelopmentPoints < cost) {
+    if (cost > 0 && this.experience.availableDevPoints < cost) {
       throw new ValidationError('Insufficient development points to acquire the trait');
     }
     this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization));
-    this.experience.availableDevelopmentPoints -= cost;
+    this.experience.availableDevPoints -= cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   deleteTrait(traitId: string, specialization: string | undefined) {
-    const trait = this.traits.find((t) => t.traitId === traitId && t.specialization === specialization);
+    const trait = this.traits.find(t => t.traitId === traitId && t.specialization === specialization);
     if (!trait) {
       throw new ValidationError('Trait not found');
     }
-    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.specialization === specialization));
-    this.experience.availableDevelopmentPoints += trait.cost;
+    this.traits = this.traits.filter(t => !(t.traitId === traitId && t.specialization === specialization));
+    this.experience.availableDevPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
-  levelUpSkill(skillId: string, specialization: string | undefined, allowThird: boolean): void {
+  levelUpSkill(skillId: string, specialization: string | null, allowThird: boolean): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
@@ -244,15 +272,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     const indexCost = Math.min(skill.ranksDeveloped, 1);
     const cost = skill.development[indexCost];
-    if (this.experience.availableDevelopmentPoints < cost) {
+    if (this.experience.availableDevPoints < cost) {
       throw new ValidationError('Insufficient development points');
     }
     skill.ranks += 1;
     skill.ranksDeveloped += 1;
-    this.experience.availableDevelopmentPoints -= cost;
+    this.experience.availableDevPoints -= cost;
   }
 
-  levelDownSkill(skillId: string, specialization: string | undefined): void {
+  levelDownSkill(skillId: string, specialization: string | null): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) {
       throw new ValidationError('Skill not found');
@@ -264,10 +292,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     const cost = skill.development[indexCost];
     skill.ranks -= 1;
     skill.ranksDeveloped -= 1;
-    this.experience.availableDevelopmentPoints += cost;
+    this.experience.availableDevPoints += cost;
   }
 
-  deleteSkill(skillId: string, specialization: string | undefined): void {
+  deleteSkill(skillId: string, specialization: string | null): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
@@ -280,15 +308,18 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.removeSkill(skillId, specialization);
   }
 
-  findSkill(skillId: string, specialization: string | undefined): CharacterSkill | undefined {
-    return this.skills.find((s) => s.skillId === skillId && (specialization ? s.specialization === specialization : true));
+  findSkill(skillId: string, specialization: string | null): CharacterSkill | null {
+    const found = this.skills.find(
+      s => s.skillId === skillId && (s.specialization === specialization || (!s.specialization && !specialization)),
+    );
+    return found || null;
   }
 
-  removeSkill(skillId: string, specialization: string | undefined): void {
+  removeSkill(skillId: string, specialization: string | null): void {
     if (specialization) {
-      this.skills = this.skills.filter((s) => s.skillId !== skillId || s.specialization !== specialization);
+      this.skills = this.skills.filter(s => s.skillId !== skillId || s.specialization !== specialization);
     } else {
-      this.skills = this.skills.filter((s) => s.skillId !== skillId);
+      this.skills = this.skills.filter(s => s.skillId !== skillId);
     }
   }
 
@@ -296,34 +327,41 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (this.experience.level >= this.experience.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');
     }
-    if (this.experience.availableDevelopmentPoints > 0 && !force) {
+    if (this.experience.availableDevPoints > 0 && !force) {
       throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
     }
     this.experience.level += 1;
-    this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
-    this.skills.forEach((s) => (s.ranksDeveloped = 0));
+    this.experience.availableDevPoints = this.experience.devPoints;
+    this.experience.availableStatLevelUp = this.experience.level > 1 ? 2 : 0;
+    this.experience.developedStatLevelUp = 0;
+    this.skills.forEach(s => (s.ranksDeveloped = 0));
   }
 
-  addItem(item: CharacterItem): void {
-    if (item.stackable) {
-      const amount = item.amount || 1;
-      if (amount < 1) {
-        throw new ValidationError('Item amount must be at least 1');
-      }
-      const existing = this.items.find((i) => i.itemTypeId === item.itemTypeId && i.name === item.name);
-      if (existing) {
-        existing.amount = (existing.amount || 0) + amount;
-      } else {
-        this.items.push(item);
-      }
-    } else {
-      if (item.amount && item.amount > 1) {
-        throw new ValidationError('Non-stackable items cannot have amount greater than 1');
-      }
-      item.amount = undefined;
-      this.items.push(item);
+  unequipItem(itemId: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const equippedSlot = Object.entries(this.equipment.slots).find(([_, item]) => item === itemId);
+    if (!equippedSlot) {
+      throw new ValidationError('Item not equipped');
     }
-    this.apply(new CharacterUpdatedEvent(this.getProps()));
+    const slotName = equippedSlot[0];
+    this.equipment.slots[slotName] = null;
+  }
+
+  updateTemporaryStat(stat: StatKey, value: number) {
+    if (this.experience.availableStatLevelUp < 1 && this.experience.availableDevPoints < 4) {
+      throw new ValidationError('No available temporary stat level ups or development points to increase the stat');
+    }
+    const c = this.statistics[stat];
+    if (!c) {
+      throw new ValidationError('Stat not found');
+    }
+    const newValue = Math.min(c.potential, c.temporary + value);
+    c.temporary = newValue;
+    if (this.experience.availableStatLevelUp > 0) {
+      this.experience.availableStatLevelUp -= 1;
+    } else {
+      this.experience.developedStatLevelUp += 1;
+    }
   }
 
   getProps(): CharacterProps {
@@ -344,7 +382,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       power: this.power,
       initiative: this.initiative,
       skills: this.skills,
-      items: this.items,
       equipment: this.equipment,
       attacks: this.attacks,
       traits: this.traits,
@@ -358,7 +395,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   private setupRacialResistanceBonus(resistance: string, bonus: number): void {
-    const found = this.resistances.some((r) => r.resistance === resistance);
+    const found = this.resistances.some(r => r.resistance === resistance);
     if (found) {
       return;
     }

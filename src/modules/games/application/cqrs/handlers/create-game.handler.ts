@@ -36,7 +36,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       accessType: 'private',
     });
     const savedGame = await this.gameRepository.save(game);
-    game.getUncommittedEvents().forEach((event) => this.gameEventBus.publish(event));
+    game.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
     return savedGame;
   }
 }

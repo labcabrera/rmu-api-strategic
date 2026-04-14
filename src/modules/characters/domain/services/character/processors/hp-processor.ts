@@ -7,7 +7,7 @@ export class HPProcessor {
     if (!character.hp || !character.skills) {
       return;
     }
-    const skill = character.skills.find((skill) => skill.skillId === 'body-development');
+    const skill = character.skills.find(skill => skill.skillId === 'body-development');
     if (!skill) {
       return;
     }

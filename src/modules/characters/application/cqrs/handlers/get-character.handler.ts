@@ -12,7 +12,6 @@ export class GetCharacterHandler implements IQueryHandler<GetCharacterQuery, Cha
   async execute(query: GetCharacterQuery): Promise<Character> {
     const data = await this.characterRepository.findById(query.characterId);
     if (!data) throw new NotFoundError('Character', query.characterId);
-
     return data;
   }
 }

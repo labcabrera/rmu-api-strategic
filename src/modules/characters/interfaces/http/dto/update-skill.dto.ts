@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber } from 'class-validator';
 import { UpdateSkillCommand } from 'src/modules/characters/application/cqrs/commands/update-skill.command';
 
 export class UpdateSkillDto {
@@ -7,12 +7,7 @@ export class UpdateSkillDto {
   @IsNumber()
   ranks: number;
 
-  @ApiProperty({ description: 'Custom bonus applied to the skill', example: 0 })
-  @IsNumber()
-  @IsOptional()
-  customBonus: number | undefined;
-
   static toCommand(characterId: string, skillId: string, dto: UpdateSkillDto, userId: string, roles: string[]) {
-    return new UpdateSkillCommand(characterId, skillId, dto.ranks, dto.customBonus, userId, roles);
+    return new UpdateSkillCommand(characterId, skillId, dto.ranks, userId, roles);
   }
 }

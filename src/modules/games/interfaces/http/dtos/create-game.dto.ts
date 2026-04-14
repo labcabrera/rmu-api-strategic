@@ -38,15 +38,6 @@ export class CreateGameDto {
   description: string | undefined;
 
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
-    return new CreateGameCommand(
-      dto.name,
-      dto.realmId,
-      dto.options,
-      dto.powerLevel,
-      dto.shortDescription,
-      dto.description,
-      userId,
-      roles,
-    );
+    return new CreateGameCommand(dto.name, dto.realmId, dto.options, dto.powerLevel, dto.shortDescription, dto.description, userId, roles);
   }
 }

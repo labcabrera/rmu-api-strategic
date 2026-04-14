@@ -1,19 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
-import { CharacterEnduranceCreationDto } from './character-endurance.dto';
-import { CharacterInitiativeCreationDto } from './character-initiative.dto';
-import { CharacterItemCreationDto } from './character-item.dto';
-import { CharacterMovementCreationDto } from './character-movement-dto';
+import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CharacterSkillCreationDto } from './character-skill.dto';
-import { CharacterStatisticsCreationDto } from './character-statistics.dto';
+import { CharacterStatCreationDto } from './character-stat.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import {
-  CreateCharacterCommand,
-  CreateCharacterItem,
-} from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { CreateCharacterCommand, CharacterStatCreation } from 'src/modules/characters/application/cqrs/commands/create-character.command';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
+import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -37,11 +31,10 @@ export class CreateCharacterDto {
   @IsObject()
   info: CreateCharacterInfoDto;
 
-  @ApiProperty({ description: 'Character roleplay info', type: CharacterRoleplayInfoDto })
-  @ValidateNested()
-  @Type(() => CharacterRoleplayInfoDto)
+  @ApiProperty({ description: 'Character movement' })
+  // @ValidateNested()
   @IsObject()
-  roleplay: CharacterRoleplayInfoDto;
+  statistics: Record<StatKey, CharacterStatCreationDto>;
 
   @ApiProperty({ description: 'Character level', example: 1 })
   @IsNumber()
@@ -51,53 +44,36 @@ export class CreateCharacterDto {
   @IsArray()
   weaponDevelopment: WeaponDevelopmentType[] = [];
 
-  @ApiProperty({ description: 'Character movement', type: CharacterStatisticsCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterStatisticsCreationDto)
-  @IsObject()
-  statistics: CharacterStatisticsCreationDto;
-
-  @ApiProperty({ description: 'Character movement', type: CharacterMovementCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterMovementCreationDto)
-  @IsObject()
-  movement: CharacterMovementCreationDto;
-
-  @ApiProperty({ description: 'Character endurance', type: CharacterEnduranceCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterEnduranceCreationDto)
-  @IsObject()
-  endurance: CharacterEnduranceCreationDto;
-
-  @ApiProperty({ description: 'Character initiative', type: CharacterInitiativeCreationDto })
-  @ValidateNested()
-  @Type(() => CharacterInitiativeCreationDto)
-  @IsObject()
-  initiative: CharacterInitiativeCreationDto;
-
   @ApiProperty({ description: 'Character skills', type: [CharacterSkillCreationDto] })
   @ValidateNested({ each: true })
   @Type(() => CharacterSkillCreationDto)
   @IsArray()
   skills: CharacterSkillCreationDto[] | undefined;
 
-  @ApiProperty({ description: 'Character items', type: [CharacterItemCreationDto] })
-  @ValidateNested({ each: true })
-  @Type(() => CharacterItemCreationDto)
-  @IsArray()
-  items: CharacterItemCreationDto[] | undefined;
+  @ApiProperty({ description: 'Character roleplay info', type: CharacterRoleplayInfoDto })
+  @ValidateNested()
+  @Type(() => CharacterRoleplayInfoDto)
+  @IsObject()
+  roleplay: CharacterRoleplayInfoDto;
+
+  @ApiProperty({ description: 'Character image URL', example: 'https://example.com/images/character.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
 
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
-    const skills = dto.skills!.map((skill) => ({
+    const skills = dto.skills!.map(skill => ({
       skillId: skill.skillId,
       ranks: skill.ranks,
-      customBonus: skill.customBonus,
       specialization: skill.specialization,
     }));
-    const items: CreateCharacterItem[] = dto.items!.map((item) => ({
-      name: item.name,
-      itemTypeId: item.itemTypeId,
-    }));
+    const statistics: Record<StatKey, CharacterStatCreation> = Object.fromEntries(
+      Object.entries(dto.statistics || {}).map(([k, v]) => [
+        k as StatKey,
+        new CharacterStatCreation((v as any).potential, (v as any).temporary),
+      ]),
+    ) as Record<StatKey, CharacterStatCreation>;
+
     return new CreateCharacterCommand(
       dto.gameId,
       dto.factionId,
@@ -106,12 +82,9 @@ export class CreateCharacterDto {
       dto.roleplay,
       dto.level,
       dto.weaponDevelopment,
-      dto.statistics.toEntity(),
-      dto.movement.strideCustomBonus,
-      dto.endurance.customBonus,
-      dto.initiative.customBonus,
+      statistics,
       skills,
-      items,
+      dto.imageUrl,
       userId,
       roles,
     );

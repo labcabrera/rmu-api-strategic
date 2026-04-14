@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { Injectable, Logger } from '@nestjs/common';
 import { parse } from '@rsql/parser';
 import { InvalidSearchExpression } from 'src/modules/shared/domain/errors/errors';
@@ -56,35 +55,42 @@ export class RsqlParser {
         }
         return { $or: node.args.map(this.processNode) };
       case 'COMPARISON': {
-        // Handle different possible structures for comparison nodes
         let field = node.left?.selector || node.selector;
-        // If the field is 'id', convert it to '_id' for MongoDB compatibility
-        if (field === 'id') {
-          field = '_id';
-        }
+        if (field === 'id') field = '_id';
         const op = node.operator || node.comparison;
         const value = node.right?.value || (node.arguments ? node.arguments[0] : undefined);
-        if (!field) {
-          throw new InvalidSearchExpression(`Missing field selector in comparison`);
-        }
-        if (!op) {
-          throw new InvalidSearchExpression(`Missing operator in comparison for field ${field}`);
-        }
-        if (value === undefined) {
-          throw new InvalidSearchExpression(`Missing value for comparison operator ${op} on field ${field}`);
-        }
+        if (!field) throw new InvalidSearchExpression(`Missing field selector in comparison`);
+        if (!op) throw new InvalidSearchExpression(`Missing operator in comparison for field ${field}`);
+        if (value === undefined) throw new InvalidSearchExpression(`Missing value for comparison operator ${op} on field ${field}`);
 
-        let processedValue = value;
-        if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
-          const numValue = Number(value);
-          if (Number.isFinite(numValue)) {
-            processedValue = numValue;
+        // Normalizer: convert literal 'null' (case-insensitive) to JS null.
+        const normalize = (v: any) => {
+          if (v === null) return null;
+          if (typeof v === 'string' && v.trim().toLowerCase() === 'null') return null;
+          return v;
+        };
+
+        // Handle arrays vs single value and coerce numbers only when value !== null
+        const coerce = (v: any) => {
+          const n = normalize(v);
+          if (n === null) return null;
+          if (typeof n === 'string' && !isNaN(Number(n)) && n.trim() !== '') {
+            const num = Number(n);
+            return Number.isFinite(num) ? num : n;
           }
-        }
+          return n;
+        };
+
+        const processedValue = coerce(value);
+
         switch (op) {
           case '==':
+            // Match null OR missing when value is null
+            if (processedValue === null) return { [field]: null };
             return { [field]: processedValue };
           case '!=':
+            // For null, require field exists and is not null (inverse of == null)
+            if (processedValue === null) return { [field]: { $ne: null, $exists: true } };
             return { [field]: { $ne: processedValue } };
           case '>':
             return { [field]: { $gt: processedValue } };
@@ -95,30 +101,19 @@ export class RsqlParser {
           case '<=':
             return { [field]: { $lte: processedValue } };
           case '=in=': {
-            // For 'in' operations, we need to handle array values
             const values = Array.isArray(value) ? value : [value];
-            const inValues = values.map((arg: any) => {
-              if (typeof arg === 'string' && !isNaN(Number(arg)) && arg.trim() !== '') {
-                const numValue = Number(arg);
-                return Number.isFinite(numValue) ? numValue : arg;
-              }
-              return arg;
-            });
+            const inValues = values.map(coerce);
             return { [field]: { $in: inValues } };
           }
           case '=out=': {
-            // For 'not in' operations, we need to handle array values
             const values = Array.isArray(value) ? value : [value];
-            const outValues = values.map((arg: any) => {
-              if (typeof arg === 'string' && !isNaN(Number(arg)) && arg.trim() !== '') {
-                const numValue = Number(arg);
-                return Number.isFinite(numValue) ? numValue : arg;
-              }
-              return arg;
-            });
+            const outValues = values.map(coerce);
             return { [field]: { $nin: outValues } };
           }
           case '=re=':
+            if (processedValue === null) {
+              throw new InvalidSearchExpression('Regex operator cannot be applied to null');
+            }
             return { [field]: { $regex: processedValue, $options: 'i' } };
           default:
             throw new Error(`Unsupported operator: ${op}`);

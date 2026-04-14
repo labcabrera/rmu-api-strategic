@@ -1,23 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { randomUUID } from 'crypto';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
-import { CreateCharacterCommand } from '../commands/create-character.command';
-import { CharacterItem } from 'src/modules/characters/domain/value-objects/character-item.vo';
+import { CharacterStatCreation, CreateCharacterCommand } from '../commands/create-character.command';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import type { ItemClientPort } from '../../ports/item-client.port';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
 import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
 import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
-import { CharacterStatistics, Stat } from 'src/modules/characters/domain/value-objects/character-statistics.vo';
+import { CharacterStat, STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
 import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
@@ -36,9 +30,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('ItemClient') private readonly itemClient: ItemClientPort,
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -54,16 +47,9 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
-    const processedStatistics = this.processStatistics(race, command.statistics, game);
-    const info: CharacterInfo = {
-      race: new NamedEntity(race.id, race.name),
-      professionId: command.info.professionId,
-      sizeId: command.info.sizeId,
-      realmType: command.info.realmType,
-      height: command.info.height,
-      weight: command.info.weight,
-    };
-    const items = await this.processItems(info, command);
+
+    const processedStatistics = this.processStatistics(race, command.statistics);
+    const info = this.getCharacterInfo(command, race);
     const character = Character.partialCreate(
       game,
       new NamedEntity(faction.id, faction.name),
@@ -73,9 +59,11 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.level,
       command.weaponDevelopment,
       processedStatistics,
+      command.imageUrl,
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
+
     character.updateRace({
       raceName: race.name,
       sizeId: race.sizeId || 'medium',
@@ -85,54 +73,22 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       enduranceBonus: race.enduranceBonus || 0,
       baseHits: race.baseHits || 0,
       baseAt: race.baseAt || 1,
+      skillBonuses: race.skillBonuses || [],
     });
-    //TODO move to aggregate logic
-    character.items = items;
-    this.loadDefaultEquipment(character);
-    this.characterProcessorService.process(character);
+    this.characterProcessorService.process(character, []);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
     this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
-    return created;
+    return character;
   }
 
-  processStatistics(raceInfo: Race, statistics: CharacterStatistics, game: Game): CharacterStatistics {
-    const values = ['ag', 'co', 'em', 'in', 'me', 'pr', 'qu', 're', 'sd', 'st'];
-    const result: any = {};
-    const minStat = game.powerLevel.statRandomMin - 1 || 10;
-    const multiplier = 100 - minStat;
-    values.forEach((e) => {
-      const value: Stat = statistics[e] as Stat;
-      let potential = value ? value.potential : undefined;
-      let temporary = value ? value.temporary : undefined;
-      if (!potential && !temporary) {
-        const random: number[] = [];
-        // Discard rolls < 10
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.push(Math.floor(Math.random() * multiplier) + minStat);
-        random.sort();
-        potential = random[2];
-        temporary = random[1];
-      }
-      let racial = 0;
-      if (raceInfo && raceInfo.stats && raceInfo.stats[e]) {
-        racial = raceInfo.stats[e];
-      }
-      const bonus = 0;
-      let custom = 0;
-      if (statistics && value && value.custom) {
-        custom = value.custom;
-      }
-      const total = bonus + racial + custom;
-      result[e] = {
-        potential: potential,
-        temporary: temporary,
-        bonus: bonus,
-        racial: racial,
-        custom: custom,
-        totalBonus: total,
-      };
+  processStatistics(raceInfo: Race, statistics: Record<StatKey, CharacterStatCreation>): Record<StatKey, CharacterStat> {
+    const result = {} as Record<StatKey, CharacterStat>;
+    STAT_KEYS.forEach(e => {
+      const potential = statistics[e].potential;
+      const temporary = statistics[e].temporary;
+      const stat = CharacterStat.fromModifiers(potential, temporary, {} as Record<string, number>);
+      result[e] = stat;
     });
     return result;
   }
@@ -140,35 +96,50 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
   async processSkills(character: Character, profession: Profession, command: CreateCharacterCommand, raceInfo: Race): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
-    if (!skills.some((e) => e.skillId === 'body-development')) {
+    if (!skills.some(e => e.skillId === 'body-development')) {
       skills.push({
         skillId: 'body-development',
-        specialization: undefined,
+        specialization: null,
       });
     }
+    raceInfo.skillBonuses?.forEach(bonus => {
+      const current = skills.find(
+        s => s.skillId === bonus.skillId && (s.specialization === bonus.specialization || bonus.specialization === null),
+      );
+      if (!current) {
+        skills.push({
+          skillId: bonus.skillId,
+          specialization: bonus.specialization,
+        });
+      }
+    });
     const readedSkills = await this.fetchSkills();
     const readedSkillCategories = await this.fetchSkillCategories();
     for (const skill of skills) {
-      const readedSkill = readedSkills.find((s) => s.id == skill.skillId);
+      const readedSkill = readedSkills.find(s => s.id == skill.skillId);
       if (!readedSkill) {
         throw new ValidationError(`Invalid skill identifier '${skill.skillId}'`);
       }
-      const readedCategory = readedSkillCategories.find((c) => c.id == readedSkill.categoryId);
+      const readedCategory = readedSkillCategories.find(c => c.id == readedSkill.categoryId);
       if (!readedCategory) {
         throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
       }
       const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
       const categoryId = this.getSkillDevelopmentCategory(character, skill.skillId, readedCategory.id);
       const devPoints = profession.skillCosts[categoryId] || [];
-      let racialBonus: number;
-      if (skill.skillId === 'body-development') {
-        racialBonus = raceInfo.baseHits;
-      } else {
-        //TODO read from race info
-        racialBonus = 0;
-      }
-      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, racialBonus);
+      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, 0);
     }
+  }
+
+  private getCharacterInfo(command: CreateCharacterCommand, race: Race): CharacterInfo {
+    return {
+      race: new NamedEntity(race.id, race.name),
+      professionId: command.info.professionId,
+      sizeId: command.info.sizeId,
+      realmType: command.info.realmType,
+      height: command.info.height,
+      weight: command.info.weight,
+    };
   }
 
   private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
@@ -180,63 +151,6 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return categoryId;
   }
 
-  async processItems(characterInfo: CharacterInfo, command: CreateCharacterCommand): Promise<CharacterItem[]> {
-    if (!command.items || command.items.length == 0) {
-      return [];
-    }
-    return Promise.all(
-      command.items.map(async (e) => {
-        const readedItem = await this.itemClient.getItemById(e.itemTypeId);
-        const readedWeapon = readedItem.weapon ? readedItem.weapon : undefined;
-        const readedArmor = readedItem.armor ? readedItem.armor : undefined;
-        const name = e.name || readedItem.id.charAt(0).toUpperCase() + readedItem.id.slice(1);
-        const itemInfo = {
-          length: readedItem.info.length,
-          strength: readedItem.info.strength,
-          weight: readedItem.info.weight,
-        };
-        if (!itemInfo.weight && readedItem.info.weightPercent) {
-          itemInfo.weight = readedItem.info.weightPercent * characterInfo.weight;
-        }
-        return {
-          id: randomUUID(),
-          name: name,
-          itemTypeId: e.itemTypeId,
-          category: readedItem.category,
-          carried: true,
-          weapon: readedWeapon,
-          armor: readedArmor,
-          affixes: [],
-          info: itemInfo,
-          stackable: readedItem.info.stackable,
-          amount: undefined,
-          description: undefined,
-        } as CharacterItem;
-      }),
-    );
-  }
-
-  loadDefaultEquipment(character: Partial<Character>): void {
-    if (!character.items || !character.equipment) {
-      return;
-    }
-    const weapon = character.items.find((e) => e.category === 'weapon');
-    const shield = character.items.find((e) => e.category === 'shield');
-    const armor = character.items.find((e) => e.category === 'armor');
-    if (weapon && weapon.id) {
-      character.equipment.mainHand = weapon.id;
-    }
-    if (shield && shield.id) {
-      character.equipment.offHand = shield.id;
-    }
-    if (shield && shield.id) {
-      character.equipment.offHand = shield.id;
-    }
-    if (armor && armor.id) {
-      character.equipment.body = armor.id;
-    }
-  }
-
   private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
     if (skillId.startsWith('melee-weapon')) return 'melee';
     if (skillId.startsWith('ranged-weapon')) return 'ranged';
@@ -245,7 +159,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return undefined;
   }
 
-  async fetchRace(raceId: string): Promise<Race> {
+  private async fetchRace(raceId: string): Promise<Race> {
     try {
       return await this.raceClient.getRaceById(raceId);
     } catch (e) {
@@ -254,7 +168,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchSkills(): Promise<SkillResponse[]> {
+  private async fetchSkills(): Promise<SkillResponse[]> {
     try {
       return (await this.skillClient.getAllSkills()).content;
     } catch (e) {
@@ -263,7 +177,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
+  private async fetchSkillCategories(): Promise<SkillCategoryResponse[]> {
     try {
       return await this.skillCategoryClient.getAllSkillCategories();
     } catch (e) {
@@ -272,16 +186,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
-  async fetchItem(itemId: string): Promise<any> {
-    try {
-      return await this.itemClient.getItemById(itemId);
-    } catch (e) {
-      this.logger.error(e);
-      throw new ValidationError(`Item with id ${itemId} not found.`);
-    }
-  }
-
-  async fetchProfession(professionId: string): Promise<Profession> {
+  private async fetchProfession(professionId: string): Promise<Profession> {
     try {
       return await this.professionClient.getProfessionById(professionId);
     } catch (e) {

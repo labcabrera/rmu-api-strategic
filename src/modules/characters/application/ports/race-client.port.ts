@@ -1,3 +1,5 @@
+import { StatKey } from '../../domain/value-objects/character-stat.vo';
+
 export interface RaceClientPort {
   getRaceById(raceId: string): Promise<Race>;
 }
@@ -9,7 +11,7 @@ export interface Race {
   realmName: string;
   archetype: string;
   sizeId: string;
-  stats: Map<string, number>;
+  stats: Record<StatKey, number>;
   resistances: Map<string, number>;
   averageHeight: SexBasedAttribute;
   averageWeight: SexBasedAttribute;
@@ -20,7 +22,14 @@ export interface Race {
   baseDevPoints: number;
   baseAt: number;
   talents: string[];
+  skillBonuses: RaceSkillBonus[];
   description: string;
+}
+
+export interface RaceSkillBonus {
+  skillId: string;
+  specialization: string | null;
+  bonus: number;
 }
 
 export interface SexBasedAttribute {

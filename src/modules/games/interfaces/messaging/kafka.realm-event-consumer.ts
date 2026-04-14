@@ -15,7 +15,7 @@ export class KafkaRealmEventConsumer {
     this.logger.log(`Received event on topic ${context.getTopic()}: ${JSON.stringify(event)}`);
     const realmId = event?.data?.id as string;
     if (realmId) {
-      this.commandBus.execute(new DeleteGamesByRealmCommand(realmId, 'admin', ['admin'])).catch((error) => {
+      this.commandBus.execute(new DeleteGamesByRealmCommand(realmId, 'admin', ['admin'])).catch(error => {
         this.logger.error(`Error deleting games for realm ${realmId}: ${error.message}`, error.stack);
       });
     } else {

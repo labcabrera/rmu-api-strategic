@@ -47,7 +47,7 @@ export class GameController {
     const roles = req.user!.roles as string[];
     const query = new GetGamesQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetGamesQuery, Page<Game>>(query);
-    const mapped = page.content.map((game) => GameDto.fromEntity(game));
+    const mapped = page.content.map(game => GameDto.fromEntity(game));
     return new Page<GameDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
