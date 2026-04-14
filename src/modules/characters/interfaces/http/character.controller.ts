@@ -56,7 +56,7 @@ export class CharacterController {
     const roles = req.user.roles as string[];
     const query = new GetCharactersQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
-    const mapped = page.content.map((character) => CharacterDto.fromEntity(character));
+    const mapped = page.content.map(character => CharacterDto.fromEntity(character));
     return new Page<CharacterDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 

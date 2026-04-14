@@ -47,7 +47,7 @@ export class ItemController {
     const roles = req.user!.roles as string[];
     const query = new GetItemsQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetItemsQuery, Page<Item>>(query);
-    const mapped = page.content.map((game) => ItemDto.fromEntity(game));
+    const mapped = page.content.map(game => ItemDto.fromEntity(game));
     return new Page<ItemDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 

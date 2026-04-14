@@ -27,7 +27,7 @@ export class MongoFactionRepository implements FactionRepository {
       this.factionModel.find(mongoQuery).skip(skip).limit(size).sort({ name: 1 }),
       this.factionModel.countDocuments(mongoQuery),
     ]);
-    const content = factionDocs.map((doc) => this.mapToEntity(doc));
+    const content = factionDocs.map(doc => this.mapToEntity(doc));
     return new Page<Faction>(content, page, size, totalElements);
   }
 

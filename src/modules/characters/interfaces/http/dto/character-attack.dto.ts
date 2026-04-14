@@ -41,7 +41,7 @@ export class CharacterAttackDto {
     dto.type = entity.type;
     dto.defaultAttack = entity.defaultAttack;
     dto.meleeRange = entity.meleeRange;
-    dto.ranges = entity.ranges ? entity.ranges.map((range) => CharacterAttackRangeDto.fromEntity(range)) : null;
+    dto.ranges = entity.ranges ? entity.ranges.map(range => CharacterAttackRangeDto.fromEntity(range)) : null;
     dto.boModifiers = entity.boModifiers;
     return dto;
   }

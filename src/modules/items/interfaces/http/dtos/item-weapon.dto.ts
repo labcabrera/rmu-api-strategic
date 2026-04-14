@@ -16,7 +16,7 @@ export class ItemWeaponDto {
     const dto = new ItemWeaponDto();
     dto.skillId = entity.skillId;
     dto.fumble = entity.fumble;
-    dto.modes = entity.modes.map((mode) => ItemWeaponModeDto.fromEntity(mode));
+    dto.modes = entity.modes.map(mode => ItemWeaponModeDto.fromEntity(mode));
     return dto;
   }
 }

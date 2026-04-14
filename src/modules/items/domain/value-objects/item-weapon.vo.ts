@@ -8,6 +8,6 @@ export class ItemWeapon {
   ) {}
 
   static isTwoHanded(weapon: ItemWeapon): boolean {
-    return weapon.modes.filter((m) => m.type !== 'two-hands').length > 0;
+    return weapon.modes.filter(m => m.type !== 'two-hands').length > 0;
   }
 }

@@ -21,7 +21,7 @@ export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, C
     if (!character) throw new NotFoundError('Character', characterId);
 
     const items = await this.itemRepository.findByCharacterId(characterId);
-    const item = items.find((i) => i.id === command.itemId);
+    const item = items.find(i => i.id === command.itemId);
     if (!item) throw new NotFoundError('Item', command.itemId);
 
     character.unequipItem(item.id);

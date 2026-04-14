@@ -15,7 +15,7 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
 
   async findByCharacterId(characterId: string): Promise<Item[]> {
     const items = await this.model.find({ characterId });
-    return items.map((doc) => this.mapToEntity(doc));
+    return items.map(doc => this.mapToEntity(doc));
   }
 
   async findByCharacterIdAndItemTypeId(characterId: string, itemTypeId: string): Promise<Item | null> {

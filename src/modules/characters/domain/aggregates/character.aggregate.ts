@@ -179,10 +179,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   private updateRaceSkillBonuses(skillBonuses: SkillBonus[]) {
-    this.skills.forEach((skill) => {
+    this.skills.forEach(skill => {
       skill.racialBonus = 0;
     });
-    skillBonuses.forEach((bonus) => {
+    skillBonuses.forEach(bonus => {
       const skill = this.findSkill(bonus.skillId, bonus.specialization);
       if (skill) {
         skill.racialBonus = bonus.bonus;
@@ -226,7 +226,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {
-    if (this.skills.find((s) => s.skillId === skillId && s.specialization === specialization)) {
+    if (this.skills.find(s => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
@@ -242,7 +242,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     cost: number,
     specialization: string | undefined,
   ) {
-    if (this.traits.find((t) => t.traitId === traitId && t.specialization === specialization)) {
+    if (this.traits.find(t => t.traitId === traitId && t.specialization === specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
     if (cost > 0 && this.experience.availableDevPoints < cost) {
@@ -254,11 +254,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   deleteTrait(traitId: string, specialization: string | undefined) {
-    const trait = this.traits.find((t) => t.traitId === traitId && t.specialization === specialization);
+    const trait = this.traits.find(t => t.traitId === traitId && t.specialization === specialization);
     if (!trait) {
       throw new ValidationError('Trait not found');
     }
-    this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.specialization === specialization));
+    this.traits = this.traits.filter(t => !(t.traitId === traitId && t.specialization === specialization));
     this.experience.availableDevPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
@@ -310,16 +310,16 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
 
   findSkill(skillId: string, specialization: string | null): CharacterSkill | null {
     const found = this.skills.find(
-      (s) => s.skillId === skillId && (s.specialization === specialization || (!s.specialization && !specialization)),
+      s => s.skillId === skillId && (s.specialization === specialization || (!s.specialization && !specialization)),
     );
     return found || null;
   }
 
   removeSkill(skillId: string, specialization: string | null): void {
     if (specialization) {
-      this.skills = this.skills.filter((s) => s.skillId !== skillId || s.specialization !== specialization);
+      this.skills = this.skills.filter(s => s.skillId !== skillId || s.specialization !== specialization);
     } else {
-      this.skills = this.skills.filter((s) => s.skillId !== skillId);
+      this.skills = this.skills.filter(s => s.skillId !== skillId);
     }
   }
 
@@ -334,7 +334,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.experience.availableDevPoints = this.experience.devPoints;
     this.experience.availableStatLevelUp = this.experience.level > 1 ? 2 : 0;
     this.experience.developedStatLevelUp = 0;
-    this.skills.forEach((s) => (s.ranksDeveloped = 0));
+    this.skills.forEach(s => (s.ranksDeveloped = 0));
   }
 
   unequipItem(itemId: any) {
@@ -395,7 +395,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   private setupRacialResistanceBonus(resistance: string, bonus: number): void {
-    const found = this.resistances.some((r) => r.resistance === resistance);
+    const found = this.resistances.some(r => r.resistance === resistance);
     if (found) {
       return;
     }

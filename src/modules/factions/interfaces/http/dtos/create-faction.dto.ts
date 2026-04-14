@@ -38,14 +38,6 @@ export class CreateFactionDto {
   description: string | undefined;
 
   static toCommand(dto: CreateFactionDto, userId: string, roles: string[]): CreateFactionCommand {
-    return new CreateFactionCommand(
-      dto.gameId,
-      dto.name,
-      dto.management,
-      dto.shortDescription,
-      dto.description,
-      userId,
-      roles,
-    );
+    return new CreateFactionCommand(dto.gameId, dto.name, dto.management, dto.shortDescription, dto.description, userId, roles);
   }
 }

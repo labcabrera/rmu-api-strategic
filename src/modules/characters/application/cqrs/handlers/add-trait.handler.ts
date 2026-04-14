@@ -34,7 +34,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
     return updated;
   }
 

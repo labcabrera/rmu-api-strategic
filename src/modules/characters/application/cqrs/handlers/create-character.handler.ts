@@ -84,7 +84,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
 
   processStatistics(raceInfo: Race, statistics: Record<StatKey, CharacterStatCreation>): Record<StatKey, CharacterStat> {
     const result = {} as Record<StatKey, CharacterStat>;
-    STAT_KEYS.forEach((e) => {
+    STAT_KEYS.forEach(e => {
       const potential = statistics[e].potential;
       const temporary = statistics[e].temporary;
       const stat = CharacterStat.fromModifiers(potential, temporary, {} as Record<string, number>);
@@ -96,15 +96,15 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
   async processSkills(character: Character, profession: Profession, command: CreateCharacterCommand, raceInfo: Race): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
-    if (!skills.some((e) => e.skillId === 'body-development')) {
+    if (!skills.some(e => e.skillId === 'body-development')) {
       skills.push({
         skillId: 'body-development',
         specialization: null,
       });
     }
-    raceInfo.skillBonuses?.forEach((bonus) => {
+    raceInfo.skillBonuses?.forEach(bonus => {
       const current = skills.find(
-        (s) => s.skillId === bonus.skillId && (s.specialization === bonus.specialization || bonus.specialization === null),
+        s => s.skillId === bonus.skillId && (s.specialization === bonus.specialization || bonus.specialization === null),
       );
       if (!current) {
         skills.push({
@@ -116,11 +116,11 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const readedSkills = await this.fetchSkills();
     const readedSkillCategories = await this.fetchSkillCategories();
     for (const skill of skills) {
-      const readedSkill = readedSkills.find((s) => s.id == skill.skillId);
+      const readedSkill = readedSkills.find(s => s.id == skill.skillId);
       if (!readedSkill) {
         throw new ValidationError(`Invalid skill identifier '${skill.skillId}'`);
       }
-      const readedCategory = readedSkillCategories.find((c) => c.id == readedSkill.categoryId);
+      const readedCategory = readedSkillCategories.find(c => c.id == readedSkill.categoryId);
       if (!readedCategory) {
         throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
       }

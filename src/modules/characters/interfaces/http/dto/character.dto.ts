@@ -98,14 +98,14 @@ export class CharacterDto {
     dto.statistics = statistics;
     dto.movement = CharacterMovementDto.fromEntity(entity.movement);
     dto.defense = CharacterDefenseDto.fromEntity(entity.defense);
-    dto.resistances = entity.resistances.map((resistance) => CharacterResistanceDto.fromEntity(resistance));
+    dto.resistances = entity.resistances.map(resistance => CharacterResistanceDto.fromEntity(resistance));
     dto.endurance = CharacterEnduranceDto.fromEntity(entity.endurance);
     dto.hp = CharacterHPDto.fromEntity(entity.hp);
     dto.initiative = CharacterInitiativeDto.fromEntity(entity.initiative);
-    dto.skills = entity.skills.map((skill) => CharacterSkillDto.fromEntity(skill));
+    dto.skills = entity.skills.map(skill => CharacterSkillDto.fromEntity(skill));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
-    dto.attacks = entity.attacks.map((attack) => CharacterAttackDto.fromEntity(attack));
-    dto.traits = entity.traits.map((trait) => CharacterTraitDto.fromEntity(trait));
+    dto.attacks = entity.attacks.map(attack => CharacterAttackDto.fromEntity(attack));
+    dto.traits = entity.traits.map(trait => CharacterTraitDto.fromEntity(trait));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;

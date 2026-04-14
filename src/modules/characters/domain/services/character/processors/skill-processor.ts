@@ -33,7 +33,7 @@ export class SkillProcessor {
 
   private getStatBonus(character: Partial<Character>, statistics: string[]): number {
     let result = 0;
-    statistics?.forEach((stat) => {
+    statistics?.forEach(stat => {
       const statValue = character.statistics![stat] as CharacterStat;
       if (statValue?.totalBonus) {
         result += statValue.totalBonus;
@@ -59,16 +59,16 @@ export class SkillProcessor {
     }
     let modifier = 0;
     if (skill.skillId === 'body-development') {
-      const tough = character.traits.find((trait) => trait.traitId === 'tough');
+      const tough = character.traits.find(trait => trait.traitId === 'tough');
       if (tough) {
         modifier = modifier + 5 * tough.tier!;
       }
-      const fragile = character.traits.find((trait) => trait.traitId === 'fragile');
+      const fragile = character.traits.find(trait => trait.traitId === 'fragile');
       if (fragile) {
         modifier = modifier - 5 * fragile.tier!;
       }
     }
-    const prodigy = character.traits.find((trait) => trait.traitId === 'prodigy' && trait.specialization === skill.skillId);
+    const prodigy = character.traits.find(trait => trait.traitId === 'prodigy' && trait.specialization === skill.skillId);
     if (prodigy) {
       if (prodigy.specialization === skill.specialization) {
         modifier = modifier + 5 * prodigy.tier!;
@@ -84,10 +84,10 @@ export class SkillProcessor {
     const headItemId = character.equipment.slots['head'] || null;
     const armsItemId = character.equipment.slots['arms'] || null;
     if (skill.skillId === 'perception' && headItemId) {
-      const headItem = items.find((item) => item.id === headItemId && item.armor);
+      const headItem = items.find(item => item.id === headItemId && item.armor);
       return headItem ? headItem.armor!.perception : 0;
     } else if (skill.skillId === 'ranged-weapon' && armsItemId) {
-      const bodyItem = items.find((item) => item.id === armsItemId && item.armor);
+      const bodyItem = items.find(item => item.id === armsItemId && item.armor);
       return bodyItem ? bodyItem.armor!.rangedPenalty : 0;
     }
     return 0;

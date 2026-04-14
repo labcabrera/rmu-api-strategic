@@ -34,7 +34,7 @@ export class DefenseProcessor {
   private getItemArmorTypeOrDefault(itemId: string | null, items: Item[], defaultAt: number): number {
     if (!itemId) return defaultAt;
 
-    const item = items.find((e) => e.id == itemId);
+    const item = items.find(e => e.id == itemId);
     if (!item || !item.armor || !item.armor.at) {
       throw new ValidationError('Invalid armor item');
     }
@@ -50,7 +50,7 @@ export class DefenseProcessor {
     character.defense.shield = null;
     const offHandId: string | null = character.equipment.slots['offHand'] || null;
     if (offHandId) {
-      const offHand = items.find((item) => item.id === offHandId);
+      const offHand = items.find(item => item.id === offHandId);
       if (offHand && offHand.shield) {
         character.defense.shield = new CharacterShield(offHand.shield.db, offHand.shield.blockCount);
       }

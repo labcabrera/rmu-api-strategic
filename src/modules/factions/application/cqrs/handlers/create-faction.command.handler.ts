@@ -30,7 +30,7 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
       command.userId,
     );
     const created = await this.factionRepository.save(faction);
-    faction.getUncommittedEvents().forEach((event) => this.factionEventBus.publish(event));
+    faction.getUncommittedEvents().forEach(event => this.factionEventBus.publish(event));
     return created;
   }
 }

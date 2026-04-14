@@ -33,7 +33,7 @@ export class AttackProcessor {
     }
     const slotItemId = character.equipment.slots[slot];
     if (slotItemId) {
-      const item = items.find((e) => e.id == slotItemId);
+      const item = items.find(e => e.id == slotItemId);
       if (!item) {
         throw new ValidationError(`Item with id ${slotItemId} not found for character ${character.id} in slot ${slot}`);
       }
@@ -42,10 +42,10 @@ export class AttackProcessor {
         const skill = this.getWeaponSkillBonus(character, item.weapon);
         const boModifiers = this.getBoModifiers(skill, character, slot);
         const fumble = this.getFumble(item.weapon.fumble, skill);
-        this.getAvailableModes(character, item.weapon).forEach((mode) => {
+        this.getAvailableModes(character, item.weapon).forEach(mode => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
-          const ranges = mode.ranges ? mode.ranges.map((r) => new CharacterAttackRange(r.from, r.to, r.bonus)) : null;
+          const ranges = mode.ranges ? mode.ranges.map(r => new CharacterAttackRange(r.from, r.to, r.bonus)) : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
             attackTable: mode.attackTable,
@@ -120,8 +120,8 @@ export class AttackProcessor {
 
   private getAvailableModes(character: Character, weapon: ItemWeapon): ItemWeaponMode[] {
     const offHandEquiped = character.equipment.slots['offHand'] || null;
-    const hasTwoHandedMode = weapon.modes.find((m) => m.type === 'two-hands');
-    return weapon.modes.filter((m) => {
+    const hasTwoHandedMode = weapon.modes.find(m => m.type === 'two-hands');
+    return weapon.modes.filter(m => {
       if (offHandEquiped && m.type === 'two-hands') {
         return false;
       }
@@ -158,7 +158,7 @@ export class AttackProcessor {
   private getOffHandPenalty(character: Character, modifiers: Record<string, number>) {
     //TODO check light off-hand weapon
     modifiers['offHand'] = -20;
-    if (character.traits?.some((t) => t.traitId === 'ambidextrous')) {
+    if (character.traits?.some(t => t.traitId === 'ambidextrous')) {
       modifiers['ambidextrous'] = 20;
     }
   }

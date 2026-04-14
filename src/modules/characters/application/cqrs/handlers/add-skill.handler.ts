@@ -65,7 +65,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     let racialBonus = 0;
     if (readedRace.skillBonuses) {
       const skillBonus = readedRace.skillBonuses.find(
-        (bonus) => bonus.skillId === skillId && (bonus.specialization === specialization || (!bonus.specialization && !specialization)),
+        bonus => bonus.skillId === skillId && (bonus.specialization === specialization || (!bonus.specialization && !specialization)),
       );
       if (skillBonus) {
         racialBonus = skillBonus.bonus;
@@ -76,7 +76,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach((event) => this.characterEventBus.publish(event));
+    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
     return updated;
   }
 

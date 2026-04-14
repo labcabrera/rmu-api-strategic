@@ -7,11 +7,13 @@ import type { ItemGuardPort } from '../../ports/item-guard.port';
 import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
 import { ItemDeletedEvent } from 'src/modules/items/domain/events/item.events';
 import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
+import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
   constructor(
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
     @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
     @Inject() private readonly commandBus: CommandBus,
@@ -23,21 +25,23 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
 
     this.itemGuard.checkDelete(item, command.userId, command.roles);
 
-    //TODO use event
+    // Character should be removed from item before deleting it
     if (item.characterId) {
-      const updateCharacterCommand = new UpdateCharacterCommand(
-        item.characterId,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        command.userId,
-        command.roles,
-      );
-      await this.commandBus.execute(updateCharacterCommand);
+      const character = await this.characterRepository.findById(item.characterId);
+      if (character !== null) {
+        const updateCharacterCommand = new UpdateCharacterCommand(
+          item.characterId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          command.userId,
+          command.roles,
+        );
+        await this.commandBus.execute(updateCharacterCommand);
+      }
     }
-
     await this.itemRepository.deleteById(command.id);
     this.itemEventBus.publish(new ItemDeletedEvent(item));
   }

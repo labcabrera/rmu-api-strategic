@@ -11,7 +11,7 @@ export class KafkaItemEventBusAdapter implements ItemEventBusPort {
   constructor(private readonly kafkaProducerService: KafkaProducerService) {}
 
   publish(event: DomainEvent<ItemProps>): void {
-    this.kafkaProducerService.emit(`internal.rmu-strategic.item.${event.eventType}.v1`, event).catch((err) => {
+    this.kafkaProducerService.emit(`internal.rmu-strategic.item.${event.eventType}.v1`, event).catch(err => {
       this.logger.error('Error publishing event to Kafka', err);
     });
   }

@@ -18,7 +18,7 @@ export class KafkaProducerService implements OnModuleInit {
     const brokers = this.configService
       .get<string>('RMU_KAFKA_BROKERS')!
       .split(',')
-      .map((broker) => broker.trim());
+      .map(broker => broker.trim());
     const clientId = this.configService.get<string>('RMU_KAFKA_CLIENT_ID')!;
     this.kafka = new Kafka({
       clientId,

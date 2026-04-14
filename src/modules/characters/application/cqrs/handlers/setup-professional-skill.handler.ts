@@ -37,13 +37,13 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
   private validateCount(types: string[], skill: CharacterSkill, character: Character): void {
     if (types.length === 0) return;
     if (types.includes('professional') && !skill.professional?.includes('professional')) {
-      const count = character.skills.filter((skill) => skill.professional?.includes('professional')).length;
+      const count = character.skills.filter(skill => skill.professional?.includes('professional')).length;
       if (count >= 10) {
         throw new ValidationError(`Character ${character.id} cannot have more than 10 professional skills`);
       }
     }
     if (types.includes('knack') && !skill.professional?.includes('knack')) {
-      const count = character.skills.filter((skill) => skill.professional?.includes('knack')).length;
+      const count = character.skills.filter(skill => skill.professional?.includes('knack')).length;
       if (count >= 2) {
         throw new ValidationError(`Character ${character.id} cannot have more than 2 knack skills`);
       }

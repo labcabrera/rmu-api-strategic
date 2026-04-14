@@ -41,21 +41,7 @@ export class UpdateCharacterDto {
   @IsString()
   imageUrl?: string | undefined;
 
-  static toCommand(
-    characterId: string,
-    dto: UpdateCharacterDto,
-    userId: string,
-    roles: string[],
-  ): UpdateCharacterCommand {
-    return new UpdateCharacterCommand(
-      characterId,
-      dto.name,
-      dto.info,
-      dto.roleplay,
-      dto.description,
-      dto.imageUrl,
-      userId,
-      roles,
-    );
+  static toCommand(characterId: string, dto: UpdateCharacterDto, userId: string, roles: string[]): UpdateCharacterCommand {
+    return new UpdateCharacterCommand(characterId, dto.name, dto.info, dto.roleplay, dto.description, dto.imageUrl, userId, roles);
   }
 }

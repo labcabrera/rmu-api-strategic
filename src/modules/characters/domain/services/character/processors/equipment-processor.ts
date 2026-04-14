@@ -15,7 +15,7 @@ export class EquipmentProcessor {
       character.equipment.slots = {} as Record<string, string>;
     }
 
-    const tmpCarriedWeight = items.filter((item) => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
+    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
 
@@ -26,14 +26,14 @@ export class EquipmentProcessor {
     if (slots['arms']) armorIds.push(slots['arms']);
     if (slots['legs']) armorIds.push(slots['legs']);
 
-    const armors = items.filter((item) => armorIds.includes(item.id));
+    const armors = items.filter(item => armorIds.includes(item.id));
 
     let enc = 0;
     let maneuverPenalty = 0;
     let perceptionPenalty = 0;
     let rangedPenalty = 0;
     let difficultyIndex = 0;
-    armors.forEach((armorItems) => {
+    armors.forEach(armorItems => {
       //TODO change name
       enc += armorItems.armor!.enc || 0;
       maneuverPenalty += armorItems.armor!.maneuver || 0;
@@ -70,7 +70,7 @@ export class EquipmentProcessor {
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {
     if (character.skills) {
-      const skill = character.skills.find((s) => s.skillId === 'armor-maneuver');
+      const skill = character.skills.find(s => s.skillId === 'armor-maneuver');
       if (skill) {
         return skill.totalBonus || 0;
       }

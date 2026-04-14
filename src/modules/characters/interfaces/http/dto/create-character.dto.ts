@@ -62,7 +62,7 @@ export class CreateCharacterDto {
   imageUrl?: string;
 
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
-    const skills = dto.skills!.map((skill) => ({
+    const skills = dto.skills!.map(skill => ({
       skillId: skill.skillId,
       ranks: skill.ranks,
       specialization: skill.specialization,

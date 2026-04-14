@@ -24,7 +24,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     if (!character) throw new NotFoundError('Character', characterId);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
-    const item = items.find((i) => i.id === command.itemId);
+    const item = items.find(i => i.id === command.itemId);
     if (!item) throw new ValidationError('Character does not have the specified item in inventory');
 
     this.validateEquipmentData(character, item, command);
@@ -48,20 +48,20 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         character.equipment.slots[slot] = null;
       }
     }
-    const item = items.find((i) => i.id === command.itemId)!;
+    const item = items.find(i => i.id === command.itemId)!;
     if (item.weapon) {
       if (this.isTwoHanded(item)) {
         character.equipment.slots['offHand'] = null;
       }
       if (command.slot === 'offHand') {
-        const mainHandItem = items.find((i) => i.id === character.equipment.slots['mainHand']);
+        const mainHandItem = items.find(i => i.id === character.equipment.slots['mainHand']);
         if (mainHandItem && this.isTwoHanded(mainHandItem)) {
           character.equipment.slots['mainHand'] = null;
         }
       }
     }
     if (item.category === 'shield') {
-      const mainHandItem = items.find((i) => i.id === character.equipment.slots['mainHand']);
+      const mainHandItem = items.find(i => i.id === character.equipment.slots['mainHand']);
       if (mainHandItem && this.isTwoHanded(mainHandItem)) {
         character.equipment.slots['mainHand'] = null;
       }
@@ -71,7 +71,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
   private isTwoHanded(item: Item): boolean {
     if (!item.weapon || !item.weapon.modes) return false;
-    const filtered = item.weapon.modes.filter((m) => m.type !== 'two-hands');
+    const filtered = item.weapon.modes.filter(m => m.type !== 'two-hands');
     return filtered.length === 0;
   }
 
@@ -95,7 +95,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         throw new ValidationError('Invalid item slot');
     }
     if (command.slot === 'offHand' && item.category !== 'shield') {
-      const check1h = item.weapon!.modes.filter((m) => m.type !== 'one-hand').length > 0;
+      const check1h = item.weapon!.modes.filter(m => m.type !== 'one-hand').length > 0;
       if (check1h) {
         throw new ValidationError('Item is not suitable for off-hand slot');
       }

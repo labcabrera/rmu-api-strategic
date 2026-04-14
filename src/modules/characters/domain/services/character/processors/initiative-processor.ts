@@ -17,7 +17,7 @@ export class InitiativeProcessor {
     if (!character.traits || character.traits.length === 0) {
       return 0;
     }
-    const prodigy = character.traits.find((trait) => trait.traitId === 'fast-attack');
+    const prodigy = character.traits.find(trait => trait.traitId === 'fast-attack');
     if (prodigy) {
       return 5 * prodigy.tier!;
     }

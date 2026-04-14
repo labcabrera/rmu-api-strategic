@@ -27,12 +27,12 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
 
   async findByGameId(gameId: string): Promise<Character[]> {
     const characters = await this.model.find({ gameId });
-    return characters.map((doc) => this.mapToEntity(doc));
+    return characters.map(doc => this.mapToEntity(doc));
   }
 
   async findByRaceId(raceId: string): Promise<Character[]> {
     const characters = await this.model.find({ 'info.race.id': raceId });
-    return characters.map((doc) => this.mapToEntity(doc));
+    return characters.map(doc => this.mapToEntity(doc));
   }
 
   async deleteByGameId(gameId: string): Promise<void> {

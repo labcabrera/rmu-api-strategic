@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, Request, UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { CharacterDto } from './dto/character.dto';
@@ -18,10 +19,7 @@ import { EquipItemCommand } from 'src/modules/characters/application/cqrs/comman
 export class CharacterItemController {
   private readonly logger = new Logger(CharacterItemController.name);
 
-  constructor(
-    private commandBus: CommandBus,
-    private queryBus: QueryBus,
-  ) {}
+  constructor(private commandBus: CommandBus) {}
 
   @Put(':id/items/:itemId/carried/:carried')
   @ApiBody({ type: EquipItemDto })
