@@ -5,8 +5,9 @@ export class CharacterXPDto {
   level: number;
   availableLevel: number;
   xp: number;
-  developmentPoints: number;
-  availableDevelopmentPoints: number;
+  devPoints: number;
+  availableDevPoints: number;
+  availableRaceDevPoints: number;
   weaponDevelopment: WeaponDevelopmentType[];
 
   static fromEntity(entity: CharacterXP): CharacterXPDto {
@@ -14,8 +15,9 @@ export class CharacterXPDto {
     dto.level = entity.level;
     dto.availableLevel = entity.availableLevel;
     dto.xp = entity.xp;
-    dto.developmentPoints = entity.developmentPoints;
-    dto.availableDevelopmentPoints = entity.availableDevelopmentPoints;
+    dto.devPoints = entity.devPoints;
+    dto.availableDevPoints = entity.availableDevPoints;
+    dto.availableDevPoints = entity.availableDevPoints;
     dto.weaponDevelopment = entity.weaponDevelopment;
     return dto;
   }

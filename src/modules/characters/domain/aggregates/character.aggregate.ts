@@ -99,8 +99,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       new Date(),
       undefined,
     );
-    character.experience.developmentPoints = game.powerLevel.baseDevPoints || 60;
-    character.experience.availableDevelopmentPoints = game.powerLevel.baseDevPoints || 60;
+    character.experience.devPoints = game.powerLevel.baseDevPoints || 60;
+    character.experience.availableDevPoints = game.powerLevel.baseDevPoints || 60;
     return character;
   }
 
@@ -245,11 +245,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (this.traits.find((t) => t.traitId === traitId && t.specialization === specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
-    if (cost > 0 && this.experience.availableDevelopmentPoints < cost) {
+    if (cost > 0 && this.experience.availableDevPoints < cost) {
       throw new ValidationError('Insufficient development points to acquire the trait');
     }
     this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization));
-    this.experience.availableDevelopmentPoints -= cost;
+    this.experience.availableDevPoints -= cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
@@ -259,7 +259,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       throw new ValidationError('Trait not found');
     }
     this.traits = this.traits.filter((t) => !(t.traitId === traitId && t.specialization === specialization));
-    this.experience.availableDevelopmentPoints += trait.cost;
+    this.experience.availableDevPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
@@ -272,12 +272,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     const indexCost = Math.min(skill.ranksDeveloped, 1);
     const cost = skill.development[indexCost];
-    if (this.experience.availableDevelopmentPoints < cost) {
+    if (this.experience.availableDevPoints < cost) {
       throw new ValidationError('Insufficient development points');
     }
     skill.ranks += 1;
     skill.ranksDeveloped += 1;
-    this.experience.availableDevelopmentPoints -= cost;
+    this.experience.availableDevPoints -= cost;
   }
 
   levelDownSkill(skillId: string, specialization: string | null): void {
@@ -292,7 +292,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     const cost = skill.development[indexCost];
     skill.ranks -= 1;
     skill.ranksDeveloped -= 1;
-    this.experience.availableDevelopmentPoints += cost;
+    this.experience.availableDevPoints += cost;
   }
 
   deleteSkill(skillId: string, specialization: string | null): void {
@@ -327,11 +327,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (this.experience.level >= this.experience.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');
     }
-    if (this.experience.availableDevelopmentPoints > 0 && !force) {
+    if (this.experience.availableDevPoints > 0 && !force) {
       throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
     }
     this.experience.level += 1;
-    this.experience.availableDevelopmentPoints = this.experience.developmentPoints;
+    this.experience.availableDevPoints = this.experience.devPoints;
     this.skills.forEach((s) => (s.ranksDeveloped = 0));
   }
 

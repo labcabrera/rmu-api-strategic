@@ -121,27 +121,6 @@ export class CharacterInitiative {
 }
 
 @Schema({ _id: false })
-export class CharacterXP {
-  @Prop({ required: true })
-  level: number;
-
-  @Prop({ required: true })
-  availableLevel: number;
-
-  @Prop({ required: true })
-  xp: number;
-
-  @Prop({ required: true })
-  developmentPoints: number;
-
-  @Prop({ required: true })
-  availableDevelopmentPoints: number;
-
-  @Prop({ required: true })
-  weaponDevelopment: WeaponDevelopmentType[];
-}
-
-@Schema({ _id: false })
 export class CharacterRoleplayInfo {
   @Prop({ type: String, required: false })
   gender: CharacterGender | undefined;

@@ -8,7 +8,6 @@ import {
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
-  CharacterXP,
 } from './character-childs.model';
 import { CharacterEquipment } from './character-equipment.model';
 import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
@@ -20,6 +19,7 @@ import { CharacterStat, CharacterStatSchema } from './character-stat.model';
 import { CharacterMovement } from './character-movement.model';
 import { CharacterDefense } from './character-defense.model';
 import { CharacterAttack } from './character-attack.model';
+import { CharacterXP } from './character-xp.model';
 
 export type CharacterDocument = CharacterModel & Document;
 
