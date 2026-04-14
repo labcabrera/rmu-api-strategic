@@ -53,6 +53,7 @@ import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-clie
 import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
 import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
 import { ItemsModule } from '../items/items.module';
+import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-temporary-stat.handler';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { ItemsModule } from '../items/items.module';
     AddTraitHandler,
     DeleteTraitHandler,
     UpdateCharacterRaceHandler,
+    UpdateTemporaryStatHandler,
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,

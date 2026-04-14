@@ -25,9 +25,6 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
     const skill = character.skills.find((skill) => skill.skillId === skillId) || null;
     if (!skill) throw new ValidationError(`Skill ${skillId} not found for character ${characterId}`);
 
-    if (command.customBonus !== undefined) {
-      skill.customBonus = command.customBonus;
-    }
     skill.ranks = command.ranks || skill.ranks;
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);

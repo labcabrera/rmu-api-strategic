@@ -19,6 +19,8 @@ import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/
 import { GetCharacterQuery } from 'src/modules/characters/application/cqrs/queries/get-character.query';
 import { GetCharactersQuery } from 'src/modules/characters/application/cqrs/queries/get-characters.query';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { UpdateTemporaryStatCommand } from '../../application/cqrs/commands/update-temporary-stat.command';
+import { UpdateTemporaryStatDto } from './dto/update-temporary-stat.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -127,6 +129,21 @@ export class CharacterController {
     const force = dto.force || false;
     const command = new LevelUpCommand(id, force, userId, roles);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Patch(':id/level-up')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'levelUpTemporaryStat', summary: 'Level up temporary stat' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
+  @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
+  async levelUpTemporaryStat(@Param('id') id: string, @Query() dto: UpdateTemporaryStatDto, @Request() req) {
+    this.logger.debug(`Leveling up character stat: ${id} for user ${req.user.id}`);
+    const userId = req.user.id as string;
+    const roles = req.user.roles as string[];
+    const command = UpdateTemporaryStatDto.toCommand(id, dto, userId, roles);
+    const entity = await this.commandBus.execute<UpdateTemporaryStatCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 }
