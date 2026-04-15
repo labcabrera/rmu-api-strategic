@@ -19,3 +19,7 @@ export interface GameProps {
   createdAt: Date;
   updatedAt?: Date;
 }
+
+export type CreateGameProps = Omit<GameProps, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type UpdateGameProps = Partial<Omit<GameProps, 'id' | 'realmId' | 'realmName' | 'createdAt' | 'updatedAt' | 'owner'>>;

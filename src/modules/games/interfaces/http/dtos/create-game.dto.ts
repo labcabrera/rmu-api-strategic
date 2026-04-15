@@ -27,7 +27,7 @@ export class CreateGameDto {
   @ApiProperty({ description: 'Game short description', example: 'Short game description' })
   @IsString()
   @IsOptional()
-  shortDescription: string | undefined;
+  shortDescription: string | null;
 
   @ApiProperty({
     description: 'Game description',
@@ -35,9 +35,27 @@ export class CreateGameDto {
   })
   @IsString()
   @IsOptional()
-  description: string | undefined;
+  description: string | null;
+
+  @ApiProperty({
+    description: 'Game description',
+    example: 'A thrilling campaign set in Middle-earth with largue text',
+  })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | null;
 
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
-    return new CreateGameCommand(dto.name, dto.realmId, dto.options, dto.powerLevel, dto.shortDescription, dto.description, userId, roles);
+    return new CreateGameCommand(
+      dto.name,
+      dto.realmId,
+      dto.options,
+      dto.powerLevel,
+      dto.shortDescription,
+      dto.description,
+      dto.imageUrl,
+      userId,
+      roles,
+    );
   }
 }

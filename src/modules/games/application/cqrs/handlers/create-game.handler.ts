@@ -7,6 +7,7 @@ import type { GameRepository } from '../../ports/game.repository';
 import type { RealmClientPort } from '../../ports/realm-client.port';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { GameGuardPort } from '../../ports/game-guard.port';
+import { CreateGameProps } from 'src/modules/games/domain/aggregates/game-props';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
@@ -24,7 +25,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
     const realm = await this.realmClient.getRealmById(command.realmId);
     if (!realm) throw new ValidationError('Realm not found');
 
-    const game = Game.create({
+    const props = {
       name: command.name,
       realmId: realm.id,
       realmName: realm.name,
@@ -32,9 +33,12 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       powerLevel: command.powerLevel,
       shortDescription: command.shortDescription,
       description: command.description,
+      imageUrl: command.imageUrl,
       owner: command.userId,
       accessType: 'private',
-    });
+    } as CreateGameProps;
+
+    const game = Game.create(props);
     const savedGame = await this.gameRepository.save(game);
     game.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
     return savedGame;

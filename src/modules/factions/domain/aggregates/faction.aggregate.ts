@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events';
 import { FactionManagement } from '../value-objects/faction-management.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { CreateFactionProps, FactionProps } from './faction-props';
+import { CreateFactionProps, FactionProps, UpdateFactionProps } from './faction-props';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 
 export class Faction extends BaseAggregateRoot<FactionProps> {
@@ -53,7 +53,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
     );
   }
 
-  update(props: Partial<Omit<FactionProps, 'id' | 'gameId' | 'owner' | 'createdAt' | 'updatedAt'>>) {
+  update(props: UpdateFactionProps) {
     const { name, management, shortDescription, description, imageUrl } = props;
     if (name && name.trim() === '') {
       throw new ValidationError('Name can not be empty');
