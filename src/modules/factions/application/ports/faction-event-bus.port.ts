@@ -1,6 +1,6 @@
-import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { FactionProps } from '../../domain/aggregates/faction-props';
 
 export interface FactionEventBusPort {
-  publish(event: DomainEvent<Faction>): void;
+  publish(event: DomainEvent<FactionProps>): void;
 }

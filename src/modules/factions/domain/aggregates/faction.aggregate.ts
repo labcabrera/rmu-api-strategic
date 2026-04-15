@@ -1,26 +1,13 @@
-import { AggregateRoot } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events';
 import { FactionManagement } from '../value-objects/faction-management.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { CreateFactionProps, FactionProps } from './faction-props';
+import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 
-export interface FactionProps {
-  id: string;
-  gameId: string;
-  name: string;
-  management: FactionManagement;
-  shortDescription: string | undefined;
-  description: string | undefined;
-  imageUrl: string | undefined;
-  owner: string;
-  createdAt: Date;
-  updatedAt: Date | undefined;
-}
-
-export class Faction extends AggregateRoot<DomainEvent<Faction>> {
+export class Faction extends BaseAggregateRoot<FactionProps> {
   private constructor(
-    public readonly id: string,
+    id: string,
     public readonly gameId: string,
     public name: string,
     public management: FactionManagement,
@@ -31,26 +18,19 @@ export class Faction extends AggregateRoot<DomainEvent<Faction>> {
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
-    super();
+    super(id);
   }
 
-  static create(
-    gameId: string,
-    name: string,
-    management: FactionManagement,
-    shortDescription: string | undefined,
-    description: string | undefined,
-    owner: string,
-  ) {
+  static create(props: CreateFactionProps): Faction {
     const faction = new Faction(
       randomUUID(),
-      gameId,
-      name,
-      management,
-      shortDescription,
-      description,
-      undefined,
-      owner,
+      props.gameId,
+      props.name,
+      props.management,
+      props.shortDescription,
+      props.description,
+      props.imageUrl,
+      props.owner,
       new Date(),
       undefined,
     );
@@ -115,7 +95,7 @@ export class Faction extends AggregateRoot<DomainEvent<Faction>> {
     this.apply(new FactionUpdatedEvent(this));
   }
 
-  toProps(): FactionProps {
+  getProps(): FactionProps {
     return {
       id: this.id,
       gameId: this.gameId,

@@ -30,14 +30,28 @@ export class CreateFactionDto {
   @ApiProperty({ description: 'Faction short description', example: 'Faction short description' })
   @IsString()
   @IsOptional()
-  shortDescription: string | undefined;
+  shortDescription: string | null;
 
   @ApiProperty({ description: 'Faction description', example: 'A faction from Mordor' })
   @IsString()
   @IsOptional()
-  description: string | undefined;
+  description: string | null;
+
+  @ApiProperty({ description: 'Faction image', required: false, example: 'http://foo/bar.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | null;
 
   static toCommand(dto: CreateFactionDto, userId: string, roles: string[]): CreateFactionCommand {
-    return new CreateFactionCommand(dto.gameId, dto.name, dto.management, dto.shortDescription, dto.description, userId, roles);
+    return new CreateFactionCommand(
+      dto.gameId,
+      dto.name,
+      dto.management,
+      dto.shortDescription,
+      dto.description,
+      dto.imageUrl,
+      userId,
+      roles,
+    );
   }
 }

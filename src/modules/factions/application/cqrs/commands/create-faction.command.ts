@@ -6,8 +6,9 @@ export class CreateFactionCommand extends AuthenticatedCommand {
     public readonly gameId: string,
     public readonly name: string,
     public readonly management: FactionManagement,
-    public readonly shortDescription: string | undefined,
-    public readonly description: string | undefined,
+    public readonly shortDescription: string | null,
+    public readonly description: string | null,
+    public readonly imageUrl: string | null,
     userId: string,
     roles: string[],
   ) {
