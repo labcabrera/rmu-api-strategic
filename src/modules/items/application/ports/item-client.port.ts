@@ -1,3 +1,4 @@
+import { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo';
 
 export interface ItemClientPort {
@@ -35,7 +36,7 @@ export interface ItemArmorResponse {
   maneuver: number;
   rangedPenalty: number;
   perception: number;
-  baseDifficulty: string;
+  baseDifficulty: Difficulty;
 }
 
 export interface ItemShieldResponse {

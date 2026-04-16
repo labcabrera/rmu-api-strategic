@@ -1,3 +1,5 @@
+import { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo';
+
 export class ItemArmor {
   constructor(
     public readonly slot: string,
@@ -6,6 +8,6 @@ export class ItemArmor {
     public readonly maneuver: number,
     public readonly rangedPenalty: number,
     public readonly perception: number,
-    public readonly baseDifficulty: string,
+    public readonly baseDifficulty: Difficulty,
   ) {}
 }
