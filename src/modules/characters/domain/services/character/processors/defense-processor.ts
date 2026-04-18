@@ -10,6 +10,7 @@ export class DefenseProcessor {
     this.processArmor(character, items);
     this.processDefensiveBonus(character);
     this.processShield(character, items);
+    this.processProtect(character);
   }
 
   private processArmor(character: Character, items: Item[]): void {
@@ -55,5 +56,10 @@ export class DefenseProcessor {
         character.defense.shield = new CharacterShield(offHand.shield.db, offHand.shield.blockCount);
       }
     }
+  }
+
+  private processProtect(character: Character): void {
+    const protectSkill = character.findSkill('protect', null);
+    character.defense.protect = protectSkill ? protectSkill.totalBonus : 0;
   }
 }

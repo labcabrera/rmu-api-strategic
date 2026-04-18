@@ -3,10 +3,11 @@ export class CharacterDefense {
     public defensiveBonus: number,
     public armor: CharacterArmor,
     public shield: CharacterShield | null,
+    public protect: number,
   ) {}
 
   static empty(): CharacterDefense {
-    return new CharacterDefense(0, CharacterArmor.empty(), null);
+    return new CharacterDefense(0, CharacterArmor.empty(), null, 0);
   }
 }
 
