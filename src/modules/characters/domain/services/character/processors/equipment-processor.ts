@@ -13,6 +13,7 @@ export class EquipmentProcessor {
     if (!character.equipment.slots) {
       character.equipment.slots = {} as Record<string, string>;
     }
+    this.cleanUp(character, items);
 
     const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
@@ -73,4 +74,6 @@ export class EquipmentProcessor {
     }
     return 0;
   }
+
+  private cleanUp(character: Character, items: Item[]): void {}
 }

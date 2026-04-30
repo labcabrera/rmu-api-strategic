@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
@@ -11,6 +11,8 @@ import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
+  private readonly logger = new Logger(EquipItemHandler.name);
+
   constructor(
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
@@ -18,6 +20,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
+    this.logger.debug(`Equipping item ${command.itemId} to character ${command.characterId} in slot ${command.slot}`);
     const characterId = command.characterId;
 
     const character = await this.characterRepository.findById(command.characterId);
