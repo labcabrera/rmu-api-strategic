@@ -40,4 +40,7 @@ export class CharacterDefense {
 
   @Prop({ type: CharacterShield, required: false })
   shield: CharacterShield | null;
+
+  @Prop({ type: Number, required: false })
+  protect: number;
 }

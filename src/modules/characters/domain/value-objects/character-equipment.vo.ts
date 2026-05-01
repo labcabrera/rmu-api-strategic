@@ -1,3 +1,5 @@
+import { Difficulty } from './difficulty.vo';
+
 export type EquipmentSlot = 'mainHand' | 'offHand' | 'body' | 'head' | 'arms' | 'legs';
 
 export class CharacterEquipment {
@@ -11,10 +13,10 @@ export class CharacterEquipment {
     public maneuverPenalty: number,
     public rangedPenalty: number,
     public perceptionPenalty: number,
-    public movementBaseDifficulty: string,
+    public movementBaseDifficulty: Difficulty,
   ) {}
 
   static empty(): CharacterEquipment {
-    return new CharacterEquipment({} as Record<EquipmentSlot, string | null>, 0, 0, 0, 0, 0, 0, 0, 0, 'creep');
+    return new CharacterEquipment({} as Record<EquipmentSlot, string | null>, 0, 0, 0, 0, 0, 0, 0, 0, 'e');
   }
 }

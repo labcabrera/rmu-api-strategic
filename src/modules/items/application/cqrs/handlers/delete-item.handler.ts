@@ -6,8 +6,8 @@ import type { ItemRepository } from '../../ports/item.repository';
 import type { ItemGuardPort } from '../../ports/item-guard.port';
 import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
 import { ItemDeletedEvent } from 'src/modules/items/domain/events/item.events';
-import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
 import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
+import { UnequipItemCommand } from 'src/modules/characters/application/cqrs/commands/unequip-item-command';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
@@ -25,21 +25,13 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
 
     this.itemGuard.checkDelete(item, command.userId, command.roles);
 
-    // Character should be removed from item before deleting it
     if (item.characterId) {
       const character = await this.characterRepository.findById(item.characterId);
-      if (character !== null) {
-        const updateCharacterCommand = new UpdateCharacterCommand(
-          item.characterId,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          command.userId,
-          command.roles,
-        );
-        await this.commandBus.execute(updateCharacterCommand);
+      if (!character) throw new NotFoundError('Character', item.characterId);
+      const slots = character.equipment?.slots;
+      if (Array.isArray(slots) && slots.some((slot: any) => slot?.id === item.id)) {
+        const unequipCommand = new UnequipItemCommand(item.characterId, item.id, command.userId, command.roles);
+        await this.commandBus.execute(unequipCommand);
       }
     }
     await this.itemRepository.deleteById(command.id);

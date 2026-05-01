@@ -10,21 +10,22 @@ export class MovementProcessor {
     const racialStrideBonus = character.movement.modifiers['racial'] || 0;
     character.movement.modifiers['qu'] = (character.statistics.qu?.totalBonus || 0) / 2;
     character.movement.baseMovementRate = 20 + racialStrideBonus + character.movement.modifiers['qu'];
-    //TODO
-    character.movement.maxPace = 'creep';
+    this.setMaxPace(character);
+  }
 
-    const weight = character.equipment.weight || 0;
-    const weightAllowance = character.equipment.weightAllowance;
-    const constPercent = (weightAllowance ? weight / weightAllowance : 0) * 100;
-    if (constPercent <= 15) {
+  private setMaxPace(character: Character): void {
+    const characterWeight = character.info.weight;
+    const equipmentWeight = character.equipment.weight || 0;
+    const percent = characterWeight === 0 ? 0 : (equipmentWeight / characterWeight) * 100;
+    if (percent <= 15) {
       character.movement.maxPace = 'dash';
-    } else if (constPercent <= 30) {
+    } else if (percent <= 30) {
       character.movement.maxPace = 'sprint';
-    } else if (constPercent <= 45) {
+    } else if (percent <= 45) {
       character.movement.maxPace = 'run';
-    } else if (constPercent <= 60) {
+    } else if (percent <= 60) {
       character.movement.maxPace = 'jog';
-    } else if (constPercent <= 90) {
+    } else if (percent <= 90) {
       character.movement.maxPace = 'walk';
     } else {
       character.movement.maxPace = 'creep';

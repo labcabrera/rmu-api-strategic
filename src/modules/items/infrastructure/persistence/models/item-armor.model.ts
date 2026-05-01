@@ -1,4 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import type { Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo';
 
 @Schema({ _id: false })
 export class ItemArmor {
@@ -21,5 +22,5 @@ export class ItemArmor {
   perception: number;
 
   @Prop({ type: String, required: true })
-  baseDifficulty: string;
+  baseDifficulty: Difficulty;
 }

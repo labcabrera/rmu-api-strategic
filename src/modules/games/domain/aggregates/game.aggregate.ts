@@ -4,7 +4,7 @@ import { GameOptions } from '../value-objects/game-options.vo';
 import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
-import { GameProps } from './game-props';
+import { CreateGameProps, GameProps, UpdateGameProps } from './game-props';
 import { AccessType } from 'src/modules/shared/domain/entities/access-type';
 
 export class Game extends BaseAggregateRoot<GameProps> {
@@ -27,7 +27,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
     super(id);
   }
 
-  static create(props: Omit<GameProps, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Game {
+  static create(props: CreateGameProps): Game {
     const game = new Game(
       randomUUID(),
       props.name,
@@ -38,7 +38,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       props.powerLevel,
       props.shortDescription,
       props.description,
-      undefined,
+      props.imageUrl,
       props.owner,
       props.accessType,
       new Date(),
@@ -67,7 +67,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
     );
   }
 
-  update(props: Partial<Omit<GameProps, 'id' | 'status' | 'realmId' | 'realmName' | 'createdAt' | 'updatedAt'>>): void {
+  update(props: UpdateGameProps): void {
     const { name, options, powerLevel, shortDescription, description, imageUrl } = props;
     if (name) this.name = name;
     if (options) this.options = options;

@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
-
-const baseDifficultyCodes = ['c', 's', 'r', 'e', 'l', 'm', 'h', 'vh', 'xh', 'sf', 'a', 'ni'];
+import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
 
 @Injectable()
 export class EquipmentProcessor {
@@ -14,6 +13,7 @@ export class EquipmentProcessor {
     if (!character.equipment.slots) {
       character.equipment.slots = {} as Record<string, string>;
     }
+    this.cleanUp(character, items);
 
     const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
@@ -39,7 +39,7 @@ export class EquipmentProcessor {
       maneuverPenalty += armorItems.armor!.maneuver || 0;
       perceptionPenalty += armorItems.armor!.perception || 0;
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
-      difficultyIndex = Math.max(difficultyIndex, baseDifficultyCodes.indexOf(armorItems.armor!.baseDifficulty));
+      difficultyIndex = Math.max(difficultyIndex, DIFFICULTIES.indexOf(armorItems.armor!.baseDifficulty));
     });
     // round maneuverPenalty to 0 decimals
     maneuverPenalty = Math.round(maneuverPenalty);
@@ -50,22 +50,19 @@ export class EquipmentProcessor {
     character.equipment.maneuverPenalty = Math.min(0, maneuverPenalty + armorManeuverSkillBonus);
     character.equipment.perceptionPenalty = perceptionPenalty;
     character.equipment.rangedPenalty = rangedPenalty;
-    character.equipment.movementBaseDifficulty = baseDifficultyCodes[difficultyIndex];
+    character.equipment.movementBaseDifficulty = DIFFICULTIES[difficultyIndex];
     this.processEncumbrancePenalty(character);
   }
 
-  private processEncumbrancePenalty(character: Partial<Character>) {
-    if (!character.info!.height || !character.statistics || !character.statistics.st) {
-      return;
-    }
-    const carriedWeight = character.equipment!.weight || 0;
-    const characterWeight = character.info!.weight || 0;
+  private processEncumbrancePenalty(character: Character) {
+    const carriedWeight = character.equipment.weight || 0;
+    const characterWeight = character.info.weight || 0;
     const loadPercent = (carriedWeight / characterWeight) * 100;
     const st = character.statistics.st.totalBonus || 0;
     const wa = 15 + 2 * st;
     const penalty = -Math.floor(loadPercent - wa);
-    character.equipment!.weightAllowance = Math.floor(((wa * characterWeight) / 100) * 100) / 100;
-    character.equipment!.encumbrancePenalty = Math.min(0, penalty);
+    character.equipment.weightAllowance = Math.floor(((wa * characterWeight) / 100) * 100) / 100;
+    character.equipment.encumbrancePenalty = Math.min(0, penalty);
   }
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {
@@ -76,5 +73,16 @@ export class EquipmentProcessor {
       }
     }
     return 0;
+  }
+
+  private cleanUp(character: Character, items: Item[]) {
+    for (const slot in character.equipment.slots) {
+      if (character.equipment.slots[slot]) {
+        const itemId = character.equipment.slots[slot];
+        if (!items.find(item => item.id === itemId)) {
+          delete character.equipment.slots[slot];
+        }
+      }
+    }
   }
 }

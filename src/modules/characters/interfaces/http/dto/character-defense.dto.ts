@@ -57,11 +57,15 @@ export class CharacterDefenseDto {
   @ApiProperty({ description: 'Character shield', required: false })
   shield: CharacterShieldDto | null;
 
+  @ApiProperty({ description: 'Protect value', required: false, example: 0 })
+  protect: number;
+
   static fromEntity(entity: CharacterDefense): CharacterDefenseDto {
     const dto = new CharacterDefenseDto();
     dto.defensiveBonus = entity.defensiveBonus;
     dto.armor = CharacterArmorDto.fromEntity(entity.armor);
     dto.shield = entity.shield ? CharacterShieldDto.fromEntity(entity.shield) : null;
+    dto.protect = (entity as any).protect || 0;
     return dto;
   }
 }

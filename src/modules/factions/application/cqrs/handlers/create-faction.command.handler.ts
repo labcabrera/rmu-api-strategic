@@ -7,6 +7,7 @@ import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
 import { CreateFactionCommand } from '../commands/create-faction.command';
 import { FactionManagement } from 'src/modules/factions/domain/value-objects/faction-management.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { CreateFactionProps } from 'src/modules/factions/domain/aggregates/faction-props';
 
 @CommandHandler(CreateFactionCommand)
 export class CreateFactionCommandHandler implements ICommandHandler<CreateFactionCommand, Faction> {
@@ -21,14 +22,16 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
     if (!game) {
       throw new ValidationError('Game not found');
     }
-    const faction = Faction.create(
-      command.gameId,
-      command.name,
-      command.management || new FactionManagement(0, 0),
-      command.shortDescription,
-      command.description,
-      command.userId,
-    );
+    const props = {
+      gameId: command.gameId,
+      name: command.name,
+      management: command.management || new FactionManagement(0, 0),
+      shortDescription: command.shortDescription,
+      description: command.description,
+      imageUrl: command.imageUrl,
+      owner: command.userId,
+    } as CreateFactionProps;
+    const faction = Faction.create(props);
     const created = await this.factionRepository.save(faction);
     faction.getUncommittedEvents().forEach(event => this.factionEventBus.publish(event));
     return created;

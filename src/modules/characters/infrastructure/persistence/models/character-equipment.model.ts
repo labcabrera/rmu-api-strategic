@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import { EquipmentSlot } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import type { Difficulty } from '../../../domain/value-objects/difficulty.vo';
 
 @Schema({ _id: false })
 export class CharacterEquipment {
@@ -31,5 +32,5 @@ export class CharacterEquipment {
   perceptionPenalty: number;
 
   @Prop({ type: String, required: true })
-  movementBaseDifficulty: string;
+  movementBaseDifficulty: Difficulty;
 }
