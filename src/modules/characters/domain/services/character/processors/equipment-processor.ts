@@ -75,5 +75,14 @@ export class EquipmentProcessor {
     return 0;
   }
 
-  private cleanUp(character: Character, items: Item[]): void {}
+  private cleanUp(character: Character, items: Item[]) {
+    for (const slot in character.equipment.slots) {
+      if (character.equipment.slots[slot]) {
+        const itemId = character.equipment.slots[slot];
+        if (!items.find(item => item.id === itemId)) {
+          delete character.equipment.slots[slot];
+        }
+      }
+    }
+  }
 }
