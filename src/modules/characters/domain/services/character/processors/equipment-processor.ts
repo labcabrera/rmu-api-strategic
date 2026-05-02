@@ -36,8 +36,8 @@ export class EquipmentProcessor {
     armors.forEach(armorItems => {
       //TODO change name
       enc += armorItems.armor!.enc || 0;
-      maneuverPenalty += armorItems.armor!.maneuver || 0;
-      perceptionPenalty += armorItems.armor!.perception || 0;
+      maneuverPenalty += armorItems.armor!.maneuverPenalty || 0;
+      perceptionPenalty += armorItems.armor!.perceptionPenalty || 0;
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
       difficultyIndex = Math.max(difficultyIndex, DIFFICULTIES.indexOf(armorItems.armor!.baseDifficulty));
     });

@@ -85,7 +85,7 @@ export class SkillProcessor {
     const armsItemId = character.equipment.slots['arms'] || null;
     if (skill.skillId === 'perception' && headItemId) {
       const headItem = items.find(item => item.id === headItemId && item.armor);
-      return headItem ? headItem.armor!.perception : 0;
+      return headItem ? headItem.armor!.perceptionPenalty : 0;
     } else if (skill.skillId === 'ranged-weapon' && armsItemId) {
       const bodyItem = items.find(item => item.id === armsItemId && item.armor);
       return bodyItem ? bodyItem.armor!.rangedPenalty : 0;
