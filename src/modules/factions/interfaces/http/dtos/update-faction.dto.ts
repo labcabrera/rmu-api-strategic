@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 import { UpdateFactionCommand } from 'src/modules/factions/application/cqrs/commands/update-faction.command';
 import { FactionManagementDto } from './faction.dto';
 
 export class UpdateFactionDto {
-  @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })
+  @ApiProperty({ description: 'Game name', example: 'Mordor Campaign', required: false })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   name: string;
 
   @IsOptional()

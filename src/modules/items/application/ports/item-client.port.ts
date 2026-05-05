@@ -33,9 +33,9 @@ export interface ItemArmorResponse {
   slot: string;
   at: number;
   enc: number;
-  maneuver: number;
+  maneuverPenalty: number;
   rangedPenalty: number;
-  perception: number;
+  perceptionPenalty: number;
   baseDifficulty: Difficulty;
 }
 

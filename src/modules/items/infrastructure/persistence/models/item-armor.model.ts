@@ -13,13 +13,13 @@ export class ItemArmor {
   enc: number;
 
   @Prop({ required: true })
-  maneuver: number;
+  maneuverPenalty: number;
 
   @Prop({ required: true })
   rangedPenalty: number;
 
   @Prop({ required: true })
-  perception: number;
+  perceptionPenalty: number;
 
   @Prop({ type: String, required: true })
   baseDifficulty: Difficulty;
