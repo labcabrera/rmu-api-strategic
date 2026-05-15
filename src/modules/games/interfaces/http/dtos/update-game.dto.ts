@@ -1,41 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 import { UpdateGameCommand } from 'src/modules/games/application/cqrs/commands/update-game.command';
 import { GameOptionsDto } from './game-options.dto';
 import { GamePowerLevelDto } from './game-power-level-dto';
 
 export class UpdateGameDto {
-  @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })
+  @ApiProperty({ description: 'Game name', example: 'Mordor Campaign', required: false })
   @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({ description: 'Game options', type: GameOptionsDto })
   @IsOptional()
-  @IsNotEmpty()
+  name?: string;
+
+  @ApiProperty({ description: 'Game options', type: GameOptionsDto, required: false })
+  @IsOptional()
   @IsObject()
-  options: GameOptionsDto | undefined;
+  options?: GameOptionsDto;
 
-  @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto })
+  @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto, required: false })
   @IsOptional()
-  @IsNotEmpty()
   @IsObject()
-  powerLevel: GamePowerLevelDto | undefined;
+  powerLevel?: GamePowerLevelDto;
 
-  @ApiProperty({ description: 'Game short description', example: 'Game short description' })
+  @ApiProperty({ description: 'Game short description', example: 'Game short description', required: false })
   @IsString()
   @IsOptional()
-  shortDescription: string | undefined;
+  shortDescription?: string;
 
-  @ApiProperty({ description: 'Game description', example: 'A thrilling campaign set in Middle-earth' })
+  @ApiProperty({ description: 'Game description', example: 'A thrilling campaign set in Middle-earth', required: false })
   @IsString()
   @IsOptional()
-  description: string | undefined;
+  description?: string;
 
-  @ApiProperty({ description: 'Game image URL', example: '/foo/bar/image.png' })
+  @ApiProperty({ description: 'Game image URL', example: '/foo/bar/image.png', required: false })
   @IsString()
   @IsOptional()
-  imageUrl: string | undefined;
+  imageUrl?: string;
 
   static toCommand(gameId: string, dto: UpdateGameDto, userId: string, roles: string[]): UpdateGameCommand {
     return new UpdateGameCommand(
