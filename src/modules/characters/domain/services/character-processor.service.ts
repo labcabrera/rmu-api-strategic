@@ -7,6 +7,7 @@ import { EquipmentProcessor } from './character/processors/equipment-processor';
 import { HPProcessor } from './character/processors/hp-processor';
 import { InitiativeProcessor } from './character/processors/initiative-processor';
 import { MovementProcessor } from './character/processors/movement-processor';
+import { PowerProcessor } from './character/processors/power-processor';
 import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
 import { XPProcessor } from './character/processors/xp-processor';
@@ -22,6 +23,7 @@ export class CharacterProcessorService {
     private readonly skillProcessor: SkillProcessor,
     private readonly equipmentProcessor: EquipmentProcessor,
     private readonly hpProcessor: HPProcessor,
+    private readonly powerProcessor: PowerProcessor,
     private readonly defenseProcessor: DefenseProcessor,
     private readonly xpProcessor: XPProcessor,
     private readonly attackProcessor: AttackProcessor,
@@ -36,6 +38,7 @@ export class CharacterProcessorService {
     this.attackProcessor.process(character, items);
     this.movementProcessor.process(character);
     this.hpProcessor.process(character);
+    this.powerProcessor.process(character);
     this.defenseProcessor.process(character, items);
     this.resistancesProcessor.process(character);
     this.xpProcessor.process(character);

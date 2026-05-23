@@ -15,6 +15,7 @@ import { EquipmentProcessor } from './domain/services/character/processors/equip
 import { HPProcessor } from './domain/services/character/processors/hp-processor';
 import { InitiativeProcessor } from './domain/services/character/processors/initiative-processor';
 import { MovementProcessor } from './domain/services/character/processors/movement-processor';
+import { PowerProcessor } from './domain/services/character/processors/power-processor';
 import { SkillProcessor } from './domain/services/character/processors/skill-processor';
 import { StatProcessor } from './domain/services/character/processors/stat-processor';
 import { UpdateSkillHandler } from './application/cqrs/handlers/update-skill.handler';
@@ -82,6 +83,7 @@ import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-t
     SkillProcessor,
     AttackProcessor,
     HPProcessor,
+    PowerProcessor,
     EquipmentProcessor,
     DefenseProcessor,
     ResistancesProcessor,
