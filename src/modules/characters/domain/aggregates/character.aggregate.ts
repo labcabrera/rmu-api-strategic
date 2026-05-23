@@ -41,7 +41,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     public resistances: CharacterResistance[],
     public hp: CharacterHP,
     public endurance: CharacterEndurance,
-    public power: CharacterPower | undefined,
+    public power: CharacterPower | null,
     public initiative: CharacterInitiative,
     public skills: CharacterSkill[],
     public equipment: CharacterEquipment,
@@ -86,7 +86,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       [], // resistances
       CharacterHP.empty(),
       CharacterEndurance.empty(),
-      undefined, // power
+      null, // power
       new CharacterInitiative({}),
       [], // skills
       CharacterEquipment.empty(),

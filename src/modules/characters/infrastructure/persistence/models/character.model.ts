@@ -64,7 +64,8 @@ export class CharacterModel {
   @Prop({ type: CharacterHP, required: true })
   hp: CharacterHP;
 
-  power: CharacterPower | undefined;
+  @Prop({ type: CharacterPower, required: false, default: null })
+  power: CharacterPower | null;
 
   @Prop({ type: CharacterInitiative, required: true })
   initiative: CharacterInitiative;

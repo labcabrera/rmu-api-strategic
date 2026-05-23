@@ -30,7 +30,7 @@ export interface CharacterProps {
   resistances: CharacterResistance[];
   hp: CharacterHP;
   endurance: CharacterEndurance;
-  power: CharacterPower | undefined;
+  power: CharacterPower | null;
   initiative: CharacterInitiative;
   skills: CharacterSkill[];
   equipment: CharacterEquipment;
