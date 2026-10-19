@@ -20,6 +20,8 @@ import { FactionsModule } from './modules/factions/factions.module';
         RMU_API_CORE_URI: Joi.string().required(),
         RMU_API_ITEMS_URI: Joi.string().required(),
         RMU_IAM_JWK_URI: Joi.string().uri().required(),
+        RMU_IAM_ISSUER_URI: Joi.string().uri().required(),
+        RMU_IAM_AUDIENCE: Joi.string().required(),
         RMU_IAM_TOKEN_URI: Joi.string().uri().required(),
         RMU_IAM_CLIENT_ID: Joi.string().required(),
         RMU_IAM_CLIENT_SECRET: Joi.string().required(),
