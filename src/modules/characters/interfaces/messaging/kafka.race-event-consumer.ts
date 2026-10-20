@@ -49,6 +49,7 @@ export class KafkaRaceEventConsumer {
         baseAt: data.baseAt as number | undefined,
         talents: data.talents as string[] | undefined,
         skillBonuses: data.skillBonuses as any[] | undefined,
+        traits: data.traits as any[] | undefined,
       } as UpdateCharacterRaceCommandProps;
       const event = new CharacterRaceUpdatedEvent(commandProps);
       await this.kafkaProducerService.emit('internal.rmu-strategic.character.race-updated.v1', event);

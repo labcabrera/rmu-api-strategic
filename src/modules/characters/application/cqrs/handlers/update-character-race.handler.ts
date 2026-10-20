@@ -9,6 +9,10 @@ import type { ItemRepository } from 'src/modules/items/application/ports/item.re
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
 import { CharacterUpdatedEvent } from 'src/modules/characters/domain/events/character.events';
+import type { RaceClientPort, RaceTrait } from '../../ports/race-client.port';
+import type { TraitClientPort } from '../../ports/trait-client.port';
+import { mapRaceTraits } from '../../services/race-traits.mapper';
+import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
 
 @CommandHandler(UpdateCharacterRaceCommand)
 export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {
@@ -20,6 +24,8 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
+    @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject() private commandBus: CommandBus,
   ) {}
 
@@ -44,6 +50,10 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
       throw new NotFoundError('Character', characterId);
     }
 
+    const raceTraits = await this.getRaceTraits(command, character);
+    if (raceTraits) {
+      character.syncRaceTraits(await mapRaceTraits(raceTraits, this.traitClient));
+    }
     character.updateRace({
       raceName: command.name,
       sizeId: command.sizeId,
@@ -60,5 +70,19 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     await this.characterRepository.update(character.id, character);
     this.logger.log(`Character ${characterId} updated with new race values`);
     this.characterEventBus.publish(new CharacterUpdatedEvent(character.getProps()));
+  }
+
+  // Older race events do not carry the traits, so the race is read from core
+  private async getRaceTraits(command: UpdateCharacterRaceCommand, character: Character): Promise<RaceTrait[] | undefined> {
+    if (command.traits) {
+      return command.traits;
+    }
+    try {
+      const race = await this.raceClient.getRaceById(character.info.race.id);
+      return race.traits || [];
+    } catch (e) {
+      this.logger.error(`Unable to read race ${character.info.race.id} traits: ${(e as Error).message}`);
+      return undefined;
+    }
   }
 }

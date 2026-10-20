@@ -22,8 +22,17 @@ export interface Race {
   baseDevPoints: number;
   baseAt: number;
   talents: string[];
+  traits?: RaceTrait[];
   skillBonuses: RaceSkillBonus[];
   description: string;
+}
+
+export interface RaceTrait {
+  id?: string;
+  traitId: string;
+  isTalent: boolean;
+  tier?: number | null;
+  specialization?: string | null;
 }
 
 export interface RaceSkillBonus {

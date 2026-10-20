@@ -19,4 +19,7 @@ export class GamePowerLevel {
 
   @Prop({ required: true })
   statCreationSwap: number;
+
+  @Prop({ type: Number, required: false, default: 20 })
+  maxTraitCost: number;
 }

@@ -4,6 +4,9 @@ export class ErrorDto {
   @ApiProperty({ description: 'Error code', example: 'SomeError' })
   error: string;
 
+  @ApiProperty({ description: 'Machine readable error code', required: false, example: 'err-trait-max-cost' })
+  errorCode?: string;
+
   @ApiProperty({ description: 'Error message', example: 'Some error description' })
   message: string;
 

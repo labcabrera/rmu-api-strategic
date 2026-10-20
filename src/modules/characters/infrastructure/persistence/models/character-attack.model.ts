@@ -59,4 +59,7 @@ export class CharacterAttack {
 
   @Prop({ type: Boolean, required: false, default: false })
   wrongSize: boolean;
+
+  @Prop({ type: String, required: false })
+  skillId: string;
 }

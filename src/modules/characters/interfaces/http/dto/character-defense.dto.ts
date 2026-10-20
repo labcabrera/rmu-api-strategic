@@ -60,12 +60,21 @@ export class CharacterDefenseDto {
   @ApiProperty({ description: 'Protect value', required: false, example: 0 })
   protect: number;
 
+  @ApiProperty({
+    description: 'Defensive bonus breakdown (quickness, defensive-aura, natural-armor); defensiveBonus is their sum',
+    type: 'object',
+    additionalProperties: { type: 'number' },
+    example: { quickness: 9, 'defensive-aura': 5 },
+  })
+  modifiers: Record<string, number>;
+
   static fromEntity(entity: CharacterDefense): CharacterDefenseDto {
     const dto = new CharacterDefenseDto();
     dto.defensiveBonus = entity.defensiveBonus;
     dto.armor = CharacterArmorDto.fromEntity(entity.armor);
     dto.shield = entity.shield ? CharacterShieldDto.fromEntity(entity.shield) : null;
     dto.protect = (entity as any).protect || 0;
+    dto.modifiers = entity.modifiers ?? {};
     return dto;
   }
 }

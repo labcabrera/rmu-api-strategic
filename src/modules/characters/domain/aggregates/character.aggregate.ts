@@ -18,6 +18,7 @@ import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
+import { RaceTraitProps } from '../value-objects/race-trait-props.vo';
 import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
@@ -242,25 +243,46 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     cost: number,
     specialization: string | undefined,
   ) {
-    if (this.traits.find(t => t.traitId === traitId && t.specialization === specialization)) {
+    if (this.findCharacterTrait(traitId, specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
     if (cost > 0 && this.experience.availableDevPoints < cost) {
       throw new ValidationError('Insufficient development points to acquire the trait');
     }
-    this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization));
+    this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization, 'character'));
     this.experience.availableDevPoints -= cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
   deleteTrait(traitId: string, specialization: string | undefined) {
-    const trait = this.traits.find(t => t.traitId === traitId && t.specialization === specialization);
+    const trait = this.findCharacterTrait(traitId, specialization);
     if (!trait) {
+      if (this.traits.some(t => t.source === 'race' && this.sameTrait(t, traitId, specialization))) {
+        throw new ValidationError(`Trait ${traitId} comes from the race and cannot be deleted`, 'err-trait-from-race');
+      }
       throw new ValidationError('Trait not found');
     }
-    this.traits = this.traits.filter(t => !(t.traitId === traitId && t.specialization === specialization));
+    this.traits = this.traits.filter(t => t !== trait);
     this.experience.availableDevPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  // Replaces the race-sourced traits with the current race traits, at no cost
+  syncRaceTraits(raceTraits: RaceTraitProps[]) {
+    const characterTraits = this.traits.filter(t => t.source !== 'race');
+    const raceSourced = raceTraits.map(
+      t =>
+        new CharacterTrait(t.traitId, t.traitName || t.traitId, t.isTalent, t.tier ?? undefined, 0, t.specialization ?? undefined, 'race'),
+    );
+    this.traits = [...characterTraits, ...raceSourced];
+  }
+
+  private findCharacterTrait(traitId: string, specialization: string | undefined): CharacterTrait | undefined {
+    return this.traits.find(t => t.source !== 'race' && this.sameTrait(t, traitId, specialization));
+  }
+
+  private sameTrait(trait: CharacterTrait, traitId: string, specialization: string | undefined): boolean {
+    return trait.traitId === traitId && (trait.specialization || undefined) === (specialization || undefined);
   }
 
   levelUpSkill(skillId: string, specialization: string | null, allowThird: boolean): void {

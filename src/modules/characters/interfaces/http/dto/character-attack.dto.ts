@@ -43,6 +43,14 @@ export class CharacterAttackDto {
   @ApiProperty({ description: 'Whether the weapon is made for a different size than the wielder', type: Boolean, example: false })
   wrongSize: boolean;
 
+  @ApiProperty({
+    description: "Skill used by the attack ('shield' for shield attacks)",
+    type: String,
+    nullable: true,
+    example: 'melee-weapon@blade',
+  })
+  skillId: string | null;
+
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
     dto.attackName = entity.attackName;
@@ -60,6 +68,7 @@ export class CharacterAttackDto {
     dto.twoHanded = entity.twoHanded ?? false;
     dto.weaponCategory = entity.weaponCategory ?? 'standard';
     dto.wrongSize = entity.wrongSize ?? false;
+    dto.skillId = entity.skillId ?? null;
     return dto;
   }
 }

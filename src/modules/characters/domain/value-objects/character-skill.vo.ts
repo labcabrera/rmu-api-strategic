@@ -15,6 +15,7 @@ export class CharacterSkill {
     public professionalBonus: number,
     public customBonus: number,
     public totalBonus: number,
+    public traitBonus: number = 0,
   ) {}
 
   static empty(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number) {

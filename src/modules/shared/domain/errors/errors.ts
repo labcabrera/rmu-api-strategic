@@ -2,6 +2,7 @@ export class DomainError extends Error {
   constructor(
     public readonly message: string,
     public readonly statusCode: number = 500,
+    public readonly errorCode: string | undefined = undefined,
   ) {
     super(message);
     this.name = 'DomainError';
@@ -38,8 +39,8 @@ export class NotModifiedError extends DomainError {
 export class ValidationError extends DomainError {
   public readonly status: number = 400;
 
-  constructor(message: string) {
-    super(message, 400);
+  constructor(message: string, errorCode?: string) {
+    super(message, 400, errorCode);
     this.name = 'ValidationError';
     Object.setPrototypeOf(this, ValidationError.prototype);
   }

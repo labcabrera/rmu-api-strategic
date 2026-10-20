@@ -19,6 +19,7 @@ export class CharacterAttack {
     public twoHanded: boolean,
     public weaponCategory: WeaponCategory,
     public wrongSize: boolean,
+    public skillId: string,
   ) {}
 
   static fromProps(props: Omit<CharacterAttack, 'bo'>): CharacterAttack {
@@ -39,6 +40,7 @@ export class CharacterAttack {
       props.twoHanded,
       props.weaponCategory,
       props.wrongSize,
+      props.skillId,
     );
   }
 }

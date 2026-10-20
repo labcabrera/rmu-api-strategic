@@ -8,6 +8,8 @@ import { AddTraitCommand } from '../commands/add-trait.command';
 import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.port';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { DEFAULT_MAX_TRAIT_COST } from 'src/modules/games/domain/value-objects/game-power-level.vo';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
@@ -17,6 +19,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: AddTraitCommand): Promise<Character> {
@@ -30,6 +33,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     this.validateCommand(command, trait);
     const isTalent = trait.isTalent;
     const cost = this.calculateCost(trait, command.tier);
+    await this.validateMaxCost(character.gameId, command.traitId, cost);
     character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization);
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
@@ -56,6 +60,18 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     }
     if (!trait.specialization && command.specialization) {
       throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`);
+    }
+  }
+
+  // Flaws have a negative cost and no limit
+  private async validateMaxCost(gameId: string, traitId: string, cost: number): Promise<void> {
+    const game = await this.gameRepository.findById(gameId);
+    const maxTraitCost = game?.powerLevel?.maxTraitCost ?? DEFAULT_MAX_TRAIT_COST;
+    if (cost > maxTraitCost) {
+      throw new ValidationError(
+        `Trait ${traitId} costs ${cost} development points, the game allows up to ${maxTraitCost}`,
+        'err-trait-max-cost',
+      );
     }
   }
 
