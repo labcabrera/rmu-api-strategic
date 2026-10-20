@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CreateGameCommand } from 'src/modules/games/application/cqrs/commands/create-game.command';
 import { GameOptionsDto } from './game-options.dto';
@@ -18,10 +19,13 @@ export class CreateGameDto {
   @ApiProperty({ description: 'Game options', type: GameOptionsDto })
   @IsNotEmpty()
   @ValidateNested()
+  @Type(() => GameOptionsDto)
   options: GameOptionsDto;
 
   @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto })
   @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => GamePowerLevelDto)
   powerLevel: GamePowerLevelDto;
 
   @ApiProperty({ description: 'Game short description', example: 'Short game description' })

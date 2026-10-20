@@ -22,4 +22,19 @@ export class GamePowerLevel {
 
   @Prop({ type: Number, required: false, default: 20 })
   maxTraitCost: number;
+
+  @Prop({ type: Number, required: false, default: 25 })
+  raceDevPointsPerLevel: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  creationBonusDevPoints: number;
+
+  @Prop({ type: Number, required: false, default: 15 })
+  statPoints: number;
+
+  @Prop({ type: Number, required: false, default: 2 })
+  knackCount: number;
+
+  @Prop({ type: Number, required: false, default: 5 })
+  knackBonus: number;
 }

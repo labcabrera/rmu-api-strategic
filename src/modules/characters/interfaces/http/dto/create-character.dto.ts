@@ -8,6 +8,7 @@ import { CreateCharacterCommand, CharacterStatCreation } from 'src/modules/chara
 import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
 import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { CreateCharacterCultureDto } from './create-character-culture.dto';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -61,6 +62,16 @@ export class CreateCharacterDto {
   @IsOptional()
   imageUrl?: string;
 
+  @ApiProperty({
+    description: 'Optional culture: its ranks are applied before level 1 without spending development points',
+    type: CreateCharacterCultureDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateCharacterCultureDto)
+  culture?: CreateCharacterCultureDto;
+
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
     const skills = dto.skills!.map(skill => ({
       skillId: skill.skillId,
@@ -87,6 +98,7 @@ export class CreateCharacterDto {
       dto.imageUrl,
       userId,
       roles,
+      CreateCharacterCultureDto.toCommand(dto.culture),
     );
   }
 }

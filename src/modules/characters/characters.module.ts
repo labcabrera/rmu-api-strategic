@@ -53,6 +53,7 @@ import { ApiTraitClientAdapter } from './infrastructure/api-clients/api.trait-cl
 import { ApiRaceClientAdapter } from './infrastructure/api-clients/api.race-client.adapter';
 import { ApiSkillCategoryClientAdapter } from './infrastructure/api-clients/api.skill-category-client.adapter';
 import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-client.adapter';
+import { ApiCultureClientAdapter } from './infrastructure/api-clients/api.culture-client.adapter';
 import { ItemsModule } from '../items/items.module';
 import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-temporary-stat.handler';
 
@@ -133,6 +134,10 @@ import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-t
     {
       provide: 'TraitClient',
       useClass: ApiTraitClientAdapter,
+    },
+    {
+      provide: 'CultureClient',
+      useClass: ApiCultureClientAdapter,
     },
     {
       provide: 'CharacterEventBus',

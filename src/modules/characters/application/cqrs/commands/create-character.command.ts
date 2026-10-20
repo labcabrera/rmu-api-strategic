@@ -17,7 +17,22 @@ export class CreateCharacterCommand {
     public readonly imageUrl: string | undefined,
     public readonly userId: string,
     public readonly roles: string[],
+    public readonly culture?: CreateCharacterCulture,
   ) {}
+}
+
+// Culture chosen at creation. 'skill' entries are applied automatically; the other entries need assignments
+export interface CreateCharacterCulture {
+  cultureId: string;
+  assignments: CreateCharacterCultureAssignment[];
+}
+
+export interface CreateCharacterCultureAssignment {
+  // Index of the entry in culture.skillRanks
+  entry: number;
+  skillId: string;
+  specialization?: string | null;
+  ranks: number;
 }
 
 export class CharacterStatCreation {

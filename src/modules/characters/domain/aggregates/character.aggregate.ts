@@ -10,22 +10,57 @@ import { CharacterEquipment } from '../value-objects/character-equipment.vo';
 import { CharacterHP } from '../value-objects/character-hp.vo';
 import { CharacterInitiative } from '../value-objects/character-initiative.vo';
 import { CharacterMovement } from '../value-objects/character-movement.vo';
-import { CharacterXP } from '../value-objects/character-xp.vo';
+import { CharacterXP, isCreationLevel } from '../value-objects/character-xp.vo';
 import { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
-import { CharacterTrait } from '../value-objects/character-trait.vo';
+import { CharacterTrait, TraitPayment } from '../value-objects/character-trait.vo';
 import { RaceTraitProps } from '../value-objects/race-trait-props.vo';
 import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
 import { CharacterProps } from './character-props';
 import { SkillBonus } from '../value-objects/skill-bonus.vo';
+import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import {
+  DevPointsPayment,
+  DevPointsSpendingService,
+  DevPointsSpendOptions,
+  emptyPayment,
+} from '../services/dev-points/dev-points-spending.service';
+import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules';
 
 export const UNRANKED_SKILL_BONUS = -20;
+export const MAX_RANKS_PER_LEVEL = 2;
+export const MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK = 3;
+
+// Game values that drive development point spending
+export interface DevPointsRules {
+  bonusDevPointsPerLevel: number;
+}
+
+export interface SkillDevelopmentRules extends DevPointsRules {
+  allowThirdRank: boolean;
+}
+
+// How a trait is paid: the spending options for talents and the pool that receives the points of flaws
+export interface TraitSpending {
+  spend: DevPointsSpendOptions;
+  flawPool: 'normal' | 'flaw';
+  onInsufficient?: () => Error;
+}
+
+export interface CultureRanks {
+  skillId: string;
+  specialization: string | null;
+  ranks: number;
+}
+
+const DEFAULT_DEV_POINTS_RULES: DevPointsRules = { bonusDevPointsPerLevel: DEFAULT_RACE_DEV_POINTS_PER_LEVEL };
+const DEFAULT_TRAIT_SPENDING: TraitSpending = { spend: DEFAULT_DEV_POINTS_RULES, flawPool: 'normal' };
 
 export class Character extends BaseAggregateRoot<CharacterProps> {
   private constructor(
@@ -69,6 +104,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     statistics: Record<StatKey, CharacterStat>,
     imageUrl: string | undefined,
     owner: string,
+    raceBonusDevPoints: number = 0,
   ): Character {
     if (!weaponDevelopment || weaponDevelopment.length !== 4) {
       throw new ValidationError('Invalid weapon development types');
@@ -100,8 +136,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       new Date(),
       undefined,
     );
-    character.experience.devPoints = game.powerLevel.baseDevPoints || 60;
-    character.experience.availableDevPoints = game.powerLevel.baseDevPoints || 60;
+    // Level 0 has no development points: only the culture ranks. Level 1 grants devPoints
+    const powerLevel = resolvePowerLevel(game.powerLevel);
+    character.experience.devPoints = powerLevel.baseDevPoints;
+    character.experience.availableDevPoints = 0;
+    character.experience.availableBonusDevPoints = Math.max(0, (raceBonusDevPoints || 0) + powerLevel.creationBonusDevPoints);
+    character.experience.bonusDevPointsSpentThisLevel = 0;
+    character.experience.flawDevPoints = 0;
     return character;
   }
 
@@ -242,15 +283,48 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     tier: number | undefined,
     cost: number,
     specialization: string | undefined,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
   ) {
     if (this.findCharacterTrait(traitId, specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
-    if (cost > 0 && this.experience.availableDevPoints < cost) {
-      throw new ValidationError('Insufficient development points to acquire the trait');
+    const payment = this.payTrait(cost, spending);
+    this.traits.push(
+      new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization, 'character', {
+        ...payment,
+        level: this.experience.level,
+      }),
+    );
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  // Raises the tier of a trait the character already has, paying the cost difference
+  improveTrait(
+    traitId: string,
+    specialization: string | undefined,
+    tier: number,
+    cost: number,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+  ) {
+    const current = this.findCharacterTrait(traitId, specialization);
+    if (!current) {
+      throw new ValidationError('Trait not found');
     }
-    this.traits.push(new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization, 'character'));
-    this.experience.availableDevPoints -= cost;
+    if (!current.tier || tier <= current.tier) {
+      throw new ValidationError(`Trait ${traitId} tier must be greater than the current tier ${current.tier}`);
+    }
+    const previous = this.getTraitPayment(current);
+    const payment = this.payTrait(cost - current.cost, spending);
+    const level = this.experience.level;
+    const paidWith: TraitPayment = {
+      normal: previous.normal + payment.normal,
+      bonus: previous.bonus + payment.bonus,
+      flaw: previous.flaw + payment.flaw,
+      cappedBonus: (previous.level === level ? previous.cappedBonus : 0) + payment.cappedBonus,
+      level,
+    };
+    const improved = new CharacterTrait(traitId, current.traitName, current.isTalent, tier, cost, specialization, 'character', paidWith);
+    this.traits = this.traits.map(t => (t === current ? improved : t));
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
@@ -262,9 +336,30 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       }
       throw new ValidationError('Trait not found');
     }
+    const payment = this.getTraitPayment(trait);
+    DevPointsSpendingService.refund(this.experience, payment, payment.level === this.experience.level);
     this.traits = this.traits.filter(t => t !== trait);
-    this.experience.availableDevPoints += trait.cost;
     this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  private payTrait(cost: number, spending: TraitSpending): DevPointsPayment {
+    if (cost < 0) {
+      return DevPointsSpendingService.grant(this.experience, -cost, spending.flawPool);
+    }
+    if (cost === 0) {
+      return emptyPayment();
+    }
+    return DevPointsSpendingService.spend(
+      this.experience,
+      cost,
+      spending.spend,
+      spending.onInsufficient ?? (() => new ValidationError('Insufficient development points to acquire the trait')),
+    );
+  }
+
+  // Traits stored before the payment was tracked were paid with normal points
+  private getTraitPayment(trait: CharacterTrait): TraitPayment {
+    return trait.paidWith ?? { normal: trait.cost || 0, bonus: 0, flaw: 0, cappedBonus: 0, level: this.experience.level };
   }
 
   // Replaces the race-sourced traits with the current race traits, at no cost
@@ -277,7 +372,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.traits = [...characterTraits, ...raceSourced];
   }
 
-  private findCharacterTrait(traitId: string, specialization: string | undefined): CharacterTrait | undefined {
+  // Character-sourced trait (race traits excluded)
+  findCharacterTrait(traitId: string, specialization: string | undefined): CharacterTrait | undefined {
     return this.traits.find(t => t.source !== 'race' && this.sameTrait(t, traitId, specialization));
   }
 
@@ -285,23 +381,28 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return trait.traitId === traitId && (trait.specialization || undefined) === (specialization || undefined);
   }
 
-  levelUpSkill(skillId: string, specialization: string | null, allowThird: boolean): void {
+  levelUpSkill(skillId: string, specialization: string | null, rules: SkillDevelopmentRules): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
-    if (skill.ranksDeveloped > 2 && !allowThird) {
-      throw new ValidationError('Skill cannot be developed beyond 2 ranks in this game');
+    // Culture ranks are not developed ranks and do not count towards the limit
+    const maxRanks = rules.allowThirdRank ? MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK : MAX_RANKS_PER_LEVEL;
+    if (skill.ranksDeveloped >= maxRanks) {
+      throw new ValidationError(
+        `Skill ${skillId} cannot be developed more than ${maxRanks} ranks in a level`,
+        'err-skill-max-ranks-per-level',
+      );
     }
-    const indexCost = Math.min(skill.ranksDeveloped, 1);
-    const cost = skill.development[indexCost];
-    if (this.experience.availableDevPoints < cost) {
-      throw new ValidationError('Insufficient development points');
-    }
+    // The third rank costs the same as the second one
+    const cost = this.getRankCost(skill, skill.ranksDeveloped);
+    const payment = DevPointsSpendingService.spend(this.experience, cost, { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel });
+    const spent = skill.devPointsSpent ?? { normal: 0, bonus: 0 };
+    skill.devPointsSpent = { normal: spent.normal + payment.normal, bonus: spent.bonus + payment.bonus };
     skill.ranks += 1;
     skill.ranksDeveloped += 1;
-    this.experience.availableDevPoints -= cost;
   }
 
+  // Refunds the last developed rank: bonus points first, since they are spent after the normal ones
   levelDownSkill(skillId: string, specialization: string | null): void {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) {
@@ -310,11 +411,39 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (skill.ranksDeveloped < 1) {
       throw new ValidationError('Skill cannot be downgraded below 0 ranks');
     }
-    const indexCost = skill.ranksDeveloped === 1 ? 0 : 1;
-    const cost = skill.development[indexCost];
+    if (skill.ranks - 1 < (skill.cultureRanks || 0)) {
+      throw new ValidationError(`Skill ${skillId} cannot be downgraded below its culture ranks`, 'err-skill-below-culture-ranks');
+    }
+    const cost = this.getRankCost(skill, skill.ranksDeveloped - 1);
+    const spent = skill.devPointsSpent ?? { normal: 0, bonus: 0 };
+    const bonus = Math.min(cost, spent.bonus);
+    const normal = cost - bonus;
+    DevPointsSpendingService.refund(this.experience, { normal, bonus, flaw: 0, cappedBonus: bonus }, true);
+    skill.devPointsSpent = { normal: Math.max(0, spent.normal - normal), bonus: spent.bonus - bonus };
     skill.ranks -= 1;
     skill.ranksDeveloped -= 1;
-    this.experience.availableDevPoints += cost;
+  }
+
+  // Applies the culture ranks at creation. The skills must already exist. No development points are spent
+  applyCulture(cultureId: string, cultureRanks: CultureRanks[]): void {
+    this.info.cultureId = cultureId;
+    cultureRanks.forEach(entry => {
+      const skill = this.findSkill(entry.skillId, entry.specialization);
+      if (!skill) {
+        throw new ValidationError(`Skill ${entry.skillId} not found for culture ranks`);
+      }
+      skill.cultureRanks = (skill.cultureRanks || 0) + entry.ranks;
+      skill.ranks += entry.ranks;
+    });
+  }
+
+  private getRankCost(skill: CharacterSkill, ranksDeveloped: number): number {
+    const development = skill.development || [];
+    const cost = development[Math.min(ranksDeveloped, 1)] ?? development[0];
+    if (cost === undefined || cost === null) {
+      throw new ValidationError(`Skill ${skill.skillId} has no development cost`);
+    }
+    return cost;
   }
 
   deleteSkill(skillId: string, specialization: string | null): void {
@@ -346,17 +475,30 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   levelUp(force: boolean): void {
-    if (this.experience.level >= this.experience.availableLevel) {
+    const xp = this.experience;
+    if (xp.level >= xp.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');
     }
-    if (this.experience.availableDevPoints > 0 && !force) {
+    // Level 0 grants no development points, so leaving it never requires spending them
+    if (xp.level > 0 && xp.availableDevPoints > 0 && !force) {
       throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
     }
-    this.experience.level += 1;
-    this.experience.availableDevPoints = this.experience.devPoints;
-    this.experience.availableStatLevelUp = this.experience.level > 1 ? 2 : 0;
-    this.experience.developedStatLevelUp = 0;
-    this.skills.forEach(s => (s.ranksDeveloped = 0));
+    // Points returned by flaws at level 0 are kept for level 1
+    const carried = xp.level === 0 ? Math.max(0, xp.availableDevPoints || 0) : 0;
+    xp.level += 1;
+    xp.availableDevPoints = xp.devPoints + carried;
+    // Unspent bonus points are kept, the per level limit starts again
+    xp.bonusDevPointsSpentThisLevel = 0;
+    xp.availableStatLevelUp = xp.level > 1 ? 2 : 0;
+    xp.developedStatLevelUp = 0;
+    this.skills.forEach(s => {
+      s.ranksDeveloped = 0;
+      s.devPointsSpent = { normal: 0, bonus: 0 };
+    });
+  }
+
+  isInCreation(): boolean {
+    return isCreationLevel(this.experience.level);
   }
 
   unequipItem(itemId: any) {
@@ -369,21 +511,31 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.equipment.slots[slotName] = null;
   }
 
-  updateTemporaryStat(stat: StatKey, value: number) {
-    if (this.experience.availableStatLevelUp < 1 && this.experience.availableDevPoints < 4) {
-      throw new ValidationError('No available temporary stat level ups or development points to increase the stat');
-    }
+  // Applies a stat gain roll. Without free stat gains left, the extra roll costs development points
+  updateTemporaryStat(stat: StatKey, roll: number, rules: DevPointsRules = DEFAULT_DEV_POINTS_RULES) {
     const c = this.statistics[stat];
     if (!c) {
       throw new ValidationError('Stat not found');
     }
-    const newValue = Math.min(c.potential, c.temporary + value);
-    c.temporary = newValue;
+    const range = getStatGainRollRange(c.temporary);
+    if (roll < range.min || roll > range.max) {
+      throw new ValidationError(
+        `Stat gain roll ${roll} is out of range ${range.min}-${range.max} for a temporary value of ${c.temporary}`,
+        'err-stat-gain-roll-out-of-range',
+      );
+    }
     if (this.experience.availableStatLevelUp > 0) {
       this.experience.availableStatLevelUp -= 1;
     } else {
+      DevPointsSpendingService.spend(
+        this.experience,
+        STAT_GAIN_DEV_POINTS_COST,
+        { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel },
+        () => new ValidationError('No available temporary stat level ups or development points to increase the stat'),
+      );
       this.experience.developedStatLevelUp += 1;
     }
+    c.temporary = Math.min(c.potential, c.temporary + roll);
   }
 
   getProps(): CharacterProps {
@@ -421,6 +573,6 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (found) {
       return;
     }
-    this.resistances.push(new CharacterResistance(resistance, 0, bonus, 0, 0));
+    this.resistances.push(new CharacterResistance(resistance, 0, bonus, 0, 0, 0, 0));
   }
 }

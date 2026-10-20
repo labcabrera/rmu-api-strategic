@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character, TraitSpending } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
@@ -9,7 +9,7 @@ import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.po
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import { DEFAULT_MAX_TRAIT_COST } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { GameRules, loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
@@ -33,8 +33,17 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     this.validateCommand(command, trait);
     const isTalent = trait.isTalent;
     const cost = this.calculateCost(trait, command.tier);
-    await this.validateMaxCost(character.gameId, command.traitId, cost);
-    character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization);
+    const rules = await loadGameRules(this.gameRepository, character.gameId);
+    this.validateMaxCost(rules, command.traitId, cost);
+    // Adding a tier based trait the character already has with a higher tier improves it, paying the difference
+    const current = character.findCharacterTrait(command.traitId, command.specialization);
+    const isImprovement = !!current && trait.isTierBased && !!current.tier && !!command.tier && command.tier > current.tier;
+    const spending = this.getSpending(character, rules, isImprovement ? cost - current.cost : cost, isImprovement);
+    if (isImprovement) {
+      character.improveTrait(command.traitId, command.specialization, command.tier, cost, spending);
+    } else {
+      character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization, spending);
+    }
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
@@ -63,10 +72,57 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     }
   }
 
+  /**
+   * Pools that pay the trait, by game talent policy. Creation means level 0 or 1, before the first level up from level 1.
+   * - 'free': normal points first, then bonus points. At creation the bonus points are not limited per level unless
+   *   bonusDevPointsCapAtCreation is set.
+   * - 'race-points-at-creation': at creation only bonus points; afterwards only improvements of the talents already owned.
+   * - 'flaw-points-at-creation': at creation only the points returned by flaws, which flaws feed instead of the normal pool.
+   */
+  private getSpending(character: Character, rules: GameRules, cost: number, isImprovement: boolean): TraitSpending {
+    const creation = character.isInCreation();
+    const { talentPolicy, bonusDevPointsCapAtCreation } = rules.options;
+    const spend = {
+      bonusDevPointsPerLevel: rules.powerLevel.raceDevPointsPerLevel,
+      capBonus: !creation || bonusDevPointsCapAtCreation,
+    };
+    const flawPool = talentPolicy === 'flaw-points-at-creation' && creation ? 'flaw' : 'normal';
+    if (talentPolicy === 'race-points-at-creation') {
+      if (creation) {
+        return {
+          spend: { ...spend, pools: ['bonus'] },
+          flawPool,
+          onInsufficient: () =>
+            new ValidationError(
+              'At creation talents can only be paid with bonus development points',
+              'err-talent-policy-bonus-points-only',
+            ),
+        };
+      }
+      if (cost > 0 && !isImprovement) {
+        throw new ValidationError(
+          'New talents can only be acquired at creation, later only the talents already owned can be improved',
+          'err-talent-policy-creation-only',
+        );
+      }
+    }
+    if (talentPolicy === 'flaw-points-at-creation' && creation) {
+      return {
+        spend: { ...spend, pools: ['flaw'] },
+        flawPool,
+        onInsufficient: () =>
+          new ValidationError(
+            'At creation talents can only be paid with the points returned by flaws',
+            'err-talent-policy-flaw-points-only',
+          ),
+      };
+    }
+    return { spend, flawPool };
+  }
+
   // Flaws have a negative cost and no limit
-  private async validateMaxCost(gameId: string, traitId: string, cost: number): Promise<void> {
-    const game = await this.gameRepository.findById(gameId);
-    const maxTraitCost = game?.powerLevel?.maxTraitCost ?? DEFAULT_MAX_TRAIT_COST;
+  private validateMaxCost(rules: GameRules, traitId: string, cost: number): void {
+    const maxTraitCost = rules.powerLevel.maxTraitCost;
     if (cost > maxTraitCost) {
       throw new ValidationError(
         `Trait ${traitId} costs ${cost} development points, the game allows up to ${maxTraitCost}`,

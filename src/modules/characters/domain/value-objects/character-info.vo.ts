@@ -8,4 +8,5 @@ export interface CharacterInfo {
   realmType: CharacterRealm;
   height: number;
   weight: number;
+  cultureId?: string | null;
 }

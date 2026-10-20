@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { UpdateGameCommand } from 'src/modules/games/application/cqrs/commands/update-game.command';
 import { GameOptionsDto } from './game-options.dto';
 import { GamePowerLevelDto } from './game-power-level-dto';
@@ -13,11 +14,15 @@ export class UpdateGameDto {
   @ApiProperty({ description: 'Game options', type: GameOptionsDto, required: false })
   @IsOptional()
   @IsObject()
+  @ValidateNested()
+  @Type(() => GameOptionsDto)
   options?: GameOptionsDto;
 
   @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto, required: false })
   @IsOptional()
   @IsObject()
+  @ValidateNested()
+  @Type(() => GamePowerLevelDto)
   powerLevel?: GamePowerLevelDto;
 
   @ApiProperty({ description: 'Game short description', example: 'Game short description', required: false })

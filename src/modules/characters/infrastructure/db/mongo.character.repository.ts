@@ -13,6 +13,8 @@ import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
 import { CharacterStat, STAT_KEYS, StatKey } from '../../domain/value-objects/character-stat.vo';
 import { CharacterTrait } from '../../domain/value-objects/character-trait.vo';
+import { CharacterXP } from '../../domain/value-objects/character-xp.vo';
+import { CharacterSkill } from '../../domain/value-objects/character-skill.vo';
 
 @Injectable()
 export class MongoCharacterRepository extends MongoBaseRepository<Character, CharacterDocument> implements CharacterRepository {
@@ -49,7 +51,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       name: doc.name,
       info: doc.info,
       roleplay: doc.roleplay,
-      experience: doc.experience,
+      experience: this.mapExperience(doc),
       statistics: statistics,
       movement: doc.movement,
       defense: doc.defense,
@@ -58,7 +60,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       endurance: doc.endurance,
       power: doc.power,
       initiative: doc.initiative,
-      skills: doc.skills,
+      skills: this.mapSkills(doc),
       equipment: doc.equipment,
       attacks: doc.attacks,
       traits: this.mapTraits(doc),
@@ -68,6 +70,50 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+    });
+  }
+
+  // Documents stored before spec 009 use availableRaceDevPoints and have no bonus point tracking
+  private mapExperience(doc: CharacterDocument): CharacterXP {
+    const e = doc.experience;
+    if (!e) return e;
+    return new CharacterXP(
+      e.level,
+      e.availableLevel,
+      e.xp,
+      e.devPoints,
+      e.availableDevPoints,
+      e.availableBonusDevPoints ?? e.availableRaceDevPoints ?? 0,
+      e.availableStatLevelUp ?? 0,
+      e.developedStatLevelUp ?? 0,
+      e.weaponDevelopment,
+      e.bonusDevPointsSpentThisLevel ?? 0,
+      e.flawDevPoints ?? 0,
+    );
+  }
+
+  private mapSkills(doc: CharacterDocument): CharacterSkill[] {
+    return (doc.skills || []).map(s => {
+      const spent = s.devPointsSpent;
+      return new CharacterSkill(
+        s.skillId,
+        s.specialization ?? null,
+        s.statistics,
+        s.development,
+        s.professional ?? null,
+        s.ranks,
+        s.ranksDeveloped,
+        s.statBonus,
+        s.racialBonus,
+        s.developmentBonus,
+        s.professionalBonus,
+        s.customBonus,
+        s.totalBonus,
+        s.traitBonus ?? 0,
+        s.cultureRanks ?? 0,
+        { normal: spent?.normal ?? 0, bonus: spent?.bonus ?? 0 },
+        s.knackBonus ?? undefined,
+      );
     });
   }
 
@@ -83,6 +129,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
           t.cost ?? 0,
           t.specialization ?? undefined,
           t.source === 'race' ? 'race' : 'character',
+          t.paidWith ?? undefined,
         ),
     );
   }

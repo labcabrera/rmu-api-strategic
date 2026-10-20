@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { Character } from '../../../aggregates/character.aggregate';
-import { CharacterResistance } from '../../../value-objects/character-resistances.vo';
+import { CharacterResistance, RESISTANCE_BONUS_PER_LEVEL } from '../../../value-objects/character-resistances.vo';
 import { AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { matchesKey } from '../traits/trait-specialization-matcher';
 
@@ -27,6 +27,7 @@ export class ResistancesProcessor {
           racialBonus: 0,
           customBonus: 0,
           traitBonus: 0,
+          levelBonus: 0,
           totalBonus: 0,
         } as CharacterResistance;
         character.resistances?.push(resistanceEntry);
@@ -44,6 +45,7 @@ export class ResistancesProcessor {
         realmBonus: 0,
         customBonus: 0,
         traitBonus: 0,
+        levelBonus: 0,
         totalBonus: 0,
       } as CharacterResistance;
       character.resistances?.push(re);
@@ -51,7 +53,8 @@ export class ResistancesProcessor {
     re.realmBonus = this.getRealmBonus(character, resistance);
     re.statBonus = this.getStatusBonus(character, resistance);
     re.traitBonus = this.getTraitBonus(resistance, resistanceEffects);
-    re.totalBonus = re.statBonus + re.racialBonus + re.realmBonus + (re.customBonus || 0) + re.traitBonus;
+    re.levelBonus = RESISTANCE_BONUS_PER_LEVEL * (character.experience?.level || 0);
+    re.totalBonus = re.statBonus + re.racialBonus + re.realmBonus + (re.customBonus || 0) + re.traitBonus + re.levelBonus;
   }
 
   private getTraitBonus(resistance: string, resistanceEffects: AppliedTraitEffect[]): number {

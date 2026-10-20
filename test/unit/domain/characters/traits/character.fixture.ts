@@ -37,12 +37,18 @@ export const buildCharacter = (
     racialAt?: number;
     sizeId?: string;
     devPoints?: number;
+    level?: number;
+    bonusDevPoints?: number;
   } = {},
 ): Character => {
   const statistics = {} as Record<StatKey, CharacterStat>;
   STAT_KEYS.forEach(key => (statistics[key] = CharacterStat.fromModifiers(50, 50, {} as Record<string, number>)));
   const experience = CharacterXP.fromLevel(1, ['melee', 'ranged', 'shield', 'unarmed']);
   experience.availableDevPoints = props.devPoints ?? 60;
+  experience.devPoints = 60;
+  experience.level = props.level ?? 0;
+  experience.availableLevel = 10;
+  experience.availableBonusDevPoints = props.bonusDevPoints ?? 0;
   const defense = CharacterDefense.empty();
   defense.armor.racialAt = props.racialAt ?? 1;
   const equipment = CharacterEquipment.empty();

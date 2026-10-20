@@ -6,7 +6,8 @@ import { GameModel, GameDocument } from '../persistence/models/game-model';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
 import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
-import { DEFAULT_MAX_TRAIT_COST, GamePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { GamePowerLevel, resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { GameOptions, resolveOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
 
 @Injectable()
 export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument> implements GameRepository {
@@ -24,6 +25,8 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
     if (!powerLevel) {
       return powerLevel;
     }
+    // Documents stored before a field existed get the Superior default
+    const resolved = resolvePowerLevel(powerLevel);
     return new GamePowerLevel(
       powerLevel.baseDevPoints,
       powerLevel.statRandomMin,
@@ -31,7 +34,30 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       powerLevel.statBoostTemporary,
       powerLevel.statCreationBoost,
       powerLevel.statCreationSwap,
-      powerLevel.maxTraitCost ?? DEFAULT_MAX_TRAIT_COST,
+      resolved.maxTraitCost,
+      resolved.raceDevPointsPerLevel,
+      resolved.creationBonusDevPoints,
+      resolved.statPoints,
+      resolved.knackCount,
+      resolved.knackBonus,
+    );
+  }
+
+  private mapOptions(doc: GameDocument): GameOptions {
+    const options = doc.options;
+    if (!options) {
+      return options;
+    }
+    const resolved = resolveOptions(options);
+    return new GameOptions(
+      options.experienceMultiplier,
+      options.fatigueMultiplier,
+      options.boardScaleMultiplier,
+      options.letality,
+      resolved.allowThirdRank,
+      resolved.talentPolicy,
+      resolved.bonusDevPointsCapAtCreation,
+      resolved.statGeneration,
     );
   }
 
@@ -42,7 +68,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       realmId: doc.realmId,
       realmName: doc.realmName,
       status: doc.status,
-      options: doc.options,
+      options: this.mapOptions(doc),
       powerLevel: this.mapPowerLevel(doc),
       description: doc.description,
       imageUrl: doc.imageUrl,

@@ -19,6 +19,13 @@ import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { CharacterCreatedEvent } from 'src/modules/characters/domain/events/character.events';
 import type { TraitClientPort } from '../../ports/trait-client.port';
 import { mapRaceTraits } from '../../services/race-traits.mapper';
+import type { Culture, CultureClientPort } from '../../ports/culture-client.port';
+import { resolveCultureRanks } from '../../services/culture-ranks.resolver';
+import type { CultureRanks } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { validateCreationStats, validateStatPoints } from 'src/modules/characters/domain/services/stats/stat-rules';
+import { resolveOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
+import { resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -33,6 +40,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
+    @Inject('CultureClient') private readonly cultureClient: CultureClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
@@ -48,8 +56,13 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       throw new ValidationError(`Faction ${command.faction} does not belong to game ${command.gameId}`);
     }
 
+    this.validateStatistics(game, command.statistics);
+
     const race = await this.fetchRace(command.info.raceId);
     const profession = await this.fetchProfession(command.info.professionId);
+    const culture = command.culture ? await this.fetchCulture(command.culture.cultureId) : undefined;
+    const catalogSkills = await this.fetchSkills();
+    const cultureRanks = culture ? resolveCultureRanks(culture, command.culture!.assignments || [], catalogSkills) : [];
 
     const processedStatistics = this.processStatistics(race, command.statistics);
     const info = this.getCharacterInfo(command, race);
@@ -64,8 +77,12 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       processedStatistics,
       command.imageUrl,
       command.userId,
+      race.baseDevPoints || 0,
     );
-    await this.processSkills(character, profession, command, race);
+    await this.processSkills(character, profession, command, race, cultureRanks, catalogSkills);
+    if (culture) {
+      character.applyCulture(culture.id, cultureRanks);
+    }
     character.syncRaceTraits(await mapRaceTraits(race.traits, this.traitClient));
 
     character.updateRace({
@@ -86,6 +103,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return character;
   }
 
+  // Temporary not above potential, values in 1..100 and, with point-buy generation, the stat points budget
+  private validateStatistics(game: Game, statistics: Record<StatKey, CharacterStatCreation>): void {
+    validateCreationStats(statistics || {}, STAT_KEYS);
+    if (resolveOptions(game.options).statGeneration === 'point-buy') {
+      validateStatPoints(statistics, STAT_KEYS, resolvePowerLevel(game.powerLevel).statPoints);
+    }
+  }
+
   processStatistics(raceInfo: Race, statistics: Record<StatKey, CharacterStatCreation>): Record<StatKey, CharacterStat> {
     const result = {} as Record<StatKey, CharacterStat>;
     STAT_KEYS.forEach(e => {
@@ -97,7 +122,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     return result;
   }
 
-  async processSkills(character: Character, profession: Profession, command: CreateCharacterCommand, raceInfo: Race): Promise<void> {
+  async processSkills(
+    character: Character,
+    profession: Profession,
+    command: CreateCharacterCommand,
+    raceInfo: Race,
+    cultureRanks: CultureRanks[] = [],
+    catalogSkills?: SkillResponse[],
+  ): Promise<void> {
     const skills = command.skills || [];
     // Always include the 'body-development' skill
     if (!skills.some(e => e.skillId === 'body-development')) {
@@ -117,7 +149,14 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
         });
       }
     });
-    const readedSkills = await this.fetchSkills();
+    // Culture skills the character does not have yet are created with the profession cost
+    cultureRanks.forEach(entry => {
+      const current = skills.find(s => s.skillId === entry.skillId && (s.specialization || null) === (entry.specialization || null));
+      if (!current) {
+        skills.push({ skillId: entry.skillId, specialization: entry.specialization });
+      }
+    });
+    const readedSkills = catalogSkills ?? (await this.fetchSkills());
     const readedSkillCategories = await this.fetchSkillCategories();
     for (const skill of skills) {
       const readedSkill = readedSkills.find(s => s.id == skill.skillId);
@@ -143,6 +182,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       realmType: command.info.realmType,
       height: command.info.height,
       weight: command.info.weight,
+      cultureId: null,
     };
   }
 
@@ -159,7 +199,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     if (skillId.startsWith('melee-weapon')) return 'melee';
     if (skillId.startsWith('ranged-weapon')) return 'ranged';
     if (skillId === 'shield') return 'shield';
-    if (skillId === 'unarmed-combat') return 'unarmed';
+    if (skillId === 'unarmed-st' || skillId === 'unarmed-ag') return 'unarmed';
     return undefined;
   }
 
@@ -169,6 +209,15 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     } catch (e) {
       this.logger.error(e);
       throw new ValidationError(`Race with id ${raceId} not found.`);
+    }
+  }
+
+  private async fetchCulture(cultureId: string): Promise<Culture> {
+    try {
+      return await this.cultureClient.getCultureById(cultureId);
+    } catch (e) {
+      this.logger.error(e);
+      throw new ValidationError(`Culture with id ${cultureId} not found.`, 'err-culture-not-found');
     }
   }
 
