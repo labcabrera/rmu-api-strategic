@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterTrait, type CharacterTraitSource } from 'src/modules/characters/domain/value-objects/character-trait.vo';
+import {
+  CharacterTrait,
+  type CharacterTraitSource,
+  type TraitPayment,
+} from 'src/modules/characters/domain/value-objects/character-trait.vo';
 
 export class CharacterTraitDto {
   traitId: string;
@@ -16,6 +20,13 @@ export class CharacterTraitDto {
   })
   source: CharacterTraitSource;
 
+  @ApiProperty({
+    description: 'Development points used to pay the trait, by pool (negative values for the points granted by flaws)',
+    required: false,
+    example: { normal: 10, bonus: 5, flaw: 0, cappedBonus: 5, level: 1 },
+  })
+  paidWith: TraitPayment | undefined;
+
   static fromEntity(entity: CharacterTrait): CharacterTraitDto {
     const dto = new CharacterTraitDto();
     dto.traitId = entity.traitId;
@@ -25,6 +36,7 @@ export class CharacterTraitDto {
     dto.cost = entity.cost;
     dto.specialization = entity.specialization;
     dto.source = entity.source ?? 'character';
+    dto.paidWith = entity.paidWith;
     return dto;
   }
 }

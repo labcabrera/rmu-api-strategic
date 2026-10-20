@@ -7,6 +7,8 @@ export class CharacterResistanceDto {
   realmBonus: number;
   customBonus: number;
   traitBonus: number;
+  // +2 per character level
+  levelBonus: number;
   totalBonus: number;
 
   static fromEntity(entity: CharacterResistance): CharacterResistanceDto {
@@ -17,6 +19,7 @@ export class CharacterResistanceDto {
     dto.realmBonus = entity.realmBonus;
     dto.customBonus = entity.customBonus;
     dto.traitBonus = entity.traitBonus ?? 0;
+    dto.levelBonus = entity.levelBonus ?? 0;
     dto.totalBonus = entity.totalBonus;
     return dto;
   }

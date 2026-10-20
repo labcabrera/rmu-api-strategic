@@ -103,7 +103,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     if (skillId.startsWith('melee-weapon')) return 'melee';
     if (skillId.startsWith('ranged-weapon')) return 'ranged';
     if (skillId === 'shield') return 'shield';
-    if (skillId === 'unarmed-combat') return 'unarmed';
+    if (skillId === 'unarmed-st' || skillId === 'unarmed-ag') return 'unarmed';
     return undefined;
   }
 }

@@ -6,6 +6,8 @@ import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
 import { UpdateTemporaryStatCommand } from '../commands/update-temporary-stat.command';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(UpdateTemporaryStatCommand)
 export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTemporaryStatCommand, Character> {
@@ -13,6 +15,7 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: UpdateTemporaryStatCommand): Promise<Character> {
@@ -23,7 +26,8 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     if (!stat) {
       throw new ValidationError(`Stat ${command.stat} not found for character ${command.characterId}`);
     }
-    character.updateTemporaryStat(command.stat, command.value);
+    const { powerLevel } = await loadGameRules(this.gameRepository, character.gameId);
+    character.updateTemporaryStat(command.stat, command.value, { bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel });
     const items = await this.itemRepository.findByCharacterId(command.characterId);
     this.characterProcessorService.process(character, items);
     await this.characterRepository.update(character.id, character);

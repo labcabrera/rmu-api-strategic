@@ -5,6 +5,7 @@ import { CharacterStat } from '../../../value-objects/character-stat.vo';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { matchesSkill } from '../traits/trait-specialization-matcher';
+import { DEFAULT_KNACK_BONUS } from 'src/modules/games/domain/value-objects/game-power-level.vo';
 
 @Injectable()
 export class SkillProcessor {
@@ -51,7 +52,7 @@ export class SkillProcessor {
       bonus = Math.min(30, skill.ranks);
     }
     if (skill.professional && skill.professional.includes('knack')) {
-      bonus += 5;
+      bonus += skill.knackBonus ?? DEFAULT_KNACK_BONUS;
     }
     return bonus;
   }

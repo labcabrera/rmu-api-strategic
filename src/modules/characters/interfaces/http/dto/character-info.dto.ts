@@ -37,6 +37,9 @@ export class CharacterInfoDto {
   @IsNotEmpty()
   weight: number;
 
+  @ApiProperty({ description: 'Culture identifier chosen at creation', required: false, example: 'urban' })
+  cultureId: string | null;
+
   static fromEntity(entity: CharacterInfo): CharacterInfoDto {
     const dto = new CharacterInfoDto();
     dto.race = { id: entity.race.id, name: entity.race.name };
@@ -45,6 +48,7 @@ export class CharacterInfoDto {
     dto.realmType = entity.realmType;
     dto.height = entity.height;
     dto.weight = entity.weight;
+    dto.cultureId = entity.cultureId ?? null;
     return dto;
   }
 }

@@ -22,6 +22,9 @@ export class CharacterInfo {
 
   @Prop({ required: true })
   weight: number;
+
+  @Prop({ type: String, required: false })
+  cultureId?: string | null;
 }
 
 @Schema({ _id: false })
@@ -151,4 +154,7 @@ export class CharacterResistance {
 
   @Prop({ type: Number, required: false, default: 0 })
   traitBonus: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  levelBonus: number;
 }

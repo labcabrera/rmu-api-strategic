@@ -18,8 +18,14 @@ export class CharacterXPDto {
   @ApiProperty({ description: 'Available development points for this level', example: 42 })
   availableDevPoints: number;
 
-  @ApiProperty({ description: 'Available race development points', example: 12 })
-  availableRaceDevPoints: number;
+  @ApiProperty({ description: 'Available bonus development points (race extra points plus the game master creation bonus)', example: 25 })
+  availableBonusDevPoints: number;
+
+  @ApiProperty({ description: 'Bonus development points spent in the current level, limited by the game power level', example: 10 })
+  bonusDevPointsSpentThisLevel: number;
+
+  @ApiProperty({ description: "Points returned by flaws at creation under the 'flaw-points-at-creation' talent policy", example: 0 })
+  flawDevPoints: number;
 
   @ApiProperty({ description: 'Available temporary stat updates', example: 2 })
   availableStatLevelUp: number;
@@ -37,7 +43,9 @@ export class CharacterXPDto {
     dto.xp = entity.xp;
     dto.devPoints = entity.devPoints;
     dto.availableDevPoints = entity.availableDevPoints;
-    dto.availableRaceDevPoints = entity.availableRaceDevPoints;
+    dto.availableBonusDevPoints = entity.availableBonusDevPoints ?? 0;
+    dto.bonusDevPointsSpentThisLevel = entity.bonusDevPointsSpentThisLevel ?? 0;
+    dto.flawDevPoints = entity.flawDevPoints ?? 0;
     dto.availableStatLevelUp = entity.availableStatLevelUp ?? 0;
     dto.developedStatLevelUp = entity.developedStatLevelUp ?? 0;
     dto.weaponDevelopment = entity.weaponDevelopment;

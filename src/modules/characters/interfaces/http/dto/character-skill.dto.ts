@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import { CharacterSkill, type SkillDevPointsSpent } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
 
 export class CharacterSkillDto {
@@ -19,11 +19,17 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Professional bonuses' })
   professional: ProfessionalBonusType[] | null;
 
-  @ApiProperty({ description: 'Ranks', example: 3 })
+  @ApiProperty({ description: 'Total ranks, culture ranks included', example: 3 })
   ranks: number;
 
   @ApiProperty({ description: 'Ranks developed this level', example: 1 })
   ranksDeveloped: number;
+
+  @ApiProperty({ description: 'Ranks granted by the culture at creation', example: 1 })
+  cultureRanks: number;
+
+  @ApiProperty({ description: 'Development points spent on this skill in the current level, by pool', example: { normal: 4, bonus: 0 } })
+  devPointsSpent: SkillDevPointsSpent;
 
   @ApiProperty({ description: 'Stat bonus', example: 2 })
   statBonus: number;
@@ -55,6 +61,8 @@ export class CharacterSkillDto {
     dto.professional = skill.professional;
     dto.ranks = skill.ranks;
     dto.ranksDeveloped = skill.ranksDeveloped;
+    dto.cultureRanks = skill.cultureRanks ?? 0;
+    dto.devPointsSpent = { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 };
     dto.statBonus = skill.statBonus;
     dto.racialBonus = skill.racialBonus;
     dto.professionalBonus = skill.professionalBonus;

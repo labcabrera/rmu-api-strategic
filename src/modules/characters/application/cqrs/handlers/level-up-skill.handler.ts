@@ -7,6 +7,8 @@ import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
@@ -15,6 +17,7 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    @Inject('GameRepository') private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: LevelUpSkillCommand): Promise<Character> {
@@ -23,9 +26,11 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
-    //TODO add to game model
-    const allowThird = true;
-    character.levelUpSkill(command.skillId, command.specialization, allowThird);
+    const { powerLevel, options } = await loadGameRules(this.gameRepository, character.gameId);
+    character.levelUpSkill(command.skillId, command.specialization, {
+      allowThirdRank: options.allowThirdRank,
+      bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel,
+    });
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     await this.characterRepository.update(character.id, character);

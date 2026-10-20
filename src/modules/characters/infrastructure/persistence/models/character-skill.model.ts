@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import type { SkillDevPointsSpent } from 'src/modules/characters/domain/value-objects/character-skill.vo';
 
 @Schema({ _id: false })
 export class CharacterSkill {
@@ -44,4 +45,13 @@ export class CharacterSkill {
 
   @Prop({ type: Number, required: false, default: 0 })
   traitBonus: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  cultureRanks: number;
+
+  @Prop({ type: Object, required: false, default: () => ({ normal: 0, bonus: 0 }) })
+  devPointsSpent: SkillDevPointsSpent;
+
+  @Prop({ type: Number, required: false })
+  knackBonus?: number;
 }
