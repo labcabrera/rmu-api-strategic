@@ -1,3 +1,5 @@
+export type CharacterTraitSource = 'character' | 'race';
+
 export class CharacterTrait {
   constructor(
     public readonly traitId: string,
@@ -6,5 +8,6 @@ export class CharacterTrait {
     public readonly tier: number | undefined,
     public readonly cost: number,
     public readonly specialization: string | undefined,
+    public readonly source: CharacterTraitSource = 'character',
   ) {}
 }

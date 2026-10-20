@@ -37,8 +37,11 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Professional bonus', example: 3 })
   professionalBonus: number;
 
-  @ApiProperty({ description: 'Custom bonus', example: 5 })
+  @ApiProperty({ description: 'Custom bonus (armor penalties and manual adjustments)', example: 5 })
   customBonus: number;
+
+  @ApiProperty({ description: 'Bonus from talents and flaws', example: 10 })
+  traitBonus: number;
 
   @ApiProperty({ description: 'Total bonus', example: 10 })
   totalBonus: number;
@@ -57,6 +60,7 @@ export class CharacterSkillDto {
     dto.professionalBonus = skill.professionalBonus;
     dto.developmentBonus = skill.developmentBonus;
     dto.customBonus = skill.customBonus;
+    dto.traitBonus = skill.traitBonus ?? 0;
     dto.totalBonus = skill.totalBonus;
     return dto;
   }

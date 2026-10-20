@@ -6,7 +6,8 @@ export class CharacterResistance {
     public racialBonus: number,
     public realmBonus: number,
     public customBonus: number,
+    public traitBonus: number = 0,
   ) {
-    this.totalBonus = statBonus + racialBonus + realmBonus + customBonus;
+    this.totalBonus = statBonus + racialBonus + realmBonus + customBonus + traitBonus;
   }
 }

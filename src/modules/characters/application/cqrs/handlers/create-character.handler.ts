@@ -17,6 +17,8 @@ import type { CharacterEventBusPort } from '../../ports/character-event-bus.port
 import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { CharacterCreatedEvent } from 'src/modules/characters/domain/events/character.events';
+import type { TraitClientPort } from '../../ports/trait-client.port';
+import { mapRaceTraits } from '../../services/race-traits.mapper';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -30,6 +32,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
+    @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
     @Inject() private readonly characterProcessorService: CharacterProcessorService,
   ) {}
@@ -63,6 +66,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.userId,
     );
     await this.processSkills(character, profession, command, race);
+    character.syncRaceTraits(await mapRaceTraits(race.traits, this.traitClient));
 
     character.updateRace({
       raceName: race.name,

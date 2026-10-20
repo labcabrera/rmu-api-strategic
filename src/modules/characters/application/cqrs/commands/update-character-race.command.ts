@@ -1,5 +1,5 @@
 import { SkillBonus } from 'src/modules/characters/domain/value-objects/skill-bonus.vo';
-import { Race } from '../../ports/race-client.port';
+import { Race, RaceTrait } from '../../ports/race-client.port';
 
 export interface UpdateCharacterRaceCommandProps
   extends Partial<Omit<Race, 'realmId' | 'realmName' | 'averageHeight' | 'averageWeight' | 'description'>> {
@@ -21,6 +21,7 @@ export class UpdateCharacterRaceCommand {
     public readonly baseAt: number | undefined,
     public readonly talents: string[] | undefined,
     public readonly skillBonuses: SkillBonus[] | undefined,
+    public readonly traits: RaceTrait[] | undefined,
   ) {}
 
   static create(props: UpdateCharacterRaceCommandProps): UpdateCharacterRaceCommand {
@@ -38,6 +39,7 @@ export class UpdateCharacterRaceCommand {
       props.baseAt,
       props.talents,
       props.skillBonuses,
+      props.traits,
     );
   }
 }

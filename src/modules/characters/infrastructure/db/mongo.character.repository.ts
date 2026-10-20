@@ -12,6 +12,7 @@ import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/reposi
 import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
 import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
 import { CharacterStat, STAT_KEYS, StatKey } from '../../domain/value-objects/character-stat.vo';
+import { CharacterTrait } from '../../domain/value-objects/character-trait.vo';
 
 @Injectable()
 export class MongoCharacterRepository extends MongoBaseRepository<Character, CharacterDocument> implements CharacterRepository {
@@ -60,7 +61,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       skills: doc.skills,
       equipment: doc.equipment,
       attacks: doc.attacks,
-      traits: doc.traits,
+      traits: this.mapTraits(doc),
       status: doc.status,
       description: doc.description,
       imageUrl: doc.imageUrl,
@@ -68,6 +69,22 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });
+  }
+
+  // Documents stored before race traits were synced have no source
+  private mapTraits(doc: CharacterDocument): CharacterTrait[] {
+    return (doc.traits || []).map(
+      t =>
+        new CharacterTrait(
+          t.traitId,
+          t.traitName,
+          t.isTalent,
+          t.tier ?? undefined,
+          t.cost ?? 0,
+          t.specialization ?? undefined,
+          t.source === 'race' ? 'race' : 'character',
+        ),
+    );
   }
 
   private mapStatDtoToVo(doc: CharacterDocument): Record<StatKey, CharacterStat> {

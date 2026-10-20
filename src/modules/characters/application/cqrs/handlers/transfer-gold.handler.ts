@@ -67,6 +67,7 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
       0,
       null,
       null,
+      null,
       character.id,
       ['rmu-admin'],
     );

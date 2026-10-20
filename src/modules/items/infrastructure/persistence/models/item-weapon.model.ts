@@ -11,4 +11,7 @@ export class ItemWeapon {
 
   @Prop({ type: [ItemWeaponMode], required: true })
   modes: ItemWeaponMode[];
+
+  @Prop({ type: String, required: false })
+  wielderSize?: string;
 }

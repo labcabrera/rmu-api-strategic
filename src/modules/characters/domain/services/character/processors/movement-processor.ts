@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 
 @Injectable()
 export class MovementProcessor {
@@ -9,7 +10,13 @@ export class MovementProcessor {
     }
     const racialStrideBonus = character.movement.modifiers['racial'] || 0;
     character.movement.modifiers['qu'] = (character.statistics.qu?.totalBonus || 0) / 2;
-    character.movement.baseMovementRate = 20 + racialStrideBonus + character.movement.modifiers['qu'];
+    const traitBonus = sumTraitEffects(getTraitEffects(character.traits, 'movement'));
+    if (traitBonus !== 0) {
+      character.movement.modifiers['trait'] = traitBonus;
+    } else {
+      delete (character.movement.modifiers as Partial<Record<string, number>>)['trait'];
+    }
+    character.movement.baseMovementRate = 20 + racialStrideBonus + character.movement.modifiers['qu'] + traitBonus;
     this.setMaxPace(character);
   }
 

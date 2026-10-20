@@ -4,10 +4,11 @@ export class CharacterDefense {
     public armor: CharacterArmor,
     public shield: CharacterShield | null,
     public protect: number,
+    public modifiers: Record<string, number> = {},
   ) {}
 
   static empty(): CharacterDefense {
-    return new CharacterDefense(0, CharacterArmor.empty(), null, 0);
+    return new CharacterDefense(0, CharacterArmor.empty(), null, 0, {});
   }
 }
 

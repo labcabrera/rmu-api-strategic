@@ -41,4 +41,7 @@ export class CharacterSkill {
 
   @Prop({ required: true })
   totalBonus: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  traitBonus: number;
 }
