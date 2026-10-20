@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CreateItemCommand } from 'src/modules/items/application/cqrs/commands/create-item.command';
+import { WEAPON_WIELDER_SIZES } from 'src/modules/items/domain/value-objects/item-weapon.vo';
 
 export class CreateItemDto {
   @ApiProperty({ description: 'Game identifier', example: 'game-001', required: true })
@@ -47,6 +48,16 @@ export class CreateItemDto {
   @IsOptional()
   description: string | null;
 
+  @ApiProperty({
+    description: 'Size the weapon is made for (weapons only). When missing, the wielder size is assumed',
+    example: 'medium',
+    required: false,
+    enum: WEAPON_WIELDER_SIZES,
+  })
+  @IsIn(WEAPON_WIELDER_SIZES)
+  @IsOptional()
+  wielderSize: string | null;
+
   static toCommand(dto: CreateItemDto, userId: string, roles: string[]): CreateItemCommand {
     return new CreateItemCommand(
       dto.gameId,
@@ -60,6 +71,7 @@ export class CreateItemDto {
       dto.amount,
       dto.description,
       dto.cost,
+      dto.wielderSize || null,
       userId,
       roles,
     );

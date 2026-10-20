@@ -12,6 +12,7 @@ import type { CharacterRepository } from 'src/modules/characters/application/por
 import { ItemProps } from 'src/modules/items/domain/aggregates/item-props';
 import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
 import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
 
 const goldCoin = 'gold-coin';
 
@@ -119,7 +120,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         name: command.name || itemType.id,
         category: itemType.category,
         carried: command.carried || false,
-        weapon: itemType.weapon,
+        weapon: this.getWeapon(command, itemType),
         armor: itemType.armor,
         shield: itemType.shield,
         affixes: command.affixes || [],
@@ -137,6 +138,15 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       const item = Item.create(itemProps);
       return await this.itemRepository.save(item);
     }
+  }
+
+  private getWeapon(command: CreateItemCommand, itemType: ItemResponse): ItemWeapon | null {
+    if (!itemType.weapon) {
+      if (command.wielderSize) throw new ValidationError(`wielderSize can only be set on weapons`);
+      return null;
+    }
+    const { skillId, fumble, modes } = itemType.weapon;
+    return new ItemWeapon(skillId, fumble, modes, command.wielderSize || itemType.weapon.wielderSize);
   }
 
   private async readItemType(itemTypeId: string): Promise<ItemResponse> {

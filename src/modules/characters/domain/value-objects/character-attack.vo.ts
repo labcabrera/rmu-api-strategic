@@ -1,5 +1,7 @@
 import { CharacterAttackRange } from './character-attack-range.vo';
 
+export type WeaponCategory = 'dagger' | 'light' | 'natural' | 'standard';
+
 export class CharacterAttack {
   constructor(
     public attackName: string,
@@ -14,6 +16,9 @@ export class CharacterAttack {
     public meleeRange: number | null,
     public ranges: CharacterAttackRange[] | null,
     public boModifiers: Record<string, number>,
+    public twoHanded: boolean,
+    public weaponCategory: WeaponCategory,
+    public wrongSize: boolean,
   ) {}
 
   static fromProps(props: Omit<CharacterAttack, 'bo'>): CharacterAttack {
@@ -31,6 +36,9 @@ export class CharacterAttack {
       props.meleeRange,
       props.ranges,
       props.boModifiers,
+      props.twoHanded,
+      props.weaponCategory,
+      props.wrongSize,
     );
   }
 }

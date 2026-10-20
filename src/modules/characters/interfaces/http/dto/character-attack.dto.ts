@@ -1,4 +1,5 @@
-import { CharacterAttack } from 'src/modules/characters/domain/value-objects/character-attack.vo';
+import { ApiProperty } from '@nestjs/swagger';
+import { CharacterAttack, type WeaponCategory } from 'src/modules/characters/domain/value-objects/character-attack.vo';
 import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo';
 
 export class CharacterAttackRangeDto {
@@ -29,6 +30,19 @@ export class CharacterAttackDto {
   ranges: CharacterAttackRangeDto[] | null;
   boModifiers: Record<string, number>;
 
+  @ApiProperty({ description: 'Whether the attack uses a two-handed weapon mode', type: Boolean, example: false })
+  twoHanded: boolean;
+
+  @ApiProperty({
+    description: 'Weapon category used by multiple attack rules',
+    enum: ['dagger', 'light', 'natural', 'standard'],
+    example: 'standard',
+  })
+  weaponCategory: WeaponCategory;
+
+  @ApiProperty({ description: 'Whether the weapon is made for a different size than the wielder', type: Boolean, example: false })
+  wrongSize: boolean;
+
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
     dto.attackName = entity.attackName;
@@ -43,6 +57,9 @@ export class CharacterAttackDto {
     dto.meleeRange = entity.meleeRange;
     dto.ranges = entity.ranges ? entity.ranges.map(range => CharacterAttackRangeDto.fromEntity(range)) : null;
     dto.boModifiers = entity.boModifiers;
+    dto.twoHanded = entity.twoHanded ?? false;
+    dto.weaponCategory = entity.weaponCategory ?? 'standard';
+    dto.wrongSize = entity.wrongSize ?? false;
     return dto;
   }
 }

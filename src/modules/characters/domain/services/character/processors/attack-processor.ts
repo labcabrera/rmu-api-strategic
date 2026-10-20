@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.aggregate';
-import { CharacterAttack } from '../../../value-objects/character-attack.vo';
+import { CharacterAttack, WeaponCategory } from '../../../value-objects/character-attack.vo';
 import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
 import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
@@ -10,6 +10,7 @@ import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
 
 const SHIELD_FUMBLE = 4;
+const WRONG_SIZE_PENALTY = -20;
 
 @Injectable()
 export class AttackProcessor {
@@ -42,9 +43,16 @@ export class AttackProcessor {
         const skill = this.getWeaponSkillBonus(character, item.weapon);
         const boModifiers = this.getBoModifiers(skill, character, slot);
         const fumble = this.getFumble(item.weapon.fumble, skill);
+        // A weapon made for another size uses its own size for the attack and gets a BO penalty
+        const wielderSize = item.weapon.wielderSize;
+        const wrongSize = !!wielderSize && wielderSize !== character.info.sizeId;
+        if (wrongSize) {
+          boModifiers['wrongSize'] = WRONG_SIZE_PENALTY;
+        }
+        const baseSizeAdjustment = this.getSizeAdjustment(wrongSize ? wielderSize : character.info.sizeId);
         this.getAvailableModes(character, item.weapon).forEach(mode => {
           const meleeRange = this.getMeleeRange(character, mode, item);
-          const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
+          const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
           const ranges = mode.ranges ? mode.ranges.map(r => new CharacterAttackRange(r.from, r.to, r.bonus)) : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
@@ -58,6 +66,9 @@ export class AttackProcessor {
             meleeRange: meleeRange,
             ranges: ranges,
             boModifiers: boModifiers,
+            twoHanded: mode.type === 'two-hands',
+            weaponCategory: this.getWeaponCategory(item, mode),
+            wrongSize: wrongSize,
           });
           attacks.push(attack);
         });
@@ -77,6 +88,9 @@ export class AttackProcessor {
           meleeRange: Math.round((character.info.height / 2) * 100) / 100,
           ranges: null,
           boModifiers: boModifiers,
+          twoHanded: false,
+          weaponCategory: 'standard',
+          wrongSize: false,
         });
         attacks.push(attack);
       }
@@ -132,8 +146,19 @@ export class AttackProcessor {
     });
   }
 
-  private getCharacterSizeAdjustment(character: Character): number {
-    switch (character.info.sizeId) {
+  // 'natural' is reserved for natural and unarmed attacks, which are not generated yet
+  private getWeaponCategory(item: Item, mode: ItemWeaponMode): WeaponCategory {
+    if (item.itemTypeId === 'dagger') {
+      return 'dagger';
+    }
+    if (mode.sizeAdjustment < 0) {
+      return 'light';
+    }
+    return 'standard';
+  }
+
+  private getSizeAdjustment(sizeId: string): number {
+    switch (sizeId) {
       case 'medium':
         return 0;
       case 'big':
@@ -141,7 +166,7 @@ export class AttackProcessor {
       case 'small':
         return -1;
       default:
-        throw new DomainError('Unsupported character size ' + character.info.sizeId);
+        throw new DomainError('Unsupported size ' + sizeId);
     }
   }
 

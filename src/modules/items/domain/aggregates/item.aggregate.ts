@@ -87,10 +87,11 @@ export class Item extends BaseAggregateRoot<ItemProps> {
   }
 
   update(props: Partial<Omit<ItemProps, 'id' | 'gameId' | 'createdAt' | 'updatedAt'>>): void {
-    const { factionId, characterId, name } = props;
+    const { factionId, characterId, name, weapon } = props;
     if (factionId) this.factionId = factionId;
     if (characterId) this.characterId = characterId;
     if (name) this.name = name;
+    if (weapon) this.weapon = weapon;
     //TODO
     this.updatedAt = new Date();
     this.apply(new ItemUpdatedEvent(this));
