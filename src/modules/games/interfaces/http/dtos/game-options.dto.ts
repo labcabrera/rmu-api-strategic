@@ -62,6 +62,16 @@ export class GameOptionsDto {
   @IsIn(STAT_GENERATIONS)
   statGeneration?: StatGeneration;
 
+  @ApiProperty({
+    description: 'Open rounds: an action still unresolved at the end of a round carries over to the next one, keeping its action points',
+    type: Boolean,
+    required: false,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  openRounds?: boolean;
+
   static fromEntity(entity: GameOptions): GameOptionsDto {
     const resolved = resolveOptions(entity);
     const dto = new GameOptionsDto();
@@ -73,6 +83,7 @@ export class GameOptionsDto {
     dto.talentPolicy = resolved.talentPolicy;
     dto.bonusDevPointsCapAtCreation = resolved.bonusDevPointsCapAtCreation;
     dto.statGeneration = resolved.statGeneration;
+    dto.openRounds = resolved.openRounds;
     return dto;
   }
 }

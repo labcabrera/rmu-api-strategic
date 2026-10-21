@@ -26,4 +26,7 @@ export class GameOptions {
 
   @Prop({ type: String, required: false, default: 'roll' })
   statGeneration: StatGeneration;
+
+  @Prop({ type: Boolean, required: false, default: true })
+  openRounds: boolean;
 }
