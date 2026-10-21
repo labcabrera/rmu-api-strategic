@@ -39,12 +39,19 @@ describe('Game defaults', () => {
       talentPolicy: 'free',
       bonusDevPointsCapAtCreation: false,
       statGeneration: 'roll',
+      openRounds: true,
     });
-    expect(GameOptionsDto.fromEntity(legacyOptions)).toMatchObject({ talentPolicy: 'free', statGeneration: 'roll' });
+    expect(GameOptionsDto.fromEntity(legacyOptions)).toMatchObject({ talentPolicy: 'free', statGeneration: 'roll', openRounds: true });
+  });
+
+  it('keeps open rounds disabled when a game turns them off', () => {
+    expect(resolveOptions({ ...legacyOptions, openRounds: false }).openRounds).toBe(false);
+    expect(GameOptionsDto.fromEntity({ ...legacyOptions, openRounds: false }).openRounds).toBe(false);
   });
 
   it('accepts a missing power level or options', () => {
     expect(resolvePowerLevel(undefined).baseDevPoints).toBe(60);
     expect(resolveOptions(null).allowThirdRank).toBe(false);
+    expect(resolveOptions(undefined).openRounds).toBe(true);
   });
 });

@@ -11,6 +11,7 @@ export const DEFAULT_ALLOW_THIRD_RANK = false;
 export const DEFAULT_TALENT_POLICY: TalentPolicy = 'free';
 export const DEFAULT_BONUS_DEV_POINTS_CAP_AT_CREATION = false;
 export const DEFAULT_STAT_GENERATION: StatGeneration = 'roll';
+export const DEFAULT_OPEN_ROUNDS = true;
 
 export class GameOptions {
   constructor(
@@ -24,6 +25,8 @@ export class GameOptions {
     // When true the bonus development points per level limit also applies to talents bought at creation
     public readonly bonusDevPointsCapAtCreation?: boolean,
     public readonly statGeneration?: StatGeneration,
+    // Open rounds: an action still unresolved at the end of a round carries over to the next one, keeping its action points
+    public readonly openRounds?: boolean,
   ) {}
 }
 
@@ -38,4 +41,5 @@ export const resolveOptions = (options: Partial<GameOptions> | null | undefined)
   talentPolicy: options?.talentPolicy ?? DEFAULT_TALENT_POLICY,
   bonusDevPointsCapAtCreation: options?.bonusDevPointsCapAtCreation ?? DEFAULT_BONUS_DEV_POINTS_CAP_AT_CREATION,
   statGeneration: options?.statGeneration ?? DEFAULT_STAT_GENERATION,
+  openRounds: options?.openRounds ?? DEFAULT_OPEN_ROUNDS,
 });
