@@ -40,6 +40,9 @@ export class CharacterInfoDto {
   @ApiProperty({ description: 'Culture identifier chosen at creation', required: false, example: 'urban' })
   cultureId: string | null;
 
+  @ApiProperty({ description: 'Race recovery multiplier of the injury recovery time', required: false, example: 1 })
+  recoveryMultiplier: number;
+
   static fromEntity(entity: CharacterInfo): CharacterInfoDto {
     const dto = new CharacterInfoDto();
     dto.race = { id: entity.race.id, name: entity.race.name };
@@ -49,6 +52,7 @@ export class CharacterInfoDto {
     dto.height = entity.height;
     dto.weight = entity.weight;
     dto.cultureId = entity.cultureId ?? null;
+    dto.recoveryMultiplier = entity.recoveryMultiplier ?? 1;
     return dto;
   }
 }

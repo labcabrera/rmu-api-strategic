@@ -15,6 +15,8 @@ import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { CharacterTrait } from '../value-objects/character-trait.vo';
 import { CharacterXP } from '../value-objects/character-xp.vo';
+import { CharacterCondition } from '../value-objects/character-condition.vo';
+import { Injury } from '../value-objects/injury.vo';
 
 export interface CharacterProps {
   id: string;
@@ -37,6 +39,10 @@ export interface CharacterProps {
   attacks: CharacterAttack[];
   traits: CharacterTrait[];
   status: CharacterStatus;
+  injuries: Injury[];
+  conditions: CharacterCondition[];
+  /** Tactical games whose outcome has been applied (idempotency) */
+  appliedTacticalGames: string[];
   description: string | undefined;
   imageUrl: string | undefined;
   owner: string;

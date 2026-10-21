@@ -16,6 +16,7 @@ const config: Record<string, string> = {
   RMU_IAM_JWK_URI: 'http://localhost:8090/sso/realms/rmu/protocol/openid-connect/certs',
   RMU_IAM_ISSUER_URI: ISSUER,
   RMU_IAM_AUDIENCE: AUDIENCE,
+  RMU_IAM_CLIENT_ID: 'rmu-client',
 };
 
 const configService = { get: (key: string) => config[key] } as unknown as ConfigService;
@@ -75,5 +76,17 @@ describe('JwtStrategy', () => {
     const result = await authenticate(signToken({ ...claims, aud: 'account' }));
 
     expect(result.outcome).toBe('fail');
+  });
+
+  it('adds the rmu-service role to tokens of the API client', async () => {
+    const result = await authenticate(signToken({ ...claims, azp: 'rmu-client', groups: ['rmu-admin'] }));
+
+    expect(result).toEqual({ outcome: 'success', user: expect.objectContaining({ roles: ['rmu-admin', 'rmu-service'] }) as unknown });
+  });
+
+  it('does not add the rmu-service role to tokens of the front client', async () => {
+    const result = await authenticate(signToken({ ...claims, azp: 'rmu-client-front' }));
+
+    expect(result).toEqual({ outcome: 'success', user: expect.objectContaining({ roles: ['RMU_ADMIN'] }) as unknown });
   });
 });

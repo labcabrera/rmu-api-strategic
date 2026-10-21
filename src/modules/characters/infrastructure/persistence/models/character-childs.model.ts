@@ -25,6 +25,9 @@ export class CharacterInfo {
 
   @Prop({ type: String, required: false })
   cultureId?: string | null;
+
+  @Prop({ type: Number, required: false })
+  recoveryMultiplier?: number;
 }
 
 @Schema({ _id: false })

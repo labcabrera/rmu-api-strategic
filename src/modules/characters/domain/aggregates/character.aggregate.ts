@@ -32,6 +32,22 @@ import {
   emptyPayment,
 } from '../services/dev-points/dev-points-spending.service';
 import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { CharacterCondition } from '../value-objects/character-condition.vo';
+import { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo';
+import { HealthSummary } from '../value-objects/health-summary.vo';
+import {
+  BleedingControl,
+  Injury,
+  InjuryPermanent,
+  InjuryRecovery,
+  InjuryTreatment,
+  PENALTY_STATUSES,
+  TreatmentProcedure,
+} from '../value-objects/injury.vo';
+import { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo';
+import { HealingCalculator, InjuryProgress } from '../services/healing/healing-calculator';
+import { OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger';
 
 export const UNRANKED_SKILL_BONUS = -20;
 export const MAX_RANKS_PER_LEVEL = 2;
@@ -62,7 +78,49 @@ export interface CultureRanks {
 const DEFAULT_DEV_POINTS_RULES: DevPointsRules = { bonusDevPointsPerLevel: DEFAULT_RACE_DEV_POINTS_PER_LEVEL };
 const DEFAULT_TRAIT_SPENDING: TraitSpending = { spend: DEFAULT_DEV_POINTS_RULES, flawPool: 'normal' };
 
+/** Editable fields of an injury (game master). */
+export type InjuryChanges = Partial<
+  Pick<
+    Injury,
+    | 'type'
+    | 'severity'
+    | 'location'
+    | 'side'
+    | 'penalty'
+    | 'initialPenalty'
+    | 'bleeding'
+    | 'bleedingControl'
+    | 'flags'
+    | 'description'
+    | 'permanent'
+    | 'status'
+  >
+>;
+
+export interface RestResult {
+  hpBefore: number;
+  hpAfter: number;
+  days: number;
+  injuries: { injuryId: string; days: number; penalty: number; remainingDays: number; status: string }[];
+  resolvedConditions: string[];
+}
+
+export const BODY_DEVELOPMENT_SKILL = 'body-development';
+
+/** Procedures that stop the bleeding of the injury when the treatment succeeds. */
+const BLEEDING_CONTROL_BY_PROCEDURE: Partial<Record<TreatmentProcedure, BleedingControl>> = {
+  stitches: 'stitches',
+  tourniquet: 'tourniquet',
+  cauterize: 'cauterized',
+  magic: 'magic',
+};
+
 export class Character extends BaseAggregateRoot<CharacterProps> {
+  public injuries: Injury[] = [];
+  public conditions: CharacterCondition[] = [];
+  public appliedTacticalGames: string[] = [];
+  private pendingHealingLog: HealingLogEntry[] = [];
+
   private constructor(
     id: string,
     public gameId: string,
@@ -174,6 +232,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       props.createdAt,
       props.updatedAt,
     );
+    character.injuries = props.injuries || [];
+    character.conditions = props.conditions || [];
+    character.appliedTacticalGames = props.appliedTacticalGames || [];
     return character;
   }
 
@@ -184,10 +245,14 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     resistances: Map<string, number> | undefined;
     strideBonus: number | undefined;
     enduranceBonus: number | undefined;
+    recoveryMultiplier?: number | undefined;
     baseHits: number | undefined;
     baseAt: number | undefined;
     skillBonuses: SkillBonus[];
   }) {
+    if (props.recoveryMultiplier !== undefined && props.recoveryMultiplier !== null && props.recoveryMultiplier > 0) {
+      this.info.recoveryMultiplier = props.recoveryMultiplier;
+    }
     if (props.baseHits) {
       props.skillBonuses.push({ skillId: 'body-development', specialization: null, bonus: props.baseHits });
     }
@@ -538,6 +603,271 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     c.temporary = Math.min(c.potential, c.temporary + roll);
   }
 
+  // Health (spec 013)
+
+  get healthSummary(): HealthSummary {
+    const withPenalty = this.injuries.filter(i => PENALTY_STATUSES.includes(i.status));
+    const notHealed = this.injuries.filter(i => i.status !== 'healed');
+    return {
+      injuryPenalty: withPenalty.reduce((acc, i) => acc + (i.penalty || 0), 0),
+      activeInjuries: this.injuries.filter(i => i.status === 'active' || i.status === 'recovering').length,
+      bleeding: notHealed.reduce((acc, i) => acc + (i.bleeding || 0), 0),
+    };
+  }
+
+  /** Hits below 0 at which the character dies: the Body Development bonus (the maximum hits without it). */
+  get deathThreshold(): number {
+    const bodyDevelopment = this.findSkill(BODY_DEVELOPMENT_SKILL, null);
+    return bodyDevelopment ? bodyDevelopment.totalBonus : this.hp.max;
+  }
+
+  get bodyDevelopmentRanks(): number {
+    return this.findSkill(BODY_DEVELOPMENT_SKILL, null)?.ranks ?? 0;
+  }
+
+  get recoveryMultiplier(): number {
+    return this.info.recoveryMultiplier && this.info.recoveryMultiplier > 0 ? this.info.recoveryMultiplier : 1;
+  }
+
+  findInjury(injuryId: string): Injury {
+    const injury = this.injuries.find(i => i.id === injuryId);
+    if (!injury) throw new NotFoundError('Injury', injuryId, 'err-injury-not-found');
+    return injury;
+  }
+
+  private replaceInjury(injury: Injury): Injury {
+    this.injuries = this.injuries.map(i => (i.id === injury.id ? injury : i));
+    return injury;
+  }
+
+  private touch(): void {
+    this.updatedAt = new Date();
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  addInjury(injury: Injury): Injury {
+    if (this.injuries.some(i => i.id === injury.id)) {
+      throw new ValidationError(`Injury ${injury.id} already exists`, 'err-injury-already-exists');
+    }
+    this.injuries.push(injury);
+    this.recordHealing(
+      'manual',
+      { action: 'injury-added', type: injury.type, severity: injury.severity, penalty: injury.penalty },
+      {
+        injuryId: injury.id,
+      },
+    );
+    this.touch();
+    return injury;
+  }
+
+  updateInjury(injuryId: string, changes: InjuryChanges): Injury {
+    const injury = this.findInjury(injuryId);
+    const now = new Date().toISOString();
+    const defined = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)) as InjuryChanges;
+    const updated: Injury = { ...injury, ...defined, updatedAt: now };
+    if (defined.status === 'healed' && injury.status !== 'healed') {
+      updated.healedAt = now;
+      updated.penalty = 0;
+      updated.bleeding = injury.bleeding ? 0 : injury.bleeding;
+    }
+    if (defined.status === 'permanent' && defined.penalty === undefined) {
+      updated.penalty = updated.permanent?.penalty ?? injury.initialPenalty;
+      updated.permanent = updated.permanent ?? { penalty: injury.initialPenalty };
+    }
+    if (updated.penalty > 0) updated.penalty = -updated.penalty;
+    if (updated.initialPenalty > 0) updated.initialPenalty = -updated.initialPenalty;
+    this.replaceInjury(updated);
+    this.recordHealing('manual', { action: 'injury-updated', changes: defined }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  private assertTreatable(injury: Injury): void {
+    if (injury.status === 'healed') {
+      throw new ValidationError(`Injury ${injury.id} is already healed`, 'err-injury-healed');
+    }
+  }
+
+  /** Stores a treatment. An absolute failure worsens the penalty (also its starting value for the linear reduction). */
+  addInjuryTreatment(injuryId: string, treatment: InjuryTreatment, penaltyWorsening = 0): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    const worsening = Math.abs(penaltyWorsening || 0);
+    const updated: Injury = {
+      ...injury,
+      treatments: [...injury.treatments, treatment],
+      penalty: injury.penalty - worsening,
+      initialPenalty: injury.initialPenalty - worsening,
+      updatedAt: treatment.at,
+    };
+    const control = BLEEDING_CONTROL_BY_PROCEDURE[treatment.procedure];
+    const succeeded = treatment.result === 'success' || treatment.result === 'absolute-success';
+    if (control && succeeded && updated.bleeding) {
+      updated.bleeding = 0;
+      updated.bleedingControl = control;
+    }
+    this.replaceInjury(updated);
+    const resolved = this.resolveUnconsciousIfConscious(treatment.at);
+    this.recordHealing(
+      'treatment',
+      {
+        procedure: treatment.procedure,
+        roll: treatment.roll,
+        total: treatment.total,
+        result: treatment.result,
+        healingType: treatment.healingType,
+        recoveryModifier: treatment.recoveryModifier,
+        penaltyWorsening: worsening,
+        resolvedConditions: resolved,
+      },
+      { injuryId, healerName: treatment.healer.name },
+    );
+    this.touch();
+    return updated;
+  }
+
+  setInjuryRecovery(injuryId: string, recovery: InjuryRecovery, permanentCheckRequired: boolean): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (injury.status === 'permanent') {
+      throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
+    }
+    const updated: Injury = { ...injury, recovery, status: 'recovering', permanent: undefined, updatedAt: recovery.startedAt };
+    this.replaceInjury(updated);
+    this.recordHealing('recovery-roll', { ...recovery, permanentCheckRequired }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  setInjuryPermanent(injuryId: string, permanent: InjuryPermanent, summary: Record<string, unknown>): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (!injury.recovery) {
+      throw new ValidationError(`Injury ${injuryId} has no recovery roll`, 'err-injury-recovery-required');
+    }
+    const now = new Date().toISOString();
+    const updated: Injury = { ...injury, permanent, updatedAt: now };
+    // Already recovered: the permanent part applies at once
+    if (injury.recovery.remainingDays <= 0 && permanent.penalty < 0) {
+      updated.status = 'permanent';
+      updated.penalty = permanent.penalty;
+    }
+    this.replaceInjury(updated);
+    this.recordHealing('permanent-roll', { ...summary, penalty: permanent.penalty, roll: permanent.roll }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  /** Passes time resting: hits per rest period and days off the injury counters. */
+  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>): RestResult {
+    const hpBefore = this.hp.current;
+    this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
+    const progress: InjuryProgress[] = this.injuries.map(injury => HealingCalculator.advance(injury, days, now));
+    this.injuries = progress.map(p => p.injury);
+    const resolvedConditions = this.resolveUnconsciousIfConscious(now);
+    const result: RestResult = {
+      hpBefore,
+      hpAfter: this.hp.current,
+      days,
+      injuries: progress
+        .filter(p => p.days > 0)
+        .map(p => ({
+          injuryId: p.injury.id,
+          days: p.days,
+          penalty: p.injury.penalty,
+          remainingDays: p.injury.recovery?.remainingDays ?? 0,
+          status: p.injury.status,
+        })),
+      resolvedConditions,
+    };
+    this.recordHealing('rest', { ...summary, ...result });
+    this.touch();
+    return result;
+  }
+
+  /** Resolves the unconscious conditions once the hits are above 0. */
+  private resolveUnconsciousIfConscious(now: string): string[] {
+    if (this.hp.current <= 0) return [];
+    const resolved: string[] = [];
+    this.conditions = this.conditions.map(c => {
+      if (c.status !== 'unconscious' || c.resolvedAt) return c;
+      resolved.push(c.id);
+      return { ...c, resolvedAt: now };
+    });
+    return resolved;
+  }
+
+  resolveCondition(conditionId: string): CharacterCondition {
+    const condition = this.conditions.find(c => c.id === conditionId);
+    if (!condition) throw new NotFoundError('Condition', conditionId, 'err-condition-not-found');
+    if (condition.resolvedAt) {
+      throw new ValidationError(`Condition ${conditionId} is already resolved`, 'err-condition-already-resolved');
+    }
+    const now = new Date().toISOString();
+    const resolved = { ...condition, resolvedAt: now };
+    this.conditions = this.conditions.map(c => (c.id === conditionId ? resolved : c));
+    // The game master can bring a dead character back by resolving its death
+    if (condition.status === 'dead' && !this.conditions.some(c => c.status === 'dead' && !c.resolvedAt)) {
+      this.status = 'created';
+    }
+    this.recordHealing('manual', { action: 'condition-resolved', conditionId, status: condition.status });
+    this.touch();
+    return resolved;
+  }
+
+  isTacticalGameApplied(tacticalGameId: string): boolean {
+    return this.appliedTacticalGames.includes(tacticalGameId);
+  }
+
+  /** Applies a tactical game outcome. Returns undefined when it was already applied (idempotent). */
+  applyTacticalOutcome(outcome: TacticalCharacterOutcome): OutcomeMergeSummary | undefined {
+    if (this.isTacticalGameApplied(outcome.tacticalGameId)) return undefined;
+    const now = new Date().toISOString();
+    const { state, summary } = TacticalOutcomeMerger.merge(
+      { hp: this.hp, status: this.status, injuries: this.injuries, conditions: this.conditions },
+      outcome,
+      this.deathThreshold,
+      now,
+    );
+    this.hp.current = state.hp.current;
+    this.status = state.status;
+    this.injuries = state.injuries;
+    this.conditions = state.conditions;
+    this.appliedTacticalGames = [...this.appliedTacticalGames, outcome.tacticalGameId];
+    this.recordHealing(
+      'tactical-outcome',
+      {
+        ...summary,
+        tacticalGameName: outcome.tacticalGameName,
+        actorId: outcome.actorId,
+        // Spec 013, §1.1: the hits log stays out of the character, its totals go to the healing log.
+        ...(outcome.hpBySource ? { hpBySource: outcome.hpBySource } : {}),
+        ...(outcome.hpLog ? { hpLogEntries: outcome.hpLog.length } : {}),
+      },
+      {
+        tacticalGameId: outcome.tacticalGameId,
+      },
+    );
+    this.touch();
+    return summary;
+  }
+
+  private recordHealing(
+    kind: HealingLogKind,
+    summary: Record<string, unknown>,
+    extra: Partial<Pick<HealingLogEntry, 'injuryId' | 'tacticalGameId' | 'healerName'>> = {},
+  ): void {
+    this.pendingHealingLog.push({ id: randomUUID(), at: new Date().toISOString(), kind, summary, ...extra });
+  }
+
+  /** Healing log entries produced since the last call, to be stored by the repository. */
+  pullHealingLog(): HealingLogEntry[] {
+    const entries = this.pendingHealingLog;
+    this.pendingHealingLog = [];
+    return entries;
+  }
+
   getProps(): CharacterProps {
     return {
       id: this.id,
@@ -560,6 +890,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       attacks: this.attacks,
       traits: this.traits,
       status: this.status,
+      injuries: this.injuries,
+      conditions: this.conditions,
+      appliedTacticalGames: this.appliedTacticalGames,
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,

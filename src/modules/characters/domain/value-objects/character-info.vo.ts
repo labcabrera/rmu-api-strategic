@@ -9,4 +9,6 @@ export interface CharacterInfo {
   height: number;
   weight: number;
   cultureId?: string | null;
+  /** Race recovery multiplier: multiplies the recovery time of injuries (1 when unknown) */
+  recoveryMultiplier?: number;
 }

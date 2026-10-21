@@ -9,8 +9,8 @@ export class DomainError extends Error {
   }
 }
 export class NotFoundError extends DomainError {
-  constructor(entity: string, id: number | string) {
-    super(`${entity} ${id} not found`, 404);
+  constructor(entity: string, id: number | string, errorCode?: string) {
+    super(`${entity} ${id} not found`, 404, errorCode);
     this.name = 'NotFoundError';
     Object.setPrototypeOf(this, NotFoundError.prototype);
   }
@@ -67,16 +67,16 @@ export class UnauthorizedError extends DomainError {
 
 export class ForbiddenError extends DomainError {
   public readonly status: number = 403;
-  constructor(message: string) {
-    super(message, 403);
+  constructor(message: string, errorCode?: string) {
+    super(message, 403, errorCode);
     this.name = 'ForbiddenError';
     Object.setPrototypeOf(this, ForbiddenError.prototype);
   }
 }
 
 export class BadGatewayError extends DomainError {
-  constructor(message: string) {
-    super(message, 502);
+  constructor(message: string, errorCode?: string) {
+    super(message, 502, errorCode);
     this.name = 'BadGatewayError';
     Object.setPrototypeOf(this, BadGatewayError.prototype);
   }

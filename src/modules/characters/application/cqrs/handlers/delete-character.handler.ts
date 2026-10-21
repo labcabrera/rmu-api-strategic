@@ -5,6 +5,7 @@ import type { CharacterRepository } from '../../ports/character.repository';
 import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 import { CharacterDeletedEvent } from 'src/modules/characters/domain/events/character.events';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import type { HealingLogRepository } from '../../ports/healing-log.repository';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCommand> {
@@ -13,6 +14,7 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
   constructor(
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject('HealingLogRepository') private readonly healingLogRepository: HealingLogRepository,
   ) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
@@ -22,6 +24,7 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
       throw new NotFoundError('Character', command.characterId);
     }
     await this.characterRepository.deleteById(command.characterId);
+    await this.healingLogRepository.deleteByCharacterId(command.characterId);
     this.characterEventBus.publish(new CharacterDeletedEvent(character.getProps()));
   }
 }
