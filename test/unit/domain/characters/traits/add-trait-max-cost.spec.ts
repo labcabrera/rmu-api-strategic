@@ -103,3 +103,36 @@ describe('AddTraitHandler max trait cost', () => {
     expect(character.traits.map(t => t.cost)).toEqual([-40]);
   });
 });
+
+describe('AddTraitHandler command validation', () => {
+  const expectCode = async (cmd: AddTraitCommand, errorCode: string) => {
+    const { handler, character } = setup({ baseDevPoints: 60 });
+    await expect(handler.execute(cmd)).rejects.toBeInstanceOf(ValidationError);
+    await expect(handler.execute(cmd)).rejects.toMatchObject({ errorCode });
+    expect(character.traits).toHaveLength(0);
+  };
+
+  it('rejects a tier based trait without tier with err-trait-tier-required', async () => {
+    await expectCode(command('fast-attack'), 'err-trait-tier-required');
+  });
+
+  it('rejects a negative tier with err-trait-tier-invalid', async () => {
+    await expectCode(command('fast-attack', -1), 'err-trait-tier-invalid');
+  });
+
+  it('rejects a tier above the max tier with err-trait-tier-invalid', async () => {
+    await expectCode(command('fast-attack', 6), 'err-trait-tier-invalid');
+  });
+
+  it('rejects a tier on a non tier based trait with err-trait-tier-invalid', async () => {
+    await expectCode(command('recurved-musculature', 1), 'err-trait-tier-invalid');
+  });
+
+  it('rejects a missing specialization with err-trait-specialization-required', async () => {
+    await expectCode(command('prodigy', 1), 'err-trait-specialization-required');
+  });
+
+  it('rejects an unexpected specialization with err-trait-specialization-not-allowed', async () => {
+    await expectCode(command('fast-attack', 1, 'perception'), 'err-trait-specialization-not-allowed');
+  });
+});
