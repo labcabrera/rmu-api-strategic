@@ -53,22 +53,25 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
 
   private validateCommand(command: AddTraitCommand, trait: TraitResponse): void {
     if (command.tier && command.tier < 1) {
-      throw new ValidationError(`Trait ${command.traitId} tier must be greater than 0`);
+      throw new ValidationError(`Trait ${command.traitId} tier must be greater than 0`, 'err-trait-tier-invalid');
     }
     if (trait.isTierBased && !command.tier) {
-      throw new ValidationError(`Trait ${command.traitId} is tier based, tier must be defined`);
+      throw new ValidationError(`Trait ${command.traitId} is tier based, tier must be defined`, 'err-trait-tier-required');
     }
     if (!trait.isTierBased && command.tier) {
-      throw new ValidationError(`Trait ${command.traitId} is not tier based, tier must be undefined`);
+      throw new ValidationError(`Trait ${command.traitId} is not tier based, tier must be undefined`, 'err-trait-tier-invalid');
     }
     if (command.tier && trait.maxTier && command.tier > trait.maxTier) {
-      throw new ValidationError(`Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`);
+      throw new ValidationError(
+        `Trait ${command.traitId} max tier is ${trait.maxTier}, tier must be less or equal than max tier`,
+        'err-trait-tier-invalid',
+      );
     }
     if (trait.specialization && !command.specialization) {
-      throw new ValidationError(`Trait ${command.traitId} requires a specialization value`);
+      throw new ValidationError(`Trait ${command.traitId} requires a specialization value`, 'err-trait-specialization-required');
     }
     if (!trait.specialization && command.specialization) {
-      throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`);
+      throw new ValidationError(`Trait ${command.traitId} does not require a specialization value`, 'err-trait-specialization-not-allowed');
     }
   }
 
