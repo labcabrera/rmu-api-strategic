@@ -56,13 +56,31 @@ import { ApiSkillClientAdapter } from './infrastructure/api-clients/api.skill-cl
 import { ApiCultureClientAdapter } from './infrastructure/api-clients/api.culture-client.adapter';
 import { ItemsModule } from '../items/items.module';
 import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-temporary-stat.handler';
+import { CharacterHealthController } from './interfaces/http/character-health.controller';
+import { CharacterHealthStore } from './application/services/character-health.store';
+import { ApplyTacticalOutcomeHandler } from './application/cqrs/handlers/apply-tactical-outcome.handler';
+import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler';
+import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler';
+import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler';
+import { RollInjuryRecoveryHandler } from './application/cqrs/handlers/roll-injury-recovery.handler';
+import { RollPermanentInjuryHandler } from './application/cqrs/handlers/roll-permanent-injury.handler';
+import { RestCharacterHandler } from './application/cqrs/handlers/rest-character.handler';
+import { ResolveConditionHandler } from './application/cqrs/handlers/resolve-condition.handler';
+import { GetHealingLogHandler } from './application/cqrs/handlers/get-healing-log.handler';
+import { ApiHealingTablesClientAdapter } from './infrastructure/api-clients/api.healing-tables-client.adapter';
+import { ApiManeuverClientAdapter } from './infrastructure/api-clients/api.maneuver-client.adapter';
+import { MongoHealingLogRepository } from './infrastructure/db/mongo.healing-log.repository';
+import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastructure/persistence/models/character-healing-log.model';
 
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
     ConfigModule,
-    MongooseModule.forFeature([{ name: CharacterModel.name, schema: CharacterSchema }]),
+    MongooseModule.forFeature([
+      { name: CharacterModel.name, schema: CharacterSchema },
+      { name: CharacterHealingLogModel.name, schema: CharacterHealingLogSchema },
+    ]),
     AuthModule,
     SharedModule,
     GamesModule,
@@ -74,6 +92,7 @@ import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-t
     CharacterSkillController,
     CharacterItemController,
     CharacterTraitController,
+    CharacterHealthController,
     KafkaRaceEventConsumer,
     KafkaCharacterEventConsumer,
   ],
@@ -111,6 +130,28 @@ import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-t
     DeleteTraitHandler,
     UpdateCharacterRaceHandler,
     UpdateTemporaryStatHandler,
+    CharacterHealthStore,
+    ApplyTacticalOutcomeHandler,
+    AddInjuryHandler,
+    UpdateInjuryHandler,
+    TreatInjuryHandler,
+    RollInjuryRecoveryHandler,
+    RollPermanentInjuryHandler,
+    RestCharacterHandler,
+    ResolveConditionHandler,
+    GetHealingLogHandler,
+    {
+      provide: 'HealingLogRepository',
+      useClass: MongoHealingLogRepository,
+    },
+    {
+      provide: 'HealingTablesClient',
+      useClass: ApiHealingTablesClientAdapter,
+    },
+    {
+      provide: 'ManeuverClient',
+      useClass: ApiManeuverClientAdapter,
+    },
     {
       provide: 'CharacterRepository',
       useClass: MongoCharacterRepository,

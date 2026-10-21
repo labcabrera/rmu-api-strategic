@@ -20,6 +20,8 @@ import { CharacterMovement } from './character-movement.model';
 import { CharacterDefense } from './character-defense.model';
 import { CharacterAttack } from './character-attack.model';
 import { CharacterXP } from './character-xp.model';
+import type { Injury } from 'src/modules/characters/domain/value-objects/injury.vo';
+import type { CharacterCondition } from 'src/modules/characters/domain/value-objects/character-condition.vo';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -84,6 +86,16 @@ export class CharacterModel {
 
   @Prop({ type: String, required: true })
   status: CharacterStatus;
+
+  // Health (spec 013): stored as plain subdocuments with the shared Injury / CharacterCondition shape
+  @Prop({ type: [Object], required: false, default: [] })
+  injuries: Injury[];
+
+  @Prop({ type: [Object], required: false, default: [] })
+  conditions: CharacterCondition[];
+
+  @Prop({ type: [String], required: false, default: [] })
+  appliedTacticalGames: string[];
 
   @Prop({ type: String, required: false })
   description: string | undefined;

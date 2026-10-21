@@ -61,6 +61,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
       resistances: command.resistances,
       strideBonus: command.strideBonus,
       enduranceBonus: command.enduranceBonus,
+      recoveryMultiplier: command.recoveryMultiplier,
       baseHits: command.baseHits,
       baseAt: command.baseAt,
       skillBonuses: command.skillBonuses || [],

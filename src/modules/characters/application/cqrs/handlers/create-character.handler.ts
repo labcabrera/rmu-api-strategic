@@ -92,6 +92,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       resistances: race.resistances || {},
       strideBonus: race.strideBonus || 0,
       enduranceBonus: race.enduranceBonus || 0,
+      recoveryMultiplier: race.recoveryMultiplier || 1,
       baseHits: race.baseHits || 0,
       baseAt: race.baseAt || 1,
       skillBonuses: race.skillBonuses || [],

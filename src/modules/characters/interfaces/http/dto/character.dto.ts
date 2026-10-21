@@ -18,6 +18,8 @@ import { Character } from 'src/modules/characters/domain/aggregates/character.ag
 import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
 import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
 import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
@@ -77,6 +79,21 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character talents and flaws', type: [CharacterTraitDto] })
   traits: CharacterTraitDto[];
 
+  @ApiProperty({ description: 'Character status', enum: ['partially_created', 'created', 'dead'], example: 'created' })
+  status: CharacterStatus;
+
+  @ApiProperty({ description: 'Injuries, including the healed ones', type: [InjuryDto] })
+  injuries: InjuryDto[];
+
+  @ApiProperty({ description: 'Conditions (unconscious, dead...), including the resolved ones', type: [CharacterConditionDto] })
+  conditions: CharacterConditionDto[];
+
+  @ApiProperty({ description: 'Injury penalty, active injuries and bleeding', type: HealthSummaryDto })
+  healthSummary: HealthSummaryDto;
+
+  @ApiProperty({ description: 'Tactical games whose outcome has been applied', type: [String] })
+  appliedTacticalGames: string[];
+
   @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
@@ -111,6 +128,11 @@ export class CharacterDto {
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map(attack => CharacterAttackDto.fromEntity(attack));
     dto.traits = entity.traits.map(trait => CharacterTraitDto.fromEntity(trait));
+    dto.status = entity.status;
+    dto.injuries = (entity.injuries || []).map(injury => InjuryDto.fromEntity(injury));
+    dto.conditions = (entity.conditions || []).map(condition => CharacterConditionDto.fromEntity(condition));
+    dto.healthSummary = HealthSummaryDto.fromEntity(entity.healthSummary);
+    dto.appliedTacticalGames = [...(entity.appliedTacticalGames || [])];
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
