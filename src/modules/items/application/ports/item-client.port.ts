@@ -1,5 +1,5 @@
-import { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo';
-import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo';
+import type { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo.js';
+import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 
 export interface ItemClientPort {
   getItemById(itemId: string): Promise<ItemResponse>;

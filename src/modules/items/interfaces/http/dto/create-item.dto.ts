@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CreateItemCommand } from '../../../application/cqrs/commands/create-item.command';
-import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo';
+import { CreateItemCommand } from '../../../application/cqrs/commands/create-item.command.js';
+import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
 
 export class CreateItemDto {
   @ApiProperty({ description: 'Game identifier', example: 'game-001', required: true })

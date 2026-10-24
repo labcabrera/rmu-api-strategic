@@ -1,21 +1,21 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { GameDto, GamePageDto } from './dto/game.dto';
-import { GetGameQuery } from '../../application/cqrs/queries/get-game.query';
-import { Game } from '../../domain/aggregates/game';
-import { GetGamesQuery } from '../../application/cqrs/queries/get-games.query';
-import { CreateGameDto } from './dto/create-game.dto';
-import { UpdateGameDto } from './dto/update-game.dto';
-import { CreateGameCommand } from '../../application/cqrs/commands/create-game.command';
-import { DeleteGameCommand } from '../../application/cqrs/commands/delete-game.command';
-import { UpdateGameCommand } from '../../application/cqrs/commands/update-game.command';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
-import { Page } from '../../../shared/application/pagination/page';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { GameDto, GamePageDto } from './dto/game.dto.js';
+import { GetGameQuery } from '../../application/cqrs/queries/get-game.query.js';
+import { Game } from '../../domain/aggregates/game.js';
+import { GetGamesQuery } from '../../application/cqrs/queries/get-games.query.js';
+import { CreateGameDto } from './dto/create-game.dto.js';
+import { UpdateGameDto } from './dto/update-game.dto.js';
+import { CreateGameCommand } from '../../application/cqrs/commands/create-game.command.js';
+import { DeleteGameCommand } from '../../application/cqrs/commands/delete-game.command.js';
+import { UpdateGameCommand } from '../../application/cqrs/commands/update-game.command.js';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { Page } from '../../../shared/application/pagination/page.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/strategic-games')

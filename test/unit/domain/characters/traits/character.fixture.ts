@@ -1,18 +1,21 @@
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
-import { CharacterEndurance } from '../../../../../src/modules/characters/domain/value-objects/character-endurance.vo';
-import { CharacterDefense } from '../../../../../src/modules/characters/domain/value-objects/character-defense.vo';
-import { CharacterEquipment } from '../../../../../src/modules/characters/domain/value-objects/character-equipment.vo';
-import { CharacterInitiative } from '../../../../../src/modules/characters/domain/value-objects/character-initiative.vo';
-import { CharacterMovement } from '../../../../../src/modules/characters/domain/value-objects/character-movement.vo';
-import { CharacterSkill } from '../../../../../src/modules/characters/domain/value-objects/character-skill.vo';
-import { CharacterStat, STAT_KEYS, StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo';
-import { CharacterTrait, CharacterTraitSource } from '../../../../../src/modules/characters/domain/value-objects/character-trait.vo';
-import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo';
-import { NamedEntity } from '../../../../../src/modules/shared/domain/entities/named-entity';
-import { Item } from '../../../../../src/modules/items/domain/aggregates/item';
-import { ItemWeapon } from '../../../../../src/modules/items/domain/value-objects/item-weapon.vo';
-import { ItemWeaponMode } from '../../../../../src/modules/items/domain/value-objects/item-weapon-mode.vo';
-import { ItemWeaponRange } from '../../../../../src/modules/items/domain/value-objects/item-weapon-range.vo';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
+import { CharacterEndurance } from '../../../../../src/modules/characters/domain/value-objects/character-endurance.vo.js';
+import { CharacterDefense } from '../../../../../src/modules/characters/domain/value-objects/character-defense.vo.js';
+import { CharacterEquipment } from '../../../../../src/modules/characters/domain/value-objects/character-equipment.vo.js';
+import { CharacterInitiative } from '../../../../../src/modules/characters/domain/value-objects/character-initiative.vo.js';
+import { CharacterMovement } from '../../../../../src/modules/characters/domain/value-objects/character-movement.vo.js';
+import { CharacterSkill } from '../../../../../src/modules/characters/domain/value-objects/character-skill.vo.js';
+import { CharacterStat, STAT_KEYS, type StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo.js';
+import {
+  CharacterTrait,
+  type CharacterTraitSource,
+} from '../../../../../src/modules/characters/domain/value-objects/character-trait.vo.js';
+import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo.js';
+import { NamedEntity } from '../../../../../src/modules/shared/domain/entities/named-entity.js';
+import { Item } from '../../../../../src/modules/items/domain/aggregates/item.js';
+import { ItemWeapon } from '../../../../../src/modules/items/domain/value-objects/item-weapon.vo.js';
+import { ItemWeaponMode } from '../../../../../src/modules/items/domain/value-objects/item-weapon-mode.vo.js';
+import { ItemWeaponRange } from '../../../../../src/modules/items/domain/value-objects/item-weapon-range.vo.js';
 
 export const trait = (
   traitId: string,

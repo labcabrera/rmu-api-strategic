@@ -1,4 +1,4 @@
-import { FactionManagement } from '../value-objects/faction-management.vo';
+import { FactionManagement } from '../value-objects/faction-management.vo.js';
 
 export interface FactionProps {
   id: string;

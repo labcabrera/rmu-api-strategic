@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
 
 @Schema({ _id: false })
 export class CharacterXP {

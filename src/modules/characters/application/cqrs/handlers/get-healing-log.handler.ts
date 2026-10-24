@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Page } from '../../../../shared/application/pagination/page';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { HealingLogEntry } from '../../../domain/value-objects/healing-log-entry.vo';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { type HealingLogRepository, HEALING_LOG_REPOSITORY } from '../../ports/healing-log-repository.port';
-import { GetHealingLogQuery } from '../queries/get-healing-log.query';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Page } from '../../../../shared/application/pagination/page.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import type { HealingLogEntry } from '../../../domain/value-objects/healing-log-entry.vo.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { type HealingLogRepository, HEALING_LOG_REPOSITORY } from '../../ports/healing-log-repository.port.js';
+import { GetHealingLogQuery } from '../queries/get-healing-log.query.js';
 
 @QueryHandler(GetHealingLogQuery)
 export class GetHealingLogHandler implements IQueryHandler<GetHealingLogQuery, Page<HealingLogEntry>> {

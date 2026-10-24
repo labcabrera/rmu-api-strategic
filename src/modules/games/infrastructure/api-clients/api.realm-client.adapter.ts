@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client';
+import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client.js';
 
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { RealmClientPort, RealmResponse } from '../../application/ports/realm-client.port';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { RealmClientPort, RealmResponse } from '../../application/ports/realm-client.port.js';
 
 @Injectable()
 export class ApiRealmClientAdapter implements RealmClientPort {

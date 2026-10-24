@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterAttack, type WeaponCategory } from '../../../domain/value-objects/character-attack.vo';
-import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo';
+import { CharacterAttack, type WeaponCategory } from '../../../domain/value-objects/character-attack.vo.js';
+import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo.js';
 
 export class CharacterAttackRangeDto {
   from: number;

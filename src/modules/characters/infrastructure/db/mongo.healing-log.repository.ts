@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Page } from '../../../shared/application/pagination/page';
-import { HealingLogRepository } from '../../application/ports/healing-log-repository.port';
-import { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo';
-import { CharacterHealingLogDocument, CharacterHealingLogModel } from '../persistence/models/character-healing-log.model';
+import { Page } from '../../../shared/application/pagination/page.js';
+import type { HealingLogRepository } from '../../application/ports/healing-log-repository.port.js';
+import type { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo.js';
+import { type CharacterHealingLogDocument, CharacterHealingLogModel } from '../persistence/models/character-healing-log.model.js';
 
 @Injectable()
 export class MongoHealingLogRepository implements HealingLogRepository {

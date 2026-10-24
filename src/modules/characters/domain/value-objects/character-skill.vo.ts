@@ -1,4 +1,4 @@
-import { ProfessionalBonusType } from './professional-bonus-type.vo';
+import type { ProfessionalBonusType } from './professional-bonus-type.vo.js';
 
 // Development points spent on the ranks developed in the current level, by pool
 export interface SkillDevPointsSpent {

@@ -5,7 +5,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
-import { RMU_SERVICE } from '../../domain/entities/user-roles';
+import { RMU_SERVICE } from '../../domain/entities/user-roles.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

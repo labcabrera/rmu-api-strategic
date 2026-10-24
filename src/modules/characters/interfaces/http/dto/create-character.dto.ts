@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CharacterSkillCreationDto } from './character-skill.dto';
-import { CharacterStatCreationDto } from './character-stat.dto';
-import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CreateCharacterCommand, CharacterStatCreation } from '../../../application/cqrs/commands/create-character.command';
-import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
-import { CreateCharacterInfoDto } from './create-character-info.dto';
-import { StatKey } from '../../../domain/value-objects/character-stat.vo';
-import { CreateCharacterCultureDto } from './create-character-culture.dto';
+import { CharacterSkillCreationDto } from './character-skill.dto.js';
+import { CharacterStatCreationDto } from './character-stat.dto.js';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
+import { CreateCharacterCommand, CharacterStatCreation } from '../../../application/cqrs/commands/create-character.command.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import { CreateCharacterInfoDto } from './create-character-info.dto.js';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import { CreateCharacterCultureDto } from './create-character-culture.dto.js';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })

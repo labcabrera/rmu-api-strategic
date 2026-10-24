@@ -1,13 +1,13 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Faction } from '../../../domain/aggregates/faction';
-import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port';
-import { CreateFactionCommand } from '../commands/create-faction.command';
-import { FactionManagement } from '../../../domain/value-objects/faction-management.vo';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { CreateFactionProps } from '../../../domain/aggregates/faction-props';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { Faction } from '../../../domain/aggregates/faction.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port.js';
+import { CreateFactionCommand } from '../commands/create-faction.command.js';
+import { FactionManagement } from '../../../domain/value-objects/faction-management.vo.js';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import type { CreateFactionProps } from '../../../domain/aggregates/faction-props.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(CreateFactionCommand)
 export class CreateFactionCommandHandler implements ICommandHandler<CreateFactionCommand, Faction> {

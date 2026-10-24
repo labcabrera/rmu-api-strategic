@@ -1,14 +1,14 @@
-import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
+import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
 import { Inject, Logger } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { EquipItemCommand } from '../commands/equip-item.command';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { Item } from '../../../../items/domain/aggregates/item';
-import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { EquipItemCommand } from '../commands/equip-item.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { Item } from '../../../../items/domain/aggregates/item.js';
+import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo.js';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {

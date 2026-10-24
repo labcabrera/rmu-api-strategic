@@ -1,14 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
-import { type SkillClientPort, SKILL_CLIENT } from '../../ports/skill-client.port';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
-import { loadGameRules } from '../../services/game-rules';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { LevelUpSkillCommand } from '../commands/level-up-skill.command.js';
+import { type SkillClientPort, SKILL_CLIENT } from '../../ports/skill-client.port.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { loadGameRules } from '../../services/game-rules.js';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {

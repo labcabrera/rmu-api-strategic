@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
+import { Character } from '../../../aggregates/character.js';
 
 // Hit multiplier by character size. Mirrors the character sizes table of rmu-api-core (CHARACTER_SIZES.hitMultiplier),
 // which is a code constant there and is not exposed by the race client

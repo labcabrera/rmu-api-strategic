@@ -1,17 +1,17 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { AddSkillCommand } from '../commands/add-skill.command';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { type SkillCategoryClientPort, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port';
-import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port';
-import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port';
-import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port';
-import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { AddSkillCommand } from '../commands/add-skill.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { type SkillCategoryClientPort, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port.js';
+import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port.js';
+import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port.js';
+import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {

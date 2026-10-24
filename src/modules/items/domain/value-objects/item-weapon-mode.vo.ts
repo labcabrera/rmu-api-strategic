@@ -1,4 +1,4 @@
-import { ItemWeaponRange } from './item-weapon-range.vo';
+import { ItemWeaponRange } from './item-weapon-range.vo.js';
 
 export class ItemWeaponMode {
   constructor(

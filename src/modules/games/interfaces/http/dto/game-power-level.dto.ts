@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
-import { GamePowerLevel, resolvePowerLevel } from '../../../domain/value-objects/game-power-level.vo';
+import { GamePowerLevel, resolvePowerLevel } from '../../../domain/value-objects/game-power-level.vo.js';
 
 export class GamePowerLevelDto {
   @ApiProperty({ description: 'Base development points', type: Number })

@@ -1,16 +1,16 @@
 import { Body, Controller, Delete, HttpCode, Logger, Param, Post, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { CharacterDto } from './dto/character.dto';
-import { AddTraitDto } from './dto/add-trait.dto';
-import { DeleteTraitDto } from './dto/delete-trait.dto';
-import { AddTraitCommand } from '../../application/cqrs/commands/add-trait.command';
-import { DeleteTraitCommand } from '../../application/cqrs/commands/delete-trait.command';
-import { Character } from '../../domain/aggregates/character';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { CharacterDto } from './dto/character.dto.js';
+import { AddTraitDto } from './dto/add-trait.dto.js';
+import { DeleteTraitDto } from './dto/delete-trait.dto.js';
+import { AddTraitCommand } from '../../application/cqrs/commands/add-trait.command.js';
+import { DeleteTraitCommand } from '../../application/cqrs/commands/delete-trait.command.js';
+import { Character } from '../../domain/aggregates/character.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
-import type { RaceTrait } from '../ports/race-client.port';
-import type { TraitClientPort } from '../ports/trait-client.port';
-import { RaceTraitProps } from '../../domain/value-objects/race-trait-props.vo';
+import type { RaceTrait } from '../ports/race-client.port.js';
+import type { TraitClientPort } from '../ports/trait-client.port.js';
+import type { RaceTraitProps } from '../../domain/value-objects/race-trait-props.vo.js';
 
 const logger = new Logger('RaceTraitsMapper');
 

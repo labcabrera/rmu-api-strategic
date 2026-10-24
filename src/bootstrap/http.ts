@@ -1,6 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { DomainExceptionFilter } from '../modules/shared/interfaces/http/domain-exception.filter';
+import { DomainExceptionFilter } from '../modules/shared/interfaces/http/domain-exception.filter.js';
 
 /** The HTTP setup shared by main.ts and the e2e suite: CORS, validation and the error filter. */
 export function configureHttp(app: NestExpressApplication) {

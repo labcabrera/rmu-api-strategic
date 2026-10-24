@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { AddTraitCommand } from '../../../application/cqrs/commands/add-trait.command';
+import { AddTraitCommand } from '../../../application/cqrs/commands/add-trait.command.js';
 
 export class AddTraitDto {
   @ApiProperty({ description: 'Trait identifier', example: 'prodigy' })

@@ -1,5 +1,5 @@
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { StatKey } from '../../value-objects/character-stat.vo';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import type { StatKey } from '../../value-objects/character-stat.vo.js';
 
 // Development points of each extra stat gain roll
 export const STAT_GAIN_DEV_POINTS_COST = 4;

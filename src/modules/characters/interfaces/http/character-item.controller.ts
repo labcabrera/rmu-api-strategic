@@ -1,18 +1,18 @@
 import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { CharacterDto } from './dto/character.dto';
-import { EquipItemDto } from './dto/equip-item.dto';
-import { TransferGoldDto } from './dto/transfer-faction-gold.dto';
-import { UpdateItemCarriedStatusCommand } from '../../application/cqrs/commands/update-item-carried-status.command';
-import { Character } from '../../domain/aggregates/character';
-import { TransferGoldCommand } from '../../application/cqrs/commands/transfer-gold.command';
-import { UnequipItemCommand } from '../../application/cqrs/commands/unequip-item.command';
-import { EquipItemCommand } from '../../application/cqrs/commands/equip-item.command';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { CharacterDto } from './dto/character.dto.js';
+import { EquipItemDto } from './dto/equip-item.dto.js';
+import { TransferGoldDto } from './dto/transfer-faction-gold.dto.js';
+import { UpdateItemCarriedStatusCommand } from '../../application/cqrs/commands/update-item-carried-status.command.js';
+import { Character } from '../../domain/aggregates/character.js';
+import { TransferGoldCommand } from '../../application/cqrs/commands/transfer-gold.command.js';
+import { UnequipItemCommand } from '../../application/cqrs/commands/unequip-item.command.js';
+import { EquipItemCommand } from '../../application/cqrs/commands/equip-item.command.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

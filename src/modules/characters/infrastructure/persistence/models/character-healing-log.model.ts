@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import type { HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo';
+import type { HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo.js';
 
 export type CharacterHealingLogDocument = CharacterHealingLogModel & Document;
 

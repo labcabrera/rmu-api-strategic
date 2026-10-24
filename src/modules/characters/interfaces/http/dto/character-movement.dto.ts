@@ -1,4 +1,4 @@
-import { CharacterMovement } from '../../../domain/value-objects/character-movement.vo';
+import { CharacterMovement } from '../../../domain/value-objects/character-movement.vo.js';
 
 export class CharacterMovementDto {
   baseMovementRate: number;

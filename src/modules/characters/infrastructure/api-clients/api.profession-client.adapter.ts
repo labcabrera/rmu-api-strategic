@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
 
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port.js';
 
 @Injectable()
 export class ApiProfessionClientAdapter implements ProfessionClientPort {

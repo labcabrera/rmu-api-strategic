@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { CharacterTraitSource, TraitPayment } from '../../../domain/value-objects/character-trait.vo';
+import type { CharacterTraitSource, TraitPayment } from '../../../domain/value-objects/character-trait.vo.js';
 
 @Schema({ _id: false })
 export class CharacterTrait {

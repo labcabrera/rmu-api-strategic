@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { UpdateSkillCommand } from '../../../application/cqrs/commands/update-skill.command';
+import { UpdateSkillCommand } from '../../../application/cqrs/commands/update-skill.command.js';
 
 export class UpdateSkillDto {
   @ApiProperty({ description: 'The number of ranks in the skill', example: 3 })

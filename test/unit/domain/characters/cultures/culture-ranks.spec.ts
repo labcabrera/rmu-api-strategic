@@ -1,19 +1,22 @@
-import { fakeEventPublisher } from '../../../support/fake-event-publisher';
+import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
 import { Logger } from '@nestjs/common';
-import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler';
+import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler.js';
 import {
   CharacterStatCreation,
   CreateCharacterCommand,
-  CreateCharacterCulture,
+  type CreateCharacterCulture,
   CreateCharacterInfo,
-} from '../../../../../src/modules/characters/application/cqrs/commands/create-character.command';
-import { CultureAssignment, resolveCultureRanks } from '../../../../../src/modules/characters/application/services/culture-ranks.resolver';
-import type { Culture } from '../../../../../src/modules/characters/application/ports/culture-client.port';
-import type { SkillResponse } from '../../../../../src/modules/characters/application/ports/skill-client.port';
-import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
-import { STAT_KEYS, StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo';
-import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
+} from '../../../../../src/modules/characters/application/cqrs/commands/create-character.command.js';
+import {
+  type CultureAssignment,
+  resolveCultureRanks,
+} from '../../../../../src/modules/characters/application/services/culture-ranks.resolver.js';
+import type { Culture } from '../../../../../src/modules/characters/application/ports/culture-client.port.js';
+import type { SkillResponse } from '../../../../../src/modules/characters/application/ports/skill-client.port.js';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
+import { STAT_KEYS, type StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo.js';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
 
 // Invented catalog and culture: not book data
 const catalog: SkillResponse[] = [

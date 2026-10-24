@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemShield } from '../../../domain/value-objects/item-shield.vo';
+import { ItemShield } from '../../../domain/value-objects/item-shield.vo.js';
 
 export class ItemShieldDto {
   @ApiProperty({ description: 'Defensive bonus', type: Number, required: true, example: 20 })

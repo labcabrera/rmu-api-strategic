@@ -1,5 +1,5 @@
-import { DomainEvent } from '../../../shared/domain/events/domain-event';
-import { ItemProps } from '../aggregates/item-props';
+import { DomainEvent } from '../../../shared/domain/events/domain-event.js';
+import type { ItemProps } from '../aggregates/item-props.js';
 
 export class ItemCreatedEvent extends DomainEvent<ItemProps> {
   constructor(data: ItemProps) {

@@ -1,6 +1,6 @@
-import { GameOptions } from '../../../domain/value-objects/game-options.vo';
-import { GamePowerLevel } from '../../../domain/value-objects/game-power-level.vo';
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import { GameOptions } from '../../../domain/value-objects/game-options.vo.js';
+import { GamePowerLevel } from '../../../domain/value-objects/game-power-level.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class CreateGameCommand extends AuthenticatedCommand {
   constructor(

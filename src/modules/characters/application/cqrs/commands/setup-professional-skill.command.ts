@@ -1,5 +1,5 @@
-import { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo';
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import type { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class SetUpProfessionalSkillCommand extends AuthenticatedCommand {
   constructor(

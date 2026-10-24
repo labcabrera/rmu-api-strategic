@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { GameRepository } from '../../application/ports/game-repository.port';
-import { GameModel, GameDocument } from '../persistence/models/game.model';
-import { Game } from '../../domain/aggregates/game';
-import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser';
-import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
-import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo';
-import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo';
+import type { GameRepository } from '../../application/ports/game-repository.port.js';
+import { GameModel, type GameDocument } from '../persistence/models/game.model.js';
+import { Game } from '../../domain/aggregates/game.js';
+import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
+import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo.js';
+import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo.js';
 
 @Injectable()
 export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument> implements GameRepository {

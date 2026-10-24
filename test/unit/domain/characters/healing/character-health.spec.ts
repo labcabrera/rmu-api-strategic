@@ -1,9 +1,9 @@
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
-import { CharacterUpdatedEvent } from '../../../../../src/modules/characters/domain/events/character.events';
-import { TacticalOutcomeDto } from '../../../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto';
-import { NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
-import { buildCharacter, skill } from '../traits/character.fixture';
-import { injury, treatment } from './healing.fixture';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
+import { CharacterUpdatedEvent } from '../../../../../src/modules/characters/domain/events/character.events.js';
+import { TacticalOutcomeDto } from '../../../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto.js';
+import { NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { buildCharacter, skill } from '../traits/character.fixture.js';
+import { injury, treatment } from './healing.fixture.js';
 
 const NOW = '2026-10-22T00:00:00.000Z';
 

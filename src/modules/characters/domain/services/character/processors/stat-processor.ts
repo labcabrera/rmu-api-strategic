@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
-import { CharacterStat, STAT_KEYS } from '../../../value-objects/character-stat.vo';
-import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
-import { matchesKey } from '../traits/trait-specialization-matcher';
-import { getStatBonus } from '../../stats/stat-rules';
+import { Character } from '../../../aggregates/character.js';
+import { CharacterStat, STAT_KEYS } from '../../../value-objects/character-stat.vo.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesKey } from '../traits/trait-specialization-matcher.js';
+import { getStatBonus } from '../../stats/stat-rules.js';
 
 @Injectable()
 export class StatProcessor {

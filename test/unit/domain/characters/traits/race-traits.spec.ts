@@ -1,16 +1,16 @@
-import { fakeEventPublisher } from '../../../support/fake-event-publisher';
-import { mapRaceTraits } from '../../../../../src/modules/characters/application/services/race-traits.mapper';
-import { UpdateCharacterRaceHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/update-character-race.handler';
-import { UpdateCharacterRaceCommand } from '../../../../../src/modules/characters/application/cqrs/commands/update-character-race.command';
-import type { TraitClientPort, TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
-import type { RaceClientPort, RaceTrait } from '../../../../../src/modules/characters/application/ports/race-client.port';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
-import type { ProfessionClientPort } from '../../../../../src/modules/characters/application/ports/profession-client.port';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
+import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
+import { mapRaceTraits } from '../../../../../src/modules/characters/application/services/race-traits.mapper.js';
+import { UpdateCharacterRaceHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/update-character-race.handler.js';
+import { UpdateCharacterRaceCommand } from '../../../../../src/modules/characters/application/cqrs/commands/update-character-race.command.js';
+import type { TraitClientPort, TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port.js';
+import type { RaceClientPort, RaceTrait } from '../../../../../src/modules/characters/application/ports/race-client.port.js';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port.js';
+import type { ProfessionClientPort } from '../../../../../src/modules/characters/application/ports/profession-client.port.js';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port.js';
 import { CommandBus } from '@nestjs/cqrs';
-import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
-import { buildCharacter, trait } from './character.fixture';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { buildCharacter, trait } from './character.fixture.js';
 
 const traitClient: TraitClientPort = {
   getTraitById: vi.fn((traitId: string) =>

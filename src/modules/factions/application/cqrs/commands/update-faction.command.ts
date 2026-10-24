@@ -1,5 +1,5 @@
-import { FactionManagement } from '../../../domain/value-objects/faction-management.vo';
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import { FactionManagement } from '../../../domain/value-objects/faction-management.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class UpdateFactionCommand extends AuthenticatedCommand {
   constructor(

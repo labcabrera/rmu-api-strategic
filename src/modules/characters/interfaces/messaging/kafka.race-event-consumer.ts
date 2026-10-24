@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../application/ports/character-repository.port';
-import { DomainEvent } from '../../../shared/domain/events/domain-event';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
+import type { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../application/ports/character-repository.port.js';
+import { DomainEvent } from '../../../shared/domain/events/domain-event.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port.js';
 
 export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {
   constructor(data: UpdateCharacterRaceCommandProps) {

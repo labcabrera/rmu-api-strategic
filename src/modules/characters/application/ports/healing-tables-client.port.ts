@@ -1,4 +1,4 @@
-import { HealingTables } from '../../domain/value-objects/healing-tables.vo';
+import type { HealingTables } from '../../domain/value-objects/healing-tables.vo.js';
 
 /** Healing tables of rmu-api-core (GET /v1/healing-tables). */
 export interface HealingTablesClientPort {

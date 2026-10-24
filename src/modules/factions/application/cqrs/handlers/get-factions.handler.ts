@@ -1,9 +1,9 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Faction } from '../../../domain/aggregates/faction';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port';
-import { GetFactionsQuery } from '../queries/get-factions.query';
-import { Page } from '../../../../shared/application/pagination/page';
+import { Faction } from '../../../domain/aggregates/faction.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port.js';
+import { GetFactionsQuery } from '../queries/get-factions.query.js';
+import { Page } from '../../../../shared/application/pagination/page.js';
 
 @QueryHandler(GetFactionsQuery)
 export class GetFactionsQueryHandler implements IQueryHandler<GetFactionsQuery, Page<Faction>> {

@@ -1,6 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
-import { CharacterGender } from '../../../domain/value-objects/character-roleplay-info.vo';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
+import type { CharacterGender } from '../../../domain/value-objects/character-roleplay-info.vo.js';
 
 @Schema({ _id: false })
 export class CharacterInfo {

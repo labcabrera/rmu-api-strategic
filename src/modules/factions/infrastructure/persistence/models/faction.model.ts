@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { FactionManagement } from './faction-management.model';
+import { FactionManagement } from './faction-management.model.js';
 
 export type FactionDocument = FactionModel & Document;
 

@@ -1,53 +1,53 @@
-import { CharacterAttack } from '../value-objects/character-attack.vo';
-import { CharacterInfo } from '../value-objects/character-info.vo';
-import { CharacterPower } from '../value-objects/character-power.vo';
-import { CharacterResistance } from '../value-objects/character-resistances.vo';
-import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
-import { CharacterDefense } from '../value-objects/character-defense.vo';
-import { CharacterEndurance } from '../value-objects/character-endurance.vo';
-import { CharacterEquipment, EquipmentSlot } from '../value-objects/character-equipment.vo';
-import { CharacterHP } from '../value-objects/character-hp.vo';
-import { CharacterInitiative } from '../value-objects/character-initiative.vo';
-import { CharacterMovement } from '../value-objects/character-movement.vo';
-import { CharacterXP, isCreationLevel } from '../value-objects/character-xp.vo';
-import { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
-import { CharacterStatus } from '../value-objects/character-status.vo';
+import { CharacterAttack } from '../value-objects/character-attack.vo.js';
+import type { CharacterInfo } from '../value-objects/character-info.vo.js';
+import type { CharacterPower } from '../value-objects/character-power.vo.js';
+import { CharacterResistance } from '../value-objects/character-resistances.vo.js';
+import { CharacterSkill } from '../value-objects/character-skill.vo.js';
+import { CharacterStat, type StatKey } from '../value-objects/character-stat.vo.js';
+import { CharacterDefense } from '../value-objects/character-defense.vo.js';
+import { CharacterEndurance } from '../value-objects/character-endurance.vo.js';
+import { CharacterEquipment, type EquipmentSlot } from '../value-objects/character-equipment.vo.js';
+import { CharacterHP } from '../value-objects/character-hp.vo.js';
+import { CharacterInitiative } from '../value-objects/character-initiative.vo.js';
+import { CharacterMovement } from '../value-objects/character-movement.vo.js';
+import { CharacterXP, isCreationLevel } from '../value-objects/character-xp.vo.js';
+import type { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo.js';
+import type { CharacterStatus } from '../value-objects/character-status.vo.js';
 import { randomUUID } from 'crypto';
-import { Game } from '../../../games/domain/aggregates/game';
-import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
-import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
-import { CharacterTrait, TraitPayment } from '../value-objects/character-trait.vo';
-import { RaceTraitProps } from '../value-objects/race-trait-props.vo';
-import { NamedEntity } from '../../../shared/domain/entities/named-entity';
-import { ValidationError } from '../../../shared/domain/errors/errors';
-import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
-import { CharacterProps } from './character-props';
-import { SkillBonus } from '../value-objects/skill-bonus.vo';
-import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo';
+import { Game } from '../../../games/domain/aggregates/game.js';
+import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events.js';
+import type { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo.js';
+import { CharacterTrait, type TraitPayment } from '../value-objects/character-trait.vo.js';
+import type { RaceTraitProps } from '../value-objects/race-trait-props.vo.js';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
+import { ValidationError } from '../../../shared/domain/errors/errors.js';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
+import type { CharacterProps } from './character-props.js';
+import { SkillBonus } from '../value-objects/skill-bonus.vo.js';
+import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo.js';
 import {
-  DevPointsPayment,
+  type DevPointsPayment,
   DevPointsSpendingService,
-  DevPointsSpendOptions,
+  type DevPointsSpendOptions,
   emptyPayment,
-} from '../services/dev-points/dev-points-spending.service';
-import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules';
-import { NotFoundError } from '../../../shared/domain/errors/errors';
-import { CharacterCondition } from '../value-objects/character-condition.vo';
-import { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo';
-import { HealthSummary } from '../value-objects/health-summary.vo';
+} from '../services/dev-points/dev-points-spending.service.js';
+import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules.js';
+import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
+import type { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo.js';
+import type { HealthSummary } from '../value-objects/health-summary.vo.js';
 import {
-  BleedingControl,
-  Injury,
-  InjuryPermanent,
-  InjuryRecovery,
-  InjuryTreatment,
+  type BleedingControl,
+  type Injury,
+  type InjuryPermanent,
+  type InjuryRecovery,
+  type InjuryTreatment,
   PENALTY_STATUSES,
-  TreatmentProcedure,
-} from '../value-objects/injury.vo';
-import { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo';
-import { HealingCalculator, InjuryProgress } from '../services/healing/healing-calculator';
-import { OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger';
+  type TreatmentProcedure,
+} from '../value-objects/injury.vo.js';
+import type { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo.js';
+import { HealingCalculator, type InjuryProgress } from '../services/healing/healing-calculator.js';
+import { type OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger.js';
 
 export const UNRANKED_SKILL_BONUS = -20;
 export const MAX_RANKS_PER_LEVEL = 2;

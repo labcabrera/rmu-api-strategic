@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character';
-import { CharacterAttack, WeaponCategory } from '../../../value-objects/character-attack.vo';
-import { DomainError, ValidationError } from '../../../../../shared/domain/errors/errors';
-import { ItemWeapon } from '../../../../../items/domain/value-objects/item-weapon.vo';
-import { ItemWeaponMode } from '../../../../../items/domain/value-objects/item-weapon-mode.vo';
-import { Item } from '../../../../../items/domain/aggregates/item';
-import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
-import { CharacterSkill } from '../../../value-objects/character-skill.vo';
-import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
-import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
-import { matchesAttack } from '../traits/trait-specialization-matcher';
-import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';
+import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.js';
+import { CharacterAttack, type WeaponCategory } from '../../../value-objects/character-attack.vo.js';
+import { DomainError, ValidationError } from '../../../../../shared/domain/errors/errors.js';
+import { ItemWeapon } from '../../../../../items/domain/value-objects/item-weapon.vo.js';
+import { ItemWeaponMode } from '../../../../../items/domain/value-objects/item-weapon-mode.vo.js';
+import { Item } from '../../../../../items/domain/aggregates/item.js';
+import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo.js';
+import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesAttack } from '../traits/trait-specialization-matcher.js';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 const SHIELD_FUMBLE = 4;
 const WRONG_SIZE_PENALTY = -20;

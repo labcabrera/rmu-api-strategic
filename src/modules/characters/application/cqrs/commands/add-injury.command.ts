@@ -1,5 +1,12 @@
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
-import type { BodyLocation, BodySide, InjuryFlag, InjurySeverity, InjurySource, InjuryType } from '../../../domain/value-objects/injury.vo';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
+import type {
+  BodyLocation,
+  BodySide,
+  InjuryFlag,
+  InjurySeverity,
+  InjurySource,
+  InjuryType,
+} from '../../../domain/value-objects/injury.vo.js';
 
 export interface NewInjuryProps {
   type: InjuryType;

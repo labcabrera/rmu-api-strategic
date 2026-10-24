@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { TreatInjuryCommand } from '../../../application/cqrs/commands/treat-injury.command';
-import { HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo';
-import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo';
+import { TreatInjuryCommand } from '../../../application/cqrs/commands/treat-injury.command.js';
+import { HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo.js';
+import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
 
 export class ExternalHealerDto {
   @ApiProperty({ example: 'Village healer' })

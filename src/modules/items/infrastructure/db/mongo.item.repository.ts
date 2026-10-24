@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser';
-import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
-import { ItemDocument, ItemModel } from '../persistence/models/item.model';
-import { Item } from '../../domain/aggregates/item';
-import { ItemRepository } from '../../application/ports/item-repository.port';
+import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
+import { type ItemDocument, ItemModel } from '../persistence/models/item.model.js';
+import { Item } from '../../domain/aggregates/item.js';
+import type { ItemRepository } from '../../application/ports/item-repository.port.js';
 
 @Injectable()
 export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument> implements ItemRepository {

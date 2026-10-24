@@ -1,4 +1,4 @@
-import { InjurySource } from './injury.vo';
+import type { InjurySource } from './injury.vo.js';
 
 export type CharacterConditionStatus = 'unconscious' | 'permanent-unconscious' | 'dead';
 

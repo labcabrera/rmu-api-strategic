@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UpdateItemCommand } from '../../../application/cqrs/commands/update-item.command';
-import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo';
+import { UpdateItemCommand } from '../../../application/cqrs/commands/update-item.command.js';
+import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
 
 export class UpdateItemDto {
   @ApiProperty({ type: String, description: 'Item name', example: 'Narsil', required: false })

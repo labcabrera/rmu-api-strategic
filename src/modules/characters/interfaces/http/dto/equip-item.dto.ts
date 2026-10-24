@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { EquipItemCommand } from '../../../application/cqrs/commands/equip-item.command';
-import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
+import { EquipItemCommand } from '../../../application/cqrs/commands/equip-item.command.js';
+import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
 
 export class EquipItemDto {
   @IsString()

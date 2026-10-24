@@ -1,6 +1,6 @@
-import { ForbiddenError } from '../../domain/errors/errors';
-import { RMU_ADMIN, RMU_USER } from '../../domain/entities/user-roles';
-import { RbacEntity } from '../../domain/entities/rbac-entity';
+import { ForbiddenError } from '../../domain/errors/errors.js';
+import { RMU_ADMIN, RMU_USER } from '../../domain/entities/user-roles.js';
+import type { RbacEntity } from '../../domain/entities/rbac-entity.js';
 import type { QueryFilter } from 'mongoose';
 
 export abstract class BaseEntityGuard<E extends RbacEntity> implements BaseEntityGuard<E> {

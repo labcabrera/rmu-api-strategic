@@ -8,20 +8,20 @@ import {
   CharacterPower,
   CharacterResistance,
   CharacterRoleplayInfo,
-} from './character-childs.model';
-import { CharacterEquipment } from './character-equipment.model';
-import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo';
-import { CharacterSkill } from './character-skill.model';
-import { CharacterTrait } from './character-trait.model';
-import { NamedEntity } from '../../../../shared/infrastructure/persistence/models/named-entity.model';
-import { StatKey } from '../../../domain/value-objects/character-stat.vo';
-import { CharacterStat, CharacterStatSchema } from './character-stat.model';
-import { CharacterMovement } from './character-movement.model';
-import { CharacterDefense } from './character-defense.model';
-import { CharacterAttack } from './character-attack.model';
-import { CharacterXP } from './character-xp.model';
-import type { Injury } from '../../../domain/value-objects/injury.vo';
-import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo';
+} from './character-childs.model.js';
+import { CharacterEquipment } from './character-equipment.model.js';
+import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
+import { CharacterSkill } from './character-skill.model.js';
+import { CharacterTrait } from './character-trait.model.js';
+import { NamedEntity } from '../../../../shared/infrastructure/persistence/models/named-entity.model.js';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import { CharacterStat, CharacterStatSchema } from './character-stat.model.js';
+import { CharacterMovement } from './character-movement.model.js';
+import { CharacterDefense } from './character-defense.model.js';
+import { CharacterAttack } from './character-attack.model.js';
+import { CharacterXP } from './character-xp.model.js';
+import type { Injury } from '../../../domain/value-objects/injury.vo.js';
+import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
 
 export type CharacterDocument = CharacterModel & Document;
 

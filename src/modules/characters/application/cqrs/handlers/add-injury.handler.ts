@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { Character } from '../../../domain/aggregates/character';
-import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
-import { Injury } from '../../../domain/value-objects/injury.vo';
-import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { AddInjuryCommand } from '../commands/add-injury.command';
+import { Character } from '../../../domain/aggregates/character.js';
+import { HealingCalculator } from '../../../domain/services/healing/healing-calculator.js';
+import type { Injury } from '../../../domain/value-objects/injury.vo.js';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { AddInjuryCommand } from '../commands/add-injury.command.js';
 
 @CommandHandler(AddInjuryCommand)
 export class AddInjuryHandler implements ICommandHandler<AddInjuryCommand, Character> {

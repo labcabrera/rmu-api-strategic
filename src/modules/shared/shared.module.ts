@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TerminusModule } from '@nestjs/terminus';
-import { DOMAIN_EVENT_PUBLISHER } from './application/ports/domain-event-publisher.port';
-import { RsqlParser } from './infrastructure/db/rsql-parser';
-import { HttpClient } from './infrastructure/http/http-client';
-import { KafkaDomainEventPublisher } from './infrastructure/messaging/kafka.domain-event.publisher';
-import { KafkaProducerService } from './infrastructure/messaging/kafka-producer.service';
-import { TokenService } from './infrastructure/security/token.service';
-import { HealthController } from './interfaces/http/health.controller';
+import { DOMAIN_EVENT_PUBLISHER } from './application/ports/domain-event-publisher.port.js';
+import { RsqlParser } from './infrastructure/db/rsql-parser.js';
+import { HttpClient } from './infrastructure/http/http-client.js';
+import { KafkaDomainEventPublisher } from './infrastructure/messaging/kafka.domain-event.publisher.js';
+import { KafkaProducerService } from './infrastructure/messaging/kafka-producer.service.js';
+import { TokenService } from './infrastructure/security/token.service.js';
+import { HealthController } from './interfaces/http/health.controller.js';
 
 @Module({
   imports: [TerminusModule, CqrsModule, ConfigModule],

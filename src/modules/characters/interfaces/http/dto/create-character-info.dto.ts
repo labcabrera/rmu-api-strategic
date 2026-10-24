@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { CreateCharacterInfo } from '../../../application/cqrs/commands/create-character.command';
-import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
+import { CreateCharacterInfo } from '../../../application/cqrs/commands/create-character.command.js';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
 
 export class CreateCharacterInfoDto {
   @ApiProperty({ description: 'Race identifier' })

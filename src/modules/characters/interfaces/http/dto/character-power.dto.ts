@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterPower } from '../../../domain/value-objects/character-power.vo';
+import type { CharacterPower } from '../../../domain/value-objects/character-power.vo.js';
 
 export class CharacterPowerDto {
   @ApiProperty({ description: 'Maximum power', example: 100 })

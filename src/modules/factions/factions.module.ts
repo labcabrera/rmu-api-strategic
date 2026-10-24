@@ -2,20 +2,20 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-import { SharedModule } from '../shared/shared.module';
-import { FactionController } from './interfaces/http/faction.controller';
-import { MongoFactionRepository } from './infrastructure/db/mongo.faction.repository';
-import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model';
-import { GamesModule } from '../games/games.module';
-import { AddFactionGoldCommandHandler } from './application/cqrs/handlers/add-faction-gold.handler';
-import { AddFactionXPCommandHandler } from './application/cqrs/handlers/add-faction-xp.handler';
-import { CreateFactionCommandHandler } from './application/cqrs/handlers/create-faction.handler';
-import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-faction.handler';
-import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.handler';
-import { GetFactionsQueryHandler } from './application/cqrs/handlers/get-factions.handler';
-import { UpdateFactionHandler } from './application/cqrs/handlers/update-faction.handler';
+import { SharedModule } from '../shared/shared.module.js';
+import { FactionController } from './interfaces/http/faction.controller.js';
+import { MongoFactionRepository } from './infrastructure/db/mongo.faction.repository.js';
+import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model.js';
+import { GamesModule } from '../games/games.module.js';
+import { AddFactionGoldCommandHandler } from './application/cqrs/handlers/add-faction-gold.handler.js';
+import { AddFactionXPCommandHandler } from './application/cqrs/handlers/add-faction-xp.handler.js';
+import { CreateFactionCommandHandler } from './application/cqrs/handlers/create-faction.handler.js';
+import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-faction.handler.js';
+import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.handler.js';
+import { GetFactionsQueryHandler } from './application/cqrs/handlers/get-factions.handler.js';
+import { UpdateFactionHandler } from './application/cqrs/handlers/update-faction.handler.js';
 
-import { FACTION_REPOSITORY } from './application/ports/faction-repository.port';
+import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.js';
 @Module({
   imports: [
     TerminusModule,

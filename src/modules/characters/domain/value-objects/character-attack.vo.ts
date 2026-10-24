@@ -1,4 +1,4 @@
-import { CharacterAttackRange } from './character-attack-range.vo';
+import { CharacterAttackRange } from './character-attack-range.vo.js';
 
 export type WeaponCategory = 'dagger' | 'light' | 'natural' | 'standard';
 

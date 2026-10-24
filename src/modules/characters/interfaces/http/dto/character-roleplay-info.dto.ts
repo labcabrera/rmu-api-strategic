@@ -1,5 +1,5 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterGender, CharacterRoleplayInfo } from '../../../domain/value-objects/character-roleplay-info.vo';
+import type { CharacterGender, CharacterRoleplayInfo } from '../../../domain/value-objects/character-roleplay-info.vo.js';
 
 export class CharacterRoleplayInfoDto {
   @IsOptional()

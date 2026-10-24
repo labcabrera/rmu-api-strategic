@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { Faction } from '../../../domain/aggregates/faction';
-import { FactionManagement } from '../../../domain/value-objects/faction-management.vo';
-import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
+import { Faction } from '../../../domain/aggregates/faction.js';
+import { FactionManagement } from '../../../domain/value-objects/faction-management.vo.js';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 
 export class FactionDto {
   id: string;

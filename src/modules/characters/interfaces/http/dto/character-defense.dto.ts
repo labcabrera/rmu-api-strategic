@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterArmor, CharacterDefense, CharacterShield } from '../../../domain/value-objects/character-defense.vo';
+import { CharacterArmor, CharacterDefense, CharacterShield } from '../../../domain/value-objects/character-defense.vo.js';
 
 export class CharacterArmorDto {
   @ApiProperty({ type: Number, description: 'Armor type (AT)', required: false, example: 5 })

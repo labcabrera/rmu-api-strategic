@@ -1,18 +1,18 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
-import { CreateItemCommand } from '../commands/create-item.command';
-import { Item } from '../../../domain/aggregates/item';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
-import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
-import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../../ports/item-client.port';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port';
-import { ItemProps } from '../../../domain/aggregates/item-props';
-import { Faction } from '../../../../factions/domain/aggregates/faction';
-import { Character } from '../../../../characters/domain/aggregates/character';
-import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CreateItemCommand } from '../commands/create-item.command.js';
+import { Item } from '../../../domain/aggregates/item.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
+import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../../ports/item-client.port.js';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port.js';
+import type { ItemProps } from '../../../domain/aggregates/item-props.js';
+import { Faction } from '../../../../factions/domain/aggregates/faction.js';
+import { Character } from '../../../../characters/domain/aggregates/character.js';
+import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 const goldCoin = 'gold-coin';
 

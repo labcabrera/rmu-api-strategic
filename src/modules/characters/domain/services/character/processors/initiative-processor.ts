@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../aggregates/character';
-import { CharacterInitiative } from '../../../value-objects/character-initiative.vo';
-import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
+import { Character } from '../../../aggregates/character.js';
+import { CharacterInitiative } from '../../../value-objects/character-initiative.vo.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 
 @Injectable()
 export class InitiativeProcessor {

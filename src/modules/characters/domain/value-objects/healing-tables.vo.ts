@@ -1,4 +1,4 @@
-import { HealingType, InjurySeverity, InjuryType } from './injury.vo';
+import type { HealingType, InjurySeverity, InjuryType } from './injury.vo.js';
 
 /** Injury types with a recovery column ('unknown' has none). */
 export type RecoveryInjuryType = Exclude<InjuryType, 'unknown'>;

@@ -1,8 +1,8 @@
 import { Controller, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import { CharacterRaceUpdatedEvent } from './kafka.race-event-consumer';
+import { CharacterRaceUpdatedEvent } from './kafka.race-event-consumer.js';
 import { CommandBus } from '@nestjs/cqrs';
-import { UpdateCharacterRaceCommand } from '../../application/cqrs/commands/update-character-race.command';
+import { UpdateCharacterRaceCommand } from '../../application/cqrs/commands/update-character-race.command.js';
 
 /** The race-updated events this API publishes for each character of an updated race (see KafkaRaceEventConsumer). */
 @Controller()

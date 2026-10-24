@@ -1,8 +1,8 @@
 import { Inject, Logger } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
-import { DeleteGameCommand } from '../commands/delete-game.command';
-import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { DeleteGameCommand } from '../commands/delete-game.command.js';
+import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command.js';
 
 @CommandHandler(DeleteGamesByRealmCommand)
 export class DeleteGamesByRealmHandler implements ICommandHandler<DeleteGamesByRealmCommand, void> {

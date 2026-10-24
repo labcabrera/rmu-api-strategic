@@ -1,5 +1,5 @@
-import { SkillBonus } from '../../../domain/value-objects/skill-bonus.vo';
-import { Race, RaceTrait } from '../../ports/race-client.port';
+import { SkillBonus } from '../../../domain/value-objects/skill-bonus.vo.js';
+import type { Race, RaceTrait } from '../../ports/race-client.port.js';
 
 export interface UpdateCharacterRaceCommandProps extends Partial<
   Omit<Race, 'realmId' | 'realmName' | 'averageHeight' | 'averageWeight' | 'description'>

@@ -5,16 +5,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CharacterRepository } from '../../application/ports/character-repository.port';
-import { Character } from '../../domain/aggregates/character';
-import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
-import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser';
-import { NamedEntity } from '../../../shared/domain/entities/named-entity';
-import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
-import { CharacterStat, STAT_KEYS, StatKey } from '../../domain/value-objects/character-stat.vo';
-import { CharacterTrait } from '../../domain/value-objects/character-trait.vo';
-import { CharacterXP } from '../../domain/value-objects/character-xp.vo';
-import { CharacterSkill } from '../../domain/value-objects/character-skill.vo';
+import type { CharacterRepository } from '../../application/ports/character-repository.port.js';
+import { Character } from '../../domain/aggregates/character.js';
+import { type CharacterDocument, CharacterModel } from '../persistence/models/character.model.js';
+import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
+import { CharacterStat, STAT_KEYS, type StatKey } from '../../domain/value-objects/character-stat.vo.js';
+import { CharacterTrait } from '../../domain/value-objects/character-trait.vo.js';
+import { CharacterXP } from '../../domain/value-objects/character-xp.vo.js';
+import { CharacterSkill } from '../../domain/value-objects/character-skill.vo.js';
 
 @Injectable()
 export class MongoCharacterRepository extends MongoBaseRepository<Character, CharacterDocument> implements CharacterRepository {

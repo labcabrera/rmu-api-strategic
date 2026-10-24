@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterTrait, type CharacterTraitSource, type TraitPayment } from '../../../domain/value-objects/character-trait.vo';
+import { CharacterTrait, type CharacterTraitSource, type TraitPayment } from '../../../domain/value-objects/character-trait.vo.js';
 
 export class CharacterTraitDto {
   traitId: string;

@@ -7,7 +7,7 @@ import {
   TALENT_POLICIES,
   type StatGeneration,
   type TalentPolicy,
-} from '../../../domain/value-objects/game-options.vo';
+} from '../../../domain/value-objects/game-options.vo.js';
 
 export class GameOptionsDto {
   @ApiProperty({ description: 'Experience multiplier', type: Number, default: 1.0, example: 1.0 })

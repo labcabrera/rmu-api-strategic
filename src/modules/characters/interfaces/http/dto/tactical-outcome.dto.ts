@@ -1,23 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command';
-import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo';
-import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo';
-import type { Injury, InjurySource } from '../../../domain/value-objects/injury.vo';
-import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo';
+import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command.js';
+import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
+import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
+import type { Injury, InjurySource } from '../../../domain/value-objects/injury.vo.js';
+import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo.js';
 import type {
   TacticalItemOutcome,
   TacticalFate,
   TacticalHpBySource,
   TacticalHpLogEntry,
   TacticalHpLogKind,
-} from '../../../domain/value-objects/tactical-game-outcome.vo';
-import { TACTICAL_HP_LOG_KINDS } from '../../../domain/value-objects/tactical-game-outcome.vo';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { CharacterConditionDto, InjuryDto } from './character-health.dto';
-import { ItemModifierDto } from '../../../../items/interfaces/http/dto/item-modifier.dto';
-import { type ItemModifier, ItemModifiers } from '../../../../items/domain/value-objects/item-modifier.vo';
+} from '../../../domain/value-objects/tactical-game-outcome.vo.js';
+import { TACTICAL_HP_LOG_KINDS } from '../../../domain/value-objects/tactical-game-outcome.vo.js';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { CharacterConditionDto, InjuryDto } from './character-health.dto.js';
+import { ItemModifierDto } from '../../../../items/interfaces/http/dto/item-modifier.dto.js';
+import { type ItemModifier, ItemModifiers } from '../../../../items/domain/value-objects/item-modifier.vo.js';
 
 /** Modifiers an item of the character got in the game (spec 019). */
 export class TacticalItemOutcomeDto {

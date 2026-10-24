@@ -2,10 +2,10 @@ import {
   getStatGainRollRange,
   validateCreationStats,
   validateStatPoints,
-} from '../../../../../src/modules/characters/domain/services/stats/stat-rules';
-import { STAT_KEYS, StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo';
-import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
-import { buildCharacter } from '../traits/character.fixture';
+} from '../../../../../src/modules/characters/domain/services/stats/stat-rules.js';
+import { STAT_KEYS, type StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo.js';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { buildCharacter } from '../traits/character.fixture.js';
 
 const errorCode = (fn: () => void): string | undefined => {
   try {

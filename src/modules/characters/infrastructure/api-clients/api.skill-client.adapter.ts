@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { SkillClientPort, SkillResponse } from '../../application/ports/skill-client.port';
-import { Page } from '../../../shared/application/pagination/page';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { SkillClientPort, SkillResponse } from '../../application/ports/skill-client.port.js';
+import { Page } from '../../../shared/application/pagination/page.js';
 
 @Injectable()
 export class ApiSkillClientAdapter implements SkillClientPort {

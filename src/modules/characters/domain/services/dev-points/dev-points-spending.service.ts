@@ -1,5 +1,5 @@
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { CharacterXP } from '../../value-objects/character-xp.vo';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { CharacterXP } from '../../value-objects/character-xp.vo.js';
 
 export type DevPointsPool = 'normal' | 'bonus' | 'flaw';
 

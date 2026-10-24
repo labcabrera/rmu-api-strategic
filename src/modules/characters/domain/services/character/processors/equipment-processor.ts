@@ -1,10 +1,10 @@
-import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
+import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
-import { Item } from '../../../../../items/domain/aggregates/item';
-import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
-import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
-import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';
+import { Character } from '../../../aggregates/character.js';
+import { Item } from '../../../../../items/domain/aggregates/item.js';
+import { CharacterEquipment } from '../../../value-objects/character-equipment.vo.js';
+import { DIFFICULTIES } from '../../../value-objects/difficulty.vo.js';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 @Injectable()
 export class EquipmentProcessor {

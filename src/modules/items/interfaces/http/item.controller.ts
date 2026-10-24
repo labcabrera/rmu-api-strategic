@@ -1,24 +1,24 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { Page } from '../../../shared/application/pagination/page';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
-import { CreateItemCommand } from '../../application/cqrs/commands/create-item.command';
-import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command';
-import { UpdateItemCommand } from '../../application/cqrs/commands/update-item.command';
-import { GetItemQuery } from '../../application/cqrs/queries/get-item.query';
-import { GetItemsQuery } from '../../application/cqrs/queries/get-items.query';
-import { Item } from '../../domain/aggregates/item';
-import { CreateItemDto } from './dto/create-item.dto';
-import { ItemDto, ItemPageDto } from './dto/item.dto';
-import { UpdateItemDto } from './dto/update-item.dto';
-import { AddItemModifierDto } from './dto/item-modifier.dto';
-import { AddItemModifierCommand } from '../../application/cqrs/commands/add-item-modifier.command';
-import { DeleteItemModifierCommand } from '../../application/cqrs/commands/delete-item-modifier.command';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { Page } from '../../../shared/application/pagination/page.js';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { CreateItemCommand } from '../../application/cqrs/commands/create-item.command.js';
+import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command.js';
+import { UpdateItemCommand } from '../../application/cqrs/commands/update-item.command.js';
+import { GetItemQuery } from '../../application/cqrs/queries/get-item.query.js';
+import { GetItemsQuery } from '../../application/cqrs/queries/get-items.query.js';
+import { Item } from '../../domain/aggregates/item.js';
+import { CreateItemDto } from './dto/create-item.dto.js';
+import { ItemDto, ItemPageDto } from './dto/item.dto.js';
+import { UpdateItemDto } from './dto/update-item.dto.js';
+import { AddItemModifierDto } from './dto/item-modifier.dto.js';
+import { AddItemModifierCommand } from '../../application/cqrs/commands/add-item-modifier.command.js';
+import { DeleteItemModifierCommand } from '../../application/cqrs/commands/delete-item-modifier.command.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/items')

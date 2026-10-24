@@ -1,9 +1,9 @@
-import { MongoCharacterRepository } from '../../../../../src/modules/characters/infrastructure/db/mongo.character.repository';
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
-import { RsqlParser } from '../../../../../src/modules/shared/infrastructure/db/rsql-parser';
+import { MongoCharacterRepository } from '../../../../../src/modules/characters/infrastructure/db/mongo.character.repository.js';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
+import { RsqlParser } from '../../../../../src/modules/shared/infrastructure/db/rsql-parser.js';
 
 // The mongoose schema is not needed to test the mapping
-vi.mock('../../../../../src/modules/characters/infrastructure/persistence/models/character.model', () => ({
+vi.mock('../../../../../src/modules/characters/infrastructure/persistence/models/character.model.js', () => ({
   CharacterModel: { name: 'CharacterModel' },
 }));
 

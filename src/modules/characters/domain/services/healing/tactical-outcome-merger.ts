@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
-import { CharacterCondition } from '../../value-objects/character-condition.vo';
-import { CharacterStatus } from '../../value-objects/character-status.vo';
-import { Injury, InjurySource } from '../../value-objects/injury.vo';
-import { TacticalCharacterOutcome } from '../../value-objects/tactical-game-outcome.vo';
+import type { CharacterCondition } from '../../value-objects/character-condition.vo.js';
+import type { CharacterStatus } from '../../value-objects/character-status.vo.js';
+import type { Injury, InjurySource } from '../../value-objects/injury.vo.js';
+import type { TacticalCharacterOutcome } from '../../value-objects/tactical-game-outcome.vo.js';
 
 export interface CharacterHealthState {
   hp: { max: number; current: number };

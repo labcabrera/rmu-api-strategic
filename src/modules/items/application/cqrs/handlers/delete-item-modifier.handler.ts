@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Item } from '../../../domain/aggregates/item';
-import { DeleteItemModifierCommand } from '../commands/delete-item-modifier.command';
-import { ItemModifierStore } from '../../services/item-modifier.store';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Item } from '../../../domain/aggregates/item.js';
+import { DeleteItemModifierCommand } from '../commands/delete-item-modifier.command.js';
+import { ItemModifierStore } from '../../services/item-modifier.store.js';
 
 @CommandHandler(DeleteItemModifierCommand)
 export class DeleteItemModifierHandler implements ICommandHandler<DeleteItemModifierCommand, Item> {

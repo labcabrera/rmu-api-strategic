@@ -1,14 +1,14 @@
-import { fakeEventPublisher } from '../../../support/fake-event-publisher';
-import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler';
-import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command';
-import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import type { TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
-import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port';
-import type { GameOptions } from '../../../../../src/modules/games/domain/value-objects/game-options.vo';
-import type { GamePowerLevel } from '../../../../../src/modules/games/domain/value-objects/game-power-level.vo';
-import { buildCharacter } from '../traits/character.fixture';
+import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
+import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler.js';
+import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command.js';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
+import type { TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port.js';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port.js';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port.js';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port.js';
+import type { GameOptions } from '../../../../../src/modules/games/domain/value-objects/game-options.vo.js';
+import type { GamePowerLevel } from '../../../../../src/modules/games/domain/value-objects/game-power-level.vo.js';
+import { buildCharacter } from '../traits/character.fixture.js';
 
 const catalog: Record<string, Partial<TraitResponse>> = {
   'fast-attack': {

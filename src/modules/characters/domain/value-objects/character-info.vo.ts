@@ -1,5 +1,5 @@
-import { NamedEntity } from '../../../shared/domain/entities/named-entity';
-import { CharacterRealm } from './character-realm.vo';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
+import type { CharacterRealm } from './character-realm.vo.js';
 
 export interface CharacterInfo {
   race: NamedEntity;

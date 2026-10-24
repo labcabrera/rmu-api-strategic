@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { BadGatewayError } from '../../../shared/domain/errors/errors';
-import { AbsoluteManeuverResponse, ManeuverClientPort } from '../../application/ports/maneuver-client.port';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import { BadGatewayError } from '../../../shared/domain/errors/errors.js';
+import type { AbsoluteManeuverResponse, ManeuverClientPort } from '../../application/ports/maneuver-client.port.js';
 
 @Injectable()
 export class ApiManeuverClientAdapter implements ManeuverClientPort {

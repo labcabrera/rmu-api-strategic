@@ -1,20 +1,20 @@
-import { Character } from '../../../../src/modules/characters/domain/aggregates/character';
-import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
-import { AttackProcessor } from '../../../../src/modules/characters/domain/services/character/processors/attack-processor';
-import { DefenseProcessor } from '../../../../src/modules/characters/domain/services/character/processors/defense-processor';
-import { EquipmentProcessor } from '../../../../src/modules/characters/domain/services/character/processors/equipment-processor';
-import { HPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/hp-processor';
-import { InitiativeProcessor } from '../../../../src/modules/characters/domain/services/character/processors/initiative-processor';
-import { MovementProcessor } from '../../../../src/modules/characters/domain/services/character/processors/movement-processor';
-import { PowerProcessor } from '../../../../src/modules/characters/domain/services/character/processors/power-processor';
-import { ResistancesProcessor } from '../../../../src/modules/characters/domain/services/character/processors/resistances-processor';
-import { SkillProcessor } from '../../../../src/modules/characters/domain/services/character/processors/skill-processor';
-import { StatProcessor } from '../../../../src/modules/characters/domain/services/character/processors/stat-processor';
-import { XPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/xp-processor';
-import { Item } from '../../../../src/modules/items/domain/aggregates/item';
-import { ItemModifier, ItemModifiers } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
-import { ValidationError, NotFoundError } from '../../../../src/modules/shared/domain/errors/errors';
-import { armor, buildCharacter, shield, skill, weapon } from '../characters/traits/character.fixture';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service.js';
+import { AttackProcessor } from '../../../../src/modules/characters/domain/services/character/processors/attack-processor.js';
+import { DefenseProcessor } from '../../../../src/modules/characters/domain/services/character/processors/defense-processor.js';
+import { EquipmentProcessor } from '../../../../src/modules/characters/domain/services/character/processors/equipment-processor.js';
+import { HPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/hp-processor.js';
+import { InitiativeProcessor } from '../../../../src/modules/characters/domain/services/character/processors/initiative-processor.js';
+import { MovementProcessor } from '../../../../src/modules/characters/domain/services/character/processors/movement-processor.js';
+import { PowerProcessor } from '../../../../src/modules/characters/domain/services/character/processors/power-processor.js';
+import { ResistancesProcessor } from '../../../../src/modules/characters/domain/services/character/processors/resistances-processor.js';
+import { SkillProcessor } from '../../../../src/modules/characters/domain/services/character/processors/skill-processor.js';
+import { StatProcessor } from '../../../../src/modules/characters/domain/services/character/processors/stat-processor.js';
+import { XPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/xp-processor.js';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
+import { type ItemModifier, ItemModifiers } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo.js';
+import { ValidationError, NotFoundError } from '../../../../src/modules/shared/domain/errors/errors.js';
+import { armor, buildCharacter, shield, skill, weapon } from '../characters/traits/character.fixture.js';
 
 const processor = new CharacterProcessorService(
   new StatProcessor(),
