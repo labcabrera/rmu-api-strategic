@@ -46,7 +46,12 @@ describe('strategic games (e2e)', () => {
       // The game is stored private, but the response carries neither accessType nor shortDescription [F-strategic-17]
       expect(response.body).not.toHaveProperty('shortDescription');
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.game.created.v1']);
-      expect(e2e.events.published[0].event).toMatchObject({ eventType: 'created', eventVersion: '1', data: { name: 'E2E game' } });
+      expect(e2e.events.published[0].event).toMatchObject({
+        eventType: 'created',
+        eventVersion: '1',
+        producer: 'rmu-api-strategic-e2e',
+        data: { name: 'E2E game' },
+      });
     });
 
     it('allows rmu-user and rmu-admin, and rejects a token without groups', async () => {
@@ -151,6 +156,18 @@ describe('strategic games (e2e)', () => {
       // An update writes every prop: the short description, not in the response (F-strategic-17), must survive it
       const stored = await e2e.connection.collection('strategic-games').findOne({ _id: game.id as never });
       expect(stored).toMatchObject({ shortDescription: 'Short', version: 2 });
+    });
+
+    it('neither writes nor publishes a PATCH without changes', async () => {
+      const game = await createGame(e2e);
+      e2e.events.clear();
+      const response = await request(e2e.server)
+        .patch(`/v1/strategic-games/${game.id}`)
+        .set('Authorization', e2e.auth('owner'))
+        .send({ name: game.name as string });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ name: game.name, version: 0 });
+      expect(e2e.events.topics()).toEqual([]);
     });
 
     it('lets an admin change any game', async () => {
