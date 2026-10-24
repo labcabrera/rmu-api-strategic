@@ -1,4 +1,7 @@
+import type { KafkaContext } from '@nestjs/microservices';
 import request from 'supertest';
+import type { CharacterDeletedEvent } from '../../src/modules/characters/domain/events/character.events.js';
+import { KafkaItemCharacterEventConsumer } from '../../src/modules/items/interfaces/messaging/kafka.character-event-consumer.js';
 import { ids, startApp, type E2eApp, type UserName } from './support/app.js';
 import { createCharacter, createFaction, createItem, gameWithFaction } from './support/builders.js';
 
@@ -163,7 +166,7 @@ describe('items (e2e)', () => {
       expect((await as('owner').delete(`/v1/items/${item.id}`)).status).toBe(404);
     });
 
-    it.skip('unequips an equipped item of a character when it is deleted [F-strategic-04]', async () => {
+    it('unequips an equipped item of a character when it is deleted [F-strategic-04]', async () => {
       const character = await createCharacter(e2e, gameId, factionId);
       const item = await createItem(e2e, { gameId, characterId: character.id });
       const equipped = await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' });
@@ -171,6 +174,21 @@ describe('items (e2e)', () => {
       expect((await as('owner').delete(`/v1/items/${item.id}`)).status).toBe(204);
       const after = (await as('owner').get(`/v1/characters/${character.id}`)).body as { equipment: { slots: Record<string, unknown> } };
       expect(after.equipment.slots.mainHand).toBeNull();
+      expect(e2e.events.topics()).toContain('internal.rmu-strategic.character.updated.v1');
+    });
+
+    it('deletes the items of a deleted character, one at a time, although the character is gone [F-strategic-22, F-strategic-23]', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const first = await createItem(e2e, { gameId, characterId: character.id });
+      const second = await createItem(e2e, { gameId, characterId: character.id, itemTypeId: 'rope' });
+      await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: first.id, slot: 'mainHand' });
+      expect((await as('owner').delete(`/v1/characters/${character.id}`)).status).toBe(204);
+      // What Kafka delivers to the consumer of character.deleted
+      const deleted = e2e.events.published.find(entry => entry.topic === 'internal.rmu-strategic.character.deleted.v1')!;
+      const consumer = e2e.app.get(KafkaItemCharacterEventConsumer);
+      const context = { getTopic: () => deleted.topic } as unknown as KafkaContext;
+      await consumer.onCharacterDeleted(deleted.event as CharacterDeletedEvent, context);
+      for (const item of [first, second]) expect((await as('owner').get(`/v1/items/${item.id}`)).status).toBe(404);
     });
   });
 });
