@@ -47,7 +47,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     ctx
       .getResponse<Response>()
       .status(body.statusCode)
-      .json({ ...body, timestamp: new Date().toISOString(), path: request.originalUrl } satisfies ErrorDto);
+      .json({ ...body, timestamp: new Date().toISOString(), path: request.path } satisfies ErrorDto);
   }
 }
 

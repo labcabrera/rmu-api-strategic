@@ -33,6 +33,12 @@ describe('error format', () => {
     expect(anonymous.body).toMatchObject({ statusCode: 401, code: 'unauthorized' });
   });
 
+  it('reports the path without the query string [F-receta-22]', async () => {
+    const response = await request(e2e.server).get('/v1/characters?size=1001&q=name==x').set('Authorization', e2e.auth('owner'));
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({ path: '/v1/characters' });
+  });
+
   it('keeps the rule code also as errorCode, which rmu-mfe-strategic translates', async () => {
     // A rule error of the tactical outcome: the character of the outcome is not the one of the path
     const response = await request(e2e.server)
