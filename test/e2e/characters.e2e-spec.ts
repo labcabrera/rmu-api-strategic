@@ -109,13 +109,39 @@ describe('characters (e2e)', () => {
       expect((await as('service').get(`/v1/characters/${character.id}`)).status).toBe(200);
     });
 
-    it('lets a player read their own character, and the owner of the game read every character of it', async () => {
+    it('lets a player of a private game read it, its factions and the characters of the other players [decision 2]', async () => {
       const mine = await createCharacter(e2e, gameId, factionId);
       const theirs = await createCharacter(e2e, gameId, factionId, 'other');
+      // `other` owns a character in the private game of `owner`: they are a player of it
       expect((await as('other').get(`/v1/characters/${theirs.id}`)).status).toBe(200);
-      expect(ids((await as('other').get('/v1/characters')).body)).toEqual([theirs.id]);
+      expect((await as('other').get(`/v1/characters/${mine.id}`)).status).toBe(200);
+      expect((await as('other').get(`/v1/strategic-games/${gameId}`)).body).toMatchObject({
+        id: gameId,
+        accessType: 'private',
+        owner: 'e2e-owner',
+      });
+      expect(ids((await as('other').get('/v1/strategic-games')).body)).toEqual([gameId]);
+      expect((await as('other').get(`/v1/factions/${factionId}`)).status).toBe(200);
+      expect(ids((await as('other').get(`/v1/factions?q=gameId==${gameId}`)).body)).toEqual([factionId]);
+      // What rmu-api-tactical asks for with the token of the player
+      const tactical = await as('other').get(`/v1/characters?q=gameId==${gameId}&page=0&size=1000`);
+      expect(ids(tactical.body).sort()).toEqual([mine.id, theirs.id].sort());
       expect((await as('owner').get(`/v1/characters/${theirs.id}`)).status).toBe(200);
-      expect(ids((await as('owner').get(`/v1/characters?q=gameId==${gameId}&size=1000`)).body).sort()).toEqual([mine.id, theirs.id].sort());
+      // Reading is not changing: the player changes neither the game nor the character of another player
+      expect((await as('other').patch(`/v1/strategic-games/${gameId}`, { name: 'Hijacked' })).status).toBe(403);
+      expect((await as('other').patch(`/v1/characters/${mine.id}`, { name: 'Hijacked' })).status).toBe(403);
+      expect((await as('other').patch(`/v1/factions/${factionId}`, { name: 'Hijacked' })).status).toBe(403);
+    });
+
+    it('rejects a user without a character in the private game', async () => {
+      const mine = await createCharacter(e2e, gameId, factionId);
+      const outsider = `Bearer ${e2e.jwks.token({ sub: 'e2e-outsider', groups: ['rmu-user'] })}`;
+      const get = (path: string) => request(e2e.server).get(path).set('Authorization', outsider);
+      expect((await get(`/v1/strategic-games/${gameId}`)).status).toBe(403);
+      expect((await get(`/v1/characters/${mine.id}`)).status).toBe(403);
+      expect((await get(`/v1/factions/${factionId}`)).status).toBe(403);
+      expect(ids((await get(`/v1/characters?q=gameId==${gameId}`)).body)).toEqual([]);
+      expect(ids((await get('/v1/strategic-games')).body)).toEqual([]);
     });
   });
 

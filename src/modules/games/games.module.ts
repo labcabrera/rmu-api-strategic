@@ -1,3 +1,6 @@
+import { CharacterModel, CharacterSchema } from '../characters/infrastructure/persistence/models/character.model.js';
+import { GAME_PLAYERS } from './application/ports/game-players.port.js';
+import { MongoGamePlayersAdapter } from './infrastructure/db/mongo.game-players.adapter.js';
 import { GameAccess } from './application/services/game-access.service.js';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -20,7 +23,16 @@ import { GAME_GUARD } from './application/ports/game-guard.port.js';
 import { GAME_REPOSITORY } from './application/ports/game-repository.port.js';
 import { REALM_CLIENT } from './application/ports/realm-client.port.js';
 @Module({
-  imports: [TerminusModule, CqrsModule, MongooseModule.forFeature([{ name: GameModel.name, schema: GameSchema }]), SharedModule],
+  imports: [
+    TerminusModule,
+    CqrsModule,
+    MongooseModule.forFeature([
+      { name: GameModel.name, schema: GameSchema },
+      // The players of a game (GamePlayersPort)
+      { name: CharacterModel.name, schema: CharacterSchema },
+    ]),
+    SharedModule,
+  ],
   controllers: [GameController, KafkaRealmEventConsumer],
   providers: [
     GetGameHandler,
@@ -36,6 +48,10 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     {
       provide: REALM_CLIENT,
       useClass: ApiRealmClientAdapter,
+    },
+    {
+      provide: GAME_PLAYERS,
+      useClass: MongoGamePlayersAdapter,
     },
     {
       provide: GAME_GUARD,

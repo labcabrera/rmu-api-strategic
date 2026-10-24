@@ -7,7 +7,7 @@ import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/charact
 
 /**
  * Who may read and change a character (spec 021, decision 2; F-strategic-15):
- * - read: its owner, or whoever can read its strategic game (public game, owner of the game, admin);
+ * - read: its owner, or whoever can read its strategic game (public game, owner of the game, its players, admin);
  * - change and delete: its owner, the owner of its strategic game or an admin. rmu-api-tactical applies the outcome
  *   of a tactical game with the token of the user who runs it (the owner of the strategic game), so that owner must
  *   be able to change the characters of the other players;
@@ -42,7 +42,7 @@ export class CharacterAccess {
 
   async checkRead(character: Character, userId: string, roles: string[]): Promise<void> {
     if (GameAccess.readsAll(roles) || character.owner === userId) return;
-    this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
+    await this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
   }
 
   /** A new character: rmu-user or rmu-admin. */

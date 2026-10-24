@@ -27,7 +27,7 @@ export class ItemAccess {
   async checkRead(item: Item, userId: string, roles: string[]): Promise<void> {
     if (GameAccess.readsAll(roles) || item.owner === userId) return;
     if (await this.ownsCharacter(item, userId)) return;
-    this.gameAccess.checkRead(await this.gameAccess.findGame(item.gameId), userId, roles, 'this item');
+    await this.gameAccess.checkRead(await this.gameAccess.findGame(item.gameId), userId, roles, 'this item');
   }
 
   /** The items a user can read: of the games they can read, their own, and those of their characters. */
