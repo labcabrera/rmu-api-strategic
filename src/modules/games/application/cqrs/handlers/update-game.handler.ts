@@ -4,6 +4,7 @@ import { Game } from '../../../domain/aggregates/game.js';
 import { UpdateGameCommand } from '../commands/update-game.command.js';
 import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
 import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(UpdateGameCommand)
@@ -11,6 +12,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
   constructor(
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
   ) {}
 
   async execute(command: UpdateGameCommand): Promise<Game> {
@@ -18,6 +20,8 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
     if (!current) {
       throw new NotFoundError('Game', command.gameId);
     }
+    // The owner of the game or an admin (F-strategic-15).
+    this.gameGuard.checkUpdate(current, command.userId, command.roles);
     current.checkVersion(command.expectedVersion);
     current.update({
       name: command.name,

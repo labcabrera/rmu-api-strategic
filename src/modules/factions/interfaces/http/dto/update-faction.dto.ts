@@ -1,18 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsObject, IsOptional, IsString, IsInt, Min } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { UpdateFactionCommand } from '../../../application/cqrs/commands/update-faction.command.js';
-import { FactionManagementDto } from './faction.dto.js';
 
+/**
+ * The gold and XP of a faction are not part of the PATCH (F-strategic-16): they change through add-gold and add-xp,
+ * which only the owner of the game or an admin may call. A `management` field sent by a client is dropped.
+ */
 export class UpdateFactionDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign', required: false })
   @IsString()
   @IsOptional()
   name: string;
-
-  @IsOptional()
-  @IsObject()
-  management: FactionManagementDto | undefined;
 
   @ApiProperty({ type: String, description: 'Faction short description', example: 'Game short description' })
   @IsString()
@@ -37,16 +36,6 @@ export class UpdateFactionDto {
   version?: number;
 
   static toCommand(factionId: string, dto: UpdateFactionDto, userId: string, roles: string[]): UpdateFactionCommand {
-    return new UpdateFactionCommand(
-      factionId,
-      dto.name,
-      dto.management ? FactionManagementDto.toEntity(dto.management) : undefined,
-      dto.shortDescription,
-      dto.description,
-      dto.imageUrl,
-      userId,
-      roles,
-      dto.version,
-    );
+    return new UpdateFactionCommand(factionId, dto.name, dto.shortDescription, dto.description, dto.imageUrl, userId, roles, dto.version);
   }
 }

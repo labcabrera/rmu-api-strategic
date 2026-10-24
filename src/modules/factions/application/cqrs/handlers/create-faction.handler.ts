@@ -1,3 +1,4 @@
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { Faction } from '../../../domain/aggregates/faction.js';
@@ -15,13 +16,17 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(command: CreateFactionCommand): Promise<Faction> {
+    GameAccess.checkCreateRole(command.roles, 'factions');
     const game = await this.gameRepository.findById(command.gameId);
     if (!game) {
       throw new ValidationError('Game not found');
     }
+    // Factions are part of the game: its owner or an admin (F-strategic-16).
+    this.gameAccess.checkManage(game, command.userId, command.roles, 'the factions of this game');
     const props = {
       gameId: command.gameId,
       name: command.name,

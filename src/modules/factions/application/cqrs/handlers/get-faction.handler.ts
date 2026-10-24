@@ -1,3 +1,4 @@
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { Faction } from '../../../domain/aggregates/faction.js';
@@ -7,11 +8,16 @@ import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
 
 @QueryHandler(GetFactionQuery)
 export class GetFactionQueryHandler implements IQueryHandler<GetFactionQuery, Faction> {
-  constructor(@Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository) {}
+  constructor(
+    @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
+    private readonly gameAccess: GameAccess,
+  ) {}
 
   async execute(query: GetFactionQuery): Promise<Faction> {
     const data = await this.factionRepository.findById(query.factionId);
     if (!data) throw new NotFoundError('Faction', query.factionId);
+    // A faction is read as its game (accessType of the game, its owner or an admin).
+    this.gameAccess.checkRead(await this.gameAccess.findGame(data.gameId), query.userId, query.roles, 'this faction');
 
     return data;
   }

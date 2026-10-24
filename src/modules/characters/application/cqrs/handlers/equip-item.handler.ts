@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
@@ -18,6 +19,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -26,6 +28,8 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
     const item = items.find(i => i.id === command.itemId);

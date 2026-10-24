@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -17,12 +18,15 @@ export class DeleteTraitHandler implements ICommandHandler<DeleteTraitCommand, C
     @Inject(TRAIT_CLIENT) private readonly traitClient: TraitClientPort,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: DeleteTraitCommand): Promise<Character> {
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     character.deleteTrait(command.traitId, command.specialization);
     const items = await this.itemRepository.findByCharacterId(character.id);

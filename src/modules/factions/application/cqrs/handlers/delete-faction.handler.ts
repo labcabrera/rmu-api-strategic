@@ -1,3 +1,4 @@
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { FactionDeletedEvent } from '../../../domain/events/faction.events.js';
@@ -11,6 +12,7 @@ export class DeleteFactionCommandHandler implements ICommandHandler<DeleteFactio
   constructor(
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(command: DeleteFactionCommand): Promise<void> {
@@ -18,6 +20,7 @@ export class DeleteFactionCommandHandler implements ICommandHandler<DeleteFactio
     if (!faction) {
       throw new NotFoundError('Faction', command.factionId);
     }
+    this.gameAccess.checkManage(await this.gameAccess.findGame(faction.gameId), command.userId, command.roles, 'this faction');
     //TODO delete characters
     await this.factionRepository.deleteById(command.factionId);
     await this.events.publish('faction', new FactionDeletedEvent(faction));

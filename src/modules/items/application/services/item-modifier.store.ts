@@ -3,7 +3,7 @@ import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../charact
 import { CharacterProcessorService } from '../../../characters/domain/services/character-processor.service.js';
 import { NotFoundError } from '../../../shared/domain/errors/errors.js';
 import { Item } from '../../domain/aggregates/item.js';
-import { type ItemGuardPort, ITEM_GUARD } from '../ports/item-guard.port.js';
+import { ItemAccess } from './item-access.service.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port.js';
 
@@ -15,7 +15,7 @@ import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shar
 export class ItemModifierStore {
   constructor(
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
-    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    private readonly itemAccess: ItemAccess,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(CharacterProcessorService) private readonly characterProcessorService: CharacterProcessorService,
@@ -24,7 +24,7 @@ export class ItemModifierStore {
   async load(itemId: string, userId: string, roles: string[]): Promise<Item> {
     const item = await this.itemRepository.findById(itemId);
     if (!item) throw new NotFoundError('Item', itemId, 'err-item-not-found');
-    this.itemGuard.checkUpdate(item, userId, roles);
+    await this.itemAccess.checkChange(item, userId, roles);
     return item;
   }
 

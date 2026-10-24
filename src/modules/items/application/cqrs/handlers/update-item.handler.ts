@@ -3,7 +3,7 @@ import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { UpdateItemCommand } from '../commands/update-item.command.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
-import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
+import { ItemAccess } from '../../services/item-access.service.js';
 import { Item } from '../../../domain/aggregates/item.js';
 import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
@@ -12,7 +12,7 @@ import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../s
 export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Item> {
   constructor(
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
-    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    private readonly itemAccess: ItemAccess,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
@@ -20,7 +20,7 @@ export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Ite
     const current = await this.itemRepository.findById(command.itemId);
     if (!current) throw new NotFoundError('Item', command.itemId);
 
-    this.itemGuard.checkUpdate(current, command.userId, command.roles);
+    await this.itemAccess.checkChange(current, command.userId, command.roles);
 
     let weapon: ItemWeapon | undefined = undefined;
     if (command.wielderSize) {

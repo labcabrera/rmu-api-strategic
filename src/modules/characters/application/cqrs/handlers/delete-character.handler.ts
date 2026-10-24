@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { DeleteCharacterCommand } from '../commands/delete-character.command.js';
@@ -15,6 +16,7 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(HEALING_LOG_REPOSITORY) private readonly healingLogRepository: HealingLogRepository,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
@@ -23,6 +25,8 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
     if (!character) {
       throw new NotFoundError('Character', command.characterId);
     }
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
     await this.characterRepository.deleteById(command.characterId);
     await this.healingLogRepository.deleteByCharacterId(command.characterId);
     await this.events.publish('character', new CharacterDeletedEvent(character.getProps()));

@@ -64,13 +64,24 @@ describe('items (e2e)', () => {
   });
 
   describe('read', () => {
-    it('reads by id, public to every user, and answers 404 for an unknown item', async () => {
+    it('reads by id as its game, and answers 404 for an unknown item', async () => {
       const item = await createItem(e2e, { gameId, factionId });
       expect((await as('owner').get(`/v1/items/${item.id}`)).body).toMatchObject({ id: item.id, itemTypeId: 'stone' });
-      // Items are always created public (create-item.handler: accessType 'public')
-      expect((await as('other').get(`/v1/items/${item.id}`)).status).toBe(200);
-      expect((await as('noRole').get(`/v1/items/${item.id}`)).status).toBe(200);
+      expect((await as('admin').get(`/v1/items/${item.id}`)).status).toBe(200);
+      expect((await as('service').get(`/v1/items/${item.id}`)).status).toBe(200);
+      // The game is private: the item of one of its factions is not readable by another user (spec 021)
+      expect((await as('other').get(`/v1/items/${item.id}`)).status).toBe(403);
+      expect((await as('noRole').get(`/v1/items/${item.id}`)).status).toBe(403);
       expect((await as('owner').get('/v1/items/item-missing')).status).toBe(404);
+    });
+
+    it('lets a player read the items of their character in the private game of another user', async () => {
+      const character = await createCharacter(e2e, gameId, factionId, 'other');
+      const item = await createItem(e2e, { gameId, characterId: character.id }, 'other');
+      expect((await as('other').get(`/v1/items/${item.id}`)).status).toBe(200);
+      expect(ids((await as('other').get(`/v1/items?q=characterId==${character.id}`)).body)).toEqual([item.id]);
+      expect(ids((await as('other').get('/v1/items')).body)).toEqual([item.id]);
+      expect(ids((await as('noRole').get('/v1/items')).body)).toEqual([]);
     });
 
     it('filters with RSQL and pages, accepting the size=1000 of rmu-api-tactical', async () => {
@@ -79,9 +90,11 @@ describe('items (e2e)', () => {
       expect((filtered.body as { content: { name: string }[] }).content.map(i => i.name)).toEqual(['Beta']);
       const page = await as('owner').get('/v1/items?page=1&size=2');
       expect(page.body).toMatchObject({ pagination: { page: 1, size: 2, totalElements: 3, totalPages: 2 } });
-      const tactical = await as('other').get(`/v1/items?q=factionId==${factionId}&page=0&size=1000`);
+      const tactical = await as('owner').get(`/v1/items?q=factionId==${factionId}&page=0&size=1000`);
       expect(tactical.status).toBe(200);
       expect(ids(tactical.body)).toHaveLength(3);
+      // The items of a private game are not listed to another user
+      expect(ids((await as('other').get(`/v1/items?q=factionId==${factionId}`)).body)).toEqual([]);
       expect((await as('owner').get('/v1/items?size=1001')).status).toBe(400);
       expect((await as('owner').get('/v1/items?q=name=x')).status).toBe(400);
     });

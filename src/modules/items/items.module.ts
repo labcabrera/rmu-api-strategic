@@ -1,3 +1,5 @@
+import { GamesModule } from '../games/games.module.js';
+import { ItemAccess } from './application/services/item-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -31,11 +33,13 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     MongooseModule.forFeature([{ name: ItemModel.name, schema: ItemSchema }]),
     SharedModule,
     FactionsModule,
+    GamesModule,
     forwardRef(() => CharactersModule),
   ],
   controllers: [ItemController, KafkaItemEventConsumer, KafkaItemCharacterEventConsumer],
   providers: [
     GetItemHandler,
+    ItemAccess,
     GetItemsHandler,
     CreateItemHandler,
     UpdateItemHandler,

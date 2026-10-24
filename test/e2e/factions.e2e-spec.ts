@@ -53,7 +53,7 @@ describe('factions (e2e)', () => {
       expect((await as('owner').post('/v1/factions', { gameId })).status).toBe(400);
     });
 
-    it.skip('rejects a token without groups and a user who cannot read the game [F-strategic-16]', async () => {
+    it('rejects a token without groups and a user who does not own the game [F-strategic-16]', async () => {
       expect((await as('noRole').post('/v1/factions', { gameId, name: 'x' })).status).toBe(403);
       expect((await as('other').post('/v1/factions', { gameId, name: 'x' })).status).toBe(403);
     });
@@ -77,11 +77,24 @@ describe('factions (e2e)', () => {
       expect((await as('owner').get('/v1/factions?q=name=x')).status).toBe(400);
     });
 
-    it.skip('hides the factions of another user from reads and listings [F-strategic-16]', async () => {
+    it('hides the factions of a private game of another user from reads and listings [F-strategic-16]', async () => {
       const faction = await createFaction(e2e, gameId);
       expect((await as('other').get(`/v1/factions/${faction.id}`)).status).toBe(403);
       expect((await as('noRole').get(`/v1/factions/${faction.id}`)).status).toBe(403);
       expect(ids((await as('other').get('/v1/factions')).body)).toEqual([]);
+      expect(ids((await as('other').get(`/v1/factions?q=gameId==${gameId}`)).body)).toEqual([]);
+      expect(ids((await as('admin').get('/v1/factions')).body)).toEqual([faction.id]);
+      // The service account of another API reads them too
+      expect((await as('service').get(`/v1/factions/${faction.id}`)).status).toBe(200);
+    });
+
+    it('lists only the factions of the games the user can read', async () => {
+      const mine = await createFaction(e2e, gameId);
+      const otherGame = await createGame(e2e, 'other');
+      const theirs = await createFaction(e2e, otherGame.id, 'other');
+      expect(ids((await as('owner').get('/v1/factions')).body)).toEqual([mine.id]);
+      expect(ids((await as('other').get('/v1/factions')).body)).toEqual([theirs.id]);
+      expect(ids((await as('admin').get('/v1/factions')).body).sort()).toEqual([mine.id, theirs.id].sort());
     });
   });
 
@@ -111,7 +124,30 @@ describe('factions (e2e)', () => {
       expect((await as('owner').patch('/v1/factions/faction-missing', { name: 'x' })).status).toBe(404);
     });
 
-    it.skip('rejects a change by another user or a token without groups [F-strategic-16]', async () => {
+    it('ignores management in a PATCH: gold and xp change through add-gold and add-xp [F-strategic-16]', async () => {
+      const faction = await createFaction(e2e, gameId);
+      const response = await as('owner').patch(`/v1/factions/${faction.id}`, {
+        name: 'Rich',
+        management: { availableGold: 999, availableXP: 9 },
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ name: 'Rich', management: { availableGold: 0, availableXP: 0 } });
+    });
+
+    it('lets the owner of the game change a faction an admin created in it', async () => {
+      const faction = await createFaction(e2e, gameId, 'admin');
+      expect((await as('owner').patch(`/v1/factions/${faction.id}`, { name: 'Mine' })).status).toBe(200);
+    });
+
+    it('neither writes nor publishes a PATCH without changes', async () => {
+      const faction = await createFaction(e2e, gameId);
+      e2e.events.clear();
+      const response = await as('owner').patch(`/v1/factions/${faction.id}`, { name: faction.name as string });
+      expect(response.body).toMatchObject({ version: 0 });
+      expect(e2e.events.topics()).toEqual([]);
+    });
+
+    it('rejects a change by another user or a token without groups [F-strategic-16]', async () => {
       const faction = await createFaction(e2e, gameId);
       expect((await as('other').patch(`/v1/factions/${faction.id}`, { name: 'Hijacked' })).status).toBe(403);
       expect((await as('noRole').patch(`/v1/factions/${faction.id}`, { name: 'Hijacked' })).status).toBe(403);
@@ -119,7 +155,7 @@ describe('factions (e2e)', () => {
   });
 
   describe('xp and gold', () => {
-    it('lets anyone spend gold, but not below zero', async () => {
+    it('lets the owner of the game spend gold, but not below zero', async () => {
       const faction = await createFaction(e2e, gameId, 'owner', { management: { availableGold: 10, availableXP: 0 } });
       const spent = await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: -4 });
       expect(spent.status).toBe(200);
@@ -127,20 +163,26 @@ describe('factions (e2e)', () => {
       expect((await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: -7 })).status).toBe(400);
     });
 
-    it('requires the faction-management role to add gold or xp, a role no Keycloak group gives [F-strategic-18]', async () => {
+    it('lets an admin add gold and xp, and not another user, a token without groups or the faction-management role [F-strategic-18]', async () => {
       const faction = await createFaction(e2e, gameId);
-      expect((await as('admin').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(403);
-      expect((await as('admin').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(403);
+      expect((await as('admin').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(200);
+      const xp = await as('admin').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 });
+      expect(xp.status).toBe(200);
+      expect(xp.body).toMatchObject({ management: { availableGold: 5, availableXP: 5 } });
+      for (const user of ['other', 'noRole'] as const) {
+        expect((await as(user).post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(403);
+        expect((await as(user).post(`/v1/factions/${faction.id}/add-gold`, { gold: -1 })).status).toBe(403);
+        expect((await as(user).post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(403);
+      }
       const manager = e2e.jwks.token({ sub: 'e2e-manager', groups: ['faction-management'] });
-      const xp = await request(e2e.server)
+      const legacy = await request(e2e.server)
         .post(`/v1/factions/${faction.id}/add-xp`)
         .set('Authorization', `Bearer ${manager}`)
         .send({ xp: 5 });
-      expect(xp.status).toBe(200);
-      expect(xp.body).toMatchObject({ management: { availableXP: 5 } });
+      expect(legacy.status).toBe(403);
     });
 
-    it.skip('lets the owner of the game add gold and xp to its factions [F-strategic-18]', async () => {
+    it('lets the owner of the game add gold and xp to its factions [F-strategic-18]', async () => {
       const faction = await createFaction(e2e, gameId);
       expect((await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(200);
       expect((await as('owner').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(200);
@@ -157,7 +199,7 @@ describe('factions (e2e)', () => {
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.faction.deleted.v1']);
     });
 
-    it.skip('rejects a delete by another user or a token without groups [F-strategic-16]', async () => {
+    it('rejects a delete by another user or a token without groups [F-strategic-16]', async () => {
       const faction = await createFaction(e2e, gameId);
       expect((await as('other').delete(`/v1/factions/${faction.id}`)).status).toBe(403);
       expect((await as('noRole').delete(`/v1/factions/${faction.id}`)).status).toBe(403);

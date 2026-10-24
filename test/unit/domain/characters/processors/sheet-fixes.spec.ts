@@ -1,3 +1,4 @@
+import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { ResistancesProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/resistances-processor.js';
 import { HPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/hp-processor.js';
 import { SkillProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/skill-processor.js';
@@ -72,6 +73,7 @@ describe('Knacks by power level', () => {
       {
         findById: vi.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel } }),
       } as unknown as GameRepository,
+      allowAllCharacterAccess,
     );
     const knack = (skillId: string) =>
       handler.execute(new SetUpProfessionalSkillCommand('character-001', skillId, null, ['knack'], 'user-001', []));

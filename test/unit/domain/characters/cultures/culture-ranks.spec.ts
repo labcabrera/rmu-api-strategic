@@ -1,3 +1,4 @@
+import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
 import { Logger } from '@nestjs/common';
 import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler.js';
@@ -221,6 +222,7 @@ describe('CreateCharacterHandler', () => {
       cultureClient,
       fakeEventPublisher().publisher,
       { process: vi.fn() } as unknown as CharacterProcessorService,
+      allowAllCharacterAccess,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>
       handler.execute(

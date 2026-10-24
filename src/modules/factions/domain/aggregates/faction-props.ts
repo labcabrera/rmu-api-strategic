@@ -15,4 +15,4 @@ export interface FactionProps {
 
 export type CreateFactionProps = Omit<FactionProps, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type UpdateFactionProps = Partial<Omit<FactionProps, 'id' | 'gameId' | 'owner' | 'createdAt' | 'updatedAt'>>;
+export type UpdateFactionProps = Partial<Omit<FactionProps, 'id' | 'gameId' | 'management' | 'owner' | 'createdAt' | 'updatedAt'>>;

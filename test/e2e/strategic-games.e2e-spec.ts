@@ -179,7 +179,7 @@ describe('strategic games (e2e)', () => {
       expect(response.status).toBe(200);
     });
 
-    it.skip('rejects a change by another user or a token without groups [F-strategic-15]', async () => {
+    it('rejects a change by another user or a token without groups [F-strategic-15]', async () => {
       const game = await createGame(e2e);
       for (const user of ['other', 'noRole'] as const) {
         const response = await request(e2e.server)

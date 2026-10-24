@@ -54,21 +54,11 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
   }
 
   update(props: UpdateFactionProps) {
-    const { name, management, shortDescription, description, imageUrl } = props;
+    const { name, shortDescription, description, imageUrl } = props;
     if (name && name.trim() === '') {
       throw new ValidationError('Name can not be empty');
     }
-    if (management) {
-      if (management.availableXP && management.availableXP < 0) {
-        throw new ValidationError('Available XP can not be negative');
-      }
-      if (management.availableGold && management.availableGold < 0) {
-        throw new ValidationError('Available Gold can not be negative');
-      }
-    }
     if (name) this.name = name;
-    if (management?.availableXP) this.management.availableXP = management.availableXP;
-    if (management?.availableGold) this.management.availableGold = management.availableGold;
     if (shortDescription) this.shortDescription = shortDescription;
     if (description) this.description = description;
     if (imageUrl) this.imageUrl = imageUrl;
