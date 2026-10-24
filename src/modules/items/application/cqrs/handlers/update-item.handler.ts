@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { UpdateItemCommand } from '../commands/update-item.command';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
-import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
-import { Item } from '../../../domain/aggregates/item';
-import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { UpdateItemCommand } from '../commands/update-item.command.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
+import { Item } from '../../../domain/aggregates/item.js';
+import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(UpdateItemCommand)
 export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Item> {

@@ -1,15 +1,15 @@
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { HealingTables } from '../../value-objects/healing-tables.vo';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import type { HealingTables } from '../../value-objects/healing-tables.vo.js';
 import {
-  HealingType,
-  Injury,
+  type HealingType,
+  type Injury,
   INJURY_SEVERITIES,
-  InjuryRecovery,
-  InjurySeverity,
-  InjuryTreatment,
-  TreatmentProcedure,
-  TreatmentResult,
-} from '../../value-objects/injury.vo';
+  type InjuryRecovery,
+  type InjurySeverity,
+  type InjuryTreatment,
+  type TreatmentProcedure,
+  type TreatmentResult,
+} from '../../value-objects/injury.vo.js';
 
 /** Values of the patient that feed the recovery roll. */
 export interface RecoveryPatient {

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { UpdateGameCommand } from '../../../application/cqrs/commands/update-game.command';
-import { GameOptionsDto } from './game-options.dto';
-import { GamePowerLevelDto } from './game-power-level.dto';
+import { UpdateGameCommand } from '../../../application/cqrs/commands/update-game.command.js';
+import { GameOptionsDto } from './game-options.dto.js';
+import { GamePowerLevelDto } from './game-power-level.dto.js';
 
 export class UpdateGameDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign', required: false })

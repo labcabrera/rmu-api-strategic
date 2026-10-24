@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import type { AccessType } from '../../../../shared/domain/entities/access-type';
-import { ItemWeapon } from './item-weapon.model';
-import { ItemArmor } from './item-armor.model';
-import { ItemInfo } from './item-info.model';
-import { ItemShield } from './item-shield.model';
-import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
+import { ItemWeapon } from './item-weapon.model.js';
+import { ItemArmor } from './item-armor.model.js';
+import { ItemInfo } from './item-info.model.js';
+import { ItemShield } from './item-shield.model.js';
+import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
 
 export type ItemDocument = ItemModel & Document;
 

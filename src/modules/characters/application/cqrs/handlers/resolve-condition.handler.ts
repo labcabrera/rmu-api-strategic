@@ -1,7 +1,7 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { ResolveConditionCommand } from '../commands/resolve-condition.command';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { ResolveConditionCommand } from '../commands/resolve-condition.command.js';
 
 @CommandHandler(ResolveConditionCommand)
 export class ResolveConditionHandler implements ICommandHandler<ResolveConditionCommand, Character> {

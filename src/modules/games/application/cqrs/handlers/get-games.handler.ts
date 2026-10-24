@@ -1,10 +1,10 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from '../../../domain/aggregates/game';
-import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
-import { GetGamesQuery } from '../queries/get-games.query';
-import { Page } from '../../../../shared/application/pagination/page';
-import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port';
+import { Game } from '../../../domain/aggregates/game.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { GetGamesQuery } from '../queries/get-games.query.js';
+import { Page } from '../../../../shared/application/pagination/page.js';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
 
 @QueryHandler(GetGamesQuery)
 export class GetGamesHandler implements IQueryHandler<GetGamesQuery, Page<Game>> {

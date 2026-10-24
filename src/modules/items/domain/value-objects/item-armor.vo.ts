@@ -1,4 +1,4 @@
-import { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo';
+import type { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo.js';
 
 export class ItemArmor {
   constructor(

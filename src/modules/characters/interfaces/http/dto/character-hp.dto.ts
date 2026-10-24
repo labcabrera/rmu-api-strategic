@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterHP } from '../../../domain/value-objects/character-hp.vo';
+import { CharacterHP } from '../../../domain/value-objects/character-hp.vo.js';
 
 export class CharacterHPDto {
   @ApiProperty({ description: 'Maximum HP', example: 100 })

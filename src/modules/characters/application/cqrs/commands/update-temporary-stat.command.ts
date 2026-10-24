@@ -1,5 +1,5 @@
-import { StatKey } from '../../../domain/value-objects/character-stat.vo';
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class UpdateTemporaryStatCommand extends AuthenticatedCommand {
   constructor(

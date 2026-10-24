@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
+import { Character } from '../../../aggregates/character.js';
 
 @Injectable()
 export class XPProcessor {

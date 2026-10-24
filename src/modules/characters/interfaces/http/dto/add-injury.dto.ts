@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
-import { AddInjuryCommand } from '../../../application/cqrs/commands/add-injury.command';
-import { BODY_LOCATIONS, BODY_SIDES, INJURY_FLAGS, INJURY_SEVERITIES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo';
-import type { BodyLocation, BodySide, InjuryFlag, InjurySeverity, InjuryType } from '../../../domain/value-objects/injury.vo';
+import { AddInjuryCommand } from '../../../application/cqrs/commands/add-injury.command.js';
+import { BODY_LOCATIONS, BODY_SIDES, INJURY_FLAGS, INJURY_SEVERITIES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo.js';
+import type { BodyLocation, BodySide, InjuryFlag, InjurySeverity, InjuryType } from '../../../domain/value-objects/injury.vo.js';
 
 export class AddInjuryDto {
   @ApiProperty({ type: String, enum: INJURY_TYPES, example: 'bone' })

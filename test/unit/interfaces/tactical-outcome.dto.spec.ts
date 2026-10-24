@@ -1,5 +1,5 @@
-import { TacticalOutcomeDto } from '../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto';
-import { ValidationError } from '../../../src/modules/shared/domain/errors/errors';
+import { TacticalOutcomeDto } from '../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto.js';
+import { ValidationError } from '../../../src/modules/shared/domain/errors/errors.js';
 
 const dto = (items: unknown): TacticalOutcomeDto =>
   ({

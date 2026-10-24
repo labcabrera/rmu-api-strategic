@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterXP } from '../../../domain/value-objects/character-xp.vo';
-import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
+import { CharacterXP } from '../../../domain/value-objects/character-xp.vo.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
 
 export class CharacterXPDto {
   @ApiProperty({ description: 'Current developed level of the character', example: 2 })

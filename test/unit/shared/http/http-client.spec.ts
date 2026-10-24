@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
-import { BadGatewayError, ValidationError } from '../../../../src/modules/shared/domain/errors/errors';
-import { HttpClient, upstreamStatus } from '../../../../src/modules/shared/infrastructure/http/http-client';
-import { TokenService } from '../../../../src/modules/shared/infrastructure/security/token.service';
+import { BadGatewayError, ValidationError } from '../../../../src/modules/shared/domain/errors/errors.js';
+import { HttpClient, upstreamStatus } from '../../../../src/modules/shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../../src/modules/shared/infrastructure/security/token.service.js';
 
 const json = (status: number, body: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

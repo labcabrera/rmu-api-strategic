@@ -1,13 +1,13 @@
-import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from '../../../domain/aggregates/game';
-import { CreateGameCommand } from '../commands/create-game.command';
-import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
-import { type RealmClientPort, REALM_CLIENT } from '../../ports/realm-client.port';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port';
-import { CreateGameProps } from '../../../domain/aggregates/game-props';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { Game } from '../../../domain/aggregates/game.js';
+import { CreateGameCommand } from '../commands/create-game.command.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { type RealmClientPort, REALM_CLIENT } from '../../ports/realm-client.port.js';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
+import type { CreateGameProps } from '../../../domain/aggregates/game-props.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {

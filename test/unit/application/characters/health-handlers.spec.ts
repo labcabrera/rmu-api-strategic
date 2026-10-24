@@ -1,33 +1,33 @@
-import { fakeEventPublisher } from '../../support/fake-event-publisher';
-import { ApplyTacticalOutcomeCommand } from '../../../../src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command';
-import { RestCharacterCommand } from '../../../../src/modules/characters/application/cqrs/commands/rest-character.command';
-import { RollInjuryRecoveryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-injury-recovery.command';
-import { RollPermanentInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-permanent-injury.command';
-import { TreatInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/treat-injury.command';
-import { ApplyTacticalOutcomeHandler } from '../../../../src/modules/characters/application/cqrs/handlers/apply-tactical-outcome.handler';
-import { RestCharacterHandler } from '../../../../src/modules/characters/application/cqrs/handlers/rest-character.handler';
-import { RollInjuryRecoveryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler';
-import { RollPermanentInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler';
-import { TreatInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/treat-injury.handler';
-import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character-repository.port';
-import type { HealingLogRepository } from '../../../../src/modules/characters/application/ports/healing-log-repository.port';
-import type { HealingTablesClientPort } from '../../../../src/modules/characters/application/ports/healing-tables-client.port';
+import { fakeEventPublisher } from '../../support/fake-event-publisher.js';
+import { ApplyTacticalOutcomeCommand } from '../../../../src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command.js';
+import { RestCharacterCommand } from '../../../../src/modules/characters/application/cqrs/commands/rest-character.command.js';
+import { RollInjuryRecoveryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-injury-recovery.command.js';
+import { RollPermanentInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-permanent-injury.command.js';
+import { TreatInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/treat-injury.command.js';
+import { ApplyTacticalOutcomeHandler } from '../../../../src/modules/characters/application/cqrs/handlers/apply-tactical-outcome.handler.js';
+import { RestCharacterHandler } from '../../../../src/modules/characters/application/cqrs/handlers/rest-character.handler.js';
+import { RollInjuryRecoveryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler.js';
+import { RollPermanentInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler.js';
+import { TreatInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/treat-injury.handler.js';
+import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character-repository.port.js';
+import type { HealingLogRepository } from '../../../../src/modules/characters/application/ports/healing-log-repository.port.js';
+import type { HealingTablesClientPort } from '../../../../src/modules/characters/application/ports/healing-tables-client.port.js';
 import type {
   AbsoluteManeuverResponse,
   ManeuverClientPort,
-} from '../../../../src/modules/characters/application/ports/maneuver-client.port';
-import { CharacterHealthStore } from '../../../../src/modules/characters/application/services/character-health.store';
-import { Character } from '../../../../src/modules/characters/domain/aggregates/character';
-import { CharacterSkill } from '../../../../src/modules/characters/domain/value-objects/character-skill.vo';
-import type { GameRepository } from '../../../../src/modules/games/application/ports/game-repository.port';
-import { Game } from '../../../../src/modules/games/domain/aggregates/game';
-import { buildCharacter, skill, trait } from '../../domain/characters/traits/character.fixture';
-import { TacticalOutcomeItemsMerger } from '../../../../src/modules/characters/application/services/tactical-outcome-items.merger';
-import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
-import type { ItemRepository } from '../../../../src/modules/items/application/ports/item-repository.port';
-import { Item } from '../../../../src/modules/items/domain/aggregates/item';
-import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
-import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture';
+} from '../../../../src/modules/characters/application/ports/maneuver-client.port.js';
+import { CharacterHealthStore } from '../../../../src/modules/characters/application/services/character-health.store.js';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character.js';
+import { CharacterSkill } from '../../../../src/modules/characters/domain/value-objects/character-skill.vo.js';
+import type { GameRepository } from '../../../../src/modules/games/application/ports/game-repository.port.js';
+import { Game } from '../../../../src/modules/games/domain/aggregates/game.js';
+import { buildCharacter, skill, trait } from '../../domain/characters/traits/character.fixture.js';
+import { TacticalOutcomeItemsMerger } from '../../../../src/modules/characters/application/services/tactical-outcome-items.merger.js';
+import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service.js';
+import type { ItemRepository } from '../../../../src/modules/items/application/ports/item-repository.port.js';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
+import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo.js';
+import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture.js';
 
 const MASTER = 'master-001';
 

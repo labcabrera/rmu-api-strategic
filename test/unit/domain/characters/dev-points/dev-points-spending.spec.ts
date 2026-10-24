@@ -1,7 +1,7 @@
-import { DevPointsSpendingService } from '../../../../../src/modules/characters/domain/services/dev-points/dev-points-spending.service';
-import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo';
-import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
-import { buildCharacter, skill } from '../traits/character.fixture';
+import { DevPointsSpendingService } from '../../../../../src/modules/characters/domain/services/dev-points/dev-points-spending.service.js';
+import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo.js';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { buildCharacter, skill } from '../traits/character.fixture.js';
 
 const xp = (normal: number, bonus: number, spentThisLevel = 0, flaw = 0): CharacterXP => {
   const result = CharacterXP.fromLevel(1, ['melee', 'ranged', 'shield', 'unarmed']);

@@ -1,5 +1,5 @@
-import { EntityGuard } from '../../../shared/application/ports/entity-guard.port';
-import { Item } from '../../domain/aggregates/item';
+import type { EntityGuard } from '../../../shared/application/ports/entity-guard.port.js';
+import { Item } from '../../domain/aggregates/item.js';
 
 export type ItemGuardPort = EntityGuard<Item>;
 

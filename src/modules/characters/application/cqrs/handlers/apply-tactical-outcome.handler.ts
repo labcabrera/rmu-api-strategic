@@ -1,11 +1,11 @@
 import { Inject, Logger } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { TacticalOutcomeItemsMerger } from '../../services/tactical-outcome-items.merger';
-import { ApplyTacticalOutcomeCommand } from '../commands/apply-tactical-outcome.command';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { TacticalOutcomeItemsMerger } from '../../services/tactical-outcome-items.merger.js';
+import { ApplyTacticalOutcomeCommand } from '../commands/apply-tactical-outcome.command.js';
 
 @CommandHandler(ApplyTacticalOutcomeCommand)
 export class ApplyTacticalOutcomeHandler implements ICommandHandler<ApplyTacticalOutcomeCommand, Character> {

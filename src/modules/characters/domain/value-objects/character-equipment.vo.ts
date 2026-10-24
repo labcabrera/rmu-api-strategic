@@ -1,4 +1,4 @@
-import { Difficulty } from './difficulty.vo';
+import type { Difficulty } from './difficulty.vo.js';
 
 export type EquipmentSlot = 'mainHand' | 'offHand' | 'body' | 'head' | 'arms' | 'legs';
 

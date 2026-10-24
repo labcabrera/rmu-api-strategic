@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../items/application/ports/item-repository.port';
-import { Item } from '../../../items/domain/aggregates/item';
-import type { TacticalItemOutcome } from '../../domain/value-objects/tactical-game-outcome.vo';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../items/application/ports/item-repository.port.js';
+import { Item } from '../../../items/domain/aggregates/item.js';
+import type { TacticalItemOutcome } from '../../domain/value-objects/tactical-game-outcome.vo.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port.js';
 
 export interface TacticalItemsSummary {
   itemsDamaged: string[];

@@ -1,14 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character';
-import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
-import { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo';
-import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
-import { type AbsoluteManeuverResponse, type ManeuverClientPort, MANEUVER_CLIENT } from '../../ports/maneuver-client.port';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { TreatInjuryCommand } from '../commands/treat-injury.command';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { HealingCalculator } from '../../../domain/services/healing/healing-calculator.js';
+import type { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo.js';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
+import { type AbsoluteManeuverResponse, type ManeuverClientPort, MANEUVER_CLIENT } from '../../ports/maneuver-client.port.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { TreatInjuryCommand } from '../commands/treat-injury.command.js';
 
 export const MEDICAL_MANEUVER_TABLE = 'medical';
 export const MEDICINE_SKILL = 'medicine';

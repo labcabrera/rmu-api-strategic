@@ -1,5 +1,5 @@
-import { CharacterTrait } from '../../../value-objects/character-trait.vo';
-import { TRAIT_EFFECTS, TraitEffect, TraitEffectTarget } from './trait-effects.registry';
+import { CharacterTrait } from '../../../value-objects/character-trait.vo.js';
+import { TRAIT_EFFECTS, type TraitEffect, type TraitEffectTarget } from './trait-effects.registry.js';
 
 export interface AppliedTraitEffect {
   traitId: string;

@@ -4,7 +4,7 @@ import {
   matchesKey,
   matchesSkill,
   matchesWeaponType,
-} from '../../../../../src/modules/characters/domain/services/character/traits/trait-specialization-matcher';
+} from '../../../../../src/modules/characters/domain/services/character/traits/trait-specialization-matcher.js';
 
 describe('Trait specialization matcher', () => {
   describe('skills', () => {

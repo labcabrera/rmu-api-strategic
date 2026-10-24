@@ -1,5 +1,5 @@
-import { Page } from '../../../shared/application/pagination/page';
-import { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo';
+import { Page } from '../../../shared/application/pagination/page.js';
+import type { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo.js';
 
 /** Healing log of the characters, in its own collection because it grows with every rest and treatment. */
 export interface HealingLogRepository {

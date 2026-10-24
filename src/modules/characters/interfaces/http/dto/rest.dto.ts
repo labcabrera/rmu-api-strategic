@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
-import { RestCharacterCommand } from '../../../application/cqrs/commands/rest-character.command';
+import { RestCharacterCommand } from '../../../application/cqrs/commands/rest-character.command.js';
 
 export class RestDto {
   @ApiPropertyOptional({ description: 'Hours of rest (hits per complete rest period)', example: 8 })

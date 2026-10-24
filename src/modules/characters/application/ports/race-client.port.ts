@@ -1,4 +1,4 @@
-import { StatKey } from '../../domain/value-objects/character-stat.vo';
+import type { StatKey } from '../../domain/value-objects/character-stat.vo.js';
 
 export interface RaceClientPort {
   getRaceById(raceId: string): Promise<Race>;

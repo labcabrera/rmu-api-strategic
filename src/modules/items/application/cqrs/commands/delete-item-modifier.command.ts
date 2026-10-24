@@ -1,4 +1,4 @@
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 /** `DELETE /v1/items/:id/modifiers/:modifierId`: a repair by hand, or a modifier no longer wanted. */
 export class DeleteItemModifierCommand extends AuthenticatedCommand {

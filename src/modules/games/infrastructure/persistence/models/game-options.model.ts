@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { StatGeneration, TalentPolicy } from '../../../domain/value-objects/game-options.vo';
+import type { StatGeneration, TalentPolicy } from '../../../domain/value-objects/game-options.vo.js';
 
 @Schema({ _id: false })
 export class GameOptions {

@@ -1,5 +1,5 @@
-import { Faction } from '../../domain/aggregates/faction';
-import { Page } from '../../../shared/application/pagination/page';
+import { Faction } from '../../domain/aggregates/faction.js';
+import { Page } from '../../../shared/application/pagination/page.js';
 
 export interface FactionRepository {
   findById(id: string): Promise<Faction | null>;

@@ -1,7 +1,7 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { UpdateInjuryCommand } from '../commands/update-injury.command';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { UpdateInjuryCommand } from '../commands/update-injury.command.js';
 
 @CommandHandler(UpdateInjuryCommand)
 export class UpdateInjuryHandler implements ICommandHandler<UpdateInjuryCommand, Character> {

@@ -1,4 +1,4 @@
-import { WeaponDevelopmentType } from './weapon-development-type.vo';
+import type { WeaponDevelopmentType } from './weapon-development-type.vo.js';
 
 export class CharacterXP {
   constructor(

@@ -1,5 +1,5 @@
-import { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
-import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class EquipItemCommand extends AuthenticatedCommand {
   constructor(

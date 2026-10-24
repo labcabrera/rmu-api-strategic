@@ -2,25 +2,25 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Use
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query';
-import { Faction } from '../../domain/aggregates/faction';
-import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query';
-import { CreateFactionDto } from './dto/create-faction.dto';
-import { CreateFactionCommand } from '../../application/cqrs/commands/create-faction.command';
-import { FactionDto, FactionPageDto } from './dto/faction.dto';
-import { UpdateFactionCommand } from '../../application/cqrs/commands/update-faction.command';
-import { UpdateFactionDto } from './dto/update-faction.dto';
-import { DeleteFactionCommand } from '../../application/cqrs/commands/delete-faction.command';
-import { AddFactionXPDto } from './dto/add-faction-xp.dto';
-import { AddFactionXPCommand } from '../../application/cqrs/commands/add-faction-xp.command';
-import { AddFactionGoldCommand } from '../../application/cqrs/commands/add-faction-gold.command';
-import { AddFactionGoldDto } from './dto/add-faction-gold.dto';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
-import { Page } from '../../../shared/application/pagination/page';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query.js';
+import { Faction } from '../../domain/aggregates/faction.js';
+import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query.js';
+import { CreateFactionDto } from './dto/create-faction.dto.js';
+import { CreateFactionCommand } from '../../application/cqrs/commands/create-faction.command.js';
+import { FactionDto, FactionPageDto } from './dto/faction.dto.js';
+import { UpdateFactionCommand } from '../../application/cqrs/commands/update-faction.command.js';
+import { UpdateFactionDto } from './dto/update-faction.dto.js';
+import { DeleteFactionCommand } from '../../application/cqrs/commands/delete-faction.command.js';
+import { AddFactionXPDto } from './dto/add-faction-xp.dto.js';
+import { AddFactionXPCommand } from '../../application/cqrs/commands/add-faction-xp.command.js';
+import { AddFactionGoldCommand } from '../../application/cqrs/commands/add-faction-gold.command.js';
+import { AddFactionGoldDto } from './dto/add-faction-gold.dto.js';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { Page } from '../../../shared/application/pagination/page.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/factions')

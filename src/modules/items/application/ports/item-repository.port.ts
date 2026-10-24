@@ -1,5 +1,5 @@
-import { BaseRepository } from '../../../shared/application/ports/base-repository.port';
-import { Item } from '../../domain/aggregates/item';
+import type { BaseRepository } from '../../../shared/application/ports/base-repository.port.js';
+import { Item } from '../../domain/aggregates/item.js';
 
 export interface ItemRepository extends BaseRepository<Item> {
   findByCharacterIdAndItemTypeId(characterId: string | null, arg1: string): Promise<Item | null>;

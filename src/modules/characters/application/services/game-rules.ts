@@ -1,6 +1,6 @@
-import type { GameRepository } from '../../../games/application/ports/game-repository.port';
-import { ResolvedGameOptions, resolveOptions } from '../../../games/domain/value-objects/game-options.vo';
-import { ResolvedGamePowerLevel, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo';
+import type { GameRepository } from '../../../games/application/ports/game-repository.port.js';
+import { type ResolvedGameOptions, resolveOptions } from '../../../games/domain/value-objects/game-options.vo.js';
+import { type ResolvedGamePowerLevel, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo.js';
 
 export interface GameRules {
   powerLevel: ResolvedGamePowerLevel;

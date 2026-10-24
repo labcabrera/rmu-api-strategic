@@ -1,4 +1,4 @@
-import { ValidationError } from '../../../shared/domain/errors/errors';
+import { ValidationError } from '../../../shared/domain/errors/errors.js';
 
 /** Kind of modifier of an item (spec 019): breakage damage, quality or material, or anything else of the game master. */
 export type ItemModifierType = 'breakage' | 'quality' | 'custom';

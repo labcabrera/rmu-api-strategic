@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { SkillCategoryClientPort, SkillCategoryResponse } from '../../application/ports/skill-category-client.port';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../application/ports/skill-category-client.port.js';
 
 @Injectable()
 export class ApiSkillCategoryClientAdapter implements SkillCategoryClientPort {

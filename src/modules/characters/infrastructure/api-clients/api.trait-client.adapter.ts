@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { TraitClientPort, TraitResponse } from '../../application/ports/trait-client.port';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { TraitClientPort, TraitResponse } from '../../application/ports/trait-client.port.js';
 
 @Injectable()
 export class ApiTraitClientAdapter implements TraitClientPort {

@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { UpdateTemporaryStatCommand } from '../commands/update-temporary-stat.command';
-import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
-import { loadGameRules } from '../../services/game-rules';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { UpdateTemporaryStatCommand } from '../commands/update-temporary-stat.command.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { loadGameRules } from '../../services/game-rules.js';
 
 @CommandHandler(UpdateTemporaryStatCommand)
 export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTemporaryStatCommand, Character> {

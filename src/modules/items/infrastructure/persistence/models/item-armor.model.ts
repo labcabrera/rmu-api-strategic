@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo';
+import type { Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo.js';
 
 @Schema({ _id: false })
 export class ItemArmor {

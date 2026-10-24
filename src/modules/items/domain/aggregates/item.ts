@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
-import { ItemProps } from './item-props';
-import { ItemCreatedEvent, ItemUpdatedEvent } from '../events/item.events';
-import { ItemWeapon } from '../value-objects/item-weapon.vo';
-import { ItemArmor } from '../value-objects/item-armor.vo';
-import { ItemInfo } from '../value-objects/item-info.vo';
-import { AccessType } from '../../../shared/domain/entities/access-type';
-import { ItemShield } from '../value-objects/item-shield.vo';
-import { ItemCondition, ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo';
-import { NotFoundError } from '../../../shared/domain/errors/errors';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
+import type { ItemProps } from './item-props.js';
+import { ItemCreatedEvent, ItemUpdatedEvent } from '../events/item.events.js';
+import { ItemWeapon } from '../value-objects/item-weapon.vo.js';
+import { ItemArmor } from '../value-objects/item-armor.vo.js';
+import { ItemInfo } from '../value-objects/item-info.vo.js';
+import type { AccessType } from '../../../shared/domain/entities/access-type.js';
+import { ItemShield } from '../value-objects/item-shield.vo.js';
+import { type ItemCondition, type ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo.js';
+import { NotFoundError } from '../../../shared/domain/errors/errors.js';
 
 export const goldCoin = 'gold-coin';
 

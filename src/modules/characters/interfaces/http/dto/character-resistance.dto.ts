@@ -1,4 +1,4 @@
-import { CharacterResistance } from '../../../domain/value-objects/character-resistances.vo';
+import { CharacterResistance } from '../../../domain/value-objects/character-resistances.vo.js';
 
 export class CharacterResistanceDto {
   resistance: string;

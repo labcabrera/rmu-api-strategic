@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
-import { UpdateInjuryCommand } from '../../../application/cqrs/commands/update-injury.command';
+import { UpdateInjuryCommand } from '../../../application/cqrs/commands/update-injury.command.js';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -10,7 +10,7 @@ import {
   INJURY_SEVERITIES,
   INJURY_STATUSES,
   INJURY_TYPES,
-} from '../../../domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo.js';
 import type {
   BleedingControl,
   BodyLocation,
@@ -19,7 +19,7 @@ import type {
   InjurySeverity,
   InjuryStatus,
   InjuryType,
-} from '../../../domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo.js';
 
 export class UpdateInjuryPermanentDto {
   @ApiPropertyOptional({ description: 'Permanent penalty (negative)', example: -10 })

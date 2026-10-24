@@ -1,14 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { TransferGoldCommand } from '../commands/transfer-gold.command';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port';
-import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { Item } from '../../../../items/domain/aggregates/item';
-import { CreateItemCommand } from '../../../../items/application/cqrs/commands/create-item.command';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { TransferGoldCommand } from '../commands/transfer-gold.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { Item } from '../../../../items/domain/aggregates/item.js';
+import { CreateItemCommand } from '../../../../items/application/cqrs/commands/create-item.command.js';
 
 const GOLD_COIN = 'gold-coin';
 

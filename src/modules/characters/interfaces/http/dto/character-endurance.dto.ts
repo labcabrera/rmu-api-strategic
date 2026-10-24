@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { CharacterEndurance } from '../../../domain/value-objects/character-endurance.vo';
+import { CharacterEndurance } from '../../../domain/value-objects/character-endurance.vo.js';
 
 export class CharacterEnduranceDto {
   @ApiProperty({ description: 'Custom bonus', example: 5, default: 0 })

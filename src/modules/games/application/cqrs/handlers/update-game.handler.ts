@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Game } from '../../../domain/aggregates/game';
-import { UpdateGameCommand } from '../commands/update-game.command';
-import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Game } from '../../../domain/aggregates/game.js';
+import { UpdateGameCommand } from '../commands/update-game.command.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(UpdateGameCommand)
 export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Game> {

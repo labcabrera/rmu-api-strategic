@@ -1,25 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterDefenseDto } from './character-defense.dto';
-import { CharacterEnduranceDto } from './character-endurance.dto';
-import { CharacterEquipmentDto } from './character-equipment.dto';
-import { CharacterHPDto } from './character-hp.dto';
-import { CharacterInitiativeDto } from './character-initiative.dto';
-import { CharacterMovementDto } from './character-movement.dto';
-import { CharacterPowerDto } from './character-power.dto';
-import { CharacterSkillDto } from './character-skill.dto';
-import { CharacterStatDto } from './character-stat.dto';
-import { CharacterXPDto } from './character-xp.dto';
-import { CharacterInfoDto } from './character-info.dto';
-import { CharacterAttackDto } from './character-attack.dto';
-import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CharacterResistanceDto } from './character-resistance.dto';
-import { CharacterTraitDto } from './character-trait.dto';
-import { Character } from '../../../domain/aggregates/character';
-import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto';
-import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
-import { STAT_KEYS, StatKey } from '../../../domain/value-objects/character-stat.vo';
-import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo';
-import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto';
+import { CharacterDefenseDto } from './character-defense.dto.js';
+import { CharacterEnduranceDto } from './character-endurance.dto.js';
+import { CharacterEquipmentDto } from './character-equipment.dto.js';
+import { CharacterHPDto } from './character-hp.dto.js';
+import { CharacterInitiativeDto } from './character-initiative.dto.js';
+import { CharacterMovementDto } from './character-movement.dto.js';
+import { CharacterPowerDto } from './character-power.dto.js';
+import { CharacterSkillDto } from './character-skill.dto.js';
+import { CharacterStatDto } from './character-stat.dto.js';
+import { CharacterXPDto } from './character-xp.dto.js';
+import { CharacterInfoDto } from './character-info.dto.js';
+import { CharacterAttackDto } from './character-attack.dto.js';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
+import { CharacterResistanceDto } from './character-resistance.dto.js';
+import { CharacterTraitDto } from './character-trait.dto.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto.js';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
+import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto.js';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })

@@ -1,4 +1,4 @@
-import { Page } from '../../../shared/application/pagination/page';
+import { Page } from '../../../shared/application/pagination/page.js';
 
 export interface SkillClientPort {
   getAllSkills(): Promise<Page<SkillResponse>>;

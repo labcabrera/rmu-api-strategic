@@ -1,6 +1,6 @@
-import type { DomainEventPublisher } from '../../../src/modules/shared/application/ports/domain-event-publisher.port';
-import type { BaseAggregateRoot } from '../../../src/modules/shared/domain/aggregates/base-aggregate';
-import type { DomainEvent } from '../../../src/modules/shared/domain/events/domain-event';
+import type { DomainEventPublisher } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
+import type { BaseAggregateRoot } from '../../../src/modules/shared/domain/aggregates/base-aggregate.js';
+import type { DomainEvent } from '../../../src/modules/shared/domain/events/domain-event.js';
 
 /** An in-memory DomainEventPublisher: `publish` is a spy, and publishChanges goes through it like the Kafka one. */
 export function fakeEventPublisher() {

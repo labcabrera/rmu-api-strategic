@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import type { GameStatus } from '../../../domain/value-objects/game-status.vo';
-import { GameOptions } from './game-options.model';
-import { GamePowerLevel } from './game-power-level.model';
-import type { AccessType } from '../../../../shared/domain/entities/access-type';
+import type { GameStatus } from '../../../domain/value-objects/game-status.vo.js';
+import { GameOptions } from './game-options.model.js';
+import { GamePowerLevel } from './game-power-level.model.js';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 
 export type GameDocument = GameModel & Document;
 

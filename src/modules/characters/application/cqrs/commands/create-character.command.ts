@@ -1,7 +1,7 @@
-import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
-import { CharacterRoleplayInfo } from '../../../domain/value-objects/character-roleplay-info.vo';
-import { StatKey } from '../../../domain/value-objects/character-stat.vo';
-import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
+import type { CharacterRoleplayInfo } from '../../../domain/value-objects/character-roleplay-info.vo.js';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
 
 export class CreateCharacterCommand {
   constructor(

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -12,7 +12,7 @@ import {
   INJURY_TYPES,
   TREATMENT_PROCEDURES,
   TREATMENT_RESULTS,
-} from '../../../domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo.js';
 import type {
   BleedingControl,
   BodyLocation,
@@ -27,11 +27,11 @@ import type {
   TreatmentContext,
   TreatmentProcedure,
   TreatmentResult,
-} from '../../../domain/value-objects/injury.vo';
-import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo';
-import type { CharacterCondition, CharacterConditionStatus } from '../../../domain/value-objects/character-condition.vo';
-import type { HealingLogEntry, HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo';
-import type { HealthSummary } from '../../../domain/value-objects/health-summary.vo';
+} from '../../../domain/value-objects/injury.vo.js';
+import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
+import type { CharacterCondition, CharacterConditionStatus } from '../../../domain/value-objects/character-condition.vo.js';
+import type { HealingLogEntry, HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo.js';
+import type { HealthSummary } from '../../../domain/value-objects/health-summary.vo.js';
 
 export class InjurySourceDto {
   @ApiProperty({ type: String, enum: INJURY_SOURCE_KINDS, example: 'critical' })

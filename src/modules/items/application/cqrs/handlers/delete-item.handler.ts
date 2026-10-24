@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { DeleteItemCommand } from '../commands/delete-item.command';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
-import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
-import { ItemDeletedEvent } from '../../../domain/events/item.events';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port';
-import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item.command';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { DeleteItemCommand } from '../commands/delete-item.command.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
+import { ItemDeletedEvent } from '../../../domain/events/item.events.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port.js';
+import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item.command.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {

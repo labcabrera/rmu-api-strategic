@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
 
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { RaceClientPort } from '../../application/ports/race-client.port';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { RaceClientPort } from '../../application/ports/race-client.port.js';
 
 @Injectable()
 export class ApiRaceClientAdapter implements RaceClientPort {

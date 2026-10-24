@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { GameStatus } from '../../../domain/value-objects/game-status.vo';
-import { Game } from '../../../domain/aggregates/game';
-import { GameOptionsDto } from './game-options.dto';
-import { GamePowerLevelDto } from './game-power-level.dto';
-import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
+import type { GameStatus } from '../../../domain/value-objects/game-status.vo.js';
+import { Game } from '../../../domain/aggregates/game.js';
+import { GameOptionsDto } from './game-options.dto.js';
+import { GamePowerLevelDto } from './game-power-level.dto.js';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 
 export class GameDto {
   @ApiProperty({ description: 'Game identifier', type: String })

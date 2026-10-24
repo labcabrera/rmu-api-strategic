@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemArmor } from '../../../domain/value-objects/item-armor.vo';
+import { ItemArmor } from '../../../domain/value-objects/item-armor.vo.js';
 
 export class ItemArmorDto {
   @ApiProperty({ description: 'Armor slot', type: String, required: true, example: 'head' })

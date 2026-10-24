@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { FactionDeletedEvent } from '../../../domain/events/faction.events';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port';
-import { DeleteFactionCommand } from '../commands/delete-faction.command';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { FactionDeletedEvent } from '../../../domain/events/faction.events.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port.js';
+import { DeleteFactionCommand } from '../commands/delete-faction.command.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(DeleteFactionCommand)
 export class DeleteFactionCommandHandler implements ICommandHandler<DeleteFactionCommand> {

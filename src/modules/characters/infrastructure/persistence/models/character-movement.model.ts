@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { BmrModifierKey, Pace } from '../../../domain/value-objects/character-movement.vo';
+import type { BmrModifierKey, Pace } from '../../../domain/value-objects/character-movement.vo.js';
 
 @Schema({ _id: false })
 export class CharacterMovement {

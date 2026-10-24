@@ -1,7 +1,7 @@
-import { ValidationError } from '../../../shared/domain/errors/errors';
-import type { CultureRanks } from '../../domain/aggregates/character';
-import type { Culture, CultureSkillRank } from '../ports/culture-client.port';
-import type { SkillResponse } from '../ports/skill-client.port';
+import { ValidationError } from '../../../shared/domain/errors/errors.js';
+import type { CultureRanks } from '../../domain/aggregates/character.js';
+import type { Culture, CultureSkillRank } from '../ports/culture-client.port.js';
+import type { SkillResponse } from '../ports/skill-client.port.js';
 
 export const LANGUAGE_SKILL_IDS = ['language-spoken', 'language-written'];
 export const DEFAULT_CULTURE_MAX_RANKS_PER_SKILL = 2;

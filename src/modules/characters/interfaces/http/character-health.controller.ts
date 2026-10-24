@@ -1,27 +1,27 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
-import { Page } from '../../../shared/application/pagination/page';
-import { Character } from '../../domain/aggregates/character';
-import { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo';
-import { InjuryRecoveryResult } from '../../application/cqrs/handlers/roll-injury-recovery.handler';
-import { RollInjuryRecoveryCommand } from '../../application/cqrs/commands/roll-injury-recovery.command';
-import { RollPermanentInjuryCommand } from '../../application/cqrs/commands/roll-permanent-injury.command';
-import { ResolveConditionCommand } from '../../application/cqrs/commands/resolve-condition.command';
-import { GetHealingLogQuery } from '../../application/cqrs/queries/get-healing-log.query';
-import { CharacterDto } from './dto/character.dto';
-import { HealingLogEntryDto, HealingLogPageDto } from './dto/character-health.dto';
-import { TacticalOutcomeDto } from './dto/tactical-outcome.dto';
-import { AddInjuryDto } from './dto/add-injury.dto';
-import { UpdateInjuryDto } from './dto/update-injury.dto';
-import { TreatInjuryDto } from './dto/treat-injury.dto';
-import { InjuryRollDto } from './dto/injury-roll.dto';
-import { RestDto } from './dto/rest.dto';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { Page } from '../../../shared/application/pagination/page.js';
+import { Character } from '../../domain/aggregates/character.js';
+import type { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo.js';
+import type { InjuryRecoveryResult } from '../../application/cqrs/handlers/roll-injury-recovery.handler.js';
+import { RollInjuryRecoveryCommand } from '../../application/cqrs/commands/roll-injury-recovery.command.js';
+import { RollPermanentInjuryCommand } from '../../application/cqrs/commands/roll-permanent-injury.command.js';
+import { ResolveConditionCommand } from '../../application/cqrs/commands/resolve-condition.command.js';
+import { GetHealingLogQuery } from '../../application/cqrs/queries/get-healing-log.query.js';
+import { CharacterDto } from './dto/character.dto.js';
+import { HealingLogEntryDto, HealingLogPageDto } from './dto/character-health.dto.js';
+import { TacticalOutcomeDto } from './dto/tactical-outcome.dto.js';
+import { AddInjuryDto } from './dto/add-injury.dto.js';
+import { UpdateInjuryDto } from './dto/update-injury.dto.js';
+import { TreatInjuryDto } from './dto/treat-injury.dto.js';
+import { InjuryRollDto } from './dto/injury-roll.dto.js';
+import { RestDto } from './dto/rest.dto.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 export class CharacterRecoveryDto extends CharacterDto {
   @ApiProperty({ description: 'Medium or severe injury with doubles: a permanent injury roll is required', required: false })

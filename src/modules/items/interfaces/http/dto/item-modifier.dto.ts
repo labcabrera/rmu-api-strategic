@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
-import { AddItemModifierCommand } from '../../../application/cqrs/commands/add-item-modifier.command';
+import { AddItemModifierCommand } from '../../../application/cqrs/commands/add-item-modifier.command.js';
 import {
   ITEM_MODIFIER_TARGETS,
   ITEM_MODIFIER_TYPES,
@@ -9,7 +9,7 @@ import {
   type ItemModifierSource,
   type ItemModifierTarget,
   type ItemModifierType,
-} from '../../../domain/value-objects/item-modifier.vo';
+} from '../../../domain/value-objects/item-modifier.vo.js';
 
 export class ItemModifierDto {
   @ApiProperty({ description: 'Modifier identifier (the same in tactical and strategic)', example: 'b5f0c7e2-...' })

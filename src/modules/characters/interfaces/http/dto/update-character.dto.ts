@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
-import { UpdateCharacterCommand } from '../../../application/cqrs/commands/update-character.command';
-import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
+import { UpdateCharacterCommand } from '../../../application/cqrs/commands/update-character.command.js';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
 
 export class UpdateCharacterInfoDto {
   @ApiProperty({ type: Number, description: 'Character height', example: 4.8, required: false })

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { NotFoundError } from '../../../shared/domain/errors/errors';
-import { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port';
+import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import type { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port.js';
 
 @Injectable()
 export class ApiItemClientAdapter implements ItemClientPort {

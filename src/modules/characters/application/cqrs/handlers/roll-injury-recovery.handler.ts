@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character';
-import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
-import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
-import { CharacterHealthStore } from '../../services/character-health.store';
-import { RollInjuryRecoveryCommand } from '../commands/roll-injury-recovery.command';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { HealingCalculator } from '../../../domain/services/healing/healing-calculator.js';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { RollInjuryRecoveryCommand } from '../commands/roll-injury-recovery.command.js';
 
 export interface InjuryRecoveryResult {
   character: Character;

@@ -1,11 +1,11 @@
-import type { StatKey } from '../../../value-objects/character-stat.vo';
+import type { StatKey } from '../../../value-objects/character-stat.vo.js';
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
-import { CharacterSkill } from '../../../value-objects/character-skill.vo';
-import { Item } from '../../../../../items/domain/aggregates/item';
-import { AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
-import { matchesSkill } from '../traits/trait-specialization-matcher';
-import { DEFAULT_KNACK_BONUS } from '../../../../../games/domain/value-objects/game-power-level.vo';
+import { Character } from '../../../aggregates/character.js';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo.js';
+import { Item } from '../../../../../items/domain/aggregates/item.js';
+import { type AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesSkill } from '../traits/trait-specialization-matcher.js';
+import { DEFAULT_KNACK_BONUS } from '../../../../../games/domain/value-objects/game-power-level.vo.js';
 
 @Injectable()
 export class SkillProcessor {

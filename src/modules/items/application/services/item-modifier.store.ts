@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../characters/application/ports/character-repository.port';
-import { CharacterProcessorService } from '../../../characters/domain/services/character-processor.service';
-import { NotFoundError } from '../../../shared/domain/errors/errors';
-import { Item } from '../../domain/aggregates/item';
-import { type ItemGuardPort, ITEM_GUARD } from '../ports/item-guard.port';
-import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../characters/application/ports/character-repository.port.js';
+import { CharacterProcessorService } from '../../../characters/domain/services/character-processor.service.js';
+import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { Item } from '../../domain/aggregates/item.js';
+import { type ItemGuardPort, ITEM_GUARD } from '../ports/item-guard.port.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port.js';
 
 /**
  * Loads an item to change its modifiers and stores it with its events. The modifiers change the sheet of the

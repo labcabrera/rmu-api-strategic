@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNumber, IsString, Max, Min } from 'class-validator';
-import { UpdateTemporaryStatCommand } from '../../../application/cqrs/commands/update-temporary-stat.command';
-import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo';
+import { UpdateTemporaryStatCommand } from '../../../application/cqrs/commands/update-temporary-stat.command.js';
+import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 
 export class UpdateTemporaryStatDto {
   @ApiProperty({ description: 'Stat to update', example: 'ag', required: true, type: String, enum: STAT_KEYS })

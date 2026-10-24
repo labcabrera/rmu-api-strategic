@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Faction } from '../../../domain/aggregates/faction';
-import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port';
-import { AddFactionXPCommand } from '../commands/add-faction-xp.command';
-import { ForbiddenError, NotFoundError } from '../../../../shared/domain/errors/errors';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Faction } from '../../../domain/aggregates/faction.js';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port.js';
+import { AddFactionXPCommand } from '../commands/add-faction-xp.command.js';
+import { ForbiddenError, NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(AddFactionXPCommand)
 export class AddFactionXPCommandHandler implements ICommandHandler<AddFactionXPCommand, Faction> {

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadGatewayError, ValidationError } from '../../domain/errors/errors';
+import { BadGatewayError, ValidationError } from '../../domain/errors/errors.js';
 
 export interface HttpRequestOptions {
   /** Sent as `Authorization: Bearer <token>`. */

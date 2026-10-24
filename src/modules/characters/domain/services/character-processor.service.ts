@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../aggregates/character';
-import { AttackProcessor } from './character/processors/attack-processor';
-import { DefenseProcessor } from './character/processors/defense-processor';
-import { EquipmentProcessor } from './character/processors/equipment-processor';
-import { HPProcessor } from './character/processors/hp-processor';
-import { InitiativeProcessor } from './character/processors/initiative-processor';
-import { MovementProcessor } from './character/processors/movement-processor';
-import { PowerProcessor } from './character/processors/power-processor';
-import { SkillProcessor } from './character/processors/skill-processor';
-import { StatProcessor } from './character/processors/stat-processor';
-import { XPProcessor } from './character/processors/xp-processor';
-import { ResistancesProcessor } from './character/processors/resistances-processor';
-import { Item } from '../../../items/domain/aggregates/item';
+import { Character } from '../aggregates/character.js';
+import { AttackProcessor } from './character/processors/attack-processor.js';
+import { DefenseProcessor } from './character/processors/defense-processor.js';
+import { EquipmentProcessor } from './character/processors/equipment-processor.js';
+import { HPProcessor } from './character/processors/hp-processor.js';
+import { InitiativeProcessor } from './character/processors/initiative-processor.js';
+import { MovementProcessor } from './character/processors/movement-processor.js';
+import { PowerProcessor } from './character/processors/power-processor.js';
+import { SkillProcessor } from './character/processors/skill-processor.js';
+import { StatProcessor } from './character/processors/stat-processor.js';
+import { XPProcessor } from './character/processors/xp-processor.js';
+import { ResistancesProcessor } from './character/processors/resistances-processor.js';
+import { Item } from '../../../items/domain/aggregates/item.js';
 
 @Injectable()
 export class CharacterProcessorService {

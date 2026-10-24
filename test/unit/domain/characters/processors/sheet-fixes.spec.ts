@@ -1,13 +1,13 @@
-import { ResistancesProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/resistances-processor';
-import { HPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/hp-processor';
-import { SkillProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/skill-processor';
-import { SetupProfessionSkillHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/setup-professional-skill.handler';
-import { SetUpProfessionalSkillCommand } from '../../../../../src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
-import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
-import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port';
-import { buildCharacter, skill } from '../traits/character.fixture';
+import { ResistancesProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/resistances-processor.js';
+import { HPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/hp-processor.js';
+import { SkillProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/skill-processor.js';
+import { SetupProfessionSkillHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/setup-professional-skill.handler.js';
+import { SetUpProfessionalSkillCommand } from '../../../../../src/modules/characters/application/cqrs/commands/setup-professional-skill.command.js';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port.js';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port.js';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port.js';
+import { buildCharacter, skill } from '../traits/character.fixture.js';
 
 describe('Resistances level bonus', () => {
   it('acceptance 9: a level 3 character gets +6 to every resistance', () => {

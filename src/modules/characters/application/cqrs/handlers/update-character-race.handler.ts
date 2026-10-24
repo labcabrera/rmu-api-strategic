@@ -1,18 +1,18 @@
 import { Inject, Logger } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
-import { UpdateCharacterRaceCommand } from '../commands/update-character-race.command';
-import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
-import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port';
-import { AddSkillCommand } from '../commands/add-skill.command';
-import { CharacterUpdatedEvent } from '../../../domain/events/character.events';
-import { type RaceClientPort, type RaceTrait, RACE_CLIENT } from '../../ports/race-client.port';
-import { type TraitClientPort, TRAIT_CLIENT } from '../../ports/trait-client.port';
-import { mapRaceTraits } from '../../services/race-traits.mapper';
-import { Character } from '../../../domain/aggregates/character';
-import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { UpdateCharacterRaceCommand } from '../commands/update-character-race.command.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port.js';
+import { AddSkillCommand } from '../commands/add-skill.command.js';
+import { CharacterUpdatedEvent } from '../../../domain/events/character.events.js';
+import { type RaceClientPort, type RaceTrait, RACE_CLIENT } from '../../ports/race-client.port.js';
+import { type TraitClientPort, TRAIT_CLIENT } from '../../ports/trait-client.port.js';
+import { mapRaceTraits } from '../../services/race-traits.mapper.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(UpdateCharacterRaceCommand)
 export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {

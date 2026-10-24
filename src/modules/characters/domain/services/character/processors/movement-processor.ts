@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character';
-import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
+import { Character } from '../../../aggregates/character.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 
 @Injectable()
 export class MovementProcessor {

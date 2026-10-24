@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../http/http-client';
+import { HttpClient } from '../http/http-client.js';
 
 interface TokenResponse {
   access_token: string;

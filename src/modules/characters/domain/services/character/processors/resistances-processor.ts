@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../aggregates/character';
-import { CharacterResistance, RESISTANCE_BONUS_PER_LEVEL } from '../../../value-objects/character-resistances.vo';
-import { AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
-import { matchesKey } from '../traits/trait-specialization-matcher';
+import { Character } from '../../../aggregates/character.js';
+import { CharacterResistance, RESISTANCE_BONUS_PER_LEVEL } from '../../../value-objects/character-resistances.vo.js';
+import { type AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesKey } from '../traits/trait-specialization-matcher.js';
 
 @Injectable()
 export class ResistancesProcessor {

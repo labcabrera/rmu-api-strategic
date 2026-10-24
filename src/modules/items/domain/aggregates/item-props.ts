@@ -1,9 +1,9 @@
-import { AccessType } from '../../../shared/domain/entities/access-type';
-import { ItemArmor } from '../value-objects/item-armor.vo';
-import { ItemInfo } from '../value-objects/item-info.vo';
-import { ItemWeapon } from '../value-objects/item-weapon.vo';
-import { ItemShield } from '../value-objects/item-shield.vo';
-import { ItemModifier } from '../value-objects/item-modifier.vo';
+import type { AccessType } from '../../../shared/domain/entities/access-type.js';
+import { ItemArmor } from '../value-objects/item-armor.vo.js';
+import { ItemInfo } from '../value-objects/item-info.vo.js';
+import { ItemWeapon } from '../value-objects/item-weapon.vo.js';
+import { ItemShield } from '../value-objects/item-shield.vo.js';
+import type { ItemModifier } from '../value-objects/item-modifier.vo.js';
 
 export interface ItemProps {
   id: string;

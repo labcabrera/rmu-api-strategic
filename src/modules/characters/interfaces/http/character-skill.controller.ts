@@ -1,21 +1,21 @@
 import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { AddSkillDto } from './dto/add-skill.dto';
-import { CharacterDto } from './dto/character.dto';
-import { UpdateSkillDto } from './dto/update-skill.dto';
-import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto';
-import { AddSkillCommand } from '../../application/cqrs/commands/add-skill.command';
-import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill.command';
-import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command';
-import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command';
-import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command';
-import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command';
-import { Character } from '../../domain/aggregates/character';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedRequest, AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { AddSkillDto } from './dto/add-skill.dto.js';
+import { CharacterDto } from './dto/character.dto.js';
+import { UpdateSkillDto } from './dto/update-skill.dto.js';
+import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto.js';
+import { AddSkillCommand } from '../../application/cqrs/commands/add-skill.command.js';
+import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill.command.js';
+import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command.js';
+import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command.js';
+import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command.js';
+import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command.js';
+import { Character } from '../../domain/aggregates/character.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedRequest, AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

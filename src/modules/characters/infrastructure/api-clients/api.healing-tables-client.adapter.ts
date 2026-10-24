@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client';
-import { TokenService } from '../../../shared/infrastructure/security/token.service';
-import { BadGatewayError } from '../../../shared/domain/errors/errors';
-import { HealingTablesClientPort } from '../../application/ports/healing-tables-client.port';
-import { HealingTables } from '../../domain/value-objects/healing-tables.vo';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import { BadGatewayError } from '../../../shared/domain/errors/errors.js';
+import type { HealingTablesClientPort } from '../../application/ports/healing-tables-client.port.js';
+import type { HealingTables } from '../../domain/value-objects/healing-tables.vo.js';
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 

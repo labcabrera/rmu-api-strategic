@@ -1,4 +1,4 @@
-import { TraitSpecializationKind } from './trait-specialization-matcher';
+import type { TraitSpecializationKind } from './trait-specialization-matcher.js';
 
 // Fixed sheet effects of talents and flaws by trait id (spec 008 §2).
 // The value is applied per tier, or once when the trait has no tiers. Flaws use negative values.

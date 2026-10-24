@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Item } from '../../../domain/aggregates/item';
-import { AddItemModifierCommand } from '../commands/add-item-modifier.command';
-import { ItemModifierStore } from '../../services/item-modifier.store';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Item } from '../../../domain/aggregates/item.js';
+import { AddItemModifierCommand } from '../commands/add-item-modifier.command.js';
+import { ItemModifierStore } from '../../services/item-modifier.store.js';
 
 @CommandHandler(AddItemModifierCommand)
 export class AddItemModifierHandler implements ICommandHandler<AddItemModifierCommand, Item> {

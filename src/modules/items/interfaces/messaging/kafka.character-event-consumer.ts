@@ -1,9 +1,9 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import { CharacterDeletedEvent } from '../../../characters/domain/events/character.events';
-import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command';
-import { type ItemRepository, ITEM_REPOSITORY } from '../../application/ports/item-repository.port';
+import { CharacterDeletedEvent } from '../../../characters/domain/events/character.events.js';
+import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../application/ports/item-repository.port.js';
 
 /** Deletes the items of a deleted character. */
 @Controller()

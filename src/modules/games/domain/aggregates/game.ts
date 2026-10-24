@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto';
-import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events';
-import { GameOptions } from '../value-objects/game-options.vo';
-import { GamePowerLevel } from '../value-objects/game-power-level.vo';
-import { GameStatus } from '../value-objects/game-status.vo';
-import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
-import { CreateGameProps, GameProps, UpdateGameProps } from './game-props';
-import { AccessType } from '../../../shared/domain/entities/access-type';
+import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events.js';
+import { GameOptions } from '../value-objects/game-options.vo.js';
+import { GamePowerLevel } from '../value-objects/game-power-level.vo.js';
+import type { GameStatus } from '../value-objects/game-status.vo.js';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
+import type { CreateGameProps, GameProps, UpdateGameProps } from './game-props.js';
+import type { AccessType } from '../../../shared/domain/entities/access-type.js';
 
 export class Game extends BaseAggregateRoot<GameProps> {
   private constructor(

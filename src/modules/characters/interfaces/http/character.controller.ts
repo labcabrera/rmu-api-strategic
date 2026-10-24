@@ -1,27 +1,27 @@
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard';
-import { CharacterDto, CharacterPageDto } from './dto/character.dto';
-import { CreateCharacterDto } from './dto/create-character.dto';
-import { AddXPDto } from './dto/add-xp.dto';
-import { UpdateCharacterDto } from './dto/update-character.dto';
-import { LevelUpQueryDto } from './dto/level-up-query.dto';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
-import { Page } from '../../../shared/application/pagination/page';
-import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command';
-import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command';
-import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command';
-import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command';
-import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command';
-import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query';
-import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query';
-import { Character } from '../../domain/aggregates/character';
-import { UpdateTemporaryStatCommand } from '../../application/cqrs/commands/update-temporary-stat.command';
-import { UpdateTemporaryStatDto } from './dto/update-temporary-stat.dto';
-import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator';
-import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator';
-import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request';
+import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { CharacterDto, CharacterPageDto } from './dto/character.dto.js';
+import { CreateCharacterDto } from './dto/create-character.dto.js';
+import { AddXPDto } from './dto/add-xp.dto.js';
+import { UpdateCharacterDto } from './dto/update-character.dto.js';
+import { LevelUpQueryDto } from './dto/level-up-query.dto.js';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { Page } from '../../../shared/application/pagination/page.js';
+import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command.js';
+import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command.js';
+import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command.js';
+import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command.js';
+import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command.js';
+import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query.js';
+import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query.js';
+import { Character } from '../../domain/aggregates/character.js';
+import { UpdateTemporaryStatCommand } from '../../application/cqrs/commands/update-temporary-stat.command.js';
+import { UpdateTemporaryStatDto } from './dto/update-temporary-stat.dto.js';
+import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
+import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
+import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')

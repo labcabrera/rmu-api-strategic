@@ -1,9 +1,9 @@
 import { Inject, Logger } from '@nestjs/common';
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character';
-import { GetCharactersQuery } from '../queries/get-characters.query';
-import { Page } from '../../../../shared/application/pagination/page';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { GetCharactersQuery } from '../queries/get-characters.query.js';
+import { Page } from '../../../../shared/application/pagination/page.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
 
 @QueryHandler(GetCharactersQuery)
 export class GetCharactersHandler implements IQueryHandler<GetCharactersQuery, Page<Character>> {

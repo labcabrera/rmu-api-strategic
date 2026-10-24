@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { QueryFilter, Model } from 'mongoose';
-import { RsqlParser } from './rsql-parser';
-import { Page } from '../../application/pagination/page';
-import { NotFoundError } from '../../domain/errors/errors';
-import { BaseAggregateRoot } from '../../domain/aggregates/base-aggregate';
+import { RsqlParser } from './rsql-parser.js';
+import { Page } from '../../application/pagination/page.js';
+import { NotFoundError } from '../../domain/errors/errors.js';
+import { BaseAggregateRoot } from '../../domain/aggregates/base-aggregate.js';
 import { Logger } from '@nestjs/common';
 
 export abstract class MongoBaseRepository<E extends BaseAggregateRoot<any>, D> {

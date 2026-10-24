@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterSkill, type SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo';
-import { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo';
+import { CharacterSkill, type SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo.js';
+import type { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo.js';
 
 export class CharacterSkillDto {
   @ApiProperty({ description: 'Skill identifier', example: 'animal-handling' })

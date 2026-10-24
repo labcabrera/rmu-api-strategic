@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
-import { CharacterInfo } from '../../../domain/value-objects/character-info.vo';
-import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
+import type { CharacterInfo } from '../../../domain/value-objects/character-info.vo.js';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
 import { Type } from 'class-transformer';
-import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto';
+import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto.js';
 
 export class CharacterInfoDto {
   @ApiProperty({ description: 'Race identifier', type: NamedEntityDto })
