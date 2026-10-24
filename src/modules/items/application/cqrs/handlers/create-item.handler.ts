@@ -123,7 +123,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         weapon: this.getWeapon(command, itemType),
         armor: itemType.armor,
         shield: itemType.shield,
-        affixes: command.affixes || [],
+        modifiers: [],
         amount: command.amount,
         info: {
           length: itemType.info.length,

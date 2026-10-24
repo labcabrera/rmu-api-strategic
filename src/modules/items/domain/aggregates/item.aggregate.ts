@@ -4,10 +4,11 @@ import { ItemProps } from './item-props';
 import { ItemCreatedEvent, ItemUpdatedEvent } from '../events/item.events';
 import { ItemWeapon } from '../value-objects/item-weapon.vo';
 import { ItemArmor } from '../value-objects/item-armor.vo';
-import { ItemAffix } from '../value-objects/item-affix.vo';
 import { ItemInfo } from '../value-objects/item-info.vo';
 import { AccessType } from 'src/modules/shared/domain/entities/access-type';
 import { ItemShield } from '../value-objects/item-shield.vo';
+import { ItemCondition, ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo';
+import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
 
 export const goldCoin = 'gold-coin';
 
@@ -24,7 +25,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     public weapon: ItemWeapon | null,
     public armor: ItemArmor | null,
     public shield: ItemShield | null,
-    public affixes: ItemAffix[],
+    public modifiers: ItemModifier[],
     public info: ItemInfo,
     public amount: number | null,
     public description: string | null,
@@ -49,7 +50,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.weapon,
       props.armor,
       props.shield,
-      props.affixes,
+      props.modifiers || [],
       props.info,
       props.amount,
       props.description,
@@ -75,7 +76,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.weapon,
       props.armor,
       props.shield,
-      props.affixes,
+      props.modifiers || [],
       props.info,
       props.amount,
       props.description,
@@ -110,6 +111,33 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     }
   }
 
+  /** Spec 019, decision 3: the breakage state, derived from the modifiers. */
+  getCondition(): ItemCondition {
+    return ItemModifiers.condition(this.modifiers);
+  }
+
+  /** Adds the modifiers it has not yet (by id), so applying a tactical outcome twice adds nothing. Temporary ones are left out. */
+  addModifiers(modifiers: ItemModifier[]): ItemModifier[] {
+    const added = modifiers.filter(modifier => !modifier.temporary && !this.modifiers.some(existing => existing.id === modifier.id));
+    if (added.length === 0) {
+      return [];
+    }
+    added.forEach(modifier => ItemModifiers.validate(modifier));
+    this.modifiers = [...this.modifiers, ...added.map(modifier => ({ ...modifier }))];
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+    return added;
+  }
+
+  removeModifier(modifierId: string): void {
+    if (!this.modifiers.some(modifier => modifier.id === modifierId)) {
+      throw new NotFoundError('ItemModifier', modifierId, 'err-item-modifier-not-found');
+    }
+    this.modifiers = this.modifiers.filter(modifier => modifier.id !== modifierId);
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
   getProps(): ItemProps {
     return {
       id: this.id,
@@ -123,7 +151,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       weapon: this.weapon,
       armor: this.armor,
       shield: this.shield,
-      affixes: this.affixes,
+      modifiers: this.modifiers,
       info: this.info,
       amount: this.amount,
       description: this.description,

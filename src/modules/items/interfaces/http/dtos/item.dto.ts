@@ -5,6 +5,7 @@ import { ItemWeaponDto } from './item-weapon.dto';
 import { ItemInfoDto } from './item-info.dto';
 import { ItemArmorDto } from './item-armor.dto';
 import { ItemShieldDto } from './item-shield.dto';
+import { ItemConditionDto, ItemModifierDto } from './item-modifier.dto';
 
 export class ItemDto {
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })
@@ -54,6 +55,12 @@ export class ItemDto {
   @ApiProperty({ description: 'Item information', type: ItemInfoDto, required: true })
   info: ItemInfoDto;
 
+  @ApiProperty({ description: 'Modifiers of the item: breakage, quality... (spec 019)', type: [ItemModifierDto] })
+  modifiers: ItemModifierDto[];
+
+  @ApiProperty({ description: 'Breakage state derived from the modifiers', type: ItemConditionDto })
+  condition: ItemConditionDto;
+
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
 
@@ -72,6 +79,8 @@ export class ItemDto {
     dto.shield = entity.shield ? ItemShieldDto.fromEntity(entity.shield) : null;
     dto.amount = entity.amount;
     dto.info = ItemInfoDto.fromEntity(entity.info);
+    dto.modifiers = (entity.modifiers || []).map(modifier => ItemModifierDto.fromEntity(modifier));
+    dto.condition = ItemConditionDto.fromEntity(entity.getCondition());
     dto.owner = entity.owner;
     return dto;
   }

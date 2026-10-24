@@ -10,6 +10,7 @@ import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { matchesAttack } from '../traits/trait-specialization-matcher';
+import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 
 const SHIELD_FUMBLE = 4;
 const WRONG_SIZE_PENALTY = -20;
@@ -41,11 +42,17 @@ export class AttackProcessor {
       if (!item) {
         throw new ValidationError(`Item with id ${slotItemId} not found for character ${character.id} in slot ${slot}`);
       }
+      // Spec 019, decision 8: a broken weapon or shield gives no attack.
+      const condition = ItemModifiers.condition(item.modifiers);
+      if (condition.broken) {
+        return;
+      }
       if (item.weapon) {
         const skillId = item.weapon.skillId;
         const attackType = skillId.startsWith('ranged-') ? 'ranged' : 'melee';
         const skill = this.getWeaponSkillBonus(character, item.weapon);
         const boModifiers = this.getBoModifiers(skill, character, slot, attackType);
+        this.applyItemModifiers(boModifiers, item);
         const fumble = this.getFumble(item.weapon.fumble, skill);
         // A weapon made for another size uses its own size for the attack and gets a BO penalty
         const wielderSize = item.weapon.wielderSize;
@@ -78,12 +85,14 @@ export class AttackProcessor {
             weaponCategory: this.getWeaponCategory(item, mode),
             wrongSize: wrongSize,
             skillId: skillId,
+            itemId: item.id,
           });
           attacks.push(attack);
         });
       } else if (item.shield) {
         const skill = character.findSkill(SHIELD_SKILL_ID, null);
         const boModifiers = this.getBoModifiers(skill, character, slot, 'melee');
+        this.applyItemModifiers(boModifiers, item);
         const fumble = this.getFumble(SHIELD_FUMBLE, skill);
         const attack = CharacterAttack.fromProps({
           attackName: slot,
@@ -101,10 +110,19 @@ export class AttackProcessor {
           weaponCategory: 'standard',
           wrongSize: false,
           skillId: SHIELD_SKILL_ID,
+          itemId: item.id,
         });
         attacks.push(attack);
       }
     }
+  }
+
+  /** Spec 019: the breakage damage of the item and its other attack modifiers (quality, magic...). */
+  private applyItemModifiers(modifiers: Record<string, number>, item: Item): void {
+    const breakage = ItemModifiers.condition(item.modifiers).breakagePenalty;
+    const bonus = ItemModifiers.bonus(item.modifiers, 'attack');
+    if (breakage !== 0) modifiers['breakage'] = breakage;
+    if (bonus !== 0) modifiers['item'] = bonus;
   }
 
   private getBoModifiers(

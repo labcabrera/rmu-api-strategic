@@ -45,7 +45,7 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       weapon: doc.weapon,
       armor: doc.armor,
       shield: doc.shield,
-      affixes: doc.affixes,
+      modifiers: (doc.modifiers || []).map(modifier => ({ ...modifier })),
       info: doc.info,
       amount: doc.amount,
       description: doc.description,

@@ -185,6 +185,6 @@ import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastru
       useClass: KafkaCharacterEventBusAdapter,
     },
   ],
-  exports: ['CharacterRepository'],
+  exports: ['CharacterRepository', CharacterProcessorService],
 })
 export class CharactersModule {}

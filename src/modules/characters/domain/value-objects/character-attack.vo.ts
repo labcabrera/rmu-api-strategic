@@ -20,6 +20,8 @@ export class CharacterAttack {
     public weaponCategory: WeaponCategory,
     public wrongSize: boolean,
     public skillId: string,
+    /** Spec 019: the strategic item of the attack; missing in attacks stored before it. */
+    public itemId?: string,
   ) {}
 
   static fromProps(props: Omit<CharacterAttack, 'bo'>): CharacterAttack {
@@ -41,6 +43,7 @@ export class CharacterAttack {
       props.weaponCategory,
       props.wrongSize,
       props.skillId,
+      props.itemId,
     );
   }
 }
