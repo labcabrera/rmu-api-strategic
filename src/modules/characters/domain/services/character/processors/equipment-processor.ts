@@ -1,7 +1,7 @@
 import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character.aggregate';
-import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
+import { Character } from '../../../aggregates/character';
+import { Item } from '../../../../../items/domain/aggregates/item';
 import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
 import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';

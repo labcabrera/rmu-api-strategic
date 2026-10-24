@@ -1,16 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Faction } from '../../../domain/aggregates/faction.aggregate';
-import type { FactionRepository } from '../../ports/faction.repository';
-import type { FactionEventBusPort } from '../../ports/faction-event-bus.port';
+import { Faction } from '../../../domain/aggregates/faction';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port';
 import { UpdateFactionCommand } from '../commands/update-faction.command';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(UpdateFactionCommand)
 export class UpdateFactionHandler implements ICommandHandler<UpdateFactionCommand, Faction> {
   constructor(
-    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('FactionEventProducer') private readonly factionEventBus: FactionEventBusPort,
+    @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async execute(command: UpdateFactionCommand): Promise<Faction> {
@@ -25,7 +25,7 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
       imageUrl: command.imageUrl,
     });
     const updated = await this.factionRepository.update(command.factionId, faction);
-    faction.getUncommittedEvents().forEach(event => this.factionEventBus.publish(event));
+    await this.events.publishChanges('faction', faction);
     return updated;
   }
 }

@@ -2,20 +2,20 @@ import { Inject } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import { DeleteItemCommand } from '../commands/delete-item.command';
-import type { ItemRepository } from '../../ports/item.repository';
-import type { ItemGuardPort } from '../../ports/item-guard.port';
-import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
 import { ItemDeletedEvent } from '../../../domain/events/item.events';
-import type { CharacterRepository } from '../../../../characters/application/ports/character.repository';
-import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item-command';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port';
+import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item.command';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
-    @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly commandBus: CommandBus,
   ) {}
 
@@ -35,6 +35,6 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
       }
     }
     await this.itemRepository.deleteById(command.id);
-    this.itemEventBus.publish(new ItemDeletedEvent(item));
+    await this.events.publish('item', new ItemDeletedEvent(item));
   }
 }

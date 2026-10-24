@@ -5,10 +5,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CharacterRepository } from '../../application/ports/character.repository';
-import { Character } from '../../domain/aggregates/character.aggregate';
+import { CharacterRepository } from '../../application/ports/character-repository.port';
+import { Character } from '../../domain/aggregates/character';
 import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
-import { RsqlParser } from '../../../shared/infrastructure/persistence/repositories/rsql-parser';
+import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser';
 import { NamedEntity } from '../../../shared/domain/entities/named-entity';
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
 import { CharacterStat, STAT_KEYS, StatKey } from '../../domain/value-objects/character-stat.vo';

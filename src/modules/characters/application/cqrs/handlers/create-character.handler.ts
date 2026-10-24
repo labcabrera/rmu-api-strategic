@@ -1,47 +1,47 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import type { RaceClientPort, Race } from '../../ports/race-client.port';
+import { type RaceClientPort, type Race, RACE_CLIENT } from '../../ports/race-client.port';
 import { CharacterStatCreation, CreateCharacterCommand } from '../commands/create-character.command';
-import { Character } from '../../../domain/aggregates/character.aggregate';
-import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { GameRepository } from '../../../../games/application/ports/game.repository';
-import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
-import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
-import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
+import { Character } from '../../../domain/aggregates/character';
+import { type Profession, type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port';
+import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port';
+import { type SkillCategoryClientPort, type SkillCategoryResponse, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port';
 import { CharacterStat, STAT_KEYS, StatKey } from '../../../domain/value-objects/character-stat.vo';
 import { CharacterInfo } from '../../../domain/value-objects/character-info.vo';
 import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors/errors';
 import { NamedEntity } from '../../../../shared/domain/entities/named-entity';
 import { CharacterCreatedEvent } from '../../../domain/events/character.events';
-import type { TraitClientPort } from '../../ports/trait-client.port';
+import { type TraitClientPort, TRAIT_CLIENT } from '../../ports/trait-client.port';
 import { mapRaceTraits } from '../../services/race-traits.mapper';
-import type { Culture, CultureClientPort } from '../../ports/culture-client.port';
+import { type Culture, type CultureClientPort, CULTURE_CLIENT } from '../../ports/culture-client.port';
 import { resolveCultureRanks } from '../../services/culture-ranks.resolver';
-import type { CultureRanks } from '../../../domain/aggregates/character.aggregate';
+import type { CultureRanks } from '../../../domain/aggregates/character';
 import { validateCreationStats, validateStatPoints } from '../../../domain/services/stats/stat-rules';
 import { resolveOptions } from '../../../../games/domain/value-objects/game-options.vo';
 import { resolvePowerLevel } from '../../../../games/domain/value-objects/game-power-level.vo';
-import { Game } from '../../../../games/domain/aggregates/game.aggregate';
+import { Game } from '../../../../games/domain/aggregates/game';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
   private readonly logger = new Logger(CreateCharacterHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
-    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
-    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('TraitClient') private readonly traitClient: TraitClientPort,
-    @Inject('CultureClient') private readonly cultureClient: CultureClientPort,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
+    @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
+    @Inject(SKILL_CLIENT) private readonly skillClient: SkillClientPort,
+    @Inject(SKILL_CATEGORY_CLIENT) private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject(PROFESSION_CLIENT) private readonly professionClient: ProfessionClientPort,
+    @Inject(TRAIT_CLIENT) private readonly traitClient: TraitClientPort,
+    @Inject(CULTURE_CLIENT) private readonly cultureClient: CultureClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
@@ -100,7 +100,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     this.characterProcessorService.process(character, []);
     character.finishCreation();
     const created = await this.characterRepository.save(character);
-    this.characterEventBus.publish(new CharacterCreatedEvent(created.getProps()));
+    await this.events.publish('character', new CharacterCreatedEvent(created.getProps()));
     return character;
   }
 

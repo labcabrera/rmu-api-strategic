@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
 import { Injury } from '../../../domain/value-objects/injury.vo';
-import type { HealingTablesClientPort } from '../../ports/healing-tables-client.port';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
 import { CharacterHealthStore } from '../../services/character-health.store';
 import { AddInjuryCommand } from '../commands/add-injury.command';
 
@@ -12,7 +12,7 @@ import { AddInjuryCommand } from '../commands/add-injury.command';
 export class AddInjuryHandler implements ICommandHandler<AddInjuryCommand, Character> {
   constructor(
     private readonly store: CharacterHealthStore,
-    @Inject('HealingTablesClient') private readonly healingTablesClient: HealingTablesClientPort,
+    @Inject(HEALING_TABLES_CLIENT) private readonly healingTablesClient: HealingTablesClientPort,
   ) {}
 
   async execute(command: AddInjuryCommand): Promise<Character> {

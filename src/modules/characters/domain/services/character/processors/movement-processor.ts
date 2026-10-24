@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character.aggregate';
+import { Character } from '../../../aggregates/character';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 
 @Injectable()

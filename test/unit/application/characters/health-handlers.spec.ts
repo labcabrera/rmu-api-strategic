@@ -1,3 +1,4 @@
+import { fakeEventPublisher } from '../../support/fake-event-publisher';
 import { ApplyTacticalOutcomeCommand } from '../../../../src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command';
 import { RestCharacterCommand } from '../../../../src/modules/characters/application/cqrs/commands/rest-character.command';
 import { RollInjuryRecoveryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-injury-recovery.command';
@@ -8,24 +9,23 @@ import { RestCharacterHandler } from '../../../../src/modules/characters/applica
 import { RollInjuryRecoveryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler';
 import { RollPermanentInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler';
 import { TreatInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/treat-injury.handler';
-import type { CharacterEventBusPort } from '../../../../src/modules/characters/application/ports/character-event-bus.port';
-import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character.repository';
-import type { HealingLogRepository } from '../../../../src/modules/characters/application/ports/healing-log.repository';
+import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character-repository.port';
+import type { HealingLogRepository } from '../../../../src/modules/characters/application/ports/healing-log-repository.port';
 import type { HealingTablesClientPort } from '../../../../src/modules/characters/application/ports/healing-tables-client.port';
 import type {
   AbsoluteManeuverResponse,
   ManeuverClientPort,
 } from '../../../../src/modules/characters/application/ports/maneuver-client.port';
 import { CharacterHealthStore } from '../../../../src/modules/characters/application/services/character-health.store';
-import { Character } from '../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character';
 import { CharacterSkill } from '../../../../src/modules/characters/domain/value-objects/character-skill.vo';
-import type { GameRepository } from '../../../../src/modules/games/application/ports/game.repository';
-import { Game } from '../../../../src/modules/games/domain/aggregates/game.aggregate';
+import type { GameRepository } from '../../../../src/modules/games/application/ports/game-repository.port';
+import { Game } from '../../../../src/modules/games/domain/aggregates/game';
 import { buildCharacter, skill, trait } from '../../domain/characters/traits/character.fixture';
 import { TacticalOutcomeItemsMerger } from '../../../../src/modules/characters/application/services/tactical-outcome-items.merger';
 import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
-import type { ItemRepository } from '../../../../src/modules/items/application/ports/item.repository';
-import { Item } from '../../../../src/modules/items/domain/aggregates/item.aggregate';
+import type { ItemRepository } from '../../../../src/modules/items/application/ports/item-repository.port';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item';
 import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
 import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture';
 
@@ -59,9 +59,8 @@ const setup = (characters: Character[], results: AbsoluteManeuverResponse['resul
   } as unknown as GameRepository;
   const saveAll = vi.fn(() => Promise.resolve());
   const healingLogRepository = { saveAll } as unknown as HealingLogRepository;
-  const publish = vi.fn();
-  const eventBus: CharacterEventBusPort = { publish };
-  const store = new CharacterHealthStore(characterRepository, gameRepository, healingLogRepository, eventBus);
+  const { publisher, publish } = fakeEventPublisher();
+  const store = new CharacterHealthStore(characterRepository, gameRepository, healingLogRepository, publisher);
   const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
   const queue = [...results];
   const rolls: number[] = [];
@@ -120,8 +119,8 @@ const outcomeHandler = (store: CharacterHealthStore, items: Item[] = []) => {
     findByCharacterId: vi.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
     update: itemUpdate,
   } as unknown as ItemRepository;
-  const itemPublish = vi.fn();
-  const merger = new TacticalOutcomeItemsMerger(itemRepository, { publish: itemPublish });
+  const { publisher, publish: itemPublish } = fakeEventPublisher();
+  const merger = new TacticalOutcomeItemsMerger(itemRepository, publisher);
   const process = vi.fn();
   const processor = { process } as unknown as CharacterProcessorService;
   return { handler: new ApplyTacticalOutcomeHandler(store, merger, processor), itemUpdate, itemPublish, process };

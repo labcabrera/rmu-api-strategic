@@ -1,7 +1,7 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { CharacterHealthStore } from '../../services/character-health.store';
 import { TacticalOutcomeItemsMerger } from '../../services/tactical-outcome-items.merger';

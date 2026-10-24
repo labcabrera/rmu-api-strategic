@@ -1,4 +1,4 @@
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
 import { AttackProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/attack-processor';
 import { DefenseProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/defense-processor';
@@ -13,7 +13,7 @@ import { StatProcessor } from '../../../../../src/modules/characters/domain/serv
 import { XPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/xp-processor';
 import { CharacterTrait } from '../../../../../src/modules/characters/domain/value-objects/character-trait.vo';
 import { TRAIT_EFFECTS } from '../../../../../src/modules/characters/domain/services/character/traits/trait-effects.registry';
-import { Item } from '../../../../../src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../src/modules/items/domain/aggregates/item';
 import { ItemWeaponRange } from '../../../../../src/modules/items/domain/value-objects/item-weapon-range.vo';
 import { armor, buildCharacter, shield, skill, trait, weapon } from './character.fixture';
 

@@ -2,7 +2,6 @@ import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
 import { ItemModel, ItemSchema } from './infrastructure/persistence/models/item.model';
 import { ItemController } from './interfaces/http/item.controller';
@@ -10,28 +9,31 @@ import { GetItemHandler } from './application/cqrs/handlers/get-item.handler';
 import { GetItemsHandler } from './application/cqrs/handlers/get-items.handler';
 import { CreateItemHandler } from './application/cqrs/handlers/create-item.handler';
 import { UpdateItemHandler } from './application/cqrs/handlers/update-item.handler';
-import { MongoItemRepository } from './infrastructure/db/mongo-item.repository';
-import { ItemGuardAdapter } from './infrastructure/security/game-guard.adapter';
+import { MongoItemRepository } from './infrastructure/db/mongo.item.repository';
+import { ItemGuardAdapter } from './infrastructure/security/item-guard.adapter';
+import { KafkaItemCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer';
 import { KafkaItemEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
-import { KafkaItemEventBusAdapter } from './infrastructure/messaging/kafka.item-event-bus.adapter';
 import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
 import { FactionsModule } from '../factions/factions.module';
 import { CharactersModule } from '../characters/characters.module';
 import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler';
-import { AddItemModifierHandler, DeleteItemModifierHandler } from './application/cqrs/handlers/item-modifier.handlers';
+import { AddItemModifierHandler } from './application/cqrs/handlers/add-item-modifier.handler';
+import { DeleteItemModifierHandler } from './application/cqrs/handlers/delete-item-modifier.handler';
 import { ItemModifierStore } from './application/services/item-modifier.store';
 
+import { ITEM_CLIENT } from './application/ports/item-client.port';
+import { ITEM_GUARD } from './application/ports/item-guard.port';
+import { ITEM_REPOSITORY } from './application/ports/item-repository.port';
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
     MongooseModule.forFeature([{ name: ItemModel.name, schema: ItemSchema }]),
-    AuthModule,
     SharedModule,
     FactionsModule,
     forwardRef(() => CharactersModule),
   ],
-  controllers: [ItemController, KafkaItemEventConsumer],
+  controllers: [ItemController, KafkaItemEventConsumer, KafkaItemCharacterEventConsumer],
   providers: [
     GetItemHandler,
     GetItemsHandler,
@@ -42,22 +44,18 @@ import { ItemModifierStore } from './application/services/item-modifier.store';
     DeleteItemModifierHandler,
     ItemModifierStore,
     {
-      provide: 'ItemRepository',
+      provide: ITEM_REPOSITORY,
       useClass: MongoItemRepository,
     },
     {
-      provide: 'ItemEventProducer',
-      useClass: KafkaItemEventBusAdapter,
-    },
-    {
-      provide: 'ItemGuardPort',
+      provide: ITEM_GUARD,
       useClass: ItemGuardAdapter,
     },
     {
-      provide: 'ItemClientPort',
+      provide: ITEM_CLIENT,
       useClass: ApiItemClientAdapter,
     },
   ],
-  exports: ['ItemRepository', 'ItemClientPort', 'ItemEventProducer'],
+  exports: [ITEM_REPOSITORY, ITEM_CLIENT],
 })
 export class ItemsModule {}

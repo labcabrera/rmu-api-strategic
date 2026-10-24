@@ -5,6 +5,8 @@ export interface ItemClientPort {
   getItemById(itemId: string): Promise<ItemResponse>;
 }
 
+export const ITEM_CLIENT = Symbol('ItemClientPort');
+
 export interface ItemResponse {
   id: string;
   category: string;

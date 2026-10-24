@@ -4,3 +4,5 @@ import { HealingTables } from '../../domain/value-objects/healing-tables.vo';
 export interface HealingTablesClientPort {
   getHealingTables(): Promise<HealingTables>;
 }
+
+export const HEALING_TABLES_CLIENT = Symbol('HealingTablesClientPort');

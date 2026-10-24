@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterHealthStore } from '../../services/character-health.store';
 import { ResolveConditionCommand } from '../commands/resolve-condition.command';
 

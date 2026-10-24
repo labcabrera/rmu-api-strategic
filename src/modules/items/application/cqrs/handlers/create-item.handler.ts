@@ -1,18 +1,18 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { CreateItemCommand } from '../commands/create-item.command';
-import { Item } from '../../../domain/aggregates/item.aggregate';
-import type { ItemRepository } from '../../ports/item.repository';
-import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
-import type { ItemGuardPort } from '../../ports/item-guard.port';
-import type { ItemClientPort, ItemResponse } from '../../ports/item-client.port';
+import { Item } from '../../../domain/aggregates/item';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
+import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../../ports/item-client.port';
 import { ValidationError } from '../../../../shared/domain/errors/errors';
-import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
-import type { CharacterRepository } from '../../../../characters/application/ports/character.repository';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port';
 import { ItemProps } from '../../../domain/aggregates/item-props';
-import { Faction } from '../../../../factions/domain/aggregates/faction.aggregate';
-import { Character } from '../../../../characters/domain/aggregates/character.aggregate';
+import { Faction } from '../../../../factions/domain/aggregates/faction';
+import { Character } from '../../../../characters/domain/aggregates/character';
 import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 const goldCoin = 'gold-coin';
 
@@ -21,12 +21,12 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
   private readonly logger = new Logger(CreateItemHandler.name);
 
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
-    @Inject('ItemClientPort') private readonly itemClientPort: ItemClientPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    @Inject(ITEM_CLIENT) private readonly itemClientPort: ItemClientPort,
   ) {}
 
   async execute(command: CreateItemCommand): Promise<Item> {
@@ -76,7 +76,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     }
 
     const item = this.createOrUpdateItem(command, itemType, character);
-    //item.getUncommittedEvents().forEach((event) => this.itemEventBus.publish(event));
+    // No item.created event is published (F-strategic-09): await this.events.publishChanges('item', item);
     return item;
   }
 

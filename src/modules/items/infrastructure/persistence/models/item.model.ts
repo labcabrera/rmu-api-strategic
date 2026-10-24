@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import type { AccessType } from '../../../../shared/domain/entities/access-type';
 import { ItemWeapon } from './item-weapon.model';
 import { ItemArmor } from './item-armor.model';
-import { ItemInfo } from './item-info';
+import { ItemInfo } from './item-info.model';
 import { ItemShield } from './item-shield.model';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo';
 

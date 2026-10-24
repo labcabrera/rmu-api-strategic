@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../aggregates/character.aggregate';
+import { Character } from '../aggregates/character';
 import { AttackProcessor } from './character/processors/attack-processor';
 import { DefenseProcessor } from './character/processors/defense-processor';
 import { EquipmentProcessor } from './character/processors/equipment-processor';
@@ -12,7 +12,7 @@ import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
 import { XPProcessor } from './character/processors/xp-processor';
 import { ResistancesProcessor } from './character/processors/resistances-processor';
-import { Item } from '../../../items/domain/aggregates/item.aggregate';
+import { Item } from '../../../items/domain/aggregates/item';
 
 @Injectable()
 export class CharacterProcessorService {

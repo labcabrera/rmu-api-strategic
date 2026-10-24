@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { QueryFilter, Model } from 'mongoose';
-import { RsqlParser } from '../persistence/repositories/rsql-parser';
-import { Page } from '../../domain/entities/page';
+import { RsqlParser } from './rsql-parser';
+import { Page } from '../../application/pagination/page';
 import { NotFoundError } from '../../domain/errors/errors';
 import { BaseAggregateRoot } from '../../domain/aggregates/base-aggregate';
 import { Logger } from '@nestjs/common';

@@ -1,9 +1,9 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
-import type { HealingTablesClientPort } from '../../ports/healing-tables-client.port';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
 import { CharacterHealthStore } from '../../services/character-health.store';
 import { RestCharacterCommand } from '../commands/rest-character.command';
 
@@ -13,7 +13,7 @@ const HOURS_PER_DAY = 24;
 export class RestCharacterHandler implements ICommandHandler<RestCharacterCommand, Character> {
   constructor(
     private readonly store: CharacterHealthStore,
-    @Inject('HealingTablesClient') private readonly healingTablesClient: HealingTablesClientPort,
+    @Inject(HEALING_TABLES_CLIENT) private readonly healingTablesClient: HealingTablesClientPort,
   ) {}
 
   async execute(command: RestCharacterCommand): Promise<Character> {

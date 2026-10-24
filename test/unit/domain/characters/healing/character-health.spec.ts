@@ -1,4 +1,4 @@
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
 import { CharacterUpdatedEvent } from '../../../../../src/modules/characters/domain/events/character.events';
 import { TacticalOutcomeDto } from '../../../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto';
 import { NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';

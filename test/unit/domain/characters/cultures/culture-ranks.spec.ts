@@ -1,3 +1,4 @@
+import { fakeEventPublisher } from '../../../support/fake-event-publisher';
 import { Logger } from '@nestjs/common';
 import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler';
 import {
@@ -10,7 +11,7 @@ import { CultureAssignment, resolveCultureRanks } from '../../../../../src/modul
 import type { Culture } from '../../../../../src/modules/characters/application/ports/culture-client.port';
 import type { SkillResponse } from '../../../../../src/modules/characters/application/ports/skill-client.port';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
 import { STAT_KEYS, StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 
@@ -215,7 +216,7 @@ describe('CreateCharacterHandler', () => {
       },
       { getTraitById: vi.fn() },
       cultureClient,
-      { publish: vi.fn() },
+      fakeEventPublisher().publisher,
       { process: vi.fn() } as unknown as CharacterProcessorService,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>

@@ -1,5 +1,5 @@
 import { ValidationError } from '../../../shared/domain/errors/errors';
-import type { CultureRanks } from '../../domain/aggregates/character.aggregate';
+import type { CultureRanks } from '../../domain/aggregates/character';
 import type { Culture, CultureSkillRank } from '../ports/culture-client.port';
 import type { SkillResponse } from '../ports/skill-client.port';
 

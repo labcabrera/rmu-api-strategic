@@ -1,4 +1,4 @@
-import type { GameRepository } from '../../../games/application/ports/game.repository';
+import type { GameRepository } from '../../../games/application/ports/game-repository.port';
 import { ResolvedGameOptions, resolveOptions } from '../../../games/domain/value-objects/game-options.vo';
 import { ResolvedGamePowerLevel, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo';
 

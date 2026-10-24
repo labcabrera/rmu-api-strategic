@@ -1,20 +1,20 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteCharacterCommand } from '../commands/delete-character.command';
-import type { CharacterRepository } from '../../ports/character.repository';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import { CharacterDeletedEvent } from '../../../domain/events/character.events';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import type { HealingLogRepository } from '../../ports/healing-log.repository';
+import { type HealingLogRepository, HEALING_LOG_REPOSITORY } from '../../ports/healing-log-repository.port';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCommand> {
   private readonly logger = new Logger(DeleteCharacterHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
-    @Inject('HealingLogRepository') private readonly healingLogRepository: HealingLogRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(HEALING_LOG_REPOSITORY) private readonly healingLogRepository: HealingLogRepository,
   ) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
@@ -25,6 +25,6 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
     }
     await this.characterRepository.deleteById(command.characterId);
     await this.healingLogRepository.deleteByCharacterId(command.characterId);
-    this.characterEventBus.publish(new CharacterDeletedEvent(character.getProps()));
+    await this.events.publish('character', new CharacterDeletedEvent(character.getProps()));
   }
 }

@@ -1,5 +1,5 @@
 import { DomainEvent } from '../../../shared/domain/events/domain-event';
-import { Faction } from '../aggregates/faction.aggregate';
+import { Faction } from '../aggregates/faction';
 
 export class FactionCreatedEvent extends DomainEvent<Faction> {
   constructor(data: Faction) {

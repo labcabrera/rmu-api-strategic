@@ -2,6 +2,8 @@ export interface TraitClientPort {
   getTraitById(traitId: string): Promise<TraitResponse>;
 }
 
+export const TRAIT_CLIENT = Symbol('TraitClientPort');
+
 export interface TraitResponse {
   id: string;
   name: string;

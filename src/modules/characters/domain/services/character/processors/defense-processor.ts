@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character.aggregate';
+import { Character } from '../../../aggregates/character';
 import { ValidationError } from '../../../../../shared/domain/errors/errors';
-import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../items/domain/aggregates/item';
 import { CharacterShield } from '../../../value-objects/character-defense.vo';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';

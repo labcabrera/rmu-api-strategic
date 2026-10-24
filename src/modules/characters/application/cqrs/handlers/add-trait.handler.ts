@@ -1,25 +1,25 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character, TraitSpending } from '../../../domain/aggregates/character.aggregate';
+import { Character, TraitSpending } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 import { AddTraitCommand } from '../commands/add-trait.command';
-import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.port';
+import { type TraitClientPort, type TraitResponse, TRAIT_CLIENT } from '../../ports/trait-client.port';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
-import type { GameRepository } from '../../../../games/application/ports/game.repository';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
 import { GameRules, loadGameRules } from '../../services/game-rules';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
   constructor(
     private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('TraitClient') private readonly traitClient: TraitClientPort,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(TRAIT_CLIENT) private readonly traitClient: TraitClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: AddTraitCommand): Promise<Character> {
@@ -47,7 +47,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
+    await this.events.publishChanges('character', character);
     return updated;
   }
 

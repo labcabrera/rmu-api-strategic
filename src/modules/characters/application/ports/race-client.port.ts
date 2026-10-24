@@ -4,6 +4,8 @@ export interface RaceClientPort {
   getRaceById(raceId: string): Promise<Race>;
 }
 
+export const RACE_CLIENT = Symbol('RaceClientPort');
+
 export interface Race {
   id: string;
   name: string;

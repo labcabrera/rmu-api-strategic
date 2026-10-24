@@ -2,11 +2,11 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
 import { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo';
-import type { HealingTablesClientPort } from '../../ports/healing-tables-client.port';
-import type { AbsoluteManeuverResponse, ManeuverClientPort } from '../../ports/maneuver-client.port';
+import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port';
+import { type AbsoluteManeuverResponse, type ManeuverClientPort, MANEUVER_CLIENT } from '../../ports/maneuver-client.port';
 import { CharacterHealthStore } from '../../services/character-health.store';
 import { TreatInjuryCommand } from '../commands/treat-injury.command';
 
@@ -27,8 +27,8 @@ interface ResolvedHealer {
 export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, Character> {
   constructor(
     private readonly store: CharacterHealthStore,
-    @Inject('HealingTablesClient') private readonly healingTablesClient: HealingTablesClientPort,
-    @Inject('ManeuverClient') private readonly maneuverClient: ManeuverClientPort,
+    @Inject(HEALING_TABLES_CLIENT) private readonly healingTablesClient: HealingTablesClientPort,
+    @Inject(MANEUVER_CLIENT) private readonly maneuverClient: ManeuverClientPort,
   ) {}
 
   async execute(command: TreatInjuryCommand): Promise<Character> {

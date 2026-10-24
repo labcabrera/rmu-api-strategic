@@ -1,21 +1,21 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from '../../../domain/aggregates/game.aggregate';
+import { Game } from '../../../domain/aggregates/game';
 import { CreateGameCommand } from '../commands/create-game.command';
-import type { GameEventBusPort } from '../../ports/game-event-bus.port';
-import type { GameRepository } from '../../ports/game.repository';
-import type { RealmClientPort } from '../../ports/realm-client.port';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
+import { type RealmClientPort, REALM_CLIENT } from '../../ports/realm-client.port';
 import { ValidationError } from '../../../../shared/domain/errors/errors';
-import type { GameGuardPort } from '../../ports/game-guard.port';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port';
 import { CreateGameProps } from '../../../domain/aggregates/game-props';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('RealmClient') private readonly realmClient: RealmClientPort,
-    @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
-    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(REALM_CLIENT) private readonly realmClient: RealmClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
@@ -40,7 +40,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
 
     const game = Game.create(props);
     const savedGame = await this.gameRepository.save(game);
-    game.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
+    await this.events.publishChanges('game', game);
     return savedGame;
   }
 }

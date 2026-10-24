@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { TokenService } from '../../../auth/token.service';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client';
+import { TokenService } from '../../../shared/infrastructure/security/token.service';
 import { BadGatewayError } from '../../../shared/domain/errors/errors';
 import { HealingTablesClientPort } from '../../application/ports/healing-tables-client.port';
 import { HealingTables } from '../../domain/value-objects/healing-tables.vo';
@@ -18,6 +18,7 @@ export class ApiHealingTablesClientAdapter implements HealingTablesClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
+    private readonly httpClient: HttpClient,
   ) {}
 
   async getHealingTables(): Promise<HealingTables> {
@@ -26,8 +27,8 @@ export class ApiHealingTablesClientAdapter implements HealingTablesClientPort {
     const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/healing-tables`;
     try {
       const token = await this.tokenService.getToken();
-      const response = await axios.get<HealingTables>(uri, { headers: { Authorization: `Bearer ${token}` } });
-      this.cached = response.data;
+      const data = await this.httpClient.get<HealingTables>(uri, { token });
+      this.cached = data;
       this.expiresAt = now + CACHE_TTL_MS;
       return this.cached;
     } catch (e) {

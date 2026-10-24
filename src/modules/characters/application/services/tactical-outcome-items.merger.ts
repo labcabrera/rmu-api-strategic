@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { ItemEventBusPort } from '../../../items/application/ports/item-event-bus.port';
-import type { ItemRepository } from '../../../items/application/ports/item.repository';
-import { Item } from '../../../items/domain/aggregates/item.aggregate';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../items/application/ports/item-repository.port';
+import { Item } from '../../../items/domain/aggregates/item';
 import type { TacticalItemOutcome } from '../../domain/value-objects/tactical-game-outcome.vo';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
 
 export interface TacticalItemsSummary {
   itemsDamaged: string[];
@@ -19,8 +19,8 @@ export class TacticalOutcomeItemsMerger {
   private readonly logger = new Logger(TacticalOutcomeItemsMerger.name);
 
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async merge(characterId: string, outcomes: TacticalItemOutcome[]): Promise<{ items: Item[]; summary: TacticalItemsSummary | undefined }> {
@@ -40,8 +40,7 @@ export class TacticalOutcomeItemsMerger {
       const added = item.addModifiers(outcome.modifiers);
       if (added.length > 0) {
         await this.itemRepository.update(item.id, item);
-        item.getUncommittedEvents().forEach(event => this.itemEventBus.publish(event));
-        item.uncommit();
+        await this.events.publishChanges('item', item);
       }
       const condition = item.getCondition();
       if (condition.broken) summary.itemsBroken.push(item.id);

@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { TransferGoldCommand } from '../commands/transfer-gold.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
+import { type FactionRepository, FACTION_REPOSITORY } from '../../../../factions/application/ports/faction-repository.port';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
-import { Item } from '../../../../items/domain/aggregates/item.aggregate';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { Item } from '../../../../items/domain/aggregates/item';
 import { CreateItemCommand } from '../../../../items/application/cqrs/commands/create-item.command';
 
 const GOLD_COIN = 'gold-coin';
@@ -16,9 +16,9 @@ const GOLD_COIN = 'gold-coin';
 export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand, Character> {
   constructor(
     private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     private readonly commandBus: CommandBus,
   ) {}
 
