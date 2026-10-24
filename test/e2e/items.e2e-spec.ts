@@ -44,8 +44,19 @@ describe('items (e2e)', () => {
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({ gameId, factionId, itemTypeId: 'rope', name: 'rope', category: 'equipment', carried: false });
       expect((await as('owner').get(`/v1/factions/${factionId}`)).body).toMatchObject({ management: { availableGold: 8 } });
-      // F-strategic-09: no item.created event (nor faction.updated for the gold)
-      expect(e2e.events.topics()).toEqual([]);
+      // F-strategic-09: the gold charged to the faction and the new item
+      expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.faction.updated.v1', 'internal.rmu-strategic.item.created.v1']);
+      expect(e2e.events.published[1].event).toMatchObject({ data: { id: (response.body as { id: string }).id, itemTypeId: 'rope' } });
+    });
+
+    it('publishes item.updated when a stackable item of the character grows, and charges the gold of the character first', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      await createItem(e2e, { gameId, characterId: character.id, itemTypeId: 'gold-coin', amount: 1 });
+      e2e.events.clear();
+      const more = await as('owner').post('/v1/items', { gameId, characterId: character.id, itemTypeId: 'gold-coin', amount: 2 });
+      expect(more.status).toBe(201);
+      expect(more.body).toMatchObject({ amount: 3 });
+      expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.item.updated.v1']);
     });
 
     it('rejects an item the faction cannot afford, an unknown item type and an invalid body with 400', async () => {
@@ -140,6 +151,7 @@ describe('items (e2e)', () => {
   describe('modifiers', () => {
     it('adds and removes a modifier, publishing item.updated, with the permissions of an update', async () => {
       const item = await createItem(e2e, { gameId, factionId });
+      e2e.events.clear();
       const modifier = { type: 'breakage', value: -20, appliesTo: 'all', description: 'Dented' };
       expect((await as('other').post(`/v1/items/${item.id}/modifiers`, modifier)).status).toBe(403);
       expect((await as('owner').post(`/v1/items/${item.id}/modifiers`, { ...modifier, type: 'unknown' })).status).toBe(400);

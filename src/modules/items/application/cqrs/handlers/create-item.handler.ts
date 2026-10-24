@@ -78,6 +78,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     if (faction && factionCost !== 0) {
       faction.addGold(-factionCost);
       await this.factionRepository.update(faction);
+      await this.events.publishChanges('faction', faction);
     }
 
     if (character && characterGoldItem && characterCost !== 0) {
@@ -85,12 +86,12 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
       if (characterGoldItem) {
         characterGoldItem.addAmount(-characterCost);
         await this.itemRepository.update(characterGoldItem);
+        await this.events.publishChanges('item', characterGoldItem);
       }
     }
 
-    const item = this.createOrUpdateItem(command, itemType, character);
-    // No item.created event is published (F-strategic-09): await this.events.publishChanges('item', item);
-    return item;
+    // item.created, or item.updated for a stackable item the character already had (F-strategic-09)
+    return this.createOrUpdateItem(command, itemType, character);
   }
 
   private validateCommand(command: CreateItemCommand): void {
@@ -123,7 +124,9 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
 
     if (existingItem) {
       existingItem.addAmount(command.amount || 1);
-      return await this.itemRepository.update(existingItem);
+      const updated = await this.itemRepository.update(existingItem);
+      await this.events.publishChanges('item', existingItem);
+      return updated;
     } else {
       const itemProps: Omit<ItemProps, 'id' | 'createdAt' | 'updatedAt'> = {
         gameId: command.gameId,
@@ -149,7 +152,9 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
         owner: command.userId,
       };
       const item = Item.create(itemProps);
-      return await this.itemRepository.save(item);
+      const saved = await this.itemRepository.save(item);
+      await this.events.publishChanges('item', item);
+      return saved;
     }
   }
 

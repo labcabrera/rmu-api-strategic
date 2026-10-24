@@ -1,3 +1,4 @@
+import { CharacterWriter } from './application/services/character-writer.service.js';
 import { CharacterAccess } from './application/services/character-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -141,6 +142,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateTemporaryStatHandler,
     CharacterHealthStore,
     CharacterAccess,
+    CharacterWriter,
     ApplyTacticalOutcomeHandler,
     TacticalOutcomeItemsMerger,
     AddInjuryHandler,

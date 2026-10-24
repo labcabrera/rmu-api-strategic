@@ -1,3 +1,5 @@
+import type { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
+import type { CharacterWriter } from '../../../../../src/modules/characters/application/services/character-writer.service.js';
 import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { ResistancesProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/resistances-processor.js';
 import { HPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/hp-processor.js';
@@ -74,6 +76,7 @@ describe('Knacks by power level', () => {
         findById: vi.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel } }),
       } as unknown as GameRepository,
       allowAllCharacterAccess,
+      { save: (c: Character) => Promise.resolve(c) } as unknown as CharacterWriter,
     );
     const knack = (skillId: string) =>
       handler.execute(new SetUpProfessionalSkillCommand('character-001', skillId, null, ['knack'], 'user-001', []));
