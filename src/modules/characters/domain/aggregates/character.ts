@@ -32,21 +32,21 @@ import {
   emptyPayment,
 } from '../services/dev-points/dev-points-spending.service.js';
 import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules.js';
-import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { ConflictError, NotFoundError } from '../../../shared/domain/errors/errors.js';
 import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
 import type { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo.js';
 import type { HealthSummary } from '../value-objects/health-summary.vo.js';
 import {
-  type BleedingControl,
   type Injury,
   type InjuryPermanent,
   type InjuryRecovery,
   type InjuryTreatment,
   PENALTY_STATUSES,
-  type TreatmentProcedure,
 } from '../value-objects/injury.vo.js';
 import type { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo.js';
 import { HealingCalculator, type InjuryProgress } from '../services/healing/healing-calculator.js';
+import { InjuryTreatmentRules } from '../services/healing/injury-treatment-rules.js';
+import type { HealingTables } from '../value-objects/healing-tables.vo.js';
 import { type OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger.js';
 
 export const UNRANKED_SKILL_BONUS = -20;
@@ -106,14 +106,6 @@ export interface RestResult {
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
-
-/** Procedures that stop the bleeding of the injury when the treatment succeeds. */
-const BLEEDING_CONTROL_BY_PROCEDURE: Partial<Record<TreatmentProcedure, BleedingControl>> = {
-  stitches: 'stitches',
-  tourniquet: 'tourniquet',
-  cauterize: 'cauterized',
-  magic: 'magic',
-};
 
 export class Character extends BaseAggregateRoot<CharacterProps> {
   public injuries: Injury[] = [];
@@ -689,24 +681,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
   }
 
-  /** Stores a treatment. An absolute failure worsens the penalty (also its starting value for the linear reduction). */
-  addInjuryTreatment(injuryId: string, treatment: InjuryTreatment, penaltyWorsening = 0): Injury {
+  /**
+   * Stores a treatment and applies it to the injury (spec 022): see InjuryTreatmentRules. An absolute failure worsens
+   * the penalty and its recovery base by `penaltyWorsening`.
+   */
+  addInjuryTreatment(injuryId: string, treatment: InjuryTreatment, tables: HealingTables, penaltyWorsening = 0): Injury {
     const injury = this.findInjury(injuryId);
-    this.assertTreatable(injury);
-    const worsening = Math.abs(penaltyWorsening || 0);
-    const updated: Injury = {
-      ...injury,
-      treatments: [...injury.treatments, treatment],
-      penalty: injury.penalty - worsening,
-      initialPenalty: injury.initialPenalty - worsening,
-      updatedAt: treatment.at,
-    };
-    const control = BLEEDING_CONTROL_BY_PROCEDURE[treatment.procedure];
-    const succeeded = treatment.result === 'success' || treatment.result === 'absolute-success';
-    if (control && succeeded && updated.bleeding) {
-      updated.bleeding = 0;
-      updated.bleedingControl = control;
-    }
+    InjuryTreatmentRules.validate(treatment.procedure, injury, tables);
+    const worsening = treatment.procedure === 'cauterize' ? 0 : Math.abs(penaltyWorsening || 0);
+    const updated = InjuryTreatmentRules.apply(injury, treatment, worsening, tables);
     this.replaceInjury(updated);
     const resolved = this.resolveUnconsciousIfConscious(treatment.at);
     this.recordHealing(
@@ -718,7 +701,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         result: treatment.result,
         healingType: treatment.healingType,
         recoveryModifier: treatment.recoveryModifier,
+        difficulty: treatment.difficulty,
         penaltyWorsening: worsening,
+        penalty: updated.penalty,
+        bleeding: updated.bleeding,
+        severity: updated.severity,
+        ...(treatment.heatCritical ? { heatCritical: treatment.heatCritical } : {}),
         resolvedConditions: resolved,
       },
       { injuryId, healerName: treatment.healer.name },
@@ -732,6 +720,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.assertTreatable(injury);
     if (injury.status === 'permanent') {
       throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
+    }
+    if (HealingCalculator.isRecoveryRolled(injury)) {
+      throw new ConflictError(`Injury ${injuryId} already has a recovery roll for its latest treatment`, 'err-injury-recovery-rolled');
     }
     const updated: Injury = { ...injury, recovery, status: 'recovering', permanent: undefined, updatedAt: recovery.startedAt };
     this.replaceInjury(updated);
@@ -752,6 +743,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (injury.recovery.remainingDays <= 0 && permanent.penalty < 0) {
       updated.status = 'permanent';
       updated.penalty = permanent.penalty;
+    } else if (injury.recovery.remainingDays <= 0 && injury.status === 'permanent') {
+      // An untreated injury made permanent at its end, with a late roll that leaves nothing
+      updated.status = 'healed';
+      updated.penalty = 0;
+      updated.healedAt = now;
     }
     this.replaceInjury(updated);
     this.recordHealing('permanent-roll', { ...summary, penalty: permanent.penalty, roll: permanent.roll }, { injuryId });

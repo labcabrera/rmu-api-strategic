@@ -97,8 +97,7 @@ export class HealingCalculator {
 
   /** Recovery roll modifiers: Body Development ranks + Co bonus + type of healing - |penalty|. */
   recoveryModifiers(patient: RecoveryPatient, injury: Injury): RecoveryModifiers {
-    const latest = injury.treatments.length > 0 ? injury.treatments[injury.treatments.length - 1] : undefined;
-    const { healingType, modifier } = this.healingTypeModifier(latest);
+    const { healingType, modifier } = this.healingTypeModifier(HealingCalculator.latestTreatment(injury));
     const penalty = Math.abs(injury.penalty || 0);
     return {
       bodyDevelopmentRanks: patient.bodyDevelopmentRanks,
@@ -138,11 +137,43 @@ export class HealingCalculator {
     const total = roll + modifiers;
     const baseDays = this.baseDays(injury, total);
     const totalDays = HealingCalculator.totalDays(baseDays, multiplier);
-    return { roll, modifiers, total, baseDays, multiplier, totalDays, remainingDays: totalDays, startedAt: now };
+    const latest = HealingCalculator.latestTreatment(injury);
+    return {
+      roll,
+      modifiers,
+      total,
+      baseDays,
+      multiplier,
+      totalDays,
+      remainingDays: totalDays,
+      startedAt: now,
+      ...(latest ? { treatmentId: latest.id } : {}),
+      untreated: HealingCalculator.isUntreated(injury),
+    };
   }
 
-  /** Medium injuries check even doubles of the unmodified roll, severe injuries any doubles. */
-  static isPermanentCheckRequired(severity: InjurySeverity, roll: number): boolean {
+  static latestTreatment(injury: Pick<Injury, 'treatments'>): InjuryTreatment | undefined {
+    return injury.treatments.length > 0 ? injury.treatments[injury.treatments.length - 1] : undefined;
+  }
+
+  /** Without care: no treatment, or the latest one failed (its type of healing is 'none'). */
+  static isUntreated(injury: Pick<Injury, 'treatments'>): boolean {
+    const latest = HealingCalculator.latestTreatment(injury);
+    return !latest || latest.healingType === 'none';
+  }
+
+  /** One recovery roll per treatment (spec 022, D10): a new roll needs a treatment after the last one. */
+  static isRecoveryRolled(injury: Injury): boolean {
+    if (!injury.recovery) return false;
+    return injury.recovery.treatmentId === HealingCalculator.latestTreatment(injury)?.id;
+  }
+
+  /**
+   * Medium injuries check even doubles of the unmodified roll, severe injuries any doubles. An untreated injury always
+   * becomes permanent, light ones too (spec 022, D3): its permanent roll is always required.
+   */
+  static isPermanentCheckRequired(severity: InjurySeverity, roll: number, untreated = false): boolean {
+    if (untreated) return true;
     if (severity === 'medium') return MEDIUM_DOUBLES.includes(roll);
     if (severity === 'severe') return SEVERE_DOUBLES.includes(roll);
     return false;
@@ -169,20 +200,24 @@ export class HealingCalculator {
     return Math.max(0, days) * (fullRest ? this.tables.fullRestDayMultiplier : 1);
   }
 
-  /** Linear reduction, more on the first days: penalty after `elapsed` of `total` days. */
+  /**
+   * Daily reduction front-loaded (§13.1 Recovery): with a magnitude `m` over `t` days, each day takes `floor(m / t)`
+   * and the first `m mod t` days take one more. Penalty after `t - remaining` elapsed days.
+   */
   static penaltyAfter(initialPenalty: number, totalDays: number, remainingDays: number): number {
     const magnitude = Math.abs(initialPenalty);
     if (totalDays <= 0 || remainingDays <= 0) return 0;
-    const elapsed = Math.max(0, totalDays - remainingDays);
-    return negative(Math.max(0, magnitude - ceil((magnitude * elapsed) / totalDays)));
+    const days = Math.round(totalDays);
+    const elapsed = Math.min(days, Math.max(0, Math.floor(totalDays - remainingDays)));
+    const daily = Math.floor(magnitude / days);
+    const extra = magnitude % days;
+    return negative(Math.max(0, magnitude - (elapsed * daily + Math.min(elapsed, extra))));
   }
 
-  /** An injury improves with time only after the recovery roll; untreated medium and severe injuries do not. */
+  /** An injury improves with time after its recovery roll, untreated ones too (at the 'none' modifier, spec 022 D3). */
   static canImprove(injury: Injury): boolean {
     if (!injury.recovery || injury.recovery.remainingDays <= 0) return false;
-    if (injury.status !== 'active' && injury.status !== 'recovering') return false;
-    if (injury.treatments.length === 0 && injury.severity !== 'light') return false;
-    return true;
+    return injury.status === 'active' || injury.status === 'recovering';
   }
 
   /** Discounts days from the injury counter. At 0 the injury heals or becomes permanent. */
@@ -198,7 +233,12 @@ export class HealingCalculator {
       return { injury: next, days: discounted, finished: false };
     }
     next.bleeding = injury.bleeding ? 0 : injury.bleeding;
-    if (injury.permanent && injury.permanent.penalty < 0) {
+    // Untreated: permanent with the penalty of its permanent roll, or all of it when that roll was not made
+    if (recovery.untreated && !injury.permanent && injury.initialPenalty < 0) {
+      next.status = 'permanent';
+      next.penalty = negative(Math.abs(injury.initialPenalty));
+      next.permanent = { penalty: next.penalty };
+    } else if (injury.permanent && injury.permanent.penalty < 0) {
       next.status = 'permanent';
       next.penalty = injury.permanent.penalty;
     } else {

@@ -31,6 +31,38 @@ const state = (props: Partial<CharacterHealthState> = {}): CharacterHealthState 
 });
 
 describe('TacticalOutcomeMerger', () => {
+  it('takes the worsened recovery base of an absolute failure in the game (D1)', () => {
+    const current = state({ injuries: [injury({ id: 'a', penalty: -10, initialPenalty: -10, severity: 'light' })] });
+    const worsened = injury({
+      id: 'a',
+      penalty: -20,
+      initialPenalty: -20,
+      severity: 'medium',
+      treatments: [treatment({ id: 't-1', result: 'absolute-failure', healingType: 'none', context: 'tactical' })],
+    });
+    const merged = TacticalOutcomeMerger.merge(current, outcome({ injuries: [worsened] }), 30, NOW).state.injuries[0];
+    expect(merged).toMatchObject({ penalty: -20, initialPenalty: -20, severity: 'medium' });
+
+    // A tactical version that only worsened the penalty still moves the base, so the recovery keeps it
+    const legacy = TacticalOutcomeMerger.merge(current, outcome({ injuries: [{ ...worsened, initialPenalty: -10 }] }), 30, NOW);
+    expect(legacy.state.injuries[0].initialPenalty).toBe(-20);
+    const added = TacticalOutcomeMerger.merge(
+      state(),
+      outcome({ injuries: [injury({ id: 'b', penalty: -15, initialPenalty: -5 })] }),
+      30,
+      NOW,
+    );
+    expect(added.state.injuries[0].initialPenalty).toBe(-15);
+    // A recovering injury keeps its larger base
+    const recovering = TacticalOutcomeMerger.merge(
+      state(),
+      outcome({ injuries: [injury({ id: 'c', penalty: -4, initialPenalty: -12 })] }),
+      30,
+      NOW,
+    );
+    expect(recovering.state.injuries[0].initialPenalty).toBe(-12);
+  });
+
   it('replaces injuries by uuid concatenating the treatments, adds new ones and keeps the rest', () => {
     const current = state({
       injuries: [

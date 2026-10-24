@@ -19,6 +19,10 @@ export class RollInjuryRecoveryHandler implements ICommandHandler<RollInjuryReco
     @Inject(HEALING_TABLES_CLIENT) private readonly healingTablesClient: HealingTablesClientPort,
   ) {}
 
+  /**
+   * One recovery roll per treatment (spec 022, D10). An untreated injury rolls at the 'none' modifier and always needs
+   * its permanent roll (D3).
+   */
   async execute(command: RollInjuryRecoveryCommand): Promise<InjuryRecoveryResult> {
     const character = await this.store.load(command.characterId, command.userId, command.roles);
     if (character.status === 'dead') throw new ValidationError(`Character ${character.id} is dead`, 'err-character-dead');
@@ -33,7 +37,7 @@ export class RollInjuryRecoveryHandler implements ICommandHandler<RollInjuryReco
       character.traits.map(t => t.traitId),
     );
     const recovery = calculator.recovery(injury, command.roll, modifiers.total, multiplier, new Date().toISOString());
-    const permanentCheckRequired = HealingCalculator.isPermanentCheckRequired(injury.severity, command.roll);
+    const permanentCheckRequired = HealingCalculator.isPermanentCheckRequired(injury.severity, command.roll, recovery.untreated);
     character.setInjuryRecovery(injury.id, recovery, permanentCheckRequired);
     return { character: await this.store.save(character), permanentCheckRequired };
   }

@@ -32,9 +32,20 @@ export interface OutcomeMergeResult {
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 /**
+ * The recovery base of an injury is never below its current penalty: an absolute failure in the game worsens both
+ * (spec 022, D1), and a tactical version that only worsened the penalty still gets it into the recovery.
+ */
+const withRecoveryBase = (injury: Injury): Injury => {
+  const penalty = Math.min(0, injury.penalty || 0);
+  const initialPenalty = Math.min(penalty, injury.initialPenalty ?? penalty);
+  return initialPenalty === injury.initialPenalty ? injury : { ...injury, initialPenalty };
+};
+
+/**
  * Merges the outcome of a tactical game into the strategic health of a character (spec 013, section 4):
  * injuries by uuid (treatments concatenated), healed injuries, hits as a difference and conditions from the fate.
- * Injuries of the character that the outcome does not mention are kept as they are.
+ * Injuries of the character that the outcome does not mention are kept as they are. The penalty, its recovery base
+ * (`initialPenalty`) and the severity come from tactical, which updates them on an absolute failure (spec 022, D1).
  */
 export class TacticalOutcomeMerger {
   static merge(current: CharacterHealthState, outcome: TacticalCharacterOutcome, deathThreshold: number, now: string): OutcomeMergeResult {
@@ -44,14 +55,14 @@ export class TacticalOutcomeMerger {
     for (const incoming of outcome.injuries || []) {
       const index = injuries.findIndex(i => i.id === incoming.id);
       if (index < 0) {
-        injuries.push({ ...incoming, treatments: [...(incoming.treatments || [])] });
+        injuries.push(withRecoveryBase({ ...incoming, treatments: [...(incoming.treatments || [])] }));
         added.push(incoming.id);
         continue;
       }
       const existing = injuries[index];
       const known = new Set(existing.treatments.map(t => t.id));
       const treatments = [...existing.treatments, ...(incoming.treatments || []).filter(t => !known.has(t.id))];
-      injuries[index] = { ...incoming, treatments, createdAt: existing.createdAt || incoming.createdAt, updatedAt: now };
+      injuries[index] = withRecoveryBase({ ...incoming, treatments, createdAt: existing.createdAt || incoming.createdAt, updatedAt: now });
       updated.push(incoming.id);
     }
     const healed: string[] = [];

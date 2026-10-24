@@ -59,7 +59,12 @@ export interface InjuryHealer {
   name: string;
   external?: boolean;
   bonus: number;
+  /** Own penalties of a healer character (injuries), already added to the total (spec 022, D10) */
+  penalty?: number;
 }
+
+/** Where the difficulty of a treatment comes from: the core table (or its default) or the game master. */
+export type TreatmentDifficultySource = 'table' | 'override';
 
 export interface InjuryTreatment {
   id: string;
@@ -67,6 +72,8 @@ export interface InjuryTreatment {
   healer: InjuryHealer;
   /** Difficulty modifier applied */
   difficulty: number;
+  /** Spec 022: missing in treatments before it and in the tactical ones */
+  difficultySource?: TreatmentDifficultySource;
   roll: number;
   total: number;
   result: TreatmentResult;
@@ -76,6 +83,8 @@ export interface InjuryTreatment {
   at: string;
   context: TreatmentContext;
   tacticalGameId?: string;
+  /** Severity of the heat critical of a cauterization, for the game master to resolve (Table 13-1c) */
+  heatCritical?: string;
 }
 
 export interface InjuryRecovery {
@@ -90,6 +99,10 @@ export interface InjuryRecovery {
   totalDays: number;
   remainingDays: number;
   startedAt: string;
+  /** Treatment the roll used (none when untreated): one recovery roll per treatment (spec 022, D10) */
+  treatmentId?: string;
+  /** Rolled without care (no treatment or a failed one): it becomes permanent when it ends (spec 022, D3) */
+  untreated?: boolean;
 }
 
 export interface InjuryPermanent {
