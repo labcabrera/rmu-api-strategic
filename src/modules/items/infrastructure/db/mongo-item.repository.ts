@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
-import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
+import { RsqlParser } from '../../../shared/infrastructure/persistence/repositories/rsql-parser';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
 import { ItemDocument, ItemModel } from '../persistence/models/item.model';
 import { Item } from '../../domain/aggregates/item.aggregate';
 import { ItemRepository } from '../../application/ports/item.repository';

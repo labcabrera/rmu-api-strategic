@@ -1,7 +1,7 @@
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { CharacterUpdatedEvent } from 'src/modules/characters/domain/events/character.events';
-import { TacticalOutcomeDto } from 'src/modules/characters/interfaces/http/dto/tactical-outcome.dto';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { CharacterUpdatedEvent } from '../../../../../src/modules/characters/domain/events/character.events';
+import { TacticalOutcomeDto } from '../../../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto';
+import { NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { buildCharacter, skill } from '../traits/character.fixture';
 import { injury, treatment } from './healing.fixture';
 
@@ -89,7 +89,7 @@ describe('Character health', () => {
       },
     });
 
-    const { outcome: applied } = TacticalOutcomeDto.toCommand('character-001', dto as TacticalOutcomeDto, 'user', []);
+    const { outcome: applied } = TacticalOutcomeDto.toCommand('character-001', dto, 'user', []);
 
     expect(applied.hpLog).toEqual([{ id: 'h1', round: 1, amount: -10, kind: 'attack', attackerId: 'orc', at: NOW }]);
     expect(applied.hpBySource).toEqual({ byKind: { attack: -10 }, byAttacker: [{ attackerId: 'orc', amount: -10 }] });

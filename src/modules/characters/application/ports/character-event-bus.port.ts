@@ -1,4 +1,4 @@
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
+import { DomainEvent } from '../../../shared/domain/events/domain-event';
 import { CharacterProps } from '../../domain/aggregates/character-props';
 
 export interface CharacterEventBusPort {

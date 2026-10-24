@@ -14,11 +14,11 @@ import { CharacterAttackDto } from './character-attack.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 import { CharacterResistanceDto } from './character-resistance.dto';
 import { CharacterTraitDto } from './character-trait.dto';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
-import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
-import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
-import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
+import { Character } from '../../../domain/aggregates/character.aggregate';
+import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
+import { STAT_KEYS, StatKey } from '../../../domain/value-objects/character-stat.vo';
+import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo';
 import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto';
 
 export class CharacterDto {
@@ -79,7 +79,7 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character talents and flaws', type: [CharacterTraitDto] })
   traits: CharacterTraitDto[];
 
-  @ApiProperty({ description: 'Character status', enum: ['partially_created', 'created', 'dead'], example: 'created' })
+  @ApiProperty({ type: String, description: 'Character status', enum: ['partially_created', 'created', 'dead'], example: 'created' })
   status: CharacterStatus;
 
   @ApiProperty({ description: 'Injuries, including the healed ones', type: [InjuryDto] })
@@ -94,7 +94,7 @@ export class CharacterDto {
   @ApiProperty({ description: 'Tactical games whose outcome has been applied', type: [String] })
   appliedTacticalGames: string[];
 
-  @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
+  @ApiProperty({ type: String, description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
   @ApiProperty({ description: 'Character image URL', example: 'images/foo/bar.png', required: false })

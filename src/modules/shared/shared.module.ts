@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
-import { AuthModule } from 'src/modules/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 import { KafkaProducerService } from './infrastructure/messaging/kafka-producer.service';
 import { HealthController } from './interfaces/http/health.controller';
 import { TerminusModule } from '@nestjs/terminus';

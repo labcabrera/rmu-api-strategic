@@ -4,22 +4,22 @@ import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { TransferGoldCommand } from '../commands/transfer-gold.command';
 import type { CharacterRepository } from '../../ports/character.repository';
-import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { CreateItemCommand } from 'src/modules/items/application/cqrs/commands/create-item.command';
+import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
+import { Item } from '../../../../items/domain/aggregates/item.aggregate';
+import { CreateItemCommand } from '../../../../items/application/cqrs/commands/create-item.command';
 
 const GOLD_COIN = 'gold-coin';
 
 @CommandHandler(TransferGoldCommand)
 export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('FactionRepository') private readonly factionRepository: FactionRepository,
-    @Inject() private readonly commandBus: CommandBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute(command: TransferGoldCommand): Promise<Character> {

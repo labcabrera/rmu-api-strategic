@@ -1,5 +1,5 @@
-import { HealingTables } from 'src/modules/characters/domain/value-objects/healing-tables.vo';
-import { Injury, InjuryTreatment } from 'src/modules/characters/domain/value-objects/injury.vo';
+import { HealingTables } from '../../../../../src/modules/characters/domain/value-objects/healing-tables.vo';
+import { Injury, InjuryTreatment } from '../../../../../src/modules/characters/domain/value-objects/injury.vo';
 
 const days = (base: number) => ({
   bone: base,

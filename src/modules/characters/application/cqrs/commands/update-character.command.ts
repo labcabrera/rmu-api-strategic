@@ -1,4 +1,4 @@
-import { CharacterRoleplayInfo } from 'src/modules/characters/infrastructure/persistence/models/character-childs.model';
+import { CharacterRoleplayInfo } from '../../../infrastructure/persistence/models/character-childs.model';
 
 export class UpdateCharacterCommand {
   constructor(

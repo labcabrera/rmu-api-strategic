@@ -1,7 +1,7 @@
 import { ForbiddenError } from '../../domain/errors/errors';
 import { RMU_ADMIN, RMU_USER } from '../../domain/entities/user-roles';
 import { RbacEntity } from '../../domain/entities/has-owner';
-import { FilterQuery } from 'mongoose';
+import type { QueryFilter } from 'mongoose';
 
 export abstract class BaseEntityGuard<E extends RbacEntity> implements BaseEntityGuard<E> {
   checkRead(entity: E, userId: string, roles: string[]) {
@@ -29,7 +29,7 @@ export abstract class BaseEntityGuard<E extends RbacEntity> implements BaseEntit
     throw new ForbiddenError('You do not have permission to delete this entity');
   }
 
-  buildQueryPredicate(userId: string, roles: string[]): FilterQuery<any> {
+  buildQueryPredicate(userId: string, roles: string[]): QueryFilter<any> {
     if (roles.includes(RMU_ADMIN)) return {};
     return { $or: [{ accessType: 'public' }, { owner: userId }] };
   }

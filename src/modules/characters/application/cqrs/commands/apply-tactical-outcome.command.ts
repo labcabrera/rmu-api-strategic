@@ -1,5 +1,5 @@
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
-import { TacticalCharacterOutcome } from 'src/modules/characters/domain/value-objects/tactical-game-outcome.vo';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import { TacticalCharacterOutcome } from '../../../domain/value-objects/tactical-game-outcome.vo';
 
 export class ApplyTacticalOutcomeCommand extends AuthenticatedCommand {
   constructor(

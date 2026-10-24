@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../shared/domain/entities/page';
 import { HealingLogRepository } from '../../application/ports/healing-log.repository';
 import { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo';
 import { CharacterHealingLogDocument, CharacterHealingLogModel } from '../persistence/models/character-healing-log.model';

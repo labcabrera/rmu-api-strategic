@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsIn } from 'class-validator';
-import { SetUpProfessionalSkillCommand } from 'src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import { SetUpProfessionalSkillCommand } from '../../../application/cqrs/commands/setup-professional-skill.command';
+import { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo';
 
 export class UpdateProfessionalSkillDto {
   @ApiProperty({

@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import type { GameStatus } from 'src/modules/games/domain/value-objects/game-status.vo';
+import type { GameStatus } from '../../../domain/value-objects/game-status.vo';
 import { GameOptions } from './game-options.model';
 import { GamePowerLevel } from './game-power-level.model';
-import type { AccessType } from 'src/modules/shared/domain/entities/access-type';
+import type { AccessType } from '../../../../shared/domain/entities/access-type';
 
 export type GameDocument = GameModel & Document;
 
@@ -21,7 +21,7 @@ export class GameModel {
   @Prop({ required: true })
   realmName: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   status: GameStatus;
 
   @Prop({ required: true })

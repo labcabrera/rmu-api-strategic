@@ -1,9 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  CharacterTrait,
-  type CharacterTraitSource,
-  type TraitPayment,
-} from 'src/modules/characters/domain/value-objects/character-trait.vo';
+import { CharacterTrait, type CharacterTraitSource, type TraitPayment } from '../../../domain/value-objects/character-trait.vo';
 
 export class CharacterTraitDto {
   traitId: string;
@@ -14,6 +10,7 @@ export class CharacterTraitDto {
   specialization: string | undefined;
 
   @ApiProperty({
+    type: String,
     description: 'Origin of the trait: chosen for the character or copied from the race (race traits cannot be deleted)',
     enum: ['character', 'race'],
     example: 'character',

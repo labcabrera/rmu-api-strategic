@@ -1,4 +1,4 @@
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../shared/domain/entities/page';
 import { HealingLogEntry } from '../../domain/value-objects/healing-log-entry.vo';
 
 /** Healing log of the characters, in its own collection because it grows with every rest and treatment. */

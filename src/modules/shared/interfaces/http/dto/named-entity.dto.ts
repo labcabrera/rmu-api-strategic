@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { NamedEntity } from '../../../domain/entities/named-entity';
 
 export class NamedEntityDto {
   @ApiProperty({ description: 'Entity identifier', minimum: 0, example: 'foo-entity-001', type: String })

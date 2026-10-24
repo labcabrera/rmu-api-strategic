@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Page } from 'src/modules/shared/domain/entities/page';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { Page } from '../../../../shared/domain/entities/page';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import { HealingLogEntry } from '../../../domain/value-objects/healing-log-entry.vo';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { HealingLogRepository } from '../../ports/healing-log.repository';

@@ -1,13 +1,14 @@
+import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { EquipItemCommand } from '../commands/equip-item-command';
 import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { CharacterEquipment } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
+import { Item } from '../../../../items/domain/aggregates/item.aggregate';
+import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
@@ -16,7 +17,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
   constructor(
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -48,7 +49,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     }
     for (const [slot, equippedItemId] of Object.entries(character.equipment.slots)) {
       if (equippedItemId === command.itemId) {
-        character.equipment.slots[slot] = null;
+        character.equipment.slots[slot as EquipmentSlot] = null;
       }
     }
     const item = items.find(i => i.id === command.itemId)!;

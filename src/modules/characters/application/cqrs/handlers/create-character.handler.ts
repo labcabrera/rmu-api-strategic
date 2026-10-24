@@ -3,29 +3,29 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { RaceClientPort, Race } from '../../ports/race-client.port';
 import { CharacterStatCreation, CreateCharacterCommand } from '../commands/create-character.command';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 import type { Profession, ProfessionClientPort } from '../../ports/profession-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
+import type { GameRepository } from '../../../../games/application/ports/game.repository';
+import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
 import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
 import type { SkillCategoryClientPort, SkillCategoryResponse } from '../../ports/skill-category-client.port';
-import { CharacterStat, STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
-import { CharacterInfo } from 'src/modules/characters/domain/value-objects/character-info.vo';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import { CharacterStat, STAT_KEYS, StatKey } from '../../../domain/value-objects/character-stat.vo';
+import { CharacterInfo } from '../../../domain/value-objects/character-info.vo';
+import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import { BadGatewayError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
-import { CharacterCreatedEvent } from 'src/modules/characters/domain/events/character.events';
+import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors/errors';
+import { NamedEntity } from '../../../../shared/domain/entities/named-entity';
+import { CharacterCreatedEvent } from '../../../domain/events/character.events';
 import type { TraitClientPort } from '../../ports/trait-client.port';
 import { mapRaceTraits } from '../../services/race-traits.mapper';
 import type { Culture, CultureClientPort } from '../../ports/culture-client.port';
 import { resolveCultureRanks } from '../../services/culture-ranks.resolver';
-import type { CultureRanks } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { validateCreationStats, validateStatPoints } from 'src/modules/characters/domain/services/stats/stat-rules';
-import { resolveOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
-import { resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import type { CultureRanks } from '../../../domain/aggregates/character.aggregate';
+import { validateCreationStats, validateStatPoints } from '../../../domain/services/stats/stat-rules';
+import { resolveOptions } from '../../../../games/domain/value-objects/game-options.vo';
+import { resolvePowerLevel } from '../../../../games/domain/value-objects/game-power-level.vo';
+import { Game } from '../../../../games/domain/aggregates/game.aggregate';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -42,7 +42,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject('CultureClient') private readonly cultureClient: CultureClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {

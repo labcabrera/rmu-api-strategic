@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import { RMU_ADMIN, RMU_SERVICE } from 'src/modules/shared/domain/entities/user-roles';
-import { ForbiddenError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import type { GameRepository } from '../../../games/application/ports/game.repository';
+import { RMU_ADMIN, RMU_SERVICE } from '../../../shared/domain/entities/user-roles';
+import { ForbiddenError, NotFoundError } from '../../../shared/domain/errors/errors';
 import { Character } from '../../domain/aggregates/character.aggregate';
 import type { CharacterEventBusPort } from '../ports/character-event-bus.port';
 import type { CharacterRepository } from '../ports/character.repository';

@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
-import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
 import { ItemProps } from './item-props';
 import { ItemCreatedEvent, ItemUpdatedEvent } from '../events/item.events';
 import { ItemWeapon } from '../value-objects/item-weapon.vo';
 import { ItemArmor } from '../value-objects/item-armor.vo';
 import { ItemInfo } from '../value-objects/item-info.vo';
-import { AccessType } from 'src/modules/shared/domain/entities/access-type';
+import { AccessType } from '../../../shared/domain/entities/access-type';
 import { ItemShield } from '../value-objects/item-shield.vo';
 import { ItemCondition, ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { NotFoundError } from '../../../shared/domain/errors/errors';
 
 export const goldCoin = 'gold-coin';
 

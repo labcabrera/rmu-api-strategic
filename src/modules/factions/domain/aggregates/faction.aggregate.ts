@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events';
 import { FactionManagement } from '../value-objects/faction-management.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../shared/domain/errors/errors';
 import { CreateFactionProps, FactionProps, UpdateFactionProps } from './faction-props';
-import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
 
 export class Faction extends BaseAggregateRoot<FactionProps> {
   private constructor(

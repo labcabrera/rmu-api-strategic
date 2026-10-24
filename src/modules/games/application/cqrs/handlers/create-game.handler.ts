@@ -1,13 +1,13 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { Game } from '../../../domain/aggregates/game.aggregate';
 import { CreateGameCommand } from '../commands/create-game.command';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import type { RealmClientPort } from '../../ports/realm-client.port';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import type { GameGuardPort } from '../../ports/game-guard.port';
-import { CreateGameProps } from 'src/modules/games/domain/aggregates/game-props';
+import { CreateGameProps } from '../../../domain/aggregates/game-props';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {

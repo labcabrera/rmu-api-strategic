@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { EquipmentSlot } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
 import type { Difficulty } from '../../../domain/value-objects/difficulty.vo';
 
 @Schema({ _id: false })

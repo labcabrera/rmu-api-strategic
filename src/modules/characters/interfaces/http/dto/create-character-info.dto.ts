@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { CreateCharacterInfo } from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
+import { CreateCharacterInfo } from '../../../application/cqrs/commands/create-character.command';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
 
 export class CreateCharacterInfoDto {
   @ApiProperty({ description: 'Race identifier' })
@@ -19,7 +19,7 @@ export class CreateCharacterInfoDto {
   @IsNotEmpty()
   sizeId: string;
 
-  @ApiProperty({ description: 'Character realm type', example: 'channeling' })
+  @ApiProperty({ type: String, description: 'Character realm type', example: 'channeling' })
   @IsString()
   @IsNotEmpty()
   realmType: CharacterRealm;

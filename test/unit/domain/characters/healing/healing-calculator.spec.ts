@@ -1,5 +1,5 @@
-import { HealingCalculator } from 'src/modules/characters/domain/services/healing/healing-calculator';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { HealingCalculator } from '../../../../../src/modules/characters/domain/services/healing/healing-calculator';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { injury, TABLES, treatment } from './healing.fixture';
 
 const NOW = '2026-10-22T00:00:00.000Z';

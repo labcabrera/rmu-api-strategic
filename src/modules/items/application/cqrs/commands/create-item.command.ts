@@ -1,5 +1,5 @@
-import { ItemInfo } from 'src/modules/items/domain/value-objects/item-info.vo';
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
+import { ItemInfo } from '../../../domain/value-objects/item-info.vo';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
 
 export class CreateItemCommand extends AuthenticatedCommand {
   constructor(

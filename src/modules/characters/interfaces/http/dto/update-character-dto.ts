@@ -1,22 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
-import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
+import { UpdateCharacterCommand } from '../../../application/cqrs/commands/update-character.command';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
 
 export class UpdateCharacterInfoDto {
-  @ApiProperty({ description: 'Character height', example: 4.8, required: false })
+  @ApiProperty({ type: Number, description: 'Character height', example: 4.8, required: false })
   @IsOptional()
   @IsNumber()
   height?: number | undefined;
 
-  @ApiProperty({ description: 'Character weight', example: 161, required: false })
+  @ApiProperty({ type: Number, description: 'Character weight', example: 161, required: false })
   @IsOptional()
   @IsNumber()
   weight?: number | undefined;
 }
 
 export class UpdateCharacterDto {
-  @ApiProperty({ description: 'New character name', example: 'Sauron' })
+  @ApiProperty({ type: String, description: 'New character name', example: 'Sauron' })
   @IsOptional()
   @IsString()
   name: string | undefined;
@@ -31,12 +31,12 @@ export class UpdateCharacterDto {
   @IsObject()
   roleplay: CharacterRoleplayInfoDto | undefined;
 
-  @ApiProperty({ description: 'New character description', example: 'The Dark Lord of Mordor' })
+  @ApiProperty({ type: String, description: 'New character description', example: 'The Dark Lord of Mordor' })
   @IsOptional()
   @IsString()
   description: string | undefined;
 
-  @ApiProperty({ description: 'New character image URL', example: '/images/foo.png', required: false })
+  @ApiProperty({ type: String, description: 'New character image URL', example: '/images/foo.png', required: false })
   @IsOptional()
   @IsString()
   imageUrl?: string | undefined;

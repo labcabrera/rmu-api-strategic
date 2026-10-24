@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -12,7 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
+import { JwtAuthGuard } from '../../../auth/jwt.auth.guard';
 import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query';
 import { Faction } from '../../domain/aggregates/faction.aggregate';
 import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query';
@@ -26,9 +24,10 @@ import { AddFactionXPDto } from './dtos/add-faction-xp.dto';
 import { AddFactionXPCommand } from '../../application/cqrs/commands/add-faction-xp.command';
 import { AddFactionGoldCommand } from '../../application/cqrs/commands/add-faction-gold.command';
 import { AddFactionGoldDto } from './dtos/add-faction-gold.dto';
-import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
-import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
+import { ErrorDto } from '../../../shared/interfaces/http/dto/error-dto';
+import { Page } from '../../../shared/domain/entities/page';
+import type { AuthenticatedRequest } from '../../../shared/interfaces/http/authenticated-request';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/factions')
@@ -43,9 +42,9 @@ export class FactionController {
   @ApiOperation({ operationId: 'findFactionById', summary: 'Find faction by id' })
   @ApiOkResponse({ type: FactionDto })
   @ApiNotFoundResponse({ description: 'Faction not found', type: ErrorDto })
-  async findById(@Param('id') id: string, @Request() req) {
-    const user = req.user!;
-    const query = new GetFactionQuery(id, user.id as string, user.roles as string[]);
+  async findById(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const query = new GetFactionQuery(id, user.id, user.roles);
     const entity = await this.queryBus.execute<GetFactionQuery, Faction>(query);
     return FactionDto.fromEntity(entity);
   }
@@ -55,9 +54,9 @@ export class FactionController {
   @ApiOkResponse({ type: FactionPageDto })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Invalid RSQL query', type: ErrorDto })
-  async find(@Query() dto: PagedQueryDto, @Request() req) {
-    const user = req.user!;
-    const query = new GetFactionsQuery(dto.q, dto.page, dto.size, user.id as string, user.roles as string[]);
+  async find(@Query() dto: PagedQueryDto, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const query = new GetFactionsQuery(dto.q, dto.page, dto.size, user.id, user.roles);
     const page = await this.queryBus.execute<GetFactionsQuery, Page<Faction>>(query);
     const mapped = page.content.map(faction => FactionDto.fromEntity(faction));
     return new Page<FactionDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
@@ -68,9 +67,9 @@ export class FactionController {
   @ApiOkResponse({ type: FactionDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async create(@Body() createFactionDto: CreateFactionDto, @Request() req) {
-    const user = req.user!;
-    const command = CreateFactionDto.toCommand(createFactionDto, user.id as string, user.roles as string[]);
+  async create(@Body() createFactionDto: CreateFactionDto, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const command = CreateFactionDto.toCommand(createFactionDto, user.id, user.roles);
     const faction = await this.commandBus.execute<CreateFactionCommand, Faction>(command);
     return FactionDto.fromEntity(faction);
   }
@@ -81,9 +80,9 @@ export class FactionController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Faction not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateFaction(@Param('id') id: string, @Body() updateFactionDto: UpdateFactionDto, @Request() req) {
-    const user = req.user!;
-    const command = UpdateFactionDto.toCommand(id, updateFactionDto, user.id as string, user.roles as string[]);
+  async updateFaction(@Param('id') id: string, @Body() updateFactionDto: UpdateFactionDto, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const command = UpdateFactionDto.toCommand(id, updateFactionDto, user.id, user.roles);
     const faction = await this.commandBus.execute<UpdateFactionCommand, Faction>(command);
     return FactionDto.fromEntity(faction);
   }
@@ -92,8 +91,8 @@ export class FactionController {
   @HttpCode(204)
   @ApiOperation({ operationId: 'deleteFaction', summary: 'Delete faction by id' })
   @ApiNotFoundResponse({ description: 'Faction not found', type: ErrorDto })
-  async delete(@Param('id') id: string, @Request() req) {
-    const command = new DeleteFactionCommand(id, undefined, req.user!.id as string, req.user!.roles as string[]);
+  async delete(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const command = new DeleteFactionCommand(id, undefined, req.user.id, req.user.roles);
     await this.commandBus.execute(command);
   }
 
@@ -104,9 +103,9 @@ export class FactionController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiForbiddenResponse({ description: 'Forbidden, insufficient permissions', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addXP(@Param('id') id: string, @Body() addFactionXPDto: AddFactionXPDto, @Request() req) {
-    const user = req.user!;
-    const command = AddFactionXPDto.toCommand(id, addFactionXPDto, user.id as string, user.roles as string[]);
+  async addXP(@Param('id') id: string, @Body() addFactionXPDto: AddFactionXPDto, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const command = AddFactionXPDto.toCommand(id, addFactionXPDto, user.id, user.roles);
     const faction = await this.commandBus.execute<AddFactionXPCommand, Faction>(command);
     return FactionDto.fromEntity(faction);
   }
@@ -118,9 +117,9 @@ export class FactionController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiForbiddenResponse({ description: 'Forbidden, insufficient permissions', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addGold(@Param('id') id: string, @Body() addFactionGoldDto: AddFactionGoldDto, @Request() req) {
-    const user = req.user!;
-    const command = AddFactionGoldDto.toCommand(id, addFactionGoldDto, user.id as string, user.roles as string[]);
+  async addGold(@Param('id') id: string, @Body() addFactionGoldDto: AddFactionGoldDto, @Request() req: AuthenticatedRequest) {
+    const user = req.user;
+    const command = AddFactionGoldDto.toCommand(id, addFactionGoldDto, user.id, user.roles);
     const faction = await this.commandBus.execute<AddFactionGoldCommand, Faction>(command);
     return FactionDto.fromEntity(faction);
   }

@@ -5,13 +5,13 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import { UpdateCharacterCommand } from '../commands/update-character.command';
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 
 @CommandHandler(UpdateCharacterCommand)
 export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,

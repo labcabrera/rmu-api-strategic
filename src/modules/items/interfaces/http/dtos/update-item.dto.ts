@@ -1,16 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UpdateItemCommand } from 'src/modules/items/application/cqrs/commands/update-item.command';
-import { WEAPON_WIELDER_SIZES } from 'src/modules/items/domain/value-objects/item-weapon.vo';
+import { UpdateItemCommand } from '../../../application/cqrs/commands/update-item.command';
+import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo';
 
 export class UpdateItemDto {
-  @ApiProperty({ description: 'Item name', example: 'Narsil', required: false })
+  @ApiProperty({ type: String, description: 'Item name', example: 'Narsil', required: false })
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   name: string | undefined;
 
   @ApiProperty({
+    type: String,
     description: 'Size the weapon is made for (weapons only). When missing, the wielder size is assumed',
     example: 'medium',
     required: false,

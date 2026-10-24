@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.aggregate';
 import { CharacterAttack, WeaponCategory } from '../../../value-objects/character-attack.vo';
-import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
-import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { DomainError, ValidationError } from '../../../../../shared/domain/errors/errors';
+import { ItemWeapon } from '../../../../../items/domain/value-objects/item-weapon.vo';
+import { ItemWeaponMode } from '../../../../../items/domain/value-objects/item-weapon-mode.vo';
+import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
 import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { matchesAttack } from '../traits/trait-specialization-matcher';
-import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';
 
 const SHIELD_FUMBLE = 4;
 const WRONG_SIZE_PENALTY = -20;

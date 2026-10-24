@@ -1,4 +1,4 @@
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { CharacterXP } from '../../value-objects/character-xp.vo';
 
 export type DevPointsPool = 'normal' | 'bonus' | 'flaw';

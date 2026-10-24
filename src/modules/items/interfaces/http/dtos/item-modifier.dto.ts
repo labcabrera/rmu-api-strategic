@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
-import { AddItemModifierCommand } from 'src/modules/items/application/cqrs/commands/item-modifier.commands';
+import { AddItemModifierCommand } from '../../../application/cqrs/commands/item-modifier.commands';
 import {
   ITEM_MODIFIER_TARGETS,
   ITEM_MODIFIER_TYPES,
@@ -9,19 +9,19 @@ import {
   type ItemModifierSource,
   type ItemModifierTarget,
   type ItemModifierType,
-} from 'src/modules/items/domain/value-objects/item-modifier.vo';
+} from '../../../domain/value-objects/item-modifier.vo';
 
 export class ItemModifierDto {
   @ApiProperty({ description: 'Modifier identifier (the same in tactical and strategic)', example: 'b5f0c7e2-...' })
   id: string;
 
-  @ApiProperty({ enum: ITEM_MODIFIER_TYPES, example: 'breakage' })
+  @ApiProperty({ type: String, enum: ITEM_MODIFIER_TYPES, example: 'breakage' })
   type: ItemModifierType;
 
   @ApiProperty({ description: 'Bonus (positive) or penalty (negative)', example: -20 })
   value: number;
 
-  @ApiProperty({ enum: ITEM_MODIFIER_TARGETS, example: 'all' })
+  @ApiProperty({ type: String, enum: ITEM_MODIFIER_TARGETS, example: 'all' })
   appliesTo: ItemModifierTarget;
 
   @ApiProperty({ description: 'Breakage only: the item is broken', required: false })
@@ -59,7 +59,7 @@ export class ItemConditionDto {
 }
 
 export class AddItemModifierDto {
-  @ApiProperty({ enum: ITEM_MODIFIER_TYPES, example: 'quality' })
+  @ApiProperty({ type: String, enum: ITEM_MODIFIER_TYPES, example: 'quality' })
   @IsIn(ITEM_MODIFIER_TYPES)
   type: ItemModifierType;
 
@@ -67,7 +67,7 @@ export class AddItemModifierDto {
   @IsNumber()
   value: number;
 
-  @ApiProperty({ enum: ITEM_MODIFIER_TARGETS, example: 'breakage' })
+  @ApiProperty({ type: String, enum: ITEM_MODIFIER_TARGETS, example: 'breakage' })
   @IsIn(ITEM_MODIFIER_TARGETS)
   appliesTo: ItemModifierTarget;
 

@@ -1,8 +1,8 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../../shared/domain/entities/page';
 import { GetItemsQuery } from '../queries/get-items.query';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../domain/aggregates/item.aggregate';
 import type { ItemGuardPort } from '../../ports/item-guard.port';
 import type { ItemRepository } from '../../ports/item.repository';
 

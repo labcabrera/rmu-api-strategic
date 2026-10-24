@@ -3,16 +3,16 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 import { UpdateTemporaryStatCommand } from '../commands/update-temporary-stat.command';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import type { GameRepository } from '../../../../games/application/ports/game.repository';
 import { loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(UpdateTemporaryStatCommand)
 export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTemporaryStatCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('GameRepository') private readonly gameRepository: GameRepository,

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { AddTraitCommand } from 'src/modules/characters/application/cqrs/commands/add-trait.command';
+import { AddTraitCommand } from '../../../application/cqrs/commands/add-trait.command';
 
 export class AddTraitDto {
   @ApiProperty({ description: 'Trait identifier', example: 'prodigy' })
@@ -8,12 +8,12 @@ export class AddTraitDto {
   @IsNotEmpty()
   traitId: string;
 
-  @ApiProperty({ description: 'Trait tier', example: 2 })
+  @ApiProperty({ type: Number, description: 'Trait tier', example: 2 })
   @IsNumber()
   @IsOptional()
   tier: number | undefined;
 
-  @ApiProperty({ description: 'Trait value', example: 'body-development' })
+  @ApiProperty({ type: String, description: 'Trait value', example: 'body-development' })
   @IsString()
   @IsOptional()
   specialization: string | undefined;

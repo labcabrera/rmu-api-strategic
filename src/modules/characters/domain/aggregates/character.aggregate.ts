@@ -6,7 +6,7 @@ import { CharacterSkill } from '../value-objects/character-skill.vo';
 import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
 import { CharacterDefense } from '../value-objects/character-defense.vo';
 import { CharacterEndurance } from '../value-objects/character-endurance.vo';
-import { CharacterEquipment } from '../value-objects/character-equipment.vo';
+import { CharacterEquipment, EquipmentSlot } from '../value-objects/character-equipment.vo';
 import { CharacterHP } from '../value-objects/character-hp.vo';
 import { CharacterInitiative } from '../value-objects/character-initiative.vo';
 import { CharacterMovement } from '../value-objects/character-movement.vo';
@@ -14,17 +14,17 @@ import { CharacterXP, isCreationLevel } from '../value-objects/character-xp.vo';
 import { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
 import { CharacterStatus } from '../value-objects/character-status.vo';
 import { randomUUID } from 'crypto';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { Game } from '../../../games/domain/aggregates/game.aggregate';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events';
 import { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo';
 import { CharacterTrait, TraitPayment } from '../value-objects/character-trait.vo';
 import { RaceTraitProps } from '../value-objects/race-trait-props.vo';
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity';
+import { ValidationError } from '../../../shared/domain/errors/errors';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
 import { CharacterProps } from './character-props';
 import { SkillBonus } from '../value-objects/skill-bonus.vo';
-import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo';
 import {
   DevPointsPayment,
   DevPointsSpendingService,
@@ -32,7 +32,7 @@ import {
   emptyPayment,
 } from '../services/dev-points/dev-points-spending.service';
 import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { NotFoundError } from '../../../shared/domain/errors/errors';
 import { CharacterCondition } from '../value-objects/character-condition.vo';
 import { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo';
 import { HealthSummary } from '../value-objects/health-summary.vo';
@@ -268,7 +268,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     if (props.resistances) {
       for (const [resistance, bonus] of Object.entries(props.resistances)) {
-        this.setupRacialResistanceBonus(resistance, bonus || 0);
+        this.setupRacialResistanceBonus(resistance, (bonus as number) || 0);
       }
     }
     if (props.strideBonus !== undefined) {
@@ -572,7 +572,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (!equippedSlot) {
       throw new ValidationError('Item not equipped');
     }
-    const slotName = equippedSlot[0];
+    const slotName = equippedSlot[0] as EquipmentSlot;
     this.equipment.slots[slotName] = null;
   }
 

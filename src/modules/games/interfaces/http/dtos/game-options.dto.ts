@@ -7,7 +7,7 @@ import {
   TALENT_POLICIES,
   type StatGeneration,
   type TalentPolicy,
-} from 'src/modules/games/domain/value-objects/game-options.vo';
+} from '../../../domain/value-objects/game-options.vo';
 
 export class GameOptionsDto {
   @ApiProperty({ description: 'Experience multiplier', type: Number, default: 1.0, example: 1.0 })
@@ -37,6 +37,7 @@ export class GameOptionsDto {
   allowThirdRank?: boolean;
 
   @ApiProperty({
+    type: String,
     description:
       "Talent purchase policy: 'free' (any points, any level), 'race-points-at-creation' (new talents only at creation and only with bonus points), 'flaw-points-at-creation' (at creation talents are paid only with the points returned by flaws)",
     enum: TALENT_POLICIES,
@@ -57,7 +58,7 @@ export class GameOptionsDto {
   @IsBoolean()
   bonusDevPointsCapAtCreation?: boolean;
 
-  @ApiProperty({ description: 'Stat generation method', enum: STAT_GENERATIONS, required: false, default: 'roll' })
+  @ApiProperty({ type: String, description: 'Stat generation method', enum: STAT_GENERATIONS, required: false, default: 'roll' })
   @IsOptional()
   @IsIn(STAT_GENERATIONS)
   statGeneration?: StatGeneration;

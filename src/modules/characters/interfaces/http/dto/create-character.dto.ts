@@ -4,10 +4,10 @@ import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Validate
 import { CharacterSkillCreationDto } from './character-skill.dto';
 import { CharacterStatCreationDto } from './character-stat.dto';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CreateCharacterCommand, CharacterStatCreation } from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import { CreateCharacterCommand, CharacterStatCreation } from '../../../application/cqrs/commands/create-character.command';
+import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
 import { CreateCharacterInfoDto } from './create-character-info.dto';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { StatKey } from '../../../domain/value-objects/character-stat.vo';
 import { CreateCharacterCultureDto } from './create-character-culture.dto';
 
 export class CreateCharacterDto {
@@ -81,7 +81,7 @@ export class CreateCharacterDto {
     const statistics: Record<StatKey, CharacterStatCreation> = Object.fromEntries(
       Object.entries(dto.statistics || {}).map(([k, v]) => [
         k as StatKey,
-        new CharacterStatCreation((v as any).potential, (v as any).temporary),
+        new CharacterStatCreation((v as { potential: number }).potential, (v as { temporary: number }).temporary),
       ]),
     ) as Record<StatKey, CharacterStatCreation>;
 

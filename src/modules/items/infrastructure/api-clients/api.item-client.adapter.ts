@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { TokenService } from 'src/modules/auth/token.service';
-import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { TokenService } from '../../../auth/token.service';
+import { BadGatewayError, NotFoundError } from '../../../shared/domain/errors/errors';
 import { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port';
 
 @Injectable()

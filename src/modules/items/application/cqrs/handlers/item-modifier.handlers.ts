@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../domain/aggregates/item.aggregate';
 import { AddItemModifierCommand, DeleteItemModifierCommand } from '../commands/item-modifier.commands';
 import { ItemModifierStore } from '../../services/item-modifier.store';
 

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -12,7 +12,7 @@ import {
   INJURY_TYPES,
   TREATMENT_PROCEDURES,
   TREATMENT_RESULTS,
-} from 'src/modules/characters/domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo';
 import type {
   BleedingControl,
   BodyLocation,
@@ -27,14 +27,14 @@ import type {
   TreatmentContext,
   TreatmentProcedure,
   TreatmentResult,
-} from 'src/modules/characters/domain/value-objects/injury.vo';
-import { CHARACTER_CONDITION_STATUSES } from 'src/modules/characters/domain/value-objects/character-condition.vo';
-import type { CharacterCondition, CharacterConditionStatus } from 'src/modules/characters/domain/value-objects/character-condition.vo';
-import type { HealingLogEntry, HealingLogKind } from 'src/modules/characters/domain/value-objects/healing-log-entry.vo';
-import type { HealthSummary } from 'src/modules/characters/domain/value-objects/health-summary.vo';
+} from '../../../domain/value-objects/injury.vo';
+import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo';
+import type { CharacterCondition, CharacterConditionStatus } from '../../../domain/value-objects/character-condition.vo';
+import type { HealingLogEntry, HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo';
+import type { HealthSummary } from '../../../domain/value-objects/health-summary.vo';
 
 export class InjurySourceDto {
-  @ApiProperty({ enum: INJURY_SOURCE_KINDS, example: 'critical' })
+  @ApiProperty({ type: String, enum: INJURY_SOURCE_KINDS, example: 'critical' })
   kind: InjurySourceKind;
   @ApiPropertyOptional()
   tacticalGameId?: string;
@@ -68,7 +68,7 @@ export class InjuryHealerDto {
 export class InjuryTreatmentDto {
   @ApiProperty()
   id: string;
-  @ApiProperty({ enum: TREATMENT_PROCEDURES })
+  @ApiProperty({ type: String, enum: TREATMENT_PROCEDURES })
   procedure: TreatmentProcedure;
   @ApiProperty({ type: InjuryHealerDto })
   healer: InjuryHealerDto;
@@ -78,15 +78,15 @@ export class InjuryTreatmentDto {
   roll: number;
   @ApiProperty()
   total: number;
-  @ApiProperty({ enum: TREATMENT_RESULTS })
+  @ApiProperty({ type: String, enum: TREATMENT_RESULTS })
   result: TreatmentResult;
-  @ApiProperty({ enum: HEALING_TYPES })
+  @ApiProperty({ type: String, enum: HEALING_TYPES })
   healingType: HealingType;
   @ApiProperty({ description: 'Recovery roll modifier of the medical maneuver table' })
   recoveryModifier: number;
   @ApiProperty()
   at: string;
-  @ApiProperty({ enum: ['tactical', 'strategic'] })
+  @ApiProperty({ type: String, enum: ['tactical', 'strategic'] })
   context: TreatmentContext;
   @ApiPropertyOptional()
   tacticalGameId?: string;
@@ -121,13 +121,13 @@ export class InjuryPermanentDto {
 export class InjuryDto {
   @ApiProperty()
   id: string;
-  @ApiProperty({ enum: INJURY_TYPES })
+  @ApiProperty({ type: String, enum: INJURY_TYPES })
   type: InjuryType;
-  @ApiProperty({ enum: INJURY_SEVERITIES })
+  @ApiProperty({ type: String, enum: INJURY_SEVERITIES })
   severity: InjurySeverity;
-  @ApiPropertyOptional({ enum: BODY_LOCATIONS })
+  @ApiPropertyOptional({ type: String, enum: BODY_LOCATIONS })
   location?: BodyLocation;
-  @ApiPropertyOptional({ enum: BODY_SIDES })
+  @ApiPropertyOptional({ type: String, enum: BODY_SIDES })
   side?: BodySide;
   @ApiProperty({ example: -20 })
   penalty: number;
@@ -135,7 +135,7 @@ export class InjuryDto {
   initialPenalty: number;
   @ApiPropertyOptional()
   bleeding?: number;
-  @ApiPropertyOptional({ enum: BLEEDING_CONTROLS })
+  @ApiPropertyOptional({ type: String, enum: BLEEDING_CONTROLS })
   bleedingControl?: BleedingControl;
   @ApiPropertyOptional({ enum: INJURY_FLAGS, isArray: true })
   flags?: InjuryFlag[];
@@ -149,7 +149,7 @@ export class InjuryDto {
   recovery?: InjuryRecoveryDto;
   @ApiPropertyOptional({ type: InjuryPermanentDto })
   permanent?: InjuryPermanentDto;
-  @ApiProperty({ enum: INJURY_STATUSES })
+  @ApiProperty({ type: String, enum: INJURY_STATUSES })
   status: InjuryStatus;
   @ApiProperty()
   createdAt: string;
@@ -166,7 +166,7 @@ export class InjuryDto {
 export class CharacterConditionDto {
   @ApiProperty()
   id: string;
-  @ApiProperty({ enum: CHARACTER_CONDITION_STATUSES })
+  @ApiProperty({ type: String, enum: CHARACTER_CONDITION_STATUSES })
   status: CharacterConditionStatus;
   @ApiProperty({ type: InjurySourceDto })
   source: InjurySourceDto;
@@ -200,7 +200,7 @@ export class HealingLogEntryDto {
   id: string;
   @ApiProperty()
   at: string;
-  @ApiProperty({ enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual'] })
+  @ApiProperty({ type: String, enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual'] })
   kind: HealingLogKind;
   @ApiPropertyOptional()
   injuryId?: string;

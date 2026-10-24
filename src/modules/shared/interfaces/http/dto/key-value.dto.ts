@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { KeyValue } from 'src/modules/shared/domain/entities/key-value';
+import { KeyValue } from '../../../domain/entities/key-value';
 
 export class KeyValueDto {
   @ApiProperty({ description: 'Key code', example: 'foo' })

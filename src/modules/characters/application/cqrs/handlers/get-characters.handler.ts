@@ -2,7 +2,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { GetCharactersQuery } from '../queries/get-characters.query';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../../shared/domain/entities/page';
 import type { CharacterRepository } from '../../ports/character.repository';
 
 @QueryHandler(GetCharactersQuery)

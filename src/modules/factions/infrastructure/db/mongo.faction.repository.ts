@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
+import { FactionRepository } from '../../application/ports/faction.repository';
 import { FactionModel, FactionDocument } from '../persistence/models/faction.model';
-import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
-import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Faction } from '../../domain/aggregates/faction.aggregate';
+import { RsqlParser } from '../../../shared/infrastructure/persistence/repositories/rsql-parser';
+import { NotFoundError } from '../../../shared/domain/errors/errors';
+import { Page } from '../../../shared/domain/entities/page';
 
 @Injectable()
 export class MongoFactionRepository implements FactionRepository {

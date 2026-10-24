@@ -9,17 +9,7 @@ export type InjuryFlag = 'permanent-risk' | 'limb-loss' | 'blinding' | 'paralysi
 export type InjuryStatus = 'active' | 'recovering' | 'permanent' | 'healed';
 export type InjurySourceKind = 'critical' | 'fumble' | 'fatigue' | 'manual';
 export type TreatmentProcedure =
-  | 'pressure'
-  | 'stitches'
-  | 'tourniquet'
-  | 'cauterize'
-  | 'dress'
-  | 'splint'
-  | 'cast'
-  | 'salve'
-  | 'surgery'
-  | 'magic'
-  | 'herbs';
+  'pressure' | 'stitches' | 'tourniquet' | 'cauterize' | 'dress' | 'splint' | 'cast' | 'salve' | 'surgery' | 'magic' | 'herbs';
 export type TreatmentResult = 'absolute-failure' | 'failure' | 'partial-success' | 'success' | 'absolute-success';
 export type HealingType = 'none' | 'medicine' | 'medicine-absolute' | 'magic-or-herbs' | 'magic-and-herbs';
 export type TreatmentContext = 'tactical' | 'strategic';

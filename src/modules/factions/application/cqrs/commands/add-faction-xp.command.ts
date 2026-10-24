@@ -1,4 +1,4 @@
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
 
 export class AddFactionXPCommand extends AuthenticatedCommand {
   constructor(

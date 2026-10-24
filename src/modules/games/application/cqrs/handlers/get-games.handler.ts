@@ -1,9 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { Game } from '../../../domain/aggregates/game.aggregate';
 import type { GameRepository } from '../../ports/game.repository';
 import { GetGamesQuery } from '../queries/get-games.query';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../../shared/domain/entities/page';
 import type { GameGuardPort } from '../../ports/game-guard.port';
 
 @QueryHandler(GetGamesQuery)

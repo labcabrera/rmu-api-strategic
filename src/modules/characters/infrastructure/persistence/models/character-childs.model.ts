@@ -1,7 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
-import { CharacterGender } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo';
+import { CharacterGender } from '../../../domain/value-objects/character-roleplay-info.vo';
 
 @Schema({ _id: false })
 export class CharacterInfo {
@@ -14,7 +13,7 @@ export class CharacterInfo {
   @Prop({ required: true })
   sizeId: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   realmType: CharacterRealm;
 
   @Prop({ required: true })

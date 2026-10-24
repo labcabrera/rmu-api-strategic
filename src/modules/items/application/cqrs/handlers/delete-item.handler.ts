@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import { DeleteItemCommand } from '../commands/delete-item.command';
 import type { ItemRepository } from '../../ports/item.repository';
 import type { ItemGuardPort } from '../../ports/item-guard.port';
 import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
-import { ItemDeletedEvent } from 'src/modules/items/domain/events/item.events';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import { UnequipItemCommand } from 'src/modules/characters/application/cqrs/commands/unequip-item-command';
+import { ItemDeletedEvent } from '../../../domain/events/item.events';
+import type { CharacterRepository } from '../../../../characters/application/ports/character.repository';
+import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item-command';
 
 @CommandHandler(DeleteItemCommand)
 export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
@@ -16,7 +16,7 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
     @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
-    @Inject() private readonly commandBus: CommandBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute(command: DeleteItemCommand): Promise<void> {
@@ -29,7 +29,7 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
       const character = await this.characterRepository.findById(item.characterId);
       if (!character) throw new NotFoundError('Character', item.characterId);
       const slots = character.equipment?.slots;
-      if (Array.isArray(slots) && slots.some((slot: any) => slot?.id === item.id)) {
+      if (Array.isArray(slots) && slots.some((slot: { id?: string } | null) => slot?.id === item.id)) {
         const unequipCommand = new UnequipItemCommand(item.characterId, item.id, command.userId, command.roles);
         await this.commandBus.execute(unequipCommand);
       }

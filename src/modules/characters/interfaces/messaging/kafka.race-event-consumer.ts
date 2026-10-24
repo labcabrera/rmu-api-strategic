@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import { UpdateCharacterRaceCommandProps } from 'src/modules/characters/application/cqrs/commands/update-character-race.command';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
-import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
+import { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command';
+import type { CharacterRepository } from '../../application/ports/character.repository';
+import { DomainEvent } from '../../../shared/domain/events/domain-event';
+import { KafkaProducerService } from '../../../shared/infrastructure/messaging/kafka-producer.service';
 
 export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {
   constructor(data: UpdateCharacterRaceCommandProps) {
@@ -23,7 +23,7 @@ export class KafkaRaceEventConsumer {
     private readonly kafkaProducerService: KafkaProducerService,
   ) {}
 
-  @EventPattern('internal.rmu-core.race.updated.v1')
+  @EventPattern<string>('internal.rmu-core.race.updated.v1')
   async handleRaceUpdated(@Payload() event: any, @Ctx() context: KafkaContext) {
     this.logger.log(`Received race updated event on topic ${context.getTopic()}: ${event.data.id}: ${event.data.name}`);
     const data = event.data;

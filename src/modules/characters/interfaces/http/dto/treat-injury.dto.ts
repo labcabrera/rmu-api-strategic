@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { TreatInjuryCommand } from 'src/modules/characters/application/cqrs/commands/treat-injury.command';
-import { HEALING_TYPES, TREATMENT_PROCEDURES } from 'src/modules/characters/domain/value-objects/injury.vo';
-import type { HealingType, TreatmentProcedure } from 'src/modules/characters/domain/value-objects/injury.vo';
+import { TreatInjuryCommand } from '../../../application/cqrs/commands/treat-injury.command';
+import { HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo';
+import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo';
 
 export class ExternalHealerDto {
   @ApiProperty({ example: 'Village healer' })
@@ -38,7 +38,7 @@ export class HerbalismRollDto {
 }
 
 export class TreatInjuryDto {
-  @ApiProperty({ enum: TREATMENT_PROCEDURES, example: 'splint' })
+  @ApiProperty({ type: String, enum: TREATMENT_PROCEDURES, example: 'splint' })
   @IsIn(TREATMENT_PROCEDURES)
   procedure: TreatmentProcedure;
 
@@ -69,7 +69,7 @@ export class TreatInjuryDto {
   @IsOptional()
   herbalism?: HerbalismRollDto;
 
-  @ApiPropertyOptional({ enum: HEALING_TYPES, description: 'Overrides the type of healing derived from the result' })
+  @ApiPropertyOptional({ type: String, enum: HEALING_TYPES, description: 'Overrides the type of healing derived from the result' })
   @IsIn(HEALING_TYPES)
   @IsOptional()
   healingType?: HealingType;

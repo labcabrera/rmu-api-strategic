@@ -3,9 +3,9 @@ import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events';
 import { GameOptions } from '../value-objects/game-options.vo';
 import { GamePowerLevel } from '../value-objects/game-power-level.vo';
 import { GameStatus } from '../value-objects/game-status.vo';
-import { BaseAggregateRoot } from 'src/modules/shared/domain/aggregates/base-aggregate';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate';
 import { CreateGameProps, GameProps, UpdateGameProps } from './game-props';
-import { AccessType } from 'src/modules/shared/domain/entities/access-type';
+import { AccessType } from '../../../shared/domain/entities/access-type';
 
 export class Game extends BaseAggregateRoot<GameProps> {
   private constructor(

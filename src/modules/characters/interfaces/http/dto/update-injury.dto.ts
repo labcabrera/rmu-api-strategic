@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
-import { UpdateInjuryCommand } from 'src/modules/characters/application/cqrs/commands/update-injury.command';
+import { UpdateInjuryCommand } from '../../../application/cqrs/commands/update-injury.command';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -10,7 +10,7 @@ import {
   INJURY_SEVERITIES,
   INJURY_STATUSES,
   INJURY_TYPES,
-} from 'src/modules/characters/domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo';
 import type {
   BleedingControl,
   BodyLocation,
@@ -19,7 +19,7 @@ import type {
   InjurySeverity,
   InjuryStatus,
   InjuryType,
-} from 'src/modules/characters/domain/value-objects/injury.vo';
+} from '../../../domain/value-objects/injury.vo';
 
 export class UpdateInjuryPermanentDto {
   @ApiPropertyOptional({ description: 'Permanent penalty (negative)', example: -10 })
@@ -33,22 +33,22 @@ export class UpdateInjuryPermanentDto {
 }
 
 export class UpdateInjuryDto {
-  @ApiPropertyOptional({ enum: INJURY_TYPES })
+  @ApiPropertyOptional({ type: String, enum: INJURY_TYPES })
   @IsIn(INJURY_TYPES)
   @IsOptional()
   type?: InjuryType;
 
-  @ApiPropertyOptional({ enum: INJURY_SEVERITIES })
+  @ApiPropertyOptional({ type: String, enum: INJURY_SEVERITIES })
   @IsIn(INJURY_SEVERITIES)
   @IsOptional()
   severity?: InjurySeverity;
 
-  @ApiPropertyOptional({ enum: BODY_LOCATIONS })
+  @ApiPropertyOptional({ type: String, enum: BODY_LOCATIONS })
   @IsIn(BODY_LOCATIONS)
   @IsOptional()
   location?: BodyLocation;
 
-  @ApiPropertyOptional({ enum: BODY_SIDES })
+  @ApiPropertyOptional({ type: String, enum: BODY_SIDES })
   @IsIn(BODY_SIDES)
   @IsOptional()
   side?: BodySide;
@@ -69,7 +69,7 @@ export class UpdateInjuryDto {
   @IsOptional()
   bleeding?: number;
 
-  @ApiPropertyOptional({ enum: BLEEDING_CONTROLS })
+  @ApiPropertyOptional({ type: String, enum: BLEEDING_CONTROLS })
   @IsIn(BLEEDING_CONTROLS)
   @IsOptional()
   bleedingControl?: BleedingControl;
@@ -91,7 +91,7 @@ export class UpdateInjuryDto {
   @IsOptional()
   permanent?: UpdateInjuryPermanentDto;
 
-  @ApiPropertyOptional({ enum: INJURY_STATUSES })
+  @ApiPropertyOptional({ type: String, enum: INJURY_STATUSES })
   @IsIn(INJURY_STATUSES)
   @IsOptional()
   status?: InjuryStatus;

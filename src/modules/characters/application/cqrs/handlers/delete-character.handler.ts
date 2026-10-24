@@ -2,8 +2,8 @@ import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteCharacterCommand } from '../commands/delete-character.command';
 import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import { CharacterDeletedEvent } from 'src/modules/characters/domain/events/character.events';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import { CharacterDeletedEvent } from '../../../domain/events/character.events';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import type { HealingLogRepository } from '../../ports/healing-log.repository';
 

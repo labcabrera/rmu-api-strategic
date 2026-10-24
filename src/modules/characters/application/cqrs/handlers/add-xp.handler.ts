@@ -3,14 +3,14 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { AddXPCommand } from '../commands/add-xp.command';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import type { CharacterRepository } from '../../ports/character.repository';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 
 @CommandHandler(AddXPCommand)
 export class AddXPHandler implements ICommandHandler<AddXPCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
   ) {}

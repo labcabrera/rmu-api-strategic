@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { ItemEventBusPort } from 'src/modules/items/application/ports/item-event-bus.port';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import type { ItemEventBusPort } from '../../../items/application/ports/item-event-bus.port';
+import type { ItemRepository } from '../../../items/application/ports/item.repository';
+import { Item } from '../../../items/domain/aggregates/item.aggregate';
 import type { TacticalItemOutcome } from '../../domain/value-objects/tactical-game-outcome.vo';
 
 export interface TacticalItemsSummary {

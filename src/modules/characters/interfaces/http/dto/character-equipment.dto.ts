@@ -1,4 +1,4 @@
-import { CharacterEquipment, EquipmentSlot } from 'src/modules/characters/domain/value-objects/character-equipment.vo';
+import { CharacterEquipment, EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
 
 export class CharacterEquipmentDto {
   slots: Record<EquipmentSlot, string | null>;

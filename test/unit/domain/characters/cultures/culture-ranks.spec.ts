@@ -1,18 +1,18 @@
 import { Logger } from '@nestjs/common';
-import { CreateCharacterHandler } from 'src/modules/characters/application/cqrs/handlers/create-character.handler';
+import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler';
 import {
   CharacterStatCreation,
   CreateCharacterCommand,
   CreateCharacterCulture,
   CreateCharacterInfo,
-} from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import { CultureAssignment, resolveCultureRanks } from 'src/modules/characters/application/services/culture-ranks.resolver';
-import type { Culture } from 'src/modules/characters/application/ports/culture-client.port';
-import type { SkillResponse } from 'src/modules/characters/application/ports/skill-client.port';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+} from '../../../../../src/modules/characters/application/cqrs/commands/create-character.command';
+import { CultureAssignment, resolveCultureRanks } from '../../../../../src/modules/characters/application/services/culture-ranks.resolver';
+import type { Culture } from '../../../../../src/modules/characters/application/ports/culture-client.port';
+import type { SkillResponse } from '../../../../../src/modules/characters/application/ports/skill-client.port';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { STAT_KEYS, StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 
 // Invented catalog and culture: not book data
 const catalog: SkillResponse[] = [
@@ -167,20 +167,20 @@ describe('CreateCharacterHandler', () => {
     Object.fromEntries(STAT_KEYS.map(k => [k, new CharacterStatCreation(potential, temporary)])) as Record<StatKey, CharacterStatCreation>;
 
   const setup = (game: { powerLevel?: Record<string, number>; options?: Record<string, unknown> } = {}, baseDevPoints = 50) => {
-    const save = jest.fn((c: Character) => Promise.resolve(c));
-    const cultureClient = { getCultureById: jest.fn().mockResolvedValue(culture) };
+    const save = vi.fn((c: Character) => Promise.resolve(c));
+    const cultureClient = { getCultureById: vi.fn().mockResolvedValue(culture) };
     const handler = new CreateCharacterHandler(
       { save } as never,
       {
-        findById: jest.fn().mockResolvedValue({
+        findById: vi.fn().mockResolvedValue({
           id: 'game-001',
           powerLevel: { baseDevPoints: 60, ...(game.powerLevel || {}) },
           options: game.options || {},
         }),
       } as never,
-      { findById: jest.fn().mockResolvedValue({ id: 'faction-001', name: 'Faction', gameId: 'game-001' }) } as never,
+      { findById: vi.fn().mockResolvedValue({ id: 'faction-001', name: 'Faction', gameId: 'game-001' }) } as never,
       {
-        getRaceById: jest.fn().mockResolvedValue({
+        getRaceById: vi.fn().mockResolvedValue({
           id: 'race-001',
           name: 'Race',
           sizeId: 'medium',
@@ -189,17 +189,17 @@ describe('CreateCharacterHandler', () => {
           traits: [],
           skillBonuses: [],
         }),
-      } as never,
-      { getAllSkills: jest.fn().mockResolvedValue({ content: catalog }), getSkillById: jest.fn() } as never,
+      },
+      { getAllSkills: vi.fn().mockResolvedValue({ content: catalog }), getSkillById: vi.fn() },
       {
-        getAllSkillCategories: jest
+        getAllSkillCategories: vi
           .fn()
           .mockResolvedValue(
             ['awareness', 'combat', 'crafting', 'vocation', 'athletic', 'lore', 'physical'].map(id => ({ id, bonus: [] })),
           ),
       } as never,
       {
-        getProfessionById: jest.fn().mockResolvedValue({
+        getProfessionById: vi.fn().mockResolvedValue({
           id: 'fighter',
           professionalSkills: [],
           skillCosts: {
@@ -212,11 +212,11 @@ describe('CreateCharacterHandler', () => {
             physical: [2, 6],
           },
         }),
-      } as never,
-      { getTraitById: jest.fn() } as never,
-      cultureClient as never,
-      { publish: jest.fn() } as never,
-      { process: jest.fn() } as unknown as CharacterProcessorService,
+      },
+      { getTraitById: vi.fn() },
+      cultureClient,
+      { publish: vi.fn() },
+      { process: vi.fn() } as unknown as CharacterProcessorService,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>
       handler.execute(
@@ -273,7 +273,7 @@ describe('CreateCharacterHandler', () => {
 
   it('reports a missing culture with err-culture-not-found', async () => {
     const { create, cultureClient } = setup();
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     cultureClient.getCultureById.mockRejectedValue(new Error('404'));
     await expect(create({ cultureId: 'missing', assignments: [] })).rejects.toMatchObject({ errorCode: 'err-culture-not-found' });
   });

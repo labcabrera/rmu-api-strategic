@@ -1,4 +1,4 @@
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { StatKey } from '../../value-objects/character-stat.vo';
 
 // Development points of each extra stat gain roll

@@ -1,4 +1,4 @@
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { buildCharacter, skill } from '../traits/character.fixture';
 
 const rules = (allowThirdRank: boolean) => ({ bonusDevPointsPerLevel: 25, allowThirdRank });
