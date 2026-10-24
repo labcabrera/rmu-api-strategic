@@ -1,7 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import type { GameEventBusPort } from '../../ports/game-event-bus.port';
-import type { GameRepository } from '../../ports/game.repository';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
 import { DeleteGameCommand } from '../commands/delete-game.command';
 import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command';
 
@@ -10,8 +9,7 @@ export class DeleteGamesByRealmHandler implements ICommandHandler<DeleteGamesByR
   private readonly logger = new Logger(DeleteGamesByRealmHandler.name);
 
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     private commandBus: CommandBus,
   ) {}
 

@@ -1,23 +1,23 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
-import type { SkillClientPort } from '../../ports/skill-client.port';
-import type { CharacterRepository } from '../../ports/character.repository';
+import { type SkillClientPort, SKILL_CLIENT } from '../../ports/skill-client.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
-import type { GameRepository } from '../../../../games/application/ports/game.repository';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port';
 import { loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
   constructor(
     private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(SKILL_CLIENT) private readonly skillClient: SkillClientPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: LevelUpSkillCommand): Promise<Character> {

@@ -4,9 +4,9 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command';
-import type { CharacterRepository } from '../../application/ports/character.repository';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../application/ports/character-repository.port';
 import { DomainEvent } from '../../../shared/domain/events/domain-event';
-import { KafkaProducerService } from '../../../shared/infrastructure/messaging/kafka-producer.service';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
 
 export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {
   constructor(data: UpdateCharacterRaceCommandProps) {
@@ -19,8 +19,8 @@ export class KafkaRaceEventConsumer {
   private readonly logger = new Logger(KafkaRaceEventConsumer.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    private readonly kafkaProducerService: KafkaProducerService,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   @EventPattern<string>('internal.rmu-core.race.updated.v1')
@@ -52,7 +52,8 @@ export class KafkaRaceEventConsumer {
         traits: data.traits as any[] | undefined,
       } as UpdateCharacterRaceCommandProps;
       const event = new CharacterRaceUpdatedEvent(commandProps);
-      await this.kafkaProducerService.emit('internal.rmu-strategic.character.race-updated.v1', event);
+      // internal.rmu-strategic.character.race-updated.v1, consumed by KafkaCharacterEventConsumer
+      await this.events.publish('character', event);
     }
   }
 }

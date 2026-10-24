@@ -16,7 +16,7 @@ import type {
 import { TACTICAL_HP_LOG_KINDS } from '../../../domain/value-objects/tactical-game-outcome.vo';
 import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { CharacterConditionDto, InjuryDto } from './character-health.dto';
-import { ItemModifierDto } from '../../../../items/interfaces/http/dtos/item-modifier.dto';
+import { ItemModifierDto } from '../../../../items/interfaces/http/dto/item-modifier.dto';
 import { type ItemModifier, ItemModifiers } from '../../../../items/domain/value-objects/item-modifier.vo';
 
 /** Modifiers an item of the character got in the game (spec 019). */

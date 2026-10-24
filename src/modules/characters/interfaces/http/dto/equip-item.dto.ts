@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { EquipItemCommand } from '../../../application/cqrs/commands/equip-item-command';
+import { EquipItemCommand } from '../../../application/cqrs/commands/equip-item.command';
 import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
 
 export class EquipItemDto {

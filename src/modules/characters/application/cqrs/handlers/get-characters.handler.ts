@@ -1,15 +1,15 @@
 import { Inject, Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { GetCharactersQuery } from '../queries/get-characters.query';
-import { Page } from '../../../../shared/domain/entities/page';
-import type { CharacterRepository } from '../../ports/character.repository';
+import { Page } from '../../../../shared/application/pagination/page';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 
 @QueryHandler(GetCharactersQuery)
 export class GetCharactersHandler implements IQueryHandler<GetCharactersQuery, Page<Character>> {
   private readonly logger = new Logger(GetCharactersHandler.name);
 
-  constructor(@Inject('CharacterRepository') private readonly characterRepository: CharacterRepository) {}
+  constructor(@Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository) {}
 
   async execute(query: GetCharactersQuery): Promise<Page<Character>> {
     this.logger.debug('Finding characters with query: ', query.rsql);

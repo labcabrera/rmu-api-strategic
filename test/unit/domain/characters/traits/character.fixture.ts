@@ -1,4 +1,4 @@
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
 import { CharacterEndurance } from '../../../../../src/modules/characters/domain/value-objects/character-endurance.vo';
 import { CharacterDefense } from '../../../../../src/modules/characters/domain/value-objects/character-defense.vo';
 import { CharacterEquipment } from '../../../../../src/modules/characters/domain/value-objects/character-equipment.vo';
@@ -9,7 +9,7 @@ import { CharacterStat, STAT_KEYS, StatKey } from '../../../../../src/modules/ch
 import { CharacterTrait, CharacterTraitSource } from '../../../../../src/modules/characters/domain/value-objects/character-trait.vo';
 import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo';
 import { NamedEntity } from '../../../../../src/modules/shared/domain/entities/named-entity';
-import { Item } from '../../../../../src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../src/modules/items/domain/aggregates/item';
 import { ItemWeapon } from '../../../../../src/modules/items/domain/value-objects/item-weapon.vo';
 import { ItemWeaponMode } from '../../../../../src/modules/items/domain/value-objects/item-weapon-mode.vo';
 import { ItemWeaponRange } from '../../../../../src/modules/items/domain/value-objects/item-weapon-range.vo';

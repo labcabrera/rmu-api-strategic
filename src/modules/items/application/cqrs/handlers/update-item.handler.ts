@@ -2,18 +2,18 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
 import { UpdateItemCommand } from '../commands/update-item.command';
-import type { ItemRepository } from '../../ports/item.repository';
-import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
-import type { ItemGuardPort } from '../../ports/item-guard.port';
-import { Item } from '../../../domain/aggregates/item.aggregate';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
+import { Item } from '../../../domain/aggregates/item';
 import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(UpdateItemCommand)
 export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Item> {
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
-    @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async execute(command: UpdateItemCommand): Promise<Item> {
@@ -30,7 +30,7 @@ export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Ite
     }
     current.update({ name: command.name, weapon });
     const updated = await this.itemRepository.update(current.id, current);
-    current.getUncommittedEvents().forEach(event => this.itemEventBus.publish(event));
+    await this.events.publishChanges('item', current);
     return updated;
   }
 }

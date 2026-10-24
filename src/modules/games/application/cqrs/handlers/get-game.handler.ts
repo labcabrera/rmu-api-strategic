@@ -1,16 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from '../../../domain/aggregates/game.aggregate';
-import type { GameRepository } from '../../ports/game.repository';
+import { Game } from '../../../domain/aggregates/game';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
 import { GetGameQuery } from '../queries/get-game.query';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import type { GameGuardPort } from '../../ports/game-guard.port';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port';
 
 @QueryHandler(GetGameQuery)
 export class GetGameHandler implements IQueryHandler<GetGameQuery, Game> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
   ) {}
 
   async execute(query: GetGameQuery): Promise<Game> {

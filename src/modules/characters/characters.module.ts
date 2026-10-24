@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-import { AuthModule } from '../auth/auth.module';
 import { GamesModule } from '../games/games.module';
 import { SharedModule } from '../shared/shared.module';
 import { GetCharacterHandler } from './application/cqrs/handlers/get-character.handler';
@@ -38,7 +37,6 @@ import { LevelDownSkillHandler } from './application/cqrs/handlers/level-down-sk
 import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.handler';
 import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.handler';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler';
-import { KafkaCharacterEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
 import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler';
 import { AddTraitHandler } from './application/cqrs/handlers/add-trait.handler';
 import { DeleteTraitHandler } from './application/cqrs/handlers/delete-trait.handler';
@@ -73,6 +71,16 @@ import { ApiManeuverClientAdapter } from './infrastructure/api-clients/api.maneu
 import { MongoHealingLogRepository } from './infrastructure/db/mongo.healing-log.repository';
 import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastructure/persistence/models/character-healing-log.model';
 
+import { CHARACTER_REPOSITORY } from './application/ports/character-repository.port';
+import { CULTURE_CLIENT } from './application/ports/culture-client.port';
+import { HEALING_LOG_REPOSITORY } from './application/ports/healing-log-repository.port';
+import { HEALING_TABLES_CLIENT } from './application/ports/healing-tables-client.port';
+import { MANEUVER_CLIENT } from './application/ports/maneuver-client.port';
+import { PROFESSION_CLIENT } from './application/ports/profession-client.port';
+import { RACE_CLIENT } from './application/ports/race-client.port';
+import { SKILL_CATEGORY_CLIENT } from './application/ports/skill-category-client.port';
+import { SKILL_CLIENT } from './application/ports/skill-client.port';
+import { TRAIT_CLIENT } from './application/ports/trait-client.port';
 @Module({
   imports: [
     TerminusModule,
@@ -82,7 +90,6 @@ import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastru
       { name: CharacterModel.name, schema: CharacterSchema },
       { name: CharacterHealingLogModel.name, schema: CharacterHealingLogSchema },
     ]),
-    AuthModule,
     SharedModule,
     GamesModule,
     FactionsModule,
@@ -143,50 +150,46 @@ import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastru
     ResolveConditionHandler,
     GetHealingLogHandler,
     {
-      provide: 'HealingLogRepository',
+      provide: HEALING_LOG_REPOSITORY,
       useClass: MongoHealingLogRepository,
     },
     {
-      provide: 'HealingTablesClient',
+      provide: HEALING_TABLES_CLIENT,
       useClass: ApiHealingTablesClientAdapter,
     },
     {
-      provide: 'ManeuverClient',
+      provide: MANEUVER_CLIENT,
       useClass: ApiManeuverClientAdapter,
     },
     {
-      provide: 'CharacterRepository',
+      provide: CHARACTER_REPOSITORY,
       useClass: MongoCharacterRepository,
     },
     {
-      provide: 'RaceClient',
+      provide: RACE_CLIENT,
       useClass: ApiRaceClientAdapter,
     },
     {
-      provide: 'SkillClient',
+      provide: SKILL_CLIENT,
       useClass: ApiSkillClientAdapter,
     },
     {
-      provide: 'SkillCategoryClient',
+      provide: SKILL_CATEGORY_CLIENT,
       useClass: ApiSkillCategoryClientAdapter,
     },
     {
-      provide: 'ProfessionClient',
+      provide: PROFESSION_CLIENT,
       useClass: ApiProfessionClientAdapter,
     },
     {
-      provide: 'TraitClient',
+      provide: TRAIT_CLIENT,
       useClass: ApiTraitClientAdapter,
     },
     {
-      provide: 'CultureClient',
+      provide: CULTURE_CLIENT,
       useClass: ApiCultureClientAdapter,
     },
-    {
-      provide: 'CharacterEventBus',
-      useClass: KafkaCharacterEventBusAdapter,
-    },
   ],
-  exports: ['CharacterRepository', CharacterProcessorService],
+  exports: [CHARACTER_REPOSITORY, CharacterProcessorService],
 })
 export class CharactersModule {}

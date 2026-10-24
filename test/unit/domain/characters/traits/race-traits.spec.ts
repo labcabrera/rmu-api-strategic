@@ -1,11 +1,12 @@
+import { fakeEventPublisher } from '../../../support/fake-event-publisher';
 import { mapRaceTraits } from '../../../../../src/modules/characters/application/services/race-traits.mapper';
 import { UpdateCharacterRaceHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/update-character-race.handler';
 import { UpdateCharacterRaceCommand } from '../../../../../src/modules/characters/application/cqrs/commands/update-character-race.command';
 import type { TraitClientPort, TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
 import type { RaceClientPort, RaceTrait } from '../../../../../src/modules/characters/application/ports/race-client.port';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
 import type { ProfessionClientPort } from '../../../../../src/modules/characters/application/ports/profession-client.port';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
 import { CommandBus } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
@@ -110,7 +111,7 @@ describe('Race traits', () => {
         characterRepository as unknown as CharacterRepository,
         itemRepository as unknown as ItemRepository,
         {} as ProfessionClientPort,
-        { publish: vi.fn() },
+        fakeEventPublisher().publisher,
         raceClient,
         traitClient,
         { execute: vi.fn() } as unknown as CommandBus,

@@ -1,29 +1,29 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { AddSkillCommand } from '../commands/add-skill.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { SkillCategoryClientPort } from '../../ports/skill-category-client.port';
-import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
-import type { ProfessionClientPort } from '../../ports/profession-client.port';
-import type { RaceClientPort } from '../../ports/race-client.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
+import { type SkillCategoryClientPort, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port';
+import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port';
+import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port';
+import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port';
 import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
     private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
-    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
-    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(SKILL_CLIENT) private readonly skillClient: SkillClientPort,
+    @Inject(PROFESSION_CLIENT) private readonly professionClient: ProfessionClientPort,
+    @Inject(SKILL_CATEGORY_CLIENT) private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
@@ -76,7 +76,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
+    await this.events.publishChanges('character', character);
     return updated;
   }
 

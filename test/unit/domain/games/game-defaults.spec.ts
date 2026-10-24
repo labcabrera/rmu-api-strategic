@@ -1,7 +1,7 @@
 import { resolveOptions } from '../../../../src/modules/games/domain/value-objects/game-options.vo';
 import { resolvePowerLevel } from '../../../../src/modules/games/domain/value-objects/game-power-level.vo';
-import { GameOptionsDto } from '../../../../src/modules/games/interfaces/http/dtos/game-options.dto';
-import { GamePowerLevelDto } from '../../../../src/modules/games/interfaces/http/dtos/game-power-level-dto';
+import { GameOptionsDto } from '../../../../src/modules/games/interfaces/http/dto/game-options.dto';
+import { GamePowerLevelDto } from '../../../../src/modules/games/interfaces/http/dto/game-power-level.dto';
 
 const legacyPowerLevel = {
   baseDevPoints: 60,

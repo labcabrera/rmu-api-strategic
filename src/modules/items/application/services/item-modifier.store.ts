@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { CharacterRepository } from '../../../characters/application/ports/character.repository';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../characters/application/ports/character-repository.port';
 import { CharacterProcessorService } from '../../../characters/domain/services/character-processor.service';
 import { NotFoundError } from '../../../shared/domain/errors/errors';
-import { Item } from '../../domain/aggregates/item.aggregate';
-import type { ItemEventBusPort } from '../ports/item-event-bus.port';
-import type { ItemGuardPort } from '../ports/item-guard.port';
-import type { ItemRepository } from '../ports/item.repository';
+import { Item } from '../../domain/aggregates/item';
+import { type ItemGuardPort, ITEM_GUARD } from '../ports/item-guard.port';
+import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
 
 /**
  * Loads an item to change its modifiers and stores it with its events. The modifiers change the sheet of the
@@ -14,10 +14,10 @@ import type { ItemRepository } from '../ports/item.repository';
 @Injectable()
 export class ItemModifierStore {
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
-    @Inject('ItemEventProducer') private readonly itemEventBus: ItemEventBusPort,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(CharacterProcessorService) private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 
@@ -30,8 +30,7 @@ export class ItemModifierStore {
 
   async save(item: Item): Promise<Item> {
     const updated = await this.itemRepository.update(item.id, item);
-    item.getUncommittedEvents().forEach(event => this.itemEventBus.publish(event));
-    item.uncommit();
+    await this.events.publishChanges('item', item);
     if (item.characterId) {
       await this.reprocessCharacter(item.characterId);
     }

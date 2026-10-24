@@ -13,3 +13,5 @@ export interface AbsoluteManeuverResponse {
 export interface ManeuverClientPort {
   absolute(roll: number, table: string): Promise<AbsoluteManeuverResponse>;
 }
+
+export const MANEUVER_CLIENT = Symbol('ManeuverClientPort');

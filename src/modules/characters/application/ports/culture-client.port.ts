@@ -2,6 +2,8 @@ export interface CultureClientPort {
   getCultureById(cultureId: string): Promise<Culture>;
 }
 
+export const CULTURE_CLIENT = Symbol('CultureClientPort');
+
 export type CultureSkillRankType = 'skill' | 'skill-choice' | 'category-pool' | 'languages' | 'region';
 
 export interface CultureSkillRank {

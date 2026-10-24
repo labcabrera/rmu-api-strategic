@@ -1,18 +1,18 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 import { UpdateCharacterRaceCommand } from '../commands/update-character-race.command';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
-import type { ProfessionClientPort } from '../../ports/profession-client.port';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
 import { CharacterUpdatedEvent } from '../../../domain/events/character.events';
-import type { RaceClientPort, RaceTrait } from '../../ports/race-client.port';
-import type { TraitClientPort } from '../../ports/trait-client.port';
+import { type RaceClientPort, type RaceTrait, RACE_CLIENT } from '../../ports/race-client.port';
+import { type TraitClientPort, TRAIT_CLIENT } from '../../ports/trait-client.port';
 import { mapRaceTraits } from '../../services/race-traits.mapper';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(UpdateCharacterRaceCommand)
 export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {
@@ -20,12 +20,12 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
 
   constructor(
     private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
-    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
-    @Inject('TraitClient') private readonly traitClient: TraitClientPort,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(PROFESSION_CLIENT) private readonly professionClient: ProfessionClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
+    @Inject(TRAIT_CLIENT) private readonly traitClient: TraitClientPort,
     private commandBus: CommandBus,
   ) {}
 
@@ -70,7 +70,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     this.characterProcessorService.process(character, items);
     await this.characterRepository.update(character.id, character);
     this.logger.log(`Character ${characterId} updated with new race values`);
-    this.characterEventBus.publish(new CharacterUpdatedEvent(character.getProps()));
+    await this.events.publish('character', new CharacterUpdatedEvent(character.getProps()));
   }
 
   // Older race events do not carry the traits, so the race is read from core

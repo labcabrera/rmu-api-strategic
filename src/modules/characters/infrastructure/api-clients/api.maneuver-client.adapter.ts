@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { TokenService } from '../../../auth/token.service';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client';
+import { TokenService } from '../../../shared/infrastructure/security/token.service';
 import { BadGatewayError } from '../../../shared/domain/errors/errors';
 import { AbsoluteManeuverResponse, ManeuverClientPort } from '../../application/ports/maneuver-client.port';
 
@@ -12,6 +12,7 @@ export class ApiManeuverClientAdapter implements ManeuverClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
+    private readonly httpClient: HttpClient,
   ) {}
 
   async absolute(roll: number, table: string): Promise<AbsoluteManeuverResponse> {
@@ -19,8 +20,7 @@ export class ApiManeuverClientAdapter implements ManeuverClientPort {
     const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/maneuvers/absolute?${params.toString()}`;
     try {
       const token = await this.tokenService.getToken();
-      const response = await axios.get<AbsoluteManeuverResponse>(uri, { headers: { Authorization: `Bearer ${token}` } });
-      const data = response.data;
+      const data = await this.httpClient.get<AbsoluteManeuverResponse>(uri, { token });
       return { result: data.result, message: data.message, effects: data.effects ?? [] };
     } catch (e) {
       this.logger.error(`Unable to resolve the maneuver ${uri}: ${(e as Error).message}`);

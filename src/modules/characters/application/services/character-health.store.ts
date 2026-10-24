@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { GameRepository } from '../../../games/application/ports/game.repository';
+import { type GameRepository, GAME_REPOSITORY } from '../../../games/application/ports/game-repository.port';
 import { RMU_ADMIN, RMU_SERVICE } from '../../../shared/domain/entities/user-roles';
 import { ForbiddenError, NotFoundError } from '../../../shared/domain/errors/errors';
-import { Character } from '../../domain/aggregates/character.aggregate';
-import type { CharacterEventBusPort } from '../ports/character-event-bus.port';
-import type { CharacterRepository } from '../ports/character.repository';
-import type { HealingLogRepository } from '../ports/healing-log.repository';
+import { Character } from '../../domain/aggregates/character';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/character-repository.port';
+import { type HealingLogRepository, HEALING_LOG_REPOSITORY } from '../ports/healing-log-repository.port';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port';
 
 export interface HealthAccessOptions {
   /** Service to service calls (rmu-api-tactical applying an outcome) */
@@ -21,10 +21,10 @@ export interface HealthAccessOptions {
 @Injectable()
 export class CharacterHealthStore {
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('HealingLogRepository') private readonly healingLogRepository: HealingLogRepository,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(HEALING_LOG_REPOSITORY) private readonly healingLogRepository: HealingLogRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async load(characterId: string, userId: string, roles: string[], options: HealthAccessOptions = { allowCharacterOwner: true }) {
@@ -51,8 +51,7 @@ export class CharacterHealthStore {
     const entries = character.pullHealingLog();
     const updated = await this.characterRepository.update(character.id, character);
     await this.healingLogRepository.saveAll(character.id, character.gameId, entries);
-    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
-    character.uncommit();
+    await this.events.publishChanges('character', character);
     return updated;
   }
 }

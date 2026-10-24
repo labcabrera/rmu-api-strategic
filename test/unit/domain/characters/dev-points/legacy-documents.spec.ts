@@ -1,6 +1,6 @@
 import { MongoCharacterRepository } from '../../../../../src/modules/characters/infrastructure/db/mongo.character.repository';
-import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.aggregate';
-import { RsqlParser } from '../../../../../src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
+import { Character } from '../../../../../src/modules/characters/domain/aggregates/character';
+import { RsqlParser } from '../../../../../src/modules/shared/infrastructure/db/rsql-parser';
 
 // The mongoose schema is not needed to test the mapping
 vi.mock('../../../../../src/modules/characters/infrastructure/persistence/models/character.model', () => ({

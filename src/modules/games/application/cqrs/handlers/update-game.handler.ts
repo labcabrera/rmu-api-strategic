@@ -1,16 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Game } from '../../../domain/aggregates/game.aggregate';
+import { Game } from '../../../domain/aggregates/game';
 import { UpdateGameCommand } from '../commands/update-game.command';
-import type { GameEventBusPort } from '../../ports/game-event-bus.port';
-import type { GameRepository } from '../../ports/game.repository';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port';
 import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port';
 
 @CommandHandler(UpdateGameCommand)
 export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Game> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async execute(command: UpdateGameCommand): Promise<Game> {
@@ -27,7 +27,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
       imageUrl: command.imageUrl,
     });
     const updated = await this.gameRepository.update(current.id, current);
-    current.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
+    await this.events.publishChanges('game', current);
     return updated;
   }
 }

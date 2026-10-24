@@ -1,12 +1,13 @@
+import { fakeEventPublisher } from '../../../support/fake-event-publisher';
 import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler';
 import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { buildCharacter } from './character.fixture';
 import type { TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
-import type { GameRepository } from '../../../../../src/modules/games/application/ports/game.repository';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port';
 import { GamePowerLevel } from '../../../../../src/modules/games/domain/value-objects/game-power-level.vo';
 
 const catalog: Record<string, Partial<TraitResponse>> = {
@@ -61,7 +62,7 @@ const setup = (powerLevel: Partial<GamePowerLevel>) => {
     characterRepository as unknown as CharacterRepository,
     { findByCharacterId: vi.fn().mockResolvedValue([]) } as unknown as ItemRepository,
     { getTraitById: vi.fn((id: string) => Promise.resolve(catalog[id] as TraitResponse)) },
-    { publish: vi.fn() },
+    fakeEventPublisher().publisher,
     gameRepository as unknown as GameRepository,
   );
   return { character, handler };

@@ -1,16 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Page } from '../../../../shared/domain/entities/page';
+import { Page } from '../../../../shared/application/pagination/page';
 import { GetItemsQuery } from '../queries/get-items.query';
-import { Item } from '../../../domain/aggregates/item.aggregate';
-import type { ItemGuardPort } from '../../ports/item-guard.port';
-import type { ItemRepository } from '../../ports/item.repository';
+import { Item } from '../../../domain/aggregates/item';
+import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port';
 
 @QueryHandler(GetItemsQuery)
 export class GetItemsHandler implements IQueryHandler<GetItemsQuery, Page<Item>> {
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
   ) {}
 
   async execute(query: GetItemsQuery): Promise<Page<Item>> {

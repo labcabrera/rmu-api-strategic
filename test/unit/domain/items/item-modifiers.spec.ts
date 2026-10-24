@@ -1,4 +1,4 @@
-import { Character } from '../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character';
 import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
 import { AttackProcessor } from '../../../../src/modules/characters/domain/services/character/processors/attack-processor';
 import { DefenseProcessor } from '../../../../src/modules/characters/domain/services/character/processors/defense-processor';
@@ -11,7 +11,7 @@ import { ResistancesProcessor } from '../../../../src/modules/characters/domain/
 import { SkillProcessor } from '../../../../src/modules/characters/domain/services/character/processors/skill-processor';
 import { StatProcessor } from '../../../../src/modules/characters/domain/services/character/processors/stat-processor';
 import { XPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/xp-processor';
-import { Item } from '../../../../src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item';
 import { ItemModifier, ItemModifiers } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
 import { ValidationError, NotFoundError } from '../../../../src/modules/shared/domain/errors/errors';
 import { armor, buildCharacter, shield, skill, weapon } from '../characters/traits/character.fixture';

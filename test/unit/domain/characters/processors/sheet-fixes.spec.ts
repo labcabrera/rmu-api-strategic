@@ -4,9 +4,9 @@ import { SkillProcessor } from '../../../../../src/modules/characters/domain/ser
 import { SetupProfessionSkillHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/setup-professional-skill.handler';
 import { SetUpProfessionalSkillCommand } from '../../../../../src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
-import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
-import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
-import type { GameRepository } from '../../../../../src/modules/games/application/ports/game.repository';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character-repository.port';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item-repository.port';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game-repository.port';
 import { buildCharacter, skill } from '../traits/character.fixture';
 
 describe('Resistances level bonus', () => {

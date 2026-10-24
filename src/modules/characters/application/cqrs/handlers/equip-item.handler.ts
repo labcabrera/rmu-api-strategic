@@ -1,13 +1,13 @@
 import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { EquipItemCommand } from '../commands/equip-item-command';
-import type { CharacterRepository } from '../../ports/character.repository';
+import { EquipItemCommand } from '../commands/equip-item.command';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
-import type { ItemRepository } from '../../../../items/application/ports/item.repository';
-import { Item } from '../../../../items/domain/aggregates/item.aggregate';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port';
+import { Item } from '../../../../items/domain/aggregates/item';
 import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo';
 
 @CommandHandler(EquipItemCommand)
@@ -15,8 +15,8 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
   private readonly logger = new Logger(EquipItemHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     private readonly characterProcessorService: CharacterProcessorService,
   ) {}
 

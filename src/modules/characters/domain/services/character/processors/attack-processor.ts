@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.aggregate';
+import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character';
 import { CharacterAttack, WeaponCategory } from '../../../value-objects/character-attack.vo';
 import { DomainError, ValidationError } from '../../../../../shared/domain/errors/errors';
 import { ItemWeapon } from '../../../../../items/domain/value-objects/item-weapon.vo';
 import { ItemWeaponMode } from '../../../../../items/domain/value-objects/item-weapon-mode.vo';
-import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../items/domain/aggregates/item';
 import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
 import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';

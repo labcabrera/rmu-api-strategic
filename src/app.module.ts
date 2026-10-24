@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import * as Joi from 'joi';
-
-import { AuthModule } from './modules/auth/auth.module';
+import { envSchema } from './config/env.schema';
+import { AuthModule } from './modules/shared/infrastructure/security/auth.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { GamesModule } from './modules/games/games.module';
 import { CharactersModule } from './modules/characters/characters.module';
@@ -14,21 +13,7 @@ import { FactionsModule } from './modules/factions/factions.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
-      validationSchema: Joi.object({
-        PORT: Joi.number().positive().default(3001),
-        RMU_MONGO_STRATEGIC_URI: Joi.string().required(),
-        RMU_API_CORE_URI: Joi.string().required(),
-        RMU_API_ITEMS_URI: Joi.string().required(),
-        RMU_IAM_JWK_URI: Joi.string().uri().required(),
-        RMU_IAM_ISSUER_URI: Joi.string().uri().required(),
-        RMU_IAM_AUDIENCE: Joi.string().required(),
-        RMU_IAM_TOKEN_URI: Joi.string().uri().required(),
-        RMU_IAM_CLIENT_ID: Joi.string().required(),
-        RMU_IAM_CLIENT_SECRET: Joi.string().required(),
-        RMU_KAFKA_BROKERS: Joi.string().required(),
-        RMU_KAFKA_CLIENT_ID: Joi.string().required(),
-        RMU_KAFKA_DEFAULT_PARTITIONS: Joi.number().integer().min(1).default(1),
-      }),
+      validationSchema: envSchema,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

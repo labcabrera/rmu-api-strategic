@@ -4,6 +4,8 @@ export interface SkillCategoryClientPort {
   getAllSkillCategories(): Promise<SkillCategoryResponse[]>;
 }
 
+export const SKILL_CATEGORY_CLIENT = Symbol('SkillCategoryClientPort');
+
 export interface SkillCategoryResponse {
   id: string;
   bonus: string[];

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { HttpClient } from '../../../shared/infrastructure/http/http-client';
 
-import { TokenService } from '../../../auth/token.service';
+import { TokenService } from '../../../shared/infrastructure/security/token.service';
 import { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port';
 
 @Injectable()
@@ -10,6 +10,7 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
+    private readonly httpClient: HttpClient,
   ) {}
 
   async getProfessionById(professionId: string): Promise<Profession> {
@@ -17,14 +18,9 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
     const apiCoreUri = this.configService.get('RMU_API_CORE_URI') as string;
     const uri = `${apiCoreUri}/professions/${professionId}`;
     try {
-      const response = await axios.get(uri, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data as Profession;
+      return await this.httpClient.get<Profession>(uri, { token });
     } catch (err) {
-      //TODO add axios error handling
+      // Any failure answers 500 with the upstream error in the text, as with axios (F-strategic-12)
       throw new Error(`Error fetching profession ${professionId}: ${String(err)}`);
     }
   }

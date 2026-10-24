@@ -1,5 +1,5 @@
-import { GameOptionsDto } from '../../../interfaces/http/dtos/game-options.dto';
-import { GamePowerLevelDto } from '../../../interfaces/http/dtos/game-power-level-dto';
+import { GameOptionsDto } from '../../../interfaces/http/dto/game-options.dto';
+import { GamePowerLevelDto } from '../../../interfaces/http/dto/game-power-level.dto';
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
 
 export class UpdateGameCommand extends AuthenticatedCommand {
