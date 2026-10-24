@@ -83,7 +83,7 @@ describe('Knacks by power level', () => {
     await knack('perception');
     await knack('stalking');
     await knack('climbing');
-    await expect(knack('swimming')).rejects.toMatchObject({ errorCode: 'err-skill-max-knacks' });
+    await expect(knack('swimming')).rejects.toMatchObject({ code: 'err-skill-max-knacks' });
     new SkillProcessor().process(character, []);
     expect(character.findSkill('perception', null)!.professionalBonus).toBe(10);
     expect(character.findSkill('swimming', null)!.professionalBonus).toBe(0);
@@ -93,13 +93,13 @@ describe('Knacks by power level', () => {
     const { character, knack } = setup({});
     await knack('perception');
     await knack('stalking');
-    await expect(knack('climbing')).rejects.toMatchObject({ errorCode: 'err-skill-max-knacks' });
+    await expect(knack('climbing')).rejects.toMatchObject({ code: 'err-skill-max-knacks' });
     new SkillProcessor().process(character, []);
     expect(character.findSkill('perception', null)!.professionalBonus).toBe(5);
   });
 
   it('allows no knacks with a knackCount of 0', async () => {
     const { knack } = setup({ knackCount: 0 });
-    await expect(knack('perception')).rejects.toMatchObject({ errorCode: 'err-skill-max-knacks' });
+    await expect(knack('perception')).rejects.toMatchObject({ code: 'err-skill-max-knacks' });
   });
 });

@@ -24,7 +24,7 @@ export class KafkaDomainEventPublisher implements DomainEventPublisher {
     }
   }
 
-  async publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<unknown>): Promise<void> {
+  async publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<{ id: string }>): Promise<void> {
     // A copy: getUncommittedEvents() returns the internal array, which uncommit() empties.
     const events = [...aggregate.getUncommittedEvents()];
     aggregate.uncommit();

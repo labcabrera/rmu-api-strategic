@@ -22,6 +22,8 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
 
+    character.checkVersion(command.expectedVersion);
+
     character.update({
       name: command.name,
       weight: command.info?.weight,
@@ -33,7 +35,7 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     });
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    const updated = await this.characterRepository.update(character.id, character);
+    const updated = await this.characterRepository.update(character);
     await this.events.publishChanges('character', character);
     return updated;
   }

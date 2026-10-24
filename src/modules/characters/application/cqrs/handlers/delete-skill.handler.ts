@@ -22,7 +22,7 @@ export class DeleteSkillHandler implements ICommandHandler<DeleteSkillCommand, C
     character.deleteSkill(command.skillId, command.specialization);
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
-    const updated = await this.characterRepository.update(character.id, character);
+    const updated = await this.characterRepository.update(character);
     //TODO propagate events
     return updated;
   }

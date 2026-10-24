@@ -76,13 +76,13 @@ describe('AddTraitHandler max trait cost', () => {
     const { handler, character } = setup({ baseDevPoints: 60 });
     const promise = handler.execute(command('prodigy', 4, 'perception'));
     await expect(promise).rejects.toThrow(ValidationError);
-    await expect(handler.execute(command('prodigy', 4, 'perception'))).rejects.toMatchObject({ errorCode: 'err-trait-max-cost' });
+    await expect(handler.execute(command('prodigy', 4, 'perception'))).rejects.toMatchObject({ code: 'err-trait-max-cost' });
     expect(character.traits).toHaveLength(0);
   });
 
   it('rejects a non tier based talent above the limit', async () => {
     const { handler } = setup({ baseDevPoints: 60, maxTraitCost: 20 });
-    await expect(handler.execute(command('recurved-musculature'))).rejects.toMatchObject({ errorCode: 'err-trait-max-cost' });
+    await expect(handler.execute(command('recurved-musculature'))).rejects.toMatchObject({ code: 'err-trait-max-cost' });
   });
 
   it('accepts a talent equal to the limit', async () => {
@@ -108,7 +108,7 @@ describe('AddTraitHandler command validation', () => {
   const expectCode = async (cmd: AddTraitCommand, errorCode: string) => {
     const { handler, character } = setup({ baseDevPoints: 60 });
     await expect(handler.execute(cmd)).rejects.toBeInstanceOf(ValidationError);
-    await expect(handler.execute(cmd)).rejects.toMatchObject({ errorCode });
+    await expect(handler.execute(cmd)).rejects.toMatchObject({ code: errorCode });
     expect(character.traits).toHaveLength(0);
   };
 

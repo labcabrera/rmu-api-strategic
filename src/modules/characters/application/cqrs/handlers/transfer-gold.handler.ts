@@ -44,8 +44,8 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     if (faction.management.availableGold < 0)
       throw new ValidationError(`Faction's available gold cannot be negative: ${faction.management.availableGold}`);
 
-    await this.itemRepository.update(goldCoinItem.id, goldCoinItem);
-    await this.factionRepository.update(faction.id, faction);
+    await this.itemRepository.update(goldCoinItem);
+    await this.factionRepository.update(faction);
 
     return character;
   }

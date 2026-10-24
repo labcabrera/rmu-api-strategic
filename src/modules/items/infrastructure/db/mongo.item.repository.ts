@@ -15,21 +15,22 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
 
   async findByCharacterId(characterId: string): Promise<Item[]> {
     const items = await this.model.find({ characterId });
-    return items.map(doc => this.mapToEntity(doc));
+    return items.map(doc => this.toEntity(doc));
   }
 
   async findByCharacterIdAndItemTypeId(characterId: string, itemTypeId: string): Promise<Item | null> {
     const doc = await this.model.findOne({ characterId, itemTypeId });
-    return doc ? this.mapToEntity(doc) : null;
+    return doc ? this.toEntity(doc) : null;
   }
 
   async updateCarriedStatus(itemId: string, carried: boolean): Promise<Item> {
-    const update = { carried, updatedAt: new Date() };
-    const updated = await this.model.findByIdAndUpdate(itemId, update, { new: true });
+    // A write of its own: it moves the version, so a copy loaded before it can no longer be stored.
+    const update = { $set: { carried, updatedAt: new Date() }, $inc: { version: 1 } };
+    const updated = await this.model.findByIdAndUpdate(itemId, update, { returnDocument: 'after' });
     if (!updated) {
       throw new Error(`Item with id ${itemId} not found for updating carried status`);
     }
-    return this.mapToEntity(updated);
+    return this.toEntity(updated);
   }
 
   protected mapToEntity(doc: ItemDocument): Item {

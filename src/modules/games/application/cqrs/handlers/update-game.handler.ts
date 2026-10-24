@@ -18,6 +18,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
     if (!current) {
       throw new NotFoundError('Game', command.gameId);
     }
+    current.checkVersion(command.expectedVersion);
     current.update({
       name: command.name,
       options: command.options,
@@ -26,7 +27,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
       description: command.description,
       imageUrl: command.imageUrl,
     });
-    const updated = await this.gameRepository.update(current.id, current);
+    const updated = await this.gameRepository.update(current);
     await this.events.publishChanges('game', current);
     return updated;
   }

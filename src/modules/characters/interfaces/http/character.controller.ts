@@ -7,7 +7,7 @@ import { CreateCharacterDto } from './dto/create-character.dto.js';
 import { AddXPDto } from './dto/add-xp.dto.js';
 import { UpdateCharacterDto } from './dto/update-character.dto.js';
 import { LevelUpQueryDto } from './dto/level-up-query.dto.js';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { CatalogPagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
 import { Page } from '../../../shared/application/pagination/page.js';
 import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command.js';
 import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command.js';
@@ -50,7 +50,7 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterPageDto, description: 'Success' })
   @ApiErrors()
   @ApiOperation({ operationId: 'findCharacters', summary: 'Find characters by RSQL' })
-  async find(@Query() dto: PagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
+  async find(@Query() dto: CatalogPagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
     this.logger.debug(`Finding characters with query ${dto.q} for user ${user.id}`);
     const userId = user.id;
     const roles = user.roles;

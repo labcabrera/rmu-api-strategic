@@ -6,6 +6,9 @@ import { GamePowerLevelDto } from './game-power-level.dto.js';
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 
 export class GameDto {
+  @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
+  version: number;
+
   @ApiProperty({ description: 'Game identifier', type: String })
   id: string;
 
@@ -38,6 +41,7 @@ export class GameDto {
 
   static fromEntity(entity: Game): GameDto {
     const dto = new GameDto();
+    dto.version = entity.version;
     dto.id = entity.id;
     dto.name = entity.name;
     dto.realmId = entity.realmId;

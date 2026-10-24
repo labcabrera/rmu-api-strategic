@@ -132,7 +132,7 @@ export class InMemoryEventPublisher implements DomainEventPublisher {
     return Promise.resolve();
   }
 
-  publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<unknown>): Promise<void> {
+  publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<{ id: string }>): Promise<void> {
     const events = [...aggregate.getUncommittedEvents()];
     aggregate.uncommit();
     return this.publish(aggregateType, ...events);

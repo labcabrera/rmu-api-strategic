@@ -28,8 +28,9 @@ export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Ite
       const { skillId, fumble, modes } = current.weapon;
       weapon = new ItemWeapon(skillId, fumble, modes, command.wielderSize);
     }
+    current.checkVersion(command.expectedVersion);
     current.update({ name: command.name, weapon });
-    const updated = await this.itemRepository.update(current.id, current);
+    const updated = await this.itemRepository.update(current);
     await this.events.publishChanges('item', current);
     return updated;
   }

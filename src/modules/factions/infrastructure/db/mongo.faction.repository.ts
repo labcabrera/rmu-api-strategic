@@ -5,52 +5,21 @@ import type { FactionRepository } from '../../application/ports/faction-reposito
 import { FactionModel, type FactionDocument } from '../persistence/models/faction.model.js';
 import { Faction } from '../../domain/aggregates/faction.js';
 import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
-import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
 import { Page } from '../../../shared/application/pagination/page.js';
 
 @Injectable()
-export class MongoFactionRepository implements FactionRepository {
-  constructor(
-    @InjectModel(FactionModel.name) private factionModel: Model<FactionDocument>,
-    private rsqlParser: RsqlParser,
-  ) {}
-
-  async findById(id: string): Promise<Faction | null> {
-    const readed = await this.factionModel.findById(id);
-    return readed ? this.mapToEntity(readed) : null;
+export class MongoFactionRepository extends MongoBaseRepository<Faction, FactionDocument> implements FactionRepository {
+  constructor(@InjectModel(FactionModel.name) model: Model<FactionDocument>, rsqlParser: RsqlParser) {
+    super(model, rsqlParser);
   }
 
-  async findByRsql(rsql: string, page: number, size: number): Promise<Page<Faction>> {
-    const skip = page * size;
-    const mongoQuery = this.rsqlParser.parse(rsql);
-    const [factionDocs, totalElements] = await Promise.all([
-      this.factionModel.find(mongoQuery).skip(skip).limit(size).sort({ name: 1 }),
-      this.factionModel.countDocuments(mongoQuery),
-    ]);
-    const content = factionDocs.map(doc => this.mapToEntity(doc));
-    return new Page<Faction>(content, page, size, totalElements);
+  // Factions are listed by name
+  override findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Faction>> {
+    return super.findByRsql(rsql, page, size, undefined, { name: 'asc' });
   }
 
-  async save(faction: Partial<Faction>): Promise<Faction> {
-    const model = new this.factionModel({ ...faction, _id: faction.id });
-    await model.save();
-    return this.mapToEntity(model);
-  }
-
-  async update(id: string, request: Partial<Faction>): Promise<Faction> {
-    const updatedFaction = await this.factionModel.findByIdAndUpdate(id, { $set: request }, { new: true });
-    if (!updatedFaction) {
-      throw new NotFoundError('Faction', id);
-    }
-    return this.mapToEntity(updatedFaction);
-  }
-
-  async deleteById(id: string): Promise<Faction | null> {
-    const result = await this.factionModel.findByIdAndDelete(id);
-    return result ? this.mapToEntity(result) : null;
-  }
-
-  private mapToEntity(doc: FactionDocument): Faction {
+  protected mapToEntity(doc: FactionDocument): Faction {
     return Faction.fromProps({
       id: doc._id,
       gameId: doc.gameId,

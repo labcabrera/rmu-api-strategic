@@ -64,14 +64,14 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
 
     if (faction && factionCost !== 0) {
       faction.addGold(-factionCost);
-      await this.factionRepository.update(faction.id, faction);
+      await this.factionRepository.update(faction);
     }
 
     if (character && characterGoldItem && characterCost !== 0) {
       const characterGoldItem = await this.itemRepository.findByCharacterIdAndItemTypeId(command.characterId, goldCoin);
       if (characterGoldItem) {
         characterGoldItem.addAmount(-characterCost);
-        await this.itemRepository.update(characterGoldItem.id, characterGoldItem);
+        await this.itemRepository.update(characterGoldItem);
       }
     }
 
@@ -110,7 +110,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
 
     if (existingItem) {
       existingItem.addAmount(command.amount || 1);
-      return await this.itemRepository.update(existingItem.id, existingItem);
+      return await this.itemRepository.update(existingItem);
     } else {
       const itemProps: Omit<ItemProps, 'id' | 'createdAt' | 'updatedAt'> = {
         gameId: command.gameId,

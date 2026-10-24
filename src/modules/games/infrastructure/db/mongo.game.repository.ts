@@ -17,7 +17,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
 
   async findByRealm(realmId: string): Promise<Game[]> {
     const docs = await this.model.find({ realm: realmId }).sort({ name: 1 });
-    return docs.map(doc => this.mapToEntity(doc));
+    return docs.map(doc => this.toEntity(doc));
   }
 
   private mapPowerLevel(doc: GameDocument): GamePowerLevel {
@@ -71,6 +71,8 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       status: doc.status,
       options: this.mapOptions(doc),
       powerLevel: this.mapPowerLevel(doc),
+      // Mapped since spec 020: an update writes every prop, and an unmapped one would be removed (F-strategic-21)
+      shortDescription: doc.shortDescription,
       description: doc.description,
       imageUrl: doc.imageUrl,
       owner: doc.owner,

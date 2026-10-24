@@ -5,6 +5,9 @@ import { FactionManagement } from '../../../domain/value-objects/faction-managem
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 
 export class FactionDto {
+  @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
+  version: number;
+
   id: string;
   gameId: string;
   name: string;
@@ -16,6 +19,7 @@ export class FactionDto {
 
   static fromEntity(entity: Faction): FactionDto {
     const dto = new FactionDto();
+    dto.version = entity.version;
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.name = entity.name;

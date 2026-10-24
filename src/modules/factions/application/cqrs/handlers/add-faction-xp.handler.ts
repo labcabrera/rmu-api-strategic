@@ -21,7 +21,7 @@ export class AddFactionXPCommandHandler implements ICommandHandler<AddFactionXPC
     if (!faction) throw new NotFoundError('Faction', command.factionId);
 
     faction.addXp(command.xp);
-    const updated = await this.factionRepository.update(command.factionId, faction);
+    const updated = await this.factionRepository.update(faction);
     await this.events.publishChanges('faction', faction);
     return updated;
   }

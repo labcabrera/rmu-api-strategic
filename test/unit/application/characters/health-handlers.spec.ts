@@ -49,7 +49,7 @@ const character = (id: string, props: { gameId?: string; skills?: CharacterSkill
 
 const setup = (characters: Character[], results: AbsoluteManeuverResponse['result'][] = []) => {
   const byId = new Map(characters.map(c => [c.id, c]));
-  const update = vi.fn((_id: string, c: Character) => Promise.resolve(c));
+  const update = vi.fn((c: Character) => Promise.resolve(c));
   const characterRepository = {
     findById: vi.fn((id: string) => Promise.resolve(byId.get(id) ?? null)),
     update,
@@ -114,7 +114,7 @@ const breakage = (id: string, value: number, extra: Partial<ItemModifier> = {}):
 
 /** The outcome handler with its items: the repository keeps them by id and the processor is a spy. */
 const outcomeHandler = (store: CharacterHealthStore, items: Item[] = []) => {
-  const itemUpdate = vi.fn((_id: string, item: Item) => Promise.resolve(item));
+  const itemUpdate = vi.fn((item: Item) => Promise.resolve(item));
   const itemRepository = {
     findByCharacterId: vi.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
     update: itemUpdate,
@@ -176,7 +176,7 @@ describe('Health handlers', () => {
       const { store } = setup([character('patient')]);
       const { handler } = outcomeHandler(store);
       await expect(handler.execute(new ApplyTacticalOutcomeCommand('patient', outcome, 'player-001', ['rmu-user']))).rejects.toMatchObject({
-        errorCode: 'err-character-health-forbidden',
+        code: 'err-character-health-forbidden',
       });
       await expect(handler.execute(new ApplyTacticalOutcomeCommand('patient', outcome, MASTER, ['rmu-user']))).resolves.toBeDefined();
     });
@@ -243,7 +243,7 @@ describe('Health handlers', () => {
       const { handler } = outcomeHandler(store);
       await expect(
         handler.execute(new ApplyTacticalOutcomeCommand('patient', { ...outcome, characterId: 'other' }, 'sa', ['rmu-service'])),
-      ).rejects.toMatchObject({ errorCode: 'err-outcome-character-mismatch' });
+      ).rejects.toMatchObject({ code: 'err-outcome-character-mismatch' });
     });
   });
 
@@ -275,10 +275,10 @@ describe('Health handlers', () => {
       const { store, tables, maneuvers } = setup([withInjury(), outsider]);
       const handler = new TreatInjuryHandler(store, tables, maneuvers);
       await expect(handler.execute(treat({ healerCharacterId: 'outsider' }))).rejects.toMatchObject({
-        errorCode: 'err-healer-not-in-game',
+        code: 'err-healer-not-in-game',
       });
-      await expect(handler.execute(treat({ healerCharacterId: 'missing' }))).rejects.toMatchObject({ errorCode: 'err-healer-not-found' });
-      await expect(handler.execute(treat({}))).rejects.toMatchObject({ errorCode: 'err-healer-required' });
+      await expect(handler.execute(treat({ healerCharacterId: 'missing' }))).rejects.toMatchObject({ code: 'err-healer-not-found' });
+      await expect(handler.execute(treat({}))).rejects.toMatchObject({ code: 'err-healer-required' });
     });
 
     it('adds the herbalism bonus to the Medicine roll after a successful Herbalism roll', async () => {
@@ -315,7 +315,7 @@ describe('Health handlers', () => {
       expect(absolute).not.toHaveBeenCalled();
       expect(result.injuries[0].treatments[0]).toMatchObject({ result: 'success', healingType: 'magic-and-herbs' });
       await expect(handler.execute(treat({ roll: undefined, healer: { name: 'Quack', bonus: 0 } }))).rejects.toMatchObject({
-        errorCode: 'err-treatment-roll-required',
+        code: 'err-treatment-roll-required',
       });
     });
   });
@@ -343,7 +343,7 @@ describe('Health handlers', () => {
       const { store, tables } = setup([patient]);
       const handler = new RollPermanentInjuryHandler(store, tables);
       await expect(handler.execute(new RollPermanentInjuryCommand('patient', 'i-1', 50, MASTER, []))).rejects.toMatchObject({
-        errorCode: 'err-injury-recovery-required',
+        code: 'err-injury-recovery-required',
       });
       patient.injuries[0].recovery = {
         roll: 33,
@@ -365,7 +365,7 @@ describe('Health handlers', () => {
       const { store, tables } = setup([patient]);
       const handler = new RestCharacterHandler(store, tables);
       await expect(handler.execute(new RestCharacterCommand('patient', 0, 0, false, MASTER, []))).rejects.toMatchObject({
-        errorCode: 'err-rest-time-required',
+        code: 'err-rest-time-required',
       });
       const result = await handler.execute(new RestCharacterCommand('patient', 4, 0, false, MASTER, []));
       expect(result.hp.current).toBe(6);

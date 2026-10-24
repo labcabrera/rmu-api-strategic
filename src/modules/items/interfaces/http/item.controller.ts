@@ -3,7 +3,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { Page } from '../../../shared/application/pagination/page.js';
-import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
+import { CatalogPagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
 import { CreateItemCommand } from '../../application/cqrs/commands/create-item.command.js';
 import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command.js';
 import { UpdateItemCommand } from '../../application/cqrs/commands/update-item.command.js';
@@ -45,7 +45,7 @@ export class ItemController {
   @ApiOperation({ operationId: 'findItms', summary: 'Find items by RSQL' })
   @ApiOkResponse({ type: ItemPageDto })
   @ApiErrors({ 400: 'Invalid RSQL query' })
-  async find(@Query() dto: PagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
+  async find(@Query() dto: CatalogPagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
     const userId = user.id;
     const roles = user.roles;
     const query = new GetItemsQuery(dto.q, dto.page, dto.size, userId, roles);

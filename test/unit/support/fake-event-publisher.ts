@@ -9,7 +9,7 @@ export function fakeEventPublisher() {
     events.forEach(event => published.push({ aggregateType, event }));
     return Promise.resolve();
   });
-  const publishChanges = vi.fn((aggregateType: string, aggregate: BaseAggregateRoot<unknown>) => {
+  const publishChanges = vi.fn((aggregateType: string, aggregate: BaseAggregateRoot<{ id: string }>) => {
     const events = [...aggregate.getUncommittedEvents()];
     aggregate.uncommit();
     return publish(aggregateType, ...events);

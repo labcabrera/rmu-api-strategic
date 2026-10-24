@@ -37,7 +37,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
     await this.itemRepository.updateCarriedStatus(item.id, true);
 
-    return await this.characterRepository.update(character.id, character);
+    return await this.characterRepository.update(character);
   }
 
   private equip(character: Character, items: Item[], command: EquipItemCommand): void {

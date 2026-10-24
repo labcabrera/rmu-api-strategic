@@ -125,7 +125,7 @@ describe('Character health', () => {
     const character = patient();
     character.injuries = [injury({ id: 'a' })];
     expect(() => character.setInjuryPermanent('a', { penalty: -5, roll: 30 }, {})).toThrow(
-      expect.objectContaining({ errorCode: 'err-injury-recovery-required' }) as Error,
+      expect.objectContaining({ code: 'err-injury-recovery-required' }) as Error,
     );
   });
 
@@ -163,7 +163,7 @@ describe('Character health', () => {
     character.resolveCondition(dead.id);
     expect(character.status).toBe('created');
     expect(() => character.resolveCondition(dead.id)).toThrow(ValidationError);
-    expect(() => character.resolveCondition('missing')).toThrow(expect.objectContaining({ errorCode: 'err-condition-not-found' }) as Error);
+    expect(() => character.resolveCondition('missing')).toThrow(expect.objectContaining({ code: 'err-condition-not-found' }) as Error);
   });
 
   it('edits an injury and marks it permanent with its whole penalty when there is no permanent part', () => {

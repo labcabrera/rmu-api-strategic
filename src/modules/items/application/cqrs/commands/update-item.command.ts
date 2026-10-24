@@ -7,6 +7,8 @@ export class UpdateItemCommand extends AuthenticatedCommand {
     public readonly wielderSize: string | undefined,
     userId: string,
     roles: string[],
+    /** The version the client read; undefined applies the change to the current one. */
+    public readonly expectedVersion?: number,
   ) {
     super(userId, roles);
   }

@@ -1,3 +1,4 @@
+import type { SortCriteria } from '../../../../shared/application/criteria/query-criteria.js';
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { Game } from '../../../domain/aggregates/game.js';
@@ -15,7 +16,7 @@ export class GetGamesHandler implements IQueryHandler<GetGamesQuery, Page<Game>>
 
   async execute(query: GetGamesQuery): Promise<Page<Game>> {
     const filter = this.gameGuard.buildQueryPredicate(query.userId, query.roles);
-    const sort = { name: 1 };
+    const sort: SortCriteria = { name: 'asc' };
     return await this.gameRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

@@ -108,7 +108,7 @@ describe('Talent policy', () => {
       await add('fast-attack', 1);
       expect(character.traits[0].paidWith).toMatchObject({ normal: 0, bonus: 10 });
       expect(character.experience.availableDevPoints).toBe(60);
-      await expect(add('fast-attack', 2)).rejects.toMatchObject({ errorCode: 'err-talent-policy-bonus-points-only' });
+      await expect(add('fast-attack', 2)).rejects.toMatchObject({ code: 'err-talent-policy-bonus-points-only' });
     });
 
     it('acceptance 6: rejects a new talent at level 2 and allows improving an owned one', async () => {
@@ -128,7 +128,7 @@ describe('Talent policy', () => {
 
     it('rejects buying a new talent after creation with err-talent-policy-creation-only', async () => {
       const { add } = setup({ level: 2, devPoints: 60, bonusDevPoints: 10 }, options);
-      await expect(add('quick-draw')).rejects.toMatchObject({ errorCode: 'err-talent-policy-creation-only' });
+      await expect(add('quick-draw')).rejects.toMatchObject({ code: 'err-talent-policy-creation-only' });
     });
   });
 
@@ -143,7 +143,7 @@ describe('Talent policy', () => {
       await add('fast-attack', 1);
       expect(character.traits.find(t => t.traitId === 'fast-attack')!.paidWith).toMatchObject({ flaw: 10, bonus: 0, normal: 0 });
       expect(character.experience.flawDevPoints).toBe(2);
-      await expect(add('fast-attack', 2)).rejects.toMatchObject({ errorCode: 'err-talent-policy-flaw-points-only' });
+      await expect(add('fast-attack', 2)).rejects.toMatchObject({ code: 'err-talent-policy-flaw-points-only' });
     });
 
     it('cannot remove a flaw whose points paid a talent', async () => {

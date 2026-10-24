@@ -29,7 +29,7 @@ export class ItemModifierStore {
   }
 
   async save(item: Item): Promise<Item> {
-    const updated = await this.itemRepository.update(item.id, item);
+    const updated = await this.itemRepository.update(item);
     await this.events.publishChanges('item', item);
     if (item.characterId) {
       await this.reprocessCharacter(item.characterId);
@@ -42,6 +42,6 @@ export class ItemModifierStore {
     if (!character) return;
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterRepository.update(character);
   }
 }

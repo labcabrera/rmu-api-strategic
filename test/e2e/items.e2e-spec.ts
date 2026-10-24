@@ -82,6 +82,7 @@ describe('items (e2e)', () => {
       const tactical = await as('other').get(`/v1/items?q=factionId==${factionId}&page=0&size=1000`);
       expect(tactical.status).toBe(200);
       expect(ids(tactical.body)).toHaveLength(3);
+      expect((await as('owner').get('/v1/items?size=1001')).status).toBe(400);
       expect((await as('owner').get('/v1/items?q=name=x')).status).toBe(400);
     });
   });
@@ -94,6 +95,21 @@ describe('items (e2e)', () => {
       expect(response.body).toMatchObject({ id: item.id, name: 'Renamed' });
       expect((await as('admin').patch(`/v1/items/${item.id}`, { name: 'By admin' })).status).toBe(200);
       expect((await as('owner').patch('/v1/items/item-missing', { name: 'x' })).status).toBe(404);
+    });
+
+    it('rejects a PATCH with a stale version with 409, also after a write of the character on the item', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const item = await createItem(e2e, { gameId, characterId: character.id });
+      expect(item.version).toBe(0);
+      // Carrying the item writes it: the version read before is stale
+      await request(e2e.server).put(`/v1/characters/${character.id}/items/${item.id}/carried/true`).set('Authorization', e2e.auth('owner'));
+      const stale = await as('owner').patch(`/v1/items/${item.id}`, { name: 'Stale', version: 0 });
+      expect(stale.status).toBe(409);
+      expect(stale.body).toMatchObject({ code: 'version-conflict' });
+      expect((await as('owner').patch(`/v1/items/${item.id}`, { name: 'Fresh', version: 1 })).body).toMatchObject({
+        name: 'Fresh',
+        version: 2,
+      });
     });
 
     it('rejects a change by another user or a token without groups with 403', async () => {

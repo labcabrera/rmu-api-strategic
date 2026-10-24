@@ -33,7 +33,7 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
     });
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterRepository.update(character);
     //TODO propagate events
     return character;
   }
