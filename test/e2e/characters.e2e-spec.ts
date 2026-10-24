@@ -90,6 +90,9 @@ describe('characters (e2e)', () => {
       const page = await as('owner').get('/v1/characters?page=1&size=2');
       expect(page.body).toMatchObject({ pagination: { page: 1, size: 2, totalElements: 3, totalPages: 2 } });
       expect((await as('owner').get('/v1/characters?q=name=x')).status).toBe(400);
+      // rmu-api-tactical reads the characters of a game with size=1000
+      expect((await as('owner').get(`/v1/characters?q=gameId==${gameId}&page=0&size=1000`)).status).toBe(200);
+      expect((await as('owner').get('/v1/characters?size=1001')).status).toBe(400);
     });
 
     it.skip('hides the characters of another user from reads and listings [F-strategic-15]', async () => {
@@ -109,6 +112,16 @@ describe('characters (e2e)', () => {
       expect(response.body).toMatchObject({ id: character.id, name: 'Renamed', description: 'Changed' });
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.character.updated.v1']);
       expect((await as('admin').patch(`/v1/characters/${character.id}`, { name: 'By admin' })).status).toBe(200);
+    });
+
+    it('rejects a PATCH with a stale version with 409 version-conflict', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      expect(character.version).toBe(0);
+      await as('owner').post(`/v1/characters/${character.id}/xp`, { xp: 10 });
+      const stale = await as('owner').patch(`/v1/characters/${character.id}`, { name: 'Stale', version: 0 });
+      expect(stale.status).toBe(409);
+      expect(stale.body).toMatchObject({ code: 'version-conflict' });
+      expect((await as('owner').patch(`/v1/characters/${character.id}`, { name: 'Fresh', version: 1 })).body).toMatchObject({ version: 2 });
     });
 
     it('answers 404 for an unknown character', async () => {

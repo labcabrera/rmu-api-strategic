@@ -11,7 +11,7 @@ const errorCode = (fn: () => void): string | undefined => {
   try {
     fn();
   } catch (e) {
-    return (e as ValidationError).errorCode;
+    return (e as ValidationError).code;
   }
   return undefined;
 };

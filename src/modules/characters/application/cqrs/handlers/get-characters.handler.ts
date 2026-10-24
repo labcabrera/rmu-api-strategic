@@ -1,3 +1,4 @@
+import type { SortCriteria } from '../../../../shared/application/criteria/query-criteria.js';
 import { Inject, Logger } from '@nestjs/common';
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -14,7 +15,7 @@ export class GetCharactersHandler implements IQueryHandler<GetCharactersQuery, P
   async execute(query: GetCharactersQuery): Promise<Page<Character>> {
     this.logger.debug('Finding characters with query: ', query.rsql);
     const filter = undefined;
-    const sort = { name: 1 };
+    const sort: SortCriteria = { name: 'asc' };
     return await this.characterRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

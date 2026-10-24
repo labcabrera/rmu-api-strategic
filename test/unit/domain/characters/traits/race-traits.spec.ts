@@ -55,7 +55,7 @@ describe('Race traits', () => {
       try {
         character.deleteTrait('nightvision', undefined);
       } catch (e) {
-        expect((e as ValidationError).errorCode).toBe('err-trait-from-race');
+        expect((e as ValidationError).code).toBe('err-trait-from-race');
       }
       expect(character.traits).toHaveLength(1);
     });

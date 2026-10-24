@@ -17,6 +17,8 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
     const faction = await this.factionRepository.findById(command.factionId);
     if (!faction) throw new NotFoundError('Faction', command.factionId);
 
+    faction.checkVersion(command.expectedVersion);
+
     faction.update({
       name: command.name,
       management: command.management,
@@ -24,7 +26,7 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
       description: command.description,
       imageUrl: command.imageUrl,
     });
-    const updated = await this.factionRepository.update(command.factionId, faction);
+    const updated = await this.factionRepository.update(faction);
     await this.events.publishChanges('faction', faction);
     return updated;
   }

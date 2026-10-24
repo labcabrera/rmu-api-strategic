@@ -22,6 +22,9 @@ import type { CharacterStatus } from '../../../domain/value-objects/character-st
 import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto.js';
 
 export class CharacterDto {
+  @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
+  version: number;
+
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
   id: string;
 
@@ -109,6 +112,7 @@ export class CharacterDto {
       statistics[key] = CharacterStatDto.fromEntity(entity.statistics[key]);
     }
     const dto = new CharacterDto();
+    dto.version = entity.version;
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };

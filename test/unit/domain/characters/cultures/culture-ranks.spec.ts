@@ -62,7 +62,7 @@ const errorCode = (fn: () => unknown): string | undefined => {
   try {
     fn();
   } catch (e) {
-    return (e as ValidationError).errorCode;
+    return (e as ValidationError).code;
   }
   return undefined;
 };
@@ -267,11 +267,11 @@ describe('CreateCharacterHandler', () => {
   it('acceptance 3: rejects an incomplete assignment or one above the maximum per skill', async () => {
     const { create } = setup();
     await expect(create({ cultureId: 'culture-test', assignments: validAssignments.slice(1) })).rejects.toMatchObject({
-      errorCode: 'err-culture-incomplete-entry',
+      code: 'err-culture-incomplete-entry',
     });
     const tooMany = [...validAssignments.filter(a => a.entry !== 2), { entry: 2, skillId: 'carving', ranks: 3 }];
     await expect(create({ cultureId: 'culture-test', assignments: tooMany })).rejects.toMatchObject({
-      errorCode: 'err-culture-max-ranks-per-skill',
+      code: 'err-culture-max-ranks-per-skill',
     });
   });
 
@@ -279,7 +279,7 @@ describe('CreateCharacterHandler', () => {
     const { create, cultureClient } = setup();
     vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     cultureClient.getCultureById.mockRejectedValue(new Error('404'));
-    await expect(create({ cultureId: 'missing', assignments: [] })).rejects.toMatchObject({ errorCode: 'err-culture-not-found' });
+    await expect(create({ cultureId: 'missing', assignments: [] })).rejects.toMatchObject({ code: 'err-culture-not-found' });
   });
 
   it('acceptance 4: without culture the character is created as before but without the level 0 points', async () => {
@@ -300,14 +300,14 @@ describe('CreateCharacterHandler', () => {
 
   it('validates the stats at creation', async () => {
     const { create } = setup();
-    await expect(create(undefined, statistics(80, 70))).rejects.toMatchObject({ errorCode: 'err-stat-temporary-above-potential' });
-    await expect(create(undefined, statistics(0, 70))).rejects.toMatchObject({ errorCode: 'err-stat-out-of-range' });
+    await expect(create(undefined, statistics(80, 70))).rejects.toMatchObject({ code: 'err-stat-temporary-above-potential' });
+    await expect(create(undefined, statistics(0, 70))).rejects.toMatchObject({ code: 'err-stat-out-of-range' });
   });
 
   it('validates the stat points budget with point-buy generation', async () => {
     const pointBuy = setup({ options: { statGeneration: 'point-buy' }, powerLevel: { statPoints: 15 } });
     // 60 gives +2 in the bonus table: 10 stats x 2 = 20
-    await expect(pointBuy.create(undefined, statistics(60, 80))).rejects.toMatchObject({ errorCode: 'err-stat-points-exceeded' });
+    await expect(pointBuy.create(undefined, statistics(60, 80))).rejects.toMatchObject({ code: 'err-stat-points-exceeded' });
     await expect(pointBuy.create(undefined, statistics(50, 80))).resolves.toBeDefined();
     await expect(setup().create(undefined, statistics(60, 80))).resolves.toBeDefined();
   });

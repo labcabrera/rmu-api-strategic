@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsNumber, IsObject, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { UpdateCharacterCommand } from '../../../application/cqrs/commands/update-character.command.js';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
 
@@ -41,7 +42,24 @@ export class UpdateCharacterDto {
   @IsString()
   imageUrl?: string | undefined;
 
+  @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  version?: number;
+
   static toCommand(characterId: string, dto: UpdateCharacterDto, userId: string, roles: string[]): UpdateCharacterCommand {
-    return new UpdateCharacterCommand(characterId, dto.name, dto.info, dto.roleplay, dto.description, dto.imageUrl, userId, roles);
+    return new UpdateCharacterCommand(
+      characterId,
+      dto.name,
+      dto.info,
+      dto.roleplay,
+      dto.description,
+      dto.imageUrl,
+      userId,
+      roles,
+      dto.version,
+    );
   }
 }

@@ -29,7 +29,7 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
 
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterRepository.update(character);
     return character;
   }
 }

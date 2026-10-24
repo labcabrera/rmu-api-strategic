@@ -68,7 +68,7 @@ export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharact
     });
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterRepository.update(character);
     this.logger.log(`Character ${characterId} updated with new race values`);
     await this.events.publish('character', new CharacterUpdatedEvent(character.getProps()));
   }

@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsObject, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { UpdateFactionCommand } from '../../../application/cqrs/commands/update-faction.command.js';
 import { FactionManagementDto } from './faction.dto.js';
 
@@ -28,6 +29,13 @@ export class UpdateFactionDto {
   @IsOptional()
   imageUrl: string | undefined;
 
+  @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  version?: number;
+
   static toCommand(factionId: string, dto: UpdateFactionDto, userId: string, roles: string[]): UpdateFactionCommand {
     return new UpdateFactionCommand(
       factionId,
@@ -38,6 +46,7 @@ export class UpdateFactionDto {
       dto.imageUrl,
       userId,
       roles,
+      dto.version,
     );
   }
 }

@@ -1,3 +1,4 @@
+import type { SortCriteria } from '../../../../shared/application/criteria/query-criteria.js';
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { Page } from '../../../../shared/application/pagination/page.js';
@@ -15,7 +16,7 @@ export class GetItemsHandler implements IQueryHandler<GetItemsQuery, Page<Item>>
 
   async execute(query: GetItemsQuery): Promise<Page<Item>> {
     const filter = this.itemGuard.buildQueryPredicate(query.userId, query.roles);
-    const sort = { name: 1 };
+    const sort: SortCriteria = { name: 'asc' };
     return await this.itemRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

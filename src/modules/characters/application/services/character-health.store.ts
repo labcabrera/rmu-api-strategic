@@ -49,7 +49,7 @@ export class CharacterHealthStore {
 
   async save(character: Character): Promise<Character> {
     const entries = character.pullHealingLog();
-    const updated = await this.characterRepository.update(character.id, character);
+    const updated = await this.characterRepository.update(character);
     await this.healingLogRepository.saveAll(character.id, character.gameId, entries);
     await this.events.publishChanges('character', character);
     return updated;

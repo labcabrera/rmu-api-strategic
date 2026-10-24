@@ -25,17 +25,17 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
   async findById(id: string): Promise<Character | null> {
     const doc = await this.model.findById(id).lean();
     if (!doc) return null;
-    return this.mapToEntity(doc);
+    return this.toEntity(doc);
   }
 
   async findByGameId(gameId: string): Promise<Character[]> {
     const characters = await this.model.find({ gameId });
-    return characters.map(doc => this.mapToEntity(doc));
+    return characters.map(doc => this.toEntity(doc));
   }
 
   async findByRaceId(raceId: string): Promise<Character[]> {
     const characters = await this.model.find({ 'info.race.id': raceId });
-    return characters.map(doc => this.mapToEntity(doc));
+    return characters.map(doc => this.toEntity(doc));
   }
 
   async deleteByGameId(gameId: string): Promise<void> {

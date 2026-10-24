@@ -12,5 +12,5 @@ export interface DomainEventPublisher {
   publish(aggregateType: string, ...events: DomainEvent<unknown>[]): Promise<void>;
 
   /** Publishes the aggregate's uncommitted events and clears them. */
-  publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<unknown>): Promise<void>;
+  publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<{ id: string }>): Promise<void>;
 }

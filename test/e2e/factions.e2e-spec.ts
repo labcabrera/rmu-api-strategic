@@ -96,6 +96,17 @@ describe('factions (e2e)', () => {
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.faction.updated.v1', 'internal.rmu-strategic.faction.updated.v1']);
     });
 
+    it('rejects a PATCH with a stale version with 409 version-conflict', async () => {
+      const faction = await createFaction(e2e, gameId);
+      expect(faction.version).toBe(0);
+      expect((await as('owner').patch(`/v1/factions/${faction.id}`, { name: 'First', version: 0 })).body).toMatchObject({ version: 1 });
+      const stale = await as('owner').patch(`/v1/factions/${faction.id}`, { name: 'Stale', version: 0 });
+      expect(stale.status).toBe(409);
+      expect(stale.body).toMatchObject({ code: 'version-conflict' });
+      // Spending gold is a write of its own: it moves the version too
+      expect((await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: 0 })).body).toMatchObject({ version: 2 });
+    });
+
     it('answers 404 for an unknown faction', async () => {
       expect((await as('owner').patch('/v1/factions/faction-missing', { name: 'x' })).status).toBe(404);
     });

@@ -30,7 +30,7 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     character.updateTemporaryStat(command.stat, command.value, { bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel });
     const items = await this.itemRepository.findByCharacterId(command.characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterRepository.update(character);
     //TODO propagate events
     return character;
   }

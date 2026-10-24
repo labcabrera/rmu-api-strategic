@@ -114,8 +114,11 @@ describe('strategic games (e2e)', () => {
       expect((await get('/v1/strategic-games?page=-1', 'owner')).status).toBe(400);
     });
 
-    it('accepts any page size (no maximum)', async () => {
-      expect((await get('/v1/strategic-games?size=100000', 'owner')).status).toBe(200);
+    it('accepts pages of up to 100 games', async () => {
+      expect((await get('/v1/strategic-games?size=100', 'owner')).status).toBe(200);
+      const tooBig = await get('/v1/strategic-games?size=101', 'owner');
+      expect(tooBig.status).toBe(400);
+      expect(tooBig.body).toMatchObject({ statusCode: 400, code: 'bad-request' });
     });
   });
 
@@ -130,6 +133,24 @@ describe('strategic games (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({ id: game.id, name: 'Renamed', description: 'Changed', realmId: 'realm-001' });
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.game.updated.v1']);
+    });
+
+    it('versions the game: a PATCH with the version read applies, a stale one is a 409 version-conflict', async () => {
+      const game = await createGame(e2e);
+      expect(game.version).toBe(0);
+      const patch = (body: object) =>
+        request(e2e.server).patch(`/v1/strategic-games/${game.id}`).set('Authorization', e2e.auth('owner')).send(body);
+      const first = await patch({ name: 'First', version: 0 });
+      expect(first.status).toBe(200);
+      expect(first.body).toMatchObject({ name: 'First', version: 1 });
+      const stale = await patch({ name: 'Stale', version: 0 });
+      expect(stale.status).toBe(409);
+      expect(stale.body).toMatchObject({ statusCode: 409, error: 'ConflictError', code: 'version-conflict' });
+      expect((await patch({ name: 'No version' })).body).toMatchObject({ name: 'No version', version: 2 });
+      expect((await patch({ version: -1 })).status).toBe(400);
+      // An update writes every prop: the short description, not in the response (F-strategic-17), must survive it
+      const stored = await e2e.connection.collection('strategic-games').findOne({ _id: game.id as never });
+      expect(stored).toMatchObject({ shortDescription: 'Short', version: 2 });
     });
 
     it('lets an admin change any game', async () => {

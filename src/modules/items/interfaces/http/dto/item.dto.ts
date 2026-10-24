@@ -8,6 +8,9 @@ import { ItemShieldDto } from './item-shield.dto.js';
 import { ItemConditionDto, ItemModifierDto } from './item-modifier.dto.js';
 
 export class ItemDto {
+  @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
+  version: number;
+
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })
   id: string;
 
@@ -66,6 +69,7 @@ export class ItemDto {
 
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
+    dto.version = entity.version;
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.factionId = entity.factionId;

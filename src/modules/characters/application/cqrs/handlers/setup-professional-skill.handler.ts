@@ -38,7 +38,7 @@ export class SetupProfessionSkillHandler implements ICommandHandler<SetUpProfess
     skill.professional = command.types;
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    const updated: Character = await this.characterRepository.update(character.id, character);
+    const updated: Character = await this.characterRepository.update(character);
     return updated;
   }
 

@@ -23,6 +23,6 @@ export class AddXPHandler implements ICommandHandler<AddXPCommand, Character> {
     const items = await this.itemRepository.findByCharacterId(character.id);
     character.experience.xp += command.xp;
     this.characterProcessorService.process(character, items);
-    return await this.characterRepository.update(character.id, character);
+    return await this.characterRepository.update(character);
   }
 }

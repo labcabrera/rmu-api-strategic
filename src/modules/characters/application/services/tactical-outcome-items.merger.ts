@@ -39,7 +39,7 @@ export class TacticalOutcomeItemsMerger {
       }
       const added = item.addModifiers(outcome.modifiers);
       if (added.length > 0) {
-        await this.itemRepository.update(item.id, item);
+        await this.itemRepository.update(item);
         await this.events.publishChanges('item', item);
       }
       const condition = item.getCondition();

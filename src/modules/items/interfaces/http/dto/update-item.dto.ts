@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { UpdateItemCommand } from '../../../application/cqrs/commands/update-item.command.js';
 import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
 
@@ -21,7 +22,14 @@ export class UpdateItemDto {
   @IsOptional()
   wielderSize: string | undefined;
 
+  @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  version?: number;
+
   static toCommand(itemId: string, dto: UpdateItemDto, userId: string, roles: string[]): UpdateItemCommand {
-    return new UpdateItemCommand(itemId, dto.name, dto.wielderSize, userId, roles);
+    return new UpdateItemCommand(itemId, dto.name, dto.wielderSize, userId, roles, dto.version);
   }
 }
