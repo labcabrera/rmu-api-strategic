@@ -39,13 +39,14 @@ describe('error format', () => {
     expect(response.body).toMatchObject({ path: '/v1/characters' });
   });
 
-  it('keeps the rule code also as errorCode, which rmu-mfe-strategic translates', async () => {
+  it('sends the rule code in code only, which rmu-mfe-strategic translates [F-receta-33]', async () => {
     // A rule error of the tactical outcome: the character of the outcome is not the one of the path
     const response = await request(e2e.server)
       .post('/v1/characters/character-a/tactical-outcomes')
       .set('Authorization', e2e.auth('service'))
       .send({ tacticalGameId: 't-1', actorId: 'a-1', characterId: 'character-b', hp: { start: 1, end: 1, delta: 0 }, injuries: [] });
     expect(response.status).toBe(400);
-    expect(response.body).toMatchObject({ code: 'err-outcome-character-mismatch', errorCode: 'err-outcome-character-mismatch' });
+    expect(response.body).toMatchObject({ code: 'err-outcome-character-mismatch' });
+    expect(response.body).not.toHaveProperty('errorCode');
   });
 });

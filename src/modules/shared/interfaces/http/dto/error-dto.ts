@@ -15,14 +15,6 @@ export class ErrorDto {
   code: string;
 
   @ApiProperty({
-    description: 'Deprecated: the same rule code as `code` (err-...), only for rule errors, until rmu-mfe-strategic reads `code`',
-    required: false,
-    deprecated: true,
-    example: 'err-trait-max-cost',
-  })
-  errorCode?: string;
-
-  @ApiProperty({
     description: 'Error message; a list of messages for request validation errors',
     oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
     example: 'Character 6f1c2a9e-3b7d-4c55-9a43-0d2e8f1b7c11 not found',
