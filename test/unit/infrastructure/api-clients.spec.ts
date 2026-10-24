@@ -6,6 +6,7 @@ import {
   UpstreamValidationError,
 } from '../../../src/modules/shared/infrastructure/http/http-client.js';
 import type { TokenService } from '../../../src/modules/shared/infrastructure/security/token.service.js';
+import { ApiItemClientAdapter } from '../../../src/modules/items/infrastructure/api-clients/api.item-client.adapter.js';
 import { ApiProfessionClientAdapter } from '../../../src/modules/characters/infrastructure/api-clients/api.profession-client.adapter.js';
 
 const tokens = { getToken: () => Promise.resolve('t0k') } as unknown as TokenService;
@@ -32,5 +33,20 @@ describe('ApiProfessionClientAdapter (F-strategic-12)', () => {
     const adapter = new ApiProfessionClientAdapter(tokens, config, { get } as unknown as HttpClient);
     await adapter.getProfessionById('a/b');
     expect(get).toHaveBeenCalledWith('http://core/v1/professions/a%2Fb', { token: 't0k' });
+  });
+});
+
+describe('ApiItemClientAdapter (F-strategic-19)', () => {
+  it('answers undefined for an item type the items API does not have, and encodes the id', async () => {
+    const get = vi.fn().mockRejectedValue(new UpstreamBadGatewayError('items answered 404', 404));
+    const adapter = new ApiItemClientAdapter(tokens, config, { get } as unknown as HttpClient);
+    await expect(adapter.getItemById('a b')).resolves.toBeUndefined();
+    expect(get).toHaveBeenCalledWith('http://core/v1/items/a%20b', { token: 't0k' });
+  });
+
+  it('lets the other failures through', async () => {
+    const error = new BadGatewayError('items is not available (ECONNREFUSED)');
+    const adapter = new ApiItemClientAdapter(tokens, config, clientFailing(error));
+    await expect(adapter.getItemById('rope')).rejects.toBe(error);
   });
 });

@@ -2,7 +2,8 @@ import type { Difficulty } from '../../../characters/domain/value-objects/diffic
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 
 export interface ItemClientPort {
-  getItemById(itemId: string): Promise<ItemResponse>;
+  /** undefined when the items API has no such item type. */
+  getItemById(itemId: string): Promise<ItemResponse | undefined>;
 }
 
 export const ITEM_CLIENT = Symbol('ItemClientPort');
