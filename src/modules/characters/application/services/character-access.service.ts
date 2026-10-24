@@ -1,13 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GameAccess } from '../../../games/application/services/game-access.service.js';
 import { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
-import { ForbiddenError, NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { ForbiddenError } from '../../../shared/domain/errors/errors.js';
 import { Character } from '../../domain/aggregates/character.js';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/character-repository.port.js';
 
 /**
  * Who may read and change a character (spec 021, decision 2; F-strategic-15):
- * - read: its owner, or whoever can read its strategic game (public game, owner of the game, admin);
+ * - read: its owner, or whoever can read its strategic game (public game, owner of the game, its players, admin);
  * - change and delete: its owner, the owner of its strategic game or an admin. rmu-api-tactical applies the outcome
  *   of a tactical game with the token of the user who runs it (the owner of the strategic game), so that owner must
  *   be able to change the characters of the other players;
@@ -17,18 +16,7 @@ import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/charact
  */
 @Injectable()
 export class CharacterAccess {
-  constructor(
-    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
-    private readonly gameAccess: GameAccess,
-  ) {}
-
-  /** The character, or a 404; a 403 if the user may not change it. */
-  async loadForChange(characterId: string, userId: string, roles: string[]): Promise<Character> {
-    const character = await this.characterRepository.findById(characterId);
-    if (!character) throw new NotFoundError('Character', characterId);
-    await this.checkChange(character, userId, roles);
-    return character;
-  }
+  constructor(private readonly gameAccess: GameAccess) {}
 
   async checkChange(character: Character, userId: string, roles: string[]): Promise<void> {
     if (await this.canChange(character, userId, roles)) return;
@@ -42,7 +30,7 @@ export class CharacterAccess {
 
   async checkRead(character: Character, userId: string, roles: string[]): Promise<void> {
     if (GameAccess.readsAll(roles) || character.owner === userId) return;
-    this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
+    await this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
   }
 
   /** A new character: rmu-user or rmu-admin. */
