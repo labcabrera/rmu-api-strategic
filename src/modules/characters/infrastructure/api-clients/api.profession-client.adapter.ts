@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../../../shared/infrastructure/http/http-client.js';
+import { HttpClient, isUpstreamHttpError } from '../../../shared/infrastructure/http/http-client.js';
 
 import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
 import type { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port.js';
@@ -13,15 +13,17 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
     private readonly httpClient: HttpClient,
   ) {}
 
-  async getProfessionById(professionId: string): Promise<Profession> {
+  /** undefined when core has no such profession; any other failure is the HttpClient's error (502/504...). */
+  async getProfessionById(professionId: string): Promise<Profession | undefined> {
     const token = await this.tokenService.getToken();
     const apiCoreUri = this.configService.get('RMU_API_CORE_URI') as string;
-    const uri = `${apiCoreUri}/professions/${professionId}`;
+    const uri = `${apiCoreUri}/professions/${encodeURIComponent(professionId)}`;
     try {
       return await this.httpClient.get<Profession>(uri, { token });
     } catch (err) {
-      // Any failure answers 500 with the upstream error in the text, as with axios (F-strategic-12)
-      throw new Error(`Error fetching profession ${professionId}: ${String(err)}`);
+      // F-strategic-12: only a 404 has a meaning of its own; the rest reaches the client as the HttpClient maps it.
+      if (isUpstreamHttpError(err) && err.status === 404) return undefined;
+      throw err;
     }
   }
 }
