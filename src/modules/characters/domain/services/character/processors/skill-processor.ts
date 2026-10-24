@@ -1,11 +1,11 @@
+import type { StatKey } from '../../../value-objects/character-stat.vo';
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
 import { CharacterSkill } from '../../../value-objects/character-skill.vo';
-import { CharacterStat } from '../../../value-objects/character-stat.vo';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
 import { AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
 import { matchesSkill } from '../traits/trait-specialization-matcher';
-import { DEFAULT_KNACK_BONUS } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { DEFAULT_KNACK_BONUS } from '../../../../../games/domain/value-objects/game-power-level.vo';
 
 @Injectable()
 export class SkillProcessor {
@@ -38,7 +38,7 @@ export class SkillProcessor {
   private getStatBonus(character: Partial<Character>, statistics: string[]): number {
     let result = 0;
     statistics?.forEach(stat => {
-      const statValue = character.statistics![stat] as CharacterStat;
+      const statValue = character.statistics![stat as StatKey];
       if (statValue?.totalBonus) {
         result += statValue.totalBonus;
       }

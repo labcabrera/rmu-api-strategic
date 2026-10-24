@@ -10,18 +10,18 @@ import {
   CharacterRoleplayInfo,
 } from './character-childs.model';
 import { CharacterEquipment } from './character-equipment.model';
-import type { CharacterStatus } from 'src/modules/characters/domain/value-objects/character-status.vo';
+import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo';
 import { CharacterSkill } from './character-skill.model';
 import { CharacterTrait } from './character-trait.model';
-import { NamedEntity } from 'src/modules/shared/infrastructure/persistence/models/named-entity.model';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { NamedEntity } from '../../../../shared/infrastructure/persistence/models/named-entity.model';
+import { StatKey } from '../../../domain/value-objects/character-stat.vo';
 import { CharacterStat, CharacterStatSchema } from './character-stat.model';
 import { CharacterMovement } from './character-movement.model';
 import { CharacterDefense } from './character-defense.model';
 import { CharacterAttack } from './character-attack.model';
 import { CharacterXP } from './character-xp.model';
-import type { Injury } from 'src/modules/characters/domain/value-objects/injury.vo';
-import type { CharacterCondition } from 'src/modules/characters/domain/value-objects/character-condition.vo';
+import type { Injury } from '../../../domain/value-objects/injury.vo';
+import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo';
 
 export type CharacterDocument = CharacterModel & Document;
 

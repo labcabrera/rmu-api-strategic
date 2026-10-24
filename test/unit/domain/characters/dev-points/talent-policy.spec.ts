@@ -1,13 +1,12 @@
-import { AddTraitHandler } from 'src/modules/characters/application/cqrs/handlers/add-trait.handler';
-import { AddTraitCommand } from 'src/modules/characters/application/cqrs/commands/add-trait.command';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import type { TraitResponse } from 'src/modules/characters/application/ports/trait-client.port';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import type { CharacterEventBusPort } from 'src/modules/characters/application/ports/character-event-bus.port';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import type { GameOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
-import type { GamePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
+import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler';
+import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
+import type { TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game.repository';
+import type { GameOptions } from '../../../../../src/modules/games/domain/value-objects/game-options.vo';
+import type { GamePowerLevel } from '../../../../../src/modules/games/domain/value-objects/game-power-level.vo';
 import { buildCharacter } from '../traits/character.fixture';
 
 const catalog: Record<string, Partial<TraitResponse>> = {
@@ -50,16 +49,16 @@ const setup = (
 ) => {
   const character = buildCharacter(props);
   const handler = new AddTraitHandler(
-    { process: jest.fn() } as unknown as CharacterProcessorService,
+    { process: vi.fn() } as unknown as CharacterProcessorService,
     {
-      findById: jest.fn().mockResolvedValue(character),
-      update: jest.fn().mockResolvedValue(character),
+      findById: vi.fn().mockResolvedValue(character),
+      update: vi.fn().mockResolvedValue(character),
     } as unknown as CharacterRepository,
-    { findByCharacterId: jest.fn().mockResolvedValue([]) } as unknown as ItemRepository,
-    { getTraitById: jest.fn((id: string) => Promise.resolve(catalog[id] as TraitResponse)) },
-    { publish: jest.fn() } as CharacterEventBusPort,
+    { findByCharacterId: vi.fn().mockResolvedValue([]) } as unknown as ItemRepository,
+    { getTraitById: vi.fn((id: string) => Promise.resolve(catalog[id] as TraitResponse)) },
+    { publish: vi.fn() },
     {
-      findById: jest.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel }, options }),
+      findById: vi.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel }, options }),
     } as unknown as GameRepository,
   );
   const add = (traitId: string, tier?: number, specialization?: string) =>

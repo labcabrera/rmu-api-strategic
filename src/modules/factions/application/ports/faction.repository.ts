@@ -1,5 +1,5 @@
-import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Faction } from '../../domain/aggregates/faction.aggregate';
+import { Page } from '../../../shared/domain/entities/page';
 
 export interface FactionRepository {
   findById(id: string): Promise<Faction | null>;

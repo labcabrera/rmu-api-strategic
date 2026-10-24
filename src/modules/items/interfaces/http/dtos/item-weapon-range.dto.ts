@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemWeaponRange } from 'src/modules/items/domain/value-objects/item-weapon-range.vo';
+import { ItemWeaponRange } from '../../../domain/value-objects/item-weapon-range.vo';
 
 export class ItemWeaponRangeDto {
   @ApiProperty({ description: 'From', type: Number, required: true, example: '0' })

@@ -1,26 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
+import { JwtAuthGuard } from '../../../auth/jwt.auth.guard';
 import { CharacterDto, CharacterPageDto } from './dto/character.dto';
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { AddXPDto } from './dto/add-xp.dto';
 import { UpdateCharacterDto } from './dto/update-character-dto';
 import { LevelUpQueryDto } from './dto/level-up-query.dto';
-import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
-import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
-import { Page } from 'src/modules/shared/domain/entities/page';
-import { AddXPCommand } from 'src/modules/characters/application/cqrs/commands/add-xp.command';
-import { CreateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import { DeleteCharacterCommand } from 'src/modules/characters/application/cqrs/commands/delete-character.command';
-import { LevelUpCommand } from 'src/modules/characters/application/cqrs/commands/level-up.command';
-import { UpdateCharacterCommand } from 'src/modules/characters/application/cqrs/commands/update-character.command';
-import { GetCharacterQuery } from 'src/modules/characters/application/cqrs/queries/get-character.query';
-import { GetCharactersQuery } from 'src/modules/characters/application/cqrs/queries/get-characters.query';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { ErrorDto } from '../../../shared/interfaces/http/dto/error-dto';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
+import { Page } from '../../../shared/domain/entities/page';
+import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command';
+import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command';
+import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command';
+import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command';
+import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command';
+import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query';
+import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query';
+import { Character } from '../../domain/aggregates/character.aggregate';
 import { UpdateTemporaryStatCommand } from '../../application/cqrs/commands/update-temporary-stat.command';
 import { UpdateTemporaryStatDto } from './dto/update-temporary-stat.dto';
+import type { AuthenticatedRequest } from '../../../shared/interfaces/http/authenticated-request';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -38,9 +38,9 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Realm not found', type: ErrorDto })
-  async findById(@Param('id') id: string, @Request() req) {
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+  async findById(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const query = new GetCharacterQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
     return CharacterDto.fromEntity(entity);
@@ -50,10 +50,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterPageDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'findCharacters', summary: 'Find characters by RSQL' })
-  async find(@Query() dto: PagedQueryDto, @Request() req) {
+  async find(@Query() dto: PagedQueryDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Finding characters with query ${dto.q} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const query = new GetCharactersQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
     const mapped = page.content.map(character => CharacterDto.fromEntity(character));
@@ -66,10 +66,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async create(@Body() dto: CreateCharacterDto, @Request() req) {
+  async create(@Body() dto: CreateCharacterDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Creating character ${dto.name} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = CreateCharacterDto.toCommand(dto, userId, roles);
     const entity = await this.commandBus.execute<CreateCharacterCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -79,10 +79,10 @@ export class CharacterController {
   @ApiOperation({ operationId: 'updateCharacter', summary: 'Update character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
-  async updateSettings(@Param('id') id: string, @Body() dto: UpdateCharacterDto, @Request() req) {
+  async updateSettings(@Param('id') id: string, @Body() dto: UpdateCharacterDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Updating character ${id} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = UpdateCharacterDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateCharacterCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -92,10 +92,10 @@ export class CharacterController {
   @HttpCode(204)
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiOperation({ operationId: 'deleteCharacter', summary: 'Delete character by id' })
-  async delete(@Param('id') id: string, @Request() req) {
+  async delete(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Deleting character ${id} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = new DeleteCharacterCommand(id, userId, roles);
     await this.commandBus.execute(command);
   }
@@ -107,10 +107,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req) {
+  async addXP(@Param('id') id: string, @Body() dto: AddXPDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Adding character ${id} XP for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = AddXPDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -122,10 +122,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUp(@Param('id') id: string, @Query() dto: LevelUpQueryDto, @Request() req) {
+  async levelUp(@Param('id') id: string, @Query() dto: LevelUpQueryDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Leveling up character: ${id} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const force = dto.force || false;
     const command = new LevelUpCommand(id, force, userId, roles);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
@@ -138,10 +138,10 @@ export class CharacterController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async levelUpTemporaryStat(@Param('id') id: string, @Body() dto: UpdateTemporaryStatDto, @Request() req) {
+  async levelUpTemporaryStat(@Param('id') id: string, @Body() dto: UpdateTemporaryStatDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Leveling up character stat: ${id} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = UpdateTemporaryStatDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateTemporaryStatCommand, Character>(command);
     return CharacterDto.fromEntity(entity);

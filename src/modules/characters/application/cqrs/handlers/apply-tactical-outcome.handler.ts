@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
 import { CharacterHealthStore } from '../../services/character-health.store';

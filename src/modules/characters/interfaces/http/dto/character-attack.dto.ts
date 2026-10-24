@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterAttack, type WeaponCategory } from 'src/modules/characters/domain/value-objects/character-attack.vo';
+import { CharacterAttack, type WeaponCategory } from '../../../domain/value-objects/character-attack.vo';
 import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo';
 
 export class CharacterAttackRangeDto {
@@ -34,6 +34,7 @@ export class CharacterAttackDto {
   twoHanded: boolean;
 
   @ApiProperty({
+    type: String,
     description: 'Weapon category used by multiple attack rules',
     enum: ['dagger', 'light', 'natural', 'standard'],
     example: 'standard',

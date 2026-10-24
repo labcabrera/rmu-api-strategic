@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
-import { TokenService } from 'src/modules/auth/token.service';
+import { TokenService } from '../../../auth/token.service';
 import { RaceClientPort } from '../../application/ports/race-client.port';
 
 @Injectable()

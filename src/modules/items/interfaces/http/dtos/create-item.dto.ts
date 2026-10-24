@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CreateItemCommand } from 'src/modules/items/application/cqrs/commands/create-item.command';
-import { WEAPON_WIELDER_SIZES } from 'src/modules/items/domain/value-objects/item-weapon.vo';
+import { CreateItemCommand } from '../../../application/cqrs/commands/create-item.command';
+import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo';
 
 export class CreateItemDto {
   @ApiProperty({ description: 'Game identifier', example: 'game-001', required: true })
@@ -9,7 +9,7 @@ export class CreateItemDto {
   @IsNotEmpty()
   gameId: string;
 
-  @ApiProperty({ description: 'Faction identifier', example: 'faction-001', required: false })
+  @ApiProperty({ type: String, description: 'Faction identifier', example: 'faction-001', required: false })
   @IsString()
   @IsOptional()
   factionId: string | null;
@@ -24,17 +24,18 @@ export class CreateItemDto {
   @IsNotEmpty()
   itemTypeId: string;
 
-  @ApiProperty({ description: 'Item name', example: 'Narsil', required: false })
+  @ApiProperty({ type: String, description: 'Item name', example: 'Narsil', required: false })
   @IsString()
   @IsOptional()
   name: string | null;
 
-  @ApiProperty({ description: 'Amount of items (for stackable items)', example: '10', required: false })
+  @ApiProperty({ type: Number, description: 'Amount of items (for stackable items)', example: '10', required: false })
   @IsNumber()
   @IsOptional()
   amount: number | null;
 
   @ApiProperty({
+    type: Number,
     description: 'Item cost in gold coints. If item is stackable cost is for each single item',
     example: '0.42',
     required: false,
@@ -43,12 +44,13 @@ export class CreateItemDto {
   @IsOptional()
   cost: number | null;
 
-  @ApiProperty({ description: 'Game short description', example: 'Short game description' })
+  @ApiProperty({ type: String, description: 'Game short description', example: 'Short game description' })
   @IsString()
   @IsOptional()
   description: string | null;
 
   @ApiProperty({
+    type: String,
     description: 'Size the weapon is made for (weapons only). When missing, the wielder size is assumed',
     example: 'medium',
     required: false,

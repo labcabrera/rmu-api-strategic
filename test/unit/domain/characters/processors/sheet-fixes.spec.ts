@@ -1,12 +1,12 @@
-import { ResistancesProcessor } from 'src/modules/characters/domain/services/character/processors/resistances-processor';
-import { HPProcessor } from 'src/modules/characters/domain/services/character/processors/hp-processor';
-import { SkillProcessor } from 'src/modules/characters/domain/services/character/processors/skill-processor';
-import { SetupProfessionSkillHandler } from 'src/modules/characters/application/cqrs/handlers/setup-professional-skill.handler';
-import { SetUpProfessionalSkillCommand } from 'src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { ResistancesProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/resistances-processor';
+import { HPProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/hp-processor';
+import { SkillProcessor } from '../../../../../src/modules/characters/domain/services/character/processors/skill-processor';
+import { SetupProfessionSkillHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/setup-professional-skill.handler';
+import { SetUpProfessionalSkillCommand } from '../../../../../src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
+import type { GameRepository } from '../../../../../src/modules/games/application/ports/game.repository';
 import { buildCharacter, skill } from '../traits/character.fixture';
 
 describe('Resistances level bonus', () => {
@@ -63,14 +63,14 @@ describe('Knacks by power level', () => {
     const skills = ['perception', 'stalking', 'climbing', 'swimming'].map(id => skill(id));
     const character = buildCharacter({ skills });
     const handler = new SetupProfessionSkillHandler(
-      { process: jest.fn() } as unknown as CharacterProcessorService,
+      { process: vi.fn() } as unknown as CharacterProcessorService,
       {
-        findById: jest.fn().mockResolvedValue(character),
-        update: jest.fn().mockResolvedValue(character),
+        findById: vi.fn().mockResolvedValue(character),
+        update: vi.fn().mockResolvedValue(character),
       } as unknown as CharacterRepository,
-      { findByCharacterId: jest.fn().mockResolvedValue([]) } as unknown as ItemRepository,
+      { findByCharacterId: vi.fn().mockResolvedValue([]) } as unknown as ItemRepository,
       {
-        findById: jest.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel } }),
+        findById: vi.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel } }),
       } as unknown as GameRepository,
     );
     const knack = (skillId: string) =>

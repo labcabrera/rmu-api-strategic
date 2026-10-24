@@ -1,6 +1,6 @@
 import { CharacterCondition } from './character-condition.vo';
 import { Injury } from './injury.vo';
-import type { ItemModifier } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import type { ItemModifier } from '../../../items/domain/value-objects/item-modifier.vo';
 
 export type TacticalFate = 'dead' | 'permanent-unconscious';
 

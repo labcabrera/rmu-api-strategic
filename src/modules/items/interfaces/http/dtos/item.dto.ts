@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
+import { Item } from '../../../domain/aggregates/item.aggregate';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto';
 import { ItemWeaponDto } from './item-weapon.dto';
 import { ItemInfoDto } from './item-info.dto';
 import { ItemArmorDto } from './item-armor.dto';

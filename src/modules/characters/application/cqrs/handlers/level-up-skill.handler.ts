@@ -5,15 +5,15 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import { LevelUpSkillCommand } from '../commands/level-up-skill.command';
 import type { SkillClientPort } from '../../ports/skill-client.port';
 import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
+import type { GameRepository } from '../../../../games/application/ports/game.repository';
 import { loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(LevelUpSkillCommand)
 export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,

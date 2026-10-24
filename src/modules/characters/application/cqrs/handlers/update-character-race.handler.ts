@@ -4,29 +4,29 @@ import { CharacterProcessorService } from '../../../domain/services/character-pr
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { UpdateCharacterRaceCommand } from '../commands/update-character-race.command';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import { AddSkillCommand } from '../commands/add-skill.command';
-import { CharacterUpdatedEvent } from 'src/modules/characters/domain/events/character.events';
+import { CharacterUpdatedEvent } from '../../../domain/events/character.events';
 import type { RaceClientPort, RaceTrait } from '../../ports/race-client.port';
 import type { TraitClientPort } from '../../ports/trait-client.port';
 import { mapRaceTraits } from '../../services/race-traits.mapper';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { Character } from '../../../domain/aggregates/character.aggregate';
 
 @CommandHandler(UpdateCharacterRaceCommand)
 export class UpdateCharacterRaceHandler implements ICommandHandler<UpdateCharacterRaceCommand, void> {
   private readonly logger = new Logger(UpdateCharacterRaceHandler.name);
 
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
     @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
     @Inject('RaceClient') private readonly raceClient: RaceClientPort,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
-    @Inject() private commandBus: CommandBus,
+    private commandBus: CommandBus,
   ) {}
 
   async execute(command: UpdateCharacterRaceCommand): Promise<void> {

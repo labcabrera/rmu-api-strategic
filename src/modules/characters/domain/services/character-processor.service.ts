@@ -12,7 +12,7 @@ import { SkillProcessor } from './character/processors/skill-processor';
 import { StatProcessor } from './character/processors/stat-processor';
 import { XPProcessor } from './character/processors/xp-processor';
 import { ResistancesProcessor } from './character/processors/resistances-processor';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../items/domain/aggregates/item.aggregate';
 
 @Injectable()
 export class CharacterProcessorService {

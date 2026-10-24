@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
+import { ItemWeaponMode } from '../../../domain/value-objects/item-weapon-mode.vo';
 import { ItemWeaponRangeDto } from './item-weapon-range.dto';
 
 export class ItemWeaponModeDto {

@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CharacterSkill, type SkillDevPointsSpent } from 'src/modules/characters/domain/value-objects/character-skill.vo';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import { CharacterSkill, type SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo';
+import { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo';
 
 export class CharacterSkillDto {
   @ApiProperty({ description: 'Skill identifier', example: 'animal-handling' })
   skillId: string;
 
-  @ApiProperty({ description: 'Specialization', example: 'cats' })
+  @ApiProperty({ type: String, description: 'Specialization', example: 'cats' })
   specialization: string | null;
 
   @ApiProperty({ description: 'Associated statistics', example: ['WIS', 'CHA'] })
@@ -80,7 +80,7 @@ export class CharacterSkillCreationDto {
   @IsNotEmpty()
   skillId: string;
 
-  @ApiProperty({ description: 'Specialization', example: 'cats' })
+  @ApiProperty({ type: String, description: 'Specialization', example: 'cats' })
   @IsString()
   @IsOptional()
   specialization: string | null;

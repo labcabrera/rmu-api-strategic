@@ -1,4 +1,4 @@
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity';
 import { CharacterAttack } from '../value-objects/character-attack.vo';
 import { CharacterDefense } from '../value-objects/character-defense.vo';
 import { CharacterEndurance } from '../value-objects/character-endurance.vo';

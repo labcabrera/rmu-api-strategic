@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ItemWeaponModeDto } from './item-weapon-mode.dto';
-import { ItemInfo } from 'src/modules/items/domain/value-objects/item-info.vo';
+import { ItemInfo } from '../../../domain/value-objects/item-info.vo';
 
 export class ItemInfoDto {
   @ApiProperty({ description: 'Item identifier', type: String, required: true, example: 'item-001' })

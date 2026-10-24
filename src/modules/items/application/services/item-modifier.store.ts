@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import type { CharacterRepository } from '../../../characters/application/ports/character.repository';
+import { CharacterProcessorService } from '../../../characters/domain/services/character-processor.service';
+import { NotFoundError } from '../../../shared/domain/errors/errors';
 import { Item } from '../../domain/aggregates/item.aggregate';
 import type { ItemEventBusPort } from '../ports/item-event-bus.port';
 import type { ItemGuardPort } from '../ports/item-guard.port';

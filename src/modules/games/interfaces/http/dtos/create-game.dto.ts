@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CreateGameCommand } from 'src/modules/games/application/cqrs/commands/create-game.command';
+import { CreateGameCommand } from '../../../application/cqrs/commands/create-game.command';
 import { GameOptionsDto } from './game-options.dto';
 import { GamePowerLevelDto } from './game-power-level-dto';
 
@@ -28,23 +28,17 @@ export class CreateGameDto {
   @Type(() => GamePowerLevelDto)
   powerLevel: GamePowerLevelDto;
 
-  @ApiProperty({ description: 'Game short description', example: 'Short game description' })
+  @ApiProperty({ type: String, description: 'Game short description', example: 'Short game description' })
   @IsString()
   @IsOptional()
   shortDescription: string | null;
 
-  @ApiProperty({
-    description: 'Game description',
-    example: 'A thrilling campaign set in Middle-earth with largue text',
-  })
+  @ApiProperty({ type: String, description: 'Game description', example: 'A thrilling campaign set in Middle-earth with largue text' })
   @IsString()
   @IsOptional()
   description: string | null;
 
-  @ApiProperty({
-    description: 'Game description',
-    example: 'A thrilling campaign set in Middle-earth with largue text',
-  })
+  @ApiProperty({ type: String, description: 'Game description', example: 'A thrilling campaign set in Middle-earth with largue text' })
   @IsString()
   @IsOptional()
   imageUrl: string | null;

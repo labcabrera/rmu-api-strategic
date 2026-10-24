@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { GameRepository } from '../../application/ports/game.repository';
 import { GameModel, GameDocument } from '../persistence/models/game-model';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
-import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
-import { GamePowerLevel, resolvePowerLevel } from 'src/modules/games/domain/value-objects/game-power-level.vo';
-import { GameOptions, resolveOptions } from 'src/modules/games/domain/value-objects/game-options.vo';
+import { Game } from '../../domain/aggregates/game.aggregate';
+import { RsqlParser } from '../../../shared/infrastructure/persistence/repositories/rsql-parser';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
+import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo';
+import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo';
 
 @Injectable()
 export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument> implements GameRepository {

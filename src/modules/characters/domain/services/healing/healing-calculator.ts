@@ -1,5 +1,5 @@
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { HealingTables, RecoveryInjuryType } from '../../value-objects/healing-tables.vo';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
+import { HealingTables } from '../../value-objects/healing-tables.vo';
 import {
   HealingType,
   Injury,
@@ -117,7 +117,7 @@ export class HealingCalculator {
     }
     const row = this.tables.recoveryDays.find(r => inBand(total, r.min, r.max));
     if (!row) throw new ValidationError(`Recovery roll ${total} out of the table bounds`, 'err-healing-table-out-of-range');
-    const days = row.days[injury.type as RecoveryInjuryType];
+    const days = row.days[injury.type];
     const severity = this.tables.severityMultipliers[injury.severity] ?? 1;
     const head = injury.location === 'head' ? this.tables.headMultiplier : 1;
     return days * severity * head;

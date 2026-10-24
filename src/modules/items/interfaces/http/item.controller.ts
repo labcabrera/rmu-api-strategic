@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
-import { Page } from 'src/modules/shared/domain/entities/page';
-import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
-import { PagedQueryDto } from 'src/modules/shared/interfaces/http/dto/paged-rsql-query';
+import { JwtAuthGuard } from '../../../auth/jwt.auth.guard';
+import { Page } from '../../../shared/domain/entities/page';
+import { ErrorDto } from '../../../shared/interfaces/http/dto/error-dto';
+import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query';
 import { CreateItemCommand } from '../../application/cqrs/commands/create-item.command';
 import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command';
 import { UpdateItemCommand } from '../../application/cqrs/commands/update-item.command';
@@ -17,6 +16,7 @@ import { ItemDto, ItemPageDto } from './dtos/item.dto';
 import { UpdateItemDto } from './dtos/update-item.dto';
 import { AddItemModifierDto } from './dtos/item-modifier.dto';
 import { AddItemModifierCommand, DeleteItemModifierCommand } from '../../application/cqrs/commands/item-modifier.commands';
+import type { AuthenticatedRequest } from '../../../shared/interfaces/http/authenticated-request';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/items')
@@ -31,9 +31,9 @@ export class ItemController {
   @ApiOperation({ operationId: 'findItemById', summary: 'Find game by id' })
   @ApiOkResponse({ type: ItemDto })
   @ApiNotFoundResponse({ description: 'Item not found', type: ErrorDto })
-  async findById(@Param('id') id: string, @Request() req) {
-    const userId = req.user!.id as string;
-    const roles = req.user!.roles as string[];
+  async findById(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const query = new GetItemQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetItemQuery, Item>(query);
     return ItemDto.fromEntity(entity);
@@ -44,9 +44,9 @@ export class ItemController {
   @ApiOkResponse({ type: ItemPageDto })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Invalid RSQL query', type: ErrorDto })
-  async find(@Query() dto: PagedQueryDto, @Request() req) {
-    const userId = req.user!.id as string;
-    const roles = req.user!.roles as string[];
+  async find(@Query() dto: PagedQueryDto, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const query = new GetItemsQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetItemsQuery, Page<Item>>(query);
     const mapped = page.content.map(game => ItemDto.fromEntity(game));
@@ -58,9 +58,9 @@ export class ItemController {
   @ApiOkResponse({ type: ItemDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async create(@Body() dto: CreateItemDto, @Request() req) {
-    const userId = req.user!.id as string;
-    const roles = req.user!.roles as string[];
+  async create(@Body() dto: CreateItemDto, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = CreateItemDto.toCommand(dto, userId, roles);
     const game = await this.commandBus.execute<CreateItemCommand, Item>(command);
     return ItemDto.fromEntity(game);
@@ -72,9 +72,9 @@ export class ItemController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateGame(@Param('id') id: string, @Body() updateGameDto: UpdateItemDto, @Request() req) {
-    const userId = req.user!.id as string;
-    const roles = req.user!.roles as string[];
+  async updateGame(@Param('id') id: string, @Body() updateGameDto: UpdateItemDto, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = UpdateItemDto.toCommand(id, updateGameDto, userId, roles);
     const game = await this.commandBus.execute<UpdateItemCommand, Item>(command);
     return ItemDto.fromEntity(game);
@@ -84,9 +84,9 @@ export class ItemController {
   @HttpCode(204)
   @ApiOperation({ operationId: 'deleteGame', summary: 'Delete game by id' })
   @ApiNotFoundResponse({ description: 'Game not found', type: ErrorDto })
-  async delete(@Param('id') id: string, @Request() req) {
-    const userId = req.user!.id as string;
-    const roles = req.user!.roles as string[];
+  async delete(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = new DeleteItemCommand(id, userId, roles);
     await this.commandBus.execute(command);
   }
@@ -97,8 +97,8 @@ export class ItemController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Item not found', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addModifier(@Param('id') id: string, @Body() dto: AddItemModifierDto, @Request() req) {
-    const command = AddItemModifierDto.toCommand(id, dto, req.user!.id as string, req.user!.roles as string[]);
+  async addModifier(@Param('id') id: string, @Body() dto: AddItemModifierDto, @Request() req: AuthenticatedRequest) {
+    const command = AddItemModifierDto.toCommand(id, dto, req.user.id, req.user.roles);
     const item = await this.commandBus.execute<AddItemModifierCommand, Item>(command);
     return ItemDto.fromEntity(item);
   }
@@ -108,8 +108,8 @@ export class ItemController {
   @ApiOkResponse({ type: ItemDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiNotFoundResponse({ description: 'Item or modifier not found', type: ErrorDto })
-  async deleteModifier(@Param('id') id: string, @Param('modifierId') modifierId: string, @Request() req) {
-    const command = new DeleteItemModifierCommand(id, modifierId, req.user!.id as string, req.user!.roles as string[]);
+  async deleteModifier(@Param('id') id: string, @Param('modifierId') modifierId: string, @Request() req: AuthenticatedRequest) {
+    const command = new DeleteItemModifierCommand(id, modifierId, req.user.id, req.user.roles);
     const item = await this.commandBus.execute<DeleteItemModifierCommand, Item>(command);
     return ItemDto.fromEntity(item);
   }

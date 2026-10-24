@@ -1,8 +1,8 @@
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { AttackProcessor } from 'src/modules/characters/domain/services/character/processors/attack-processor';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
-import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { AttackProcessor } from '../../../../src/modules/characters/domain/services/character/processors/attack-processor';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.aggregate';
+import { ItemWeapon } from '../../../../src/modules/items/domain/value-objects/item-weapon.vo';
+import { ItemWeaponMode } from '../../../../src/modules/items/domain/value-objects/item-weapon-mode.vo';
 
 const SKILL_BONUS = 30;
 

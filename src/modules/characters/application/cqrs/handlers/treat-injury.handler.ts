@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
 import { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo';

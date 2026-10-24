@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
-import { CreateFactionCommand } from 'src/modules/factions/application/cqrs/commands/create-faction.command';
+import { CreateFactionCommand } from '../../../application/cqrs/commands/create-faction.command';
 import { FactionManagementDto } from './faction.dto';
 
 export class CreateFactionDto {
@@ -27,17 +27,17 @@ export class CreateFactionDto {
   @Type(() => Number)
   availableXP: number | undefined;
 
-  @ApiProperty({ description: 'Faction short description', example: 'Faction short description' })
+  @ApiProperty({ type: String, description: 'Faction short description', example: 'Faction short description' })
   @IsString()
   @IsOptional()
   shortDescription: string | null;
 
-  @ApiProperty({ description: 'Faction description', example: 'A faction from Mordor' })
+  @ApiProperty({ type: String, description: 'Faction description', example: 'A faction from Mordor' })
   @IsString()
   @IsOptional()
   description: string | null;
 
-  @ApiProperty({ description: 'Faction image', required: false, example: 'http://foo/bar.png' })
+  @ApiProperty({ type: String, description: 'Faction image', required: false, example: 'http://foo/bar.png' })
   @IsString()
   @IsOptional()
   imageUrl: string | null;

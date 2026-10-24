@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { ValidationError } from '../../../../../shared/domain/errors/errors';
+import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
 import { CharacterShield } from '../../../value-objects/character-defense.vo';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
-import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';
 
 @Injectable()
 export class DefenseProcessor {

@@ -1,19 +1,18 @@
-import { mapRaceTraits } from 'src/modules/characters/application/services/race-traits.mapper';
-import { UpdateCharacterRaceHandler } from 'src/modules/characters/application/cqrs/handlers/update-character-race.handler';
-import { UpdateCharacterRaceCommand } from 'src/modules/characters/application/cqrs/commands/update-character-race.command';
-import type { TraitClientPort, TraitResponse } from 'src/modules/characters/application/ports/trait-client.port';
-import type { RaceClientPort, RaceTrait } from 'src/modules/characters/application/ports/race-client.port';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import type { ProfessionClientPort } from 'src/modules/characters/application/ports/profession-client.port';
-import type { CharacterEventBusPort } from 'src/modules/characters/application/ports/character-event-bus.port';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { mapRaceTraits } from '../../../../../src/modules/characters/application/services/race-traits.mapper';
+import { UpdateCharacterRaceHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/update-character-race.handler';
+import { UpdateCharacterRaceCommand } from '../../../../../src/modules/characters/application/cqrs/commands/update-character-race.command';
+import type { TraitClientPort, TraitResponse } from '../../../../../src/modules/characters/application/ports/trait-client.port';
+import type { RaceClientPort, RaceTrait } from '../../../../../src/modules/characters/application/ports/race-client.port';
+import type { CharacterRepository } from '../../../../../src/modules/characters/application/ports/character.repository';
+import type { ProfessionClientPort } from '../../../../../src/modules/characters/application/ports/profession-client.port';
+import type { ItemRepository } from '../../../../../src/modules/items/application/ports/item.repository';
 import { CommandBus } from '@nestjs/cqrs';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { buildCharacter, trait } from './character.fixture';
 
 const traitClient: TraitClientPort = {
-  getTraitById: jest.fn((traitId: string) =>
+  getTraitById: vi.fn((traitId: string) =>
     traitId === 'unknown'
       ? Promise.reject(new Error('not found'))
       : Promise.resolve({ id: traitId, name: `Name ${traitId}` } as TraitResponse),
@@ -101,20 +100,20 @@ describe('Race traits', () => {
   describe('UpdateCharacterRaceHandler', () => {
     const setup = (raceTraits: RaceTrait[]) => {
       const character = buildCharacter({ traits: [trait('darkvision', 1, undefined, 'race'), trait('fast-attack', 1)] });
-      const characterRepository = { findById: jest.fn().mockResolvedValue(character), update: jest.fn().mockResolvedValue(character) };
-      const itemRepository = { findByCharacterId: jest.fn().mockResolvedValue([]) };
-      const getRaceById = jest.fn().mockResolvedValue({ id: 'race-001', traits: raceTraits });
+      const characterRepository = { findById: vi.fn().mockResolvedValue(character), update: vi.fn().mockResolvedValue(character) };
+      const itemRepository = { findByCharacterId: vi.fn().mockResolvedValue([]) };
+      const getRaceById = vi.fn().mockResolvedValue({ id: 'race-001', traits: raceTraits });
       const raceClient = { getRaceById } as RaceClientPort;
-      const processorService = { process: jest.fn() } as unknown as CharacterProcessorService;
+      const processorService = { process: vi.fn() } as unknown as CharacterProcessorService;
       const handler = new UpdateCharacterRaceHandler(
         processorService,
         characterRepository as unknown as CharacterRepository,
         itemRepository as unknown as ItemRepository,
         {} as ProfessionClientPort,
-        { publish: jest.fn() } as CharacterEventBusPort,
+        { publish: vi.fn() },
         raceClient,
         traitClient,
-        { execute: jest.fn() } as unknown as CommandBus,
+        { execute: vi.fn() } as unknown as CommandBus,
       );
       return { character, handler, getRaceById };
     };

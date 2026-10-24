@@ -1,32 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
-import { AddInjuryCommand } from 'src/modules/characters/application/cqrs/commands/add-injury.command';
-import {
-  BODY_LOCATIONS,
-  BODY_SIDES,
-  INJURY_FLAGS,
-  INJURY_SEVERITIES,
-  INJURY_TYPES,
-} from 'src/modules/characters/domain/value-objects/injury.vo';
-import type { BodyLocation, BodySide, InjuryFlag, InjurySeverity, InjuryType } from 'src/modules/characters/domain/value-objects/injury.vo';
+import { AddInjuryCommand } from '../../../application/cqrs/commands/add-injury.command';
+import { BODY_LOCATIONS, BODY_SIDES, INJURY_FLAGS, INJURY_SEVERITIES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo';
+import type { BodyLocation, BodySide, InjuryFlag, InjurySeverity, InjuryType } from '../../../domain/value-objects/injury.vo';
 
 export class AddInjuryDto {
-  @ApiProperty({ enum: INJURY_TYPES, example: 'bone' })
+  @ApiProperty({ type: String, enum: INJURY_TYPES, example: 'bone' })
   @IsIn(INJURY_TYPES)
   @IsNotEmpty()
   type: InjuryType;
 
-  @ApiPropertyOptional({ enum: INJURY_SEVERITIES, description: 'Derived from the penalty and the bleeding when missing' })
+  @ApiPropertyOptional({ type: String, enum: INJURY_SEVERITIES, description: 'Derived from the penalty and the bleeding when missing' })
   @IsIn(INJURY_SEVERITIES)
   @IsOptional()
   severity?: InjurySeverity;
 
-  @ApiPropertyOptional({ enum: BODY_LOCATIONS })
+  @ApiPropertyOptional({ type: String, enum: BODY_LOCATIONS })
   @IsIn(BODY_LOCATIONS)
   @IsOptional()
   location?: BodyLocation;
 
-  @ApiPropertyOptional({ enum: BODY_SIDES })
+  @ApiPropertyOptional({ type: String, enum: BODY_SIDES })
   @IsIn(BODY_SIDES)
   @IsOptional()
   side?: BodySide;

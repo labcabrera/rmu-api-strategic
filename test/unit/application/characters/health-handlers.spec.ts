@@ -1,29 +1,32 @@
-import { ApplyTacticalOutcomeCommand } from 'src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command';
-import { RestCharacterCommand } from 'src/modules/characters/application/cqrs/commands/rest-character.command';
-import { RollInjuryRecoveryCommand } from 'src/modules/characters/application/cqrs/commands/roll-injury-recovery.command';
-import { RollPermanentInjuryCommand } from 'src/modules/characters/application/cqrs/commands/roll-permanent-injury.command';
-import { TreatInjuryCommand } from 'src/modules/characters/application/cqrs/commands/treat-injury.command';
-import { ApplyTacticalOutcomeHandler } from 'src/modules/characters/application/cqrs/handlers/apply-tactical-outcome.handler';
-import { RestCharacterHandler } from 'src/modules/characters/application/cqrs/handlers/rest-character.handler';
-import { RollInjuryRecoveryHandler } from 'src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler';
-import { RollPermanentInjuryHandler } from 'src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler';
-import { TreatInjuryHandler } from 'src/modules/characters/application/cqrs/handlers/treat-injury.handler';
-import type { CharacterEventBusPort } from 'src/modules/characters/application/ports/character-event-bus.port';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import type { HealingLogRepository } from 'src/modules/characters/application/ports/healing-log.repository';
-import type { HealingTablesClientPort } from 'src/modules/characters/application/ports/healing-tables-client.port';
-import type { AbsoluteManeuverResponse, ManeuverClientPort } from 'src/modules/characters/application/ports/maneuver-client.port';
-import { CharacterHealthStore } from 'src/modules/characters/application/services/character-health.store';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { CharacterSkill } from 'src/modules/characters/domain/value-objects/character-skill.vo';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
+import { ApplyTacticalOutcomeCommand } from '../../../../src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command';
+import { RestCharacterCommand } from '../../../../src/modules/characters/application/cqrs/commands/rest-character.command';
+import { RollInjuryRecoveryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-injury-recovery.command';
+import { RollPermanentInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/roll-permanent-injury.command';
+import { TreatInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/treat-injury.command';
+import { ApplyTacticalOutcomeHandler } from '../../../../src/modules/characters/application/cqrs/handlers/apply-tactical-outcome.handler';
+import { RestCharacterHandler } from '../../../../src/modules/characters/application/cqrs/handlers/rest-character.handler';
+import { RollInjuryRecoveryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler';
+import { RollPermanentInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler';
+import { TreatInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/treat-injury.handler';
+import type { CharacterEventBusPort } from '../../../../src/modules/characters/application/ports/character-event-bus.port';
+import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character.repository';
+import type { HealingLogRepository } from '../../../../src/modules/characters/application/ports/healing-log.repository';
+import type { HealingTablesClientPort } from '../../../../src/modules/characters/application/ports/healing-tables-client.port';
+import type {
+  AbsoluteManeuverResponse,
+  ManeuverClientPort,
+} from '../../../../src/modules/characters/application/ports/maneuver-client.port';
+import { CharacterHealthStore } from '../../../../src/modules/characters/application/services/character-health.store';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { CharacterSkill } from '../../../../src/modules/characters/domain/value-objects/character-skill.vo';
+import type { GameRepository } from '../../../../src/modules/games/application/ports/game.repository';
+import { Game } from '../../../../src/modules/games/domain/aggregates/game.aggregate';
 import { buildCharacter, skill, trait } from '../../domain/characters/traits/character.fixture';
-import { TacticalOutcomeItemsMerger } from 'src/modules/characters/application/services/tactical-outcome-items.merger';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import type { ItemModifier } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import { TacticalOutcomeItemsMerger } from '../../../../src/modules/characters/application/services/tactical-outcome-items.merger';
+import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
+import type { ItemRepository } from '../../../../src/modules/items/application/ports/item.repository';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.aggregate';
+import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
 import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture';
 
 const MASTER = 'master-001';
@@ -46,23 +49,23 @@ const character = (id: string, props: { gameId?: string; skills?: CharacterSkill
 
 const setup = (characters: Character[], results: AbsoluteManeuverResponse['result'][] = []) => {
   const byId = new Map(characters.map(c => [c.id, c]));
-  const update = jest.fn((_id: string, c: Character) => Promise.resolve(c));
+  const update = vi.fn((_id: string, c: Character) => Promise.resolve(c));
   const characterRepository = {
-    findById: jest.fn((id: string) => Promise.resolve(byId.get(id) ?? null)),
+    findById: vi.fn((id: string) => Promise.resolve(byId.get(id) ?? null)),
     update,
   } as unknown as CharacterRepository;
   const gameRepository = {
-    findById: jest.fn(() => Promise.resolve({ id: 'game-001', owner: MASTER } as Game)),
+    findById: vi.fn(() => Promise.resolve({ id: 'game-001', owner: MASTER } as Game)),
   } as unknown as GameRepository;
-  const saveAll = jest.fn(() => Promise.resolve());
+  const saveAll = vi.fn(() => Promise.resolve());
   const healingLogRepository = { saveAll } as unknown as HealingLogRepository;
-  const publish = jest.fn();
+  const publish = vi.fn();
   const eventBus: CharacterEventBusPort = { publish };
   const store = new CharacterHealthStore(characterRepository, gameRepository, healingLogRepository, eventBus);
   const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
   const queue = [...results];
   const rolls: number[] = [];
-  const absolute = jest.fn((roll: number) => {
+  const absolute = vi.fn((roll: number) => {
     rolls.push(roll);
     const result = queue.shift() ?? 'success';
     const effects =
@@ -112,14 +115,14 @@ const breakage = (id: string, value: number, extra: Partial<ItemModifier> = {}):
 
 /** The outcome handler with its items: the repository keeps them by id and the processor is a spy. */
 const outcomeHandler = (store: CharacterHealthStore, items: Item[] = []) => {
-  const itemUpdate = jest.fn((_id: string, item: Item) => Promise.resolve(item));
+  const itemUpdate = vi.fn((_id: string, item: Item) => Promise.resolve(item));
   const itemRepository = {
-    findByCharacterId: jest.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
+    findByCharacterId: vi.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
     update: itemUpdate,
   } as unknown as ItemRepository;
-  const itemPublish = jest.fn();
+  const itemPublish = vi.fn();
   const merger = new TacticalOutcomeItemsMerger(itemRepository, { publish: itemPublish });
-  const process = jest.fn();
+  const process = vi.fn();
   const processor = { process } as unknown as CharacterProcessorService;
   return { handler: new ApplyTacticalOutcomeHandler(store, merger, processor), itemUpdate, itemPublish, process };
 };
@@ -201,7 +204,11 @@ describe('Health handlers', () => {
       expect(process).toHaveBeenCalledWith(patient, [sword, shield]);
       expect(saveAll).toHaveBeenCalledWith('patient', 'game-001', [
         expect.objectContaining({
-          summary: expect.objectContaining({ itemsDamaged: ['item-001'], itemsBroken: ['item-002'], itemsIgnored: ['item-009'] }),
+          summary: expect.objectContaining({
+            itemsDamaged: ['item-001'],
+            itemsBroken: ['item-002'],
+            itemsIgnored: ['item-009'],
+          }) as unknown,
         }),
       ]);
 

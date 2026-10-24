@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DomainExceptionFilter } from './modules/shared/interfaces/http/domain-exception.filter';
 
@@ -53,25 +53,15 @@ function configureOpenApi(app: INestApplication<any>) {
   });
 
   // Apply security schema to all paths except health endpoint
-  document.paths = Object.entries(document.paths).reduce(
-    (acc, [path, methods]) => {
-      acc[path] = {};
-      for (const method in methods) {
-        if (path === '/health' && method === 'get') {
-          acc[path][method] = { ...methods[method] };
-        } else {
-          acc[path][method] = {
-            ...methods[method],
-            security: [{ oauth2: [], 'access-token': [] }],
-          };
-        }
+  for (const [path, methods] of Object.entries(document.paths) as [string, Record<string, object>][]) {
+    for (const method of Object.keys(methods)) {
+      if (!(path === '/health' && method === 'get')) {
+        methods[method] = { ...methods[method], security: [{ oauth2: [], 'access-token': [] }] };
       }
-      return acc;
-    },
-    {} as Record<string, Record<string, any>>,
-  ) as typeof document.paths;
+    }
+  }
 
-  app.use('/api-spec', (req, res) => {
+  app.use('/api-spec', (_req: Request, res: Response) => {
     res.json(document);
   });
 }

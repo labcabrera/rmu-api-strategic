@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
-import { CreateCharacterCulture } from 'src/modules/characters/application/cqrs/commands/create-character.command';
+import { CreateCharacterCulture } from '../../../application/cqrs/commands/create-character.command';
 
 export class CreateCharacterCultureAssignmentDto {
   @ApiProperty({ description: 'Index of the entry in culture.skillRanks', example: 2 })

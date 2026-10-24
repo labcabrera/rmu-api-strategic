@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { Character } from '../../../domain/aggregates/character.aggregate';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator';
 import type { HealingTablesClientPort } from '../../ports/healing-tables-client.port';

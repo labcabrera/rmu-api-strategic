@@ -4,16 +4,7 @@ import { TraitSpecializationKind } from './trait-specialization-matcher';
 // The value is applied per tier, or once when the trait has no tiers. Flaws use negative values.
 
 export type TraitEffectTarget =
-  | 'stat'
-  | 'initiative'
-  | 'skill'
-  | 'resistance'
-  | 'defense'
-  | 'natural-armor'
-  | 'movement'
-  | 'attack-bo'
-  | 'attack-range'
-  | 'attack-size';
+  'stat' | 'initiative' | 'skill' | 'resistance' | 'defense' | 'natural-armor' | 'movement' | 'attack-bo' | 'attack-range' | 'attack-size';
 
 export interface TraitEffect {
   target: TraitEffectTarget;

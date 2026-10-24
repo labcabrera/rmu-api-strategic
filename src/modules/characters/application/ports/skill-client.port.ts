@@ -1,4 +1,4 @@
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../shared/domain/entities/page';
 
 export interface SkillClientPort {
   getAllSkills(): Promise<Page<SkillResponse>>;

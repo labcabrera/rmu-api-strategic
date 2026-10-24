@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { UpdateGameCommand } from 'src/modules/games/application/cqrs/commands/update-game.command';
+import { UpdateGameCommand } from '../../../application/cqrs/commands/update-game.command';
 import { GameOptionsDto } from './game-options.dto';
 import { GamePowerLevelDto } from './game-power-level-dto';
 

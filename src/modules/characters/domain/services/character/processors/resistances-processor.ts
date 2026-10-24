@@ -47,7 +47,7 @@ export class ResistancesProcessor {
         traitBonus: 0,
         levelBonus: 0,
         totalBonus: 0,
-      } as CharacterResistance;
+      };
       character.resistances?.push(re);
     }
     re.realmBonus = this.getRealmBonus(character, resistance);

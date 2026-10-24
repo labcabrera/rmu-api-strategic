@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { TokenService } from 'src/modules/auth/token.service';
-import { BadGatewayError } from 'src/modules/shared/domain/errors/errors';
+import { TokenService } from '../../../auth/token.service';
+import { BadGatewayError } from '../../../shared/domain/errors/errors';
 import { AbsoluteManeuverResponse, ManeuverClientPort } from '../../application/ports/maneuver-client.port';
 
 @Injectable()

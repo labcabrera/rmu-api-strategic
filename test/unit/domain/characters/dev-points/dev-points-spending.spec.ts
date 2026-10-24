@@ -1,6 +1,6 @@
-import { DevPointsSpendingService } from 'src/modules/characters/domain/services/dev-points/dev-points-spending.service';
-import { CharacterXP } from 'src/modules/characters/domain/value-objects/character-xp.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { DevPointsSpendingService } from '../../../../../src/modules/characters/domain/services/dev-points/dev-points-spending.service';
+import { CharacterXP } from '../../../../../src/modules/characters/domain/value-objects/character-xp.vo';
+import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors';
 import { buildCharacter, skill } from '../traits/character.fixture';
 
 const xp = (normal: number, bonus: number, spentThisLevel = 0, flaw = 0): CharacterXP => {

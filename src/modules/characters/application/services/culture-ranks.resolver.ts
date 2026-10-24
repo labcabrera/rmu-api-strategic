@@ -1,4 +1,4 @@
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+import { ValidationError } from '../../../shared/domain/errors/errors';
 import type { CultureRanks } from '../../domain/aggregates/character.aggregate';
 import type { Culture, CultureSkillRank } from '../ports/culture-client.port';
 import type { SkillResponse } from '../ports/skill-client.port';

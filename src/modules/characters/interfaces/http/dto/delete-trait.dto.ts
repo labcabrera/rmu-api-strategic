@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { DeleteTraitCommand } from 'src/modules/characters/application/cqrs/commands/delete-trait.command';
+import { DeleteTraitCommand } from '../../../application/cqrs/commands/delete-trait.command';
 
 export class DeleteTraitDto {
   @ApiProperty({ description: 'Trait identifier', example: 'prodigy' })
@@ -8,7 +8,7 @@ export class DeleteTraitDto {
   @IsNotEmpty()
   traitId: string;
 
-  @ApiProperty({ description: 'Trait specialization', example: 'body-development', required: false })
+  @ApiProperty({ type: String, description: 'Trait specialization', example: 'body-development', required: false })
   @IsString()
   @IsOptional()
   specialization: string | undefined;

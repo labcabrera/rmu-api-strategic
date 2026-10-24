@@ -1,5 +1,5 @@
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
-import type { InjuryChanges } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import type { InjuryChanges } from '../../../domain/aggregates/character.aggregate';
 
 export class UpdateInjuryCommand extends AuthenticatedCommand {
   constructor(

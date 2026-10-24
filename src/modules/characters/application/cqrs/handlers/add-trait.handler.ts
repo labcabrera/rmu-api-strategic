@@ -6,15 +6,15 @@ import type { CharacterRepository } from '../../ports/character.repository';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
 import { AddTraitCommand } from '../commands/add-trait.command';
 import type { TraitClientPort, TraitResponse } from '../../ports/trait-client.port';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
-import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
+import type { GameRepository } from '../../../../games/application/ports/game.repository';
 import { GameRules, loadGameRules } from '../../services/game-rules';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,

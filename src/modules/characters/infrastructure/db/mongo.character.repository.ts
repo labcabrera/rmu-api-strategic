@@ -3,14 +3,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CharacterRepository } from '../../application/ports/character.repository';
 import { Character } from '../../domain/aggregates/character.aggregate';
 import { CharacterDocument, CharacterModel } from '../persistence/models/character.model';
-import { RsqlParser } from 'src/modules/shared/infrastructure/persistence/repositories/rsql-parser';
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
-import { MongoBaseRepository } from 'src/modules/shared/infrastructure/db/mongo.base.repository';
+import { RsqlParser } from '../../../shared/infrastructure/persistence/repositories/rsql-parser';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository';
 import { CharacterStat, STAT_KEYS, StatKey } from '../../domain/value-objects/character-stat.vo';
 import { CharacterTrait } from '../../domain/value-objects/character-trait.vo';
 import { CharacterXP } from '../../domain/value-objects/character-xp.vo';
@@ -160,8 +160,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
     })();
     for (const key of STAT_KEYS) {
       const statRaw = (statsSource && (statsSource[key] ?? (typeof statsSource.get === 'function' ? statsSource.get(key) : undefined))) as
-        | undefined
-        | { potential?: number; temporary?: number; modifiers?: Record<string, number>; totalBonus?: number };
+        undefined | { potential?: number; temporary?: number; modifiers?: Record<string, number>; totalBonus?: number };
 
       if (statRaw) {
         statistics[key] = new CharacterStat(

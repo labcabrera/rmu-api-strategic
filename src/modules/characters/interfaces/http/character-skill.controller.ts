@@ -1,20 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
+import { JwtAuthGuard } from '../../../auth/jwt.auth.guard';
 import { AddSkillDto } from './dto/add-skill.dto';
 import { CharacterDto } from './dto/character.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { UpdateProfessionalSkillDto } from './dto/update-professional-skill.dto';
-import { ErrorDto } from 'src/modules/shared/interfaces/http/dto/error-dto';
-import { AddSkillCommand } from 'src/modules/characters/application/cqrs/commands/add-skill.command';
-import { DeleteSkillCommand } from 'src/modules/characters/application/cqrs/commands/delete-skill-command';
-import { LevelDownSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-down-skill.command';
-import { LevelUpSkillCommand } from 'src/modules/characters/application/cqrs/commands/level-up-skill.command';
-import { SetUpProfessionalSkillCommand } from 'src/modules/characters/application/cqrs/commands/setup-professional-skill.command';
-import { UpdateSkillCommand } from 'src/modules/characters/application/cqrs/commands/update-skill.command';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
+import { ErrorDto } from '../../../shared/interfaces/http/dto/error-dto';
+import { AddSkillCommand } from '../../application/cqrs/commands/add-skill.command';
+import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill-command';
+import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command';
+import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command';
+import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command';
+import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command';
+import { Character } from '../../domain/aggregates/character.aggregate';
+import type { AuthenticatedRequest } from '../../../shared/interfaces/http/authenticated-request';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -30,10 +30,10 @@ export class CharacterSkillController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async addSkill(@Param('id') id: string, @Body() dto: AddSkillDto, @Request() req) {
+  async addSkill(@Param('id') id: string, @Body() dto: AddSkillDto, @Request() req: AuthenticatedRequest) {
     this.logger.debug(`Adding character ${id} skill ${dto.skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = AddSkillDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<AddSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -45,10 +45,15 @@ export class CharacterSkillController {
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token', type: ErrorDto })
   @ApiResponse({ status: 400, description: 'Bad request, invalid data', type: ErrorDto })
-  async updateSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() dto: UpdateSkillDto, @Request() req) {
+  async updateSkill(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Body() dto: UpdateSkillDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     this.logger.debug(`Updating character ${id} skill  ${skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = UpdateSkillDto.toCommand(id, skillId, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -71,11 +76,11 @@ export class CharacterSkillController {
     @Param('id') id: string,
     @Param('skillId') skillId: string,
     @Query('specialization') specialization: string | null,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     this.logger.debug(`Leveling up character ${id} skill  ${skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = new LevelUpSkillCommand(id, skillId, specialization, userId, roles);
     const entity = await this.commandBus.execute<LevelUpSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -98,11 +103,11 @@ export class CharacterSkillController {
     @Param('id') id: string,
     @Param('skillId') skillId: string,
     @Query('specialization') specialization: string | null,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     this.logger.debug(`Leveling down character ${id} skill ${skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = new LevelDownSkillCommand(id, skillId, specialization, userId, roles);
     const entity = await this.commandBus.execute<LevelDownSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
@@ -117,11 +122,11 @@ export class CharacterSkillController {
     @Param('id') id: string,
     @Param('skillId') skillId: string,
     @Body() dto: UpdateProfessionalSkillDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     this.logger.debug(`Updating professional skill for character ${id} and skill ${skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const specialization = req.query.specialization as string | null;
     const command = UpdateProfessionalSkillDto.toCommand(id, skillId, specialization, dto, userId, roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
@@ -138,11 +143,11 @@ export class CharacterSkillController {
     @Param('id') id: string,
     @Param('skillId') skillId: string,
     @Query('specialization') specialization: string | null,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     this.logger.debug(`Deleting character ${id} skill ${skillId} for user ${req.user.id}`);
-    const userId = req.user.id as string;
-    const roles = req.user.roles as string[];
+    const userId = req.user.id;
+    const roles = req.user.roles;
     const command = new DeleteSkillCommand(id, skillId, specialization, userId, roles);
     const entity = await this.commandBus.execute<DeleteSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);

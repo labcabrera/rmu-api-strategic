@@ -1,19 +1,19 @@
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
-import { AttackProcessor } from 'src/modules/characters/domain/services/character/processors/attack-processor';
-import { DefenseProcessor } from 'src/modules/characters/domain/services/character/processors/defense-processor';
-import { EquipmentProcessor } from 'src/modules/characters/domain/services/character/processors/equipment-processor';
-import { HPProcessor } from 'src/modules/characters/domain/services/character/processors/hp-processor';
-import { InitiativeProcessor } from 'src/modules/characters/domain/services/character/processors/initiative-processor';
-import { MovementProcessor } from 'src/modules/characters/domain/services/character/processors/movement-processor';
-import { PowerProcessor } from 'src/modules/characters/domain/services/character/processors/power-processor';
-import { ResistancesProcessor } from 'src/modules/characters/domain/services/character/processors/resistances-processor';
-import { SkillProcessor } from 'src/modules/characters/domain/services/character/processors/skill-processor';
-import { StatProcessor } from 'src/modules/characters/domain/services/character/processors/stat-processor';
-import { XPProcessor } from 'src/modules/characters/domain/services/character/processors/xp-processor';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { ItemModifier, ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
-import { ValidationError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { Character } from '../../../../src/modules/characters/domain/aggregates/character.aggregate';
+import { CharacterProcessorService } from '../../../../src/modules/characters/domain/services/character-processor.service';
+import { AttackProcessor } from '../../../../src/modules/characters/domain/services/character/processors/attack-processor';
+import { DefenseProcessor } from '../../../../src/modules/characters/domain/services/character/processors/defense-processor';
+import { EquipmentProcessor } from '../../../../src/modules/characters/domain/services/character/processors/equipment-processor';
+import { HPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/hp-processor';
+import { InitiativeProcessor } from '../../../../src/modules/characters/domain/services/character/processors/initiative-processor';
+import { MovementProcessor } from '../../../../src/modules/characters/domain/services/character/processors/movement-processor';
+import { PowerProcessor } from '../../../../src/modules/characters/domain/services/character/processors/power-processor';
+import { ResistancesProcessor } from '../../../../src/modules/characters/domain/services/character/processors/resistances-processor';
+import { SkillProcessor } from '../../../../src/modules/characters/domain/services/character/processors/skill-processor';
+import { StatProcessor } from '../../../../src/modules/characters/domain/services/character/processors/stat-processor';
+import { XPProcessor } from '../../../../src/modules/characters/domain/services/character/processors/xp-processor';
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.aggregate';
+import { ItemModifier, ItemModifiers } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo';
+import { ValidationError, NotFoundError } from '../../../../src/modules/shared/domain/errors/errors';
 import { armor, buildCharacter, shield, skill, weapon } from '../characters/traits/character.fixture';
 
 const processor = new CharacterProcessorService(
@@ -130,7 +130,7 @@ describe('Item modifiers', () => {
   });
 
   it('reads items stored before modifiers as without them', () => {
-    const item = buildItem(undefined as unknown as ItemModifier[]);
+    const item = buildItem(undefined);
     expect(item.modifiers).toEqual([]);
   });
 });

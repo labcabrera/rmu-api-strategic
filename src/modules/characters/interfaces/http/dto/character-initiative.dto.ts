@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterInitiative } from 'src/modules/characters/domain/value-objects/character-initiative.vo';
+import { CharacterInitiative } from '../../../domain/value-objects/character-initiative.vo';
 
 export class CharacterInitiativeDto {
   @ApiProperty({ description: 'Initiative modifiers', example: { stat: 2, trait: 1, penalty: -1 }, required: true })

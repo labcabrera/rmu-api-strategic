@@ -1,23 +1,7 @@
-import { Controller, Logger } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
+import { Controller } from '@nestjs/common';
 
+// The realm.deleted consumer of the items module was commented out: deleting a realm does not delete the items of
+// its games. Its dead handler is gone so the lint passes; the class stays registered until that is decided
+// (F-strategic-02, spec 016).
 @Controller()
-export class KafkaItemEventConsumer {
-  private readonly logger = new Logger(KafkaItemEventConsumer.name);
-
-  constructor(private readonly commandBus: CommandBus) {}
-
-  // @EventPattern('internal.rmu-core.realm.deleted.v1')
-  handleRealmDeleted(@Payload() event: any, @Ctx() context: KafkaContext) {
-    // this.logger.log(`Received event on topic ${context.getTopic()}: ${JSON.stringify(event)}`);
-    // const realmId = event?.data?.id as string;
-    // if (realmId) {
-    //   this.commandBus.execute(new DeleteItemsByRealmCommand(realmId, 'admin', ['admin'])).catch((error) => {
-    //     this.logger.error(`Error deleting games for realm ${realmId}: ${error.message}`, error.stack);
-    //   });
-    // } else {
-    //   this.logger.error('realmId not found in event payload');
-    // }
-  }
-}
+export class KafkaItemEventConsumer {}

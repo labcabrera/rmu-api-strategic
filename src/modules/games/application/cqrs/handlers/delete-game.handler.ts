@@ -3,8 +3,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import type { GameEventBusPort } from '../../ports/game-event-bus.port';
 import type { GameRepository } from '../../ports/game.repository';
 import { DeleteGameCommand } from '../commands/delete-game.command';
-import { GameDeletedEvent } from 'src/modules/games/domain/events/game.events';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
+import { GameDeletedEvent } from '../../../domain/events/game.events';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
 import type { GameGuardPort } from '../../ports/game-guard.port';
 
 @CommandHandler(DeleteGameCommand)

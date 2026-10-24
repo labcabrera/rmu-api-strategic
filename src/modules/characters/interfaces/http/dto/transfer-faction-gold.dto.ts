@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { TransferGoldCommand } from 'src/modules/characters/application/cqrs/commands/transfer-gold.command';
+import { TransferGoldCommand } from '../../../application/cqrs/commands/transfer-gold.command';
 
 export class TransferGoldDto {
   @ApiProperty({

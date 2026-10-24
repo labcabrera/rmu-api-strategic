@@ -1,5 +1,5 @@
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
-import type { HealingType, TreatmentProcedure } from 'src/modules/characters/domain/value-objects/injury.vo';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command';
+import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo';
 
 export interface ExternalHealer {
   name: string;

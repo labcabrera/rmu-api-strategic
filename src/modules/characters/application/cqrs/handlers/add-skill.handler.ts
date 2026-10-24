@@ -8,15 +8,15 @@ import type { SkillCategoryClientPort } from '../../ports/skill-category-client.
 import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
 import type { ProfessionClientPort } from '../../ports/profession-client.port';
 import type { RaceClientPort } from '../../ports/race-client.port';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo';
 import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
     @Inject('SkillClient') private readonly skillClient: SkillClientPort,

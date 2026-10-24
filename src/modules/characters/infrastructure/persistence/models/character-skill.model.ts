@@ -1,6 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
-import type { SkillDevPointsSpent } from 'src/modules/characters/domain/value-objects/character-skill.vo';
+import { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo';
+import type { SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo';
 
 @Schema({ _id: false })
 export class CharacterSkill {

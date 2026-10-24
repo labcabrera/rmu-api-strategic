@@ -1,9 +1,10 @@
+import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.aggregate';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../../../items/domain/aggregates/item.aggregate';
 import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
 import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
-import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo';
 
 @Injectable()
 export class EquipmentProcessor {
@@ -79,7 +80,8 @@ export class EquipmentProcessor {
   }
 
   private cleanUp(character: Character, items: Item[]) {
-    for (const slot in character.equipment.slots) {
+    for (const key in character.equipment.slots) {
+      const slot = key as EquipmentSlot;
       if (character.equipment.slots[slot]) {
         const itemId = character.equipment.slots[slot];
         if (!items.find(item => item.id === itemId)) {

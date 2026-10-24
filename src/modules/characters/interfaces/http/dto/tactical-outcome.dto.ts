@@ -1,23 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ApplyTacticalOutcomeCommand } from 'src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command';
-import type { CharacterCondition } from 'src/modules/characters/domain/value-objects/character-condition.vo';
-import { CHARACTER_CONDITION_STATUSES } from 'src/modules/characters/domain/value-objects/character-condition.vo';
-import type { Injury, InjurySource } from 'src/modules/characters/domain/value-objects/injury.vo';
-import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from 'src/modules/characters/domain/value-objects/injury.vo';
+import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command';
+import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo';
+import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo';
+import type { Injury, InjurySource } from '../../../domain/value-objects/injury.vo';
+import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo';
 import type {
   TacticalItemOutcome,
   TacticalFate,
   TacticalHpBySource,
   TacticalHpLogEntry,
   TacticalHpLogKind,
-} from 'src/modules/characters/domain/value-objects/tactical-game-outcome.vo';
-import { TACTICAL_HP_LOG_KINDS } from 'src/modules/characters/domain/value-objects/tactical-game-outcome.vo';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
+} from '../../../domain/value-objects/tactical-game-outcome.vo';
+import { TACTICAL_HP_LOG_KINDS } from '../../../domain/value-objects/tactical-game-outcome.vo';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
 import { CharacterConditionDto, InjuryDto } from './character-health.dto';
-import { ItemModifierDto } from 'src/modules/items/interfaces/http/dtos/item-modifier.dto';
-import { type ItemModifier, ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+import { ItemModifierDto } from '../../../../items/interfaces/http/dtos/item-modifier.dto';
+import { type ItemModifier, ItemModifiers } from '../../../../items/domain/value-objects/item-modifier.vo';
 
 /** Modifiers an item of the character got in the game (spec 019). */
 export class TacticalItemOutcomeDto {
@@ -124,7 +124,7 @@ export class TacticalOutcomeDto {
   @IsOptional()
   conditionsResolved?: string[];
 
-  @ApiPropertyOptional({ enum: ['dead', 'permanent-unconscious'] })
+  @ApiPropertyOptional({ type: String, enum: ['dead', 'permanent-unconscious'] })
   @IsIn(['dead', 'permanent-unconscious'])
   @IsOptional()
   fate?: TacticalFate;

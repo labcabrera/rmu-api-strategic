@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
-import { TokenService } from 'src/modules/auth/token.service';
+import { TokenService } from '../../../auth/token.service';
 import { ProfessionClientPort, Profession } from '../../application/ports/profession-client.port';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class ApiProfessionClientAdapter implements ProfessionClientPort {
       return response.data as Profession;
     } catch (err) {
       //TODO add axios error handling
-      throw new Error(`Error fetching profession ${professionId}: ${err}`);
+      throw new Error(`Error fetching profession ${professionId}: ${String(err)}`);
     }
   }
 }

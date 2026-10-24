@@ -1,18 +1,18 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { CreateItemCommand } from '../commands/create-item.command';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Item } from '../../../domain/aggregates/item.aggregate';
 import type { ItemRepository } from '../../ports/item.repository';
 import type { ItemEventBusPort } from '../../ports/item-event-bus.port';
 import type { ItemGuardPort } from '../../ports/item-guard.port';
-import type { ItemClientPort, ItemResponse } from 'src/modules/items/application/ports/item-client.port';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { FactionRepository } from 'src/modules/factions/application/ports/faction.repository';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import { ItemProps } from 'src/modules/items/domain/aggregates/item-props';
-import { Faction } from 'src/modules/factions/domain/aggregates/faction.aggregate';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
+import type { ItemClientPort, ItemResponse } from '../../ports/item-client.port';
+import { ValidationError } from '../../../../shared/domain/errors/errors';
+import type { FactionRepository } from '../../../../factions/application/ports/faction.repository';
+import type { CharacterRepository } from '../../../../characters/application/ports/character.repository';
+import { ItemProps } from '../../../domain/aggregates/item-props';
+import { Faction } from '../../../../factions/domain/aggregates/faction.aggregate';
+import { Character } from '../../../../characters/domain/aggregates/character.aggregate';
+import { ItemWeapon } from '../../../domain/value-objects/item-weapon.vo';
 
 const goldCoin = 'gold-coin';
 

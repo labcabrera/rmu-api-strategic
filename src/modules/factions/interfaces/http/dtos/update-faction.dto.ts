@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsString } from 'class-validator';
-import { UpdateFactionCommand } from 'src/modules/factions/application/cqrs/commands/update-faction.command';
+import { UpdateFactionCommand } from '../../../application/cqrs/commands/update-faction.command';
 import { FactionManagementDto } from './faction.dto';
 
 export class UpdateFactionDto {
@@ -13,17 +13,17 @@ export class UpdateFactionDto {
   @IsObject()
   management: FactionManagementDto | undefined;
 
-  @ApiProperty({ description: 'Faction short description', example: 'Game short description' })
+  @ApiProperty({ type: String, description: 'Faction short description', example: 'Game short description' })
   @IsString()
   @IsOptional()
   shortDescription: string | undefined;
 
-  @ApiProperty({ description: 'Faction description', example: 'A thrilling campaign set in Middle-earth' })
+  @ApiProperty({ type: String, description: 'Faction description', example: 'A thrilling campaign set in Middle-earth' })
   @IsString()
   @IsOptional()
   description: string | undefined;
 
-  @ApiProperty({ description: 'Faction image URL', example: 'foo/bar/images.png' })
+  @ApiProperty({ type: String, description: 'Faction image URL', example: 'foo/bar/images.png' })
   @IsString()
   @IsOptional()
   imageUrl: string | undefined;

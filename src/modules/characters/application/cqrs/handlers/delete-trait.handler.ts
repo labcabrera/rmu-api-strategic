@@ -6,13 +6,13 @@ import type { CharacterEventBusPort } from '../../ports/character-event-bus.port
 import type { CharacterRepository } from '../../ports/character.repository';
 import type { TraitClientPort } from '../../ports/trait-client.port';
 import { DeleteTraitCommand } from '../commands/delete-trait.command';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { NotFoundError } from '../../../../shared/domain/errors/errors';
+import type { ItemRepository } from '../../../../items/application/ports/item.repository';
 
 @CommandHandler(DeleteTraitCommand)
 export class DeleteTraitHandler implements ICommandHandler<DeleteTraitCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterProcessorService: CharacterProcessorService,
     @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
     @Inject('TraitClient') private readonly traitClient: TraitClientPort,
     @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
