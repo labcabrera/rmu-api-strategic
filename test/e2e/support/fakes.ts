@@ -85,7 +85,7 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
 export function apiFakes() {
   const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(id === REALM.id ? REALM : undefined) };
   const itemClient: ItemClientPort = {
-    getItemById: id => (ITEM_TYPES[id] ? Promise.resolve(ITEM_TYPES[id]) : Promise.reject(new NotFoundError('Item', id))),
+    getItemById: id => Promise.resolve(ITEM_TYPES[id]),
   };
   const raceClient: RaceClientPort = {
     getRaceById: id => (id === RACE.id ? Promise.resolve(RACE) : Promise.reject(new Error(`race ${id}`))),

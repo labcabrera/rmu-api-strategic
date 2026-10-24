@@ -48,12 +48,14 @@ describe('items (e2e)', () => {
       expect(e2e.events.topics()).toEqual([]);
     });
 
-    it('rejects an item the faction cannot afford and an invalid body with 400, and an unknown item type with 404', async () => {
+    it('rejects an item the faction cannot afford, an unknown item type and an invalid body with 400', async () => {
       const poor = (await createFaction(e2e, gameId)).id;
       const expensive = await as('owner').post('/v1/items', { gameId, factionId: poor, itemTypeId: 'rope' });
       expect(expensive.status).toBe(400);
-      // F-strategic-19: the 404 of the items API reaches the client, the ValidationError of the handler is never thrown
-      expect((await as('owner').post('/v1/items', { gameId, factionId, itemTypeId: 'unknown' })).status).toBe(404);
+      // F-strategic-19: an unknown item type is a 400, not the 404 of the items API
+      const unknown = await as('owner').post('/v1/items', { gameId, factionId, itemTypeId: 'unknown' });
+      expect(unknown.status).toBe(400);
+      expect(unknown.body).toMatchObject({ code: 'validation', message: 'Invalid item type unknown' });
       expect((await as('owner').post('/v1/items', { gameId, itemTypeId: 'stone' })).status).toBe(400);
       const character = await createCharacter(e2e, gameId, factionId);
       expect((await as('owner').post('/v1/items', { gameId, factionId, characterId: character.id, itemTypeId: 'stone' })).status).toBe(400);
