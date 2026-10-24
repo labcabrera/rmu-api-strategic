@@ -3,6 +3,7 @@ import { Character } from '../../../aggregates/character.aggregate';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
 import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
+import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 
 @Injectable()
 export class EquipmentProcessor {
@@ -37,6 +38,8 @@ export class EquipmentProcessor {
       //TODO change name
       enc += armorItems.armor!.enc || 0;
       maneuverPenalty += armorItems.armor!.maneuverPenalty || 0;
+      // Spec 019, decision 10: the breakage damage of armor is an armor maneuver penalty.
+      maneuverPenalty += ItemModifiers.condition(armorItems.modifiers).breakagePenalty;
       perceptionPenalty += armorItems.armor!.perceptionPenalty || 0;
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
       difficultyIndex = Math.max(difficultyIndex, DIFFICULTIES.indexOf(armorItems.armor!.baseDifficulty));

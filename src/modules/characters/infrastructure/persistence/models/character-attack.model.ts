@@ -62,4 +62,7 @@ export class CharacterAttack {
 
   @Prop({ type: String, required: false })
   skillId: string;
+
+  @Prop({ type: String, required: false })
+  itemId?: string;
 }

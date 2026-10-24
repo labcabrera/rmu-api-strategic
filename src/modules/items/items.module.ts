@@ -18,6 +18,8 @@ import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-clie
 import { FactionsModule } from '../factions/factions.module';
 import { CharactersModule } from '../characters/characters.module';
 import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler';
+import { AddItemModifierHandler, DeleteItemModifierHandler } from './application/cqrs/handlers/item-modifier.handlers';
+import { ItemModifierStore } from './application/services/item-modifier.store';
 
 @Module({
   imports: [
@@ -36,6 +38,9 @@ import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handl
     CreateItemHandler,
     UpdateItemHandler,
     DeleteItemHandler,
+    AddItemModifierHandler,
+    DeleteItemModifierHandler,
+    ItemModifierStore,
     {
       provide: 'ItemRepository',
       useClass: MongoItemRepository,

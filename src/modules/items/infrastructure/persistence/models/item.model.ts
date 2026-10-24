@@ -3,9 +3,9 @@ import { Document } from 'mongoose';
 import type { AccessType } from 'src/modules/shared/domain/entities/access-type';
 import { ItemWeapon } from './item-weapon.model';
 import { ItemArmor } from './item-armor.model';
-import { ItemAffix } from './item-affix.model';
 import { ItemInfo } from './item-info';
 import { ItemShield } from './item-shield.model';
+import type { ItemModifier } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 
 export type ItemDocument = ItemModel & Document;
 
@@ -44,8 +44,9 @@ export class ItemModel {
   @Prop({ type: ItemShield, required: false })
   shield: ItemShield | null;
 
-  @Prop({ type: [ItemAffix], required: true })
-  affixes: ItemAffix[];
+  /** Spec 019: plain objects (see ItemModifier), missing in items stored before it. */
+  @Prop({ type: [Object], required: false, default: [] })
+  modifiers: ItemModifier[];
 
   @Prop({ type: ItemInfo, required: true })
   info: ItemInfo;

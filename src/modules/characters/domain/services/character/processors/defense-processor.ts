@@ -4,6 +4,7 @@ import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
 import { CharacterShield } from '../../../value-objects/character-defense.vo';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver';
+import { ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 
 @Injectable()
 export class DefenseProcessor {
@@ -55,6 +56,10 @@ export class DefenseProcessor {
     if (!item || !item.armor || !item.armor.at) {
       throw new ValidationError('Invalid armor item');
     }
+    // Spec 019, decision 10: a broken piece, or one damaged beyond -50, no longer protects its area.
+    if (ItemModifiers.isUnprotected(ItemModifiers.condition(item.modifiers))) {
+      return null;
+    }
     return item.armor.at;
   }
 
@@ -85,7 +90,13 @@ export class DefenseProcessor {
     if (offHandId) {
       const offHand = items.find(item => item.id === offHandId);
       if (offHand && offHand.shield) {
-        character.defense.shield = new CharacterShield(offHand.shield.db, offHand.shield.blockCount);
+        // Spec 019, decision 9: breakage damage lowers the shield DB; a broken shield gives none.
+        const condition = ItemModifiers.condition(offHand.modifiers);
+        if (condition.broken) {
+          return;
+        }
+        const db = Math.max(0, offHand.shield.db + condition.breakagePenalty + ItemModifiers.bonus(offHand.modifiers, 'defense'));
+        character.defense.shield = new CharacterShield(db, offHand.shield.blockCount);
       }
     }
   }

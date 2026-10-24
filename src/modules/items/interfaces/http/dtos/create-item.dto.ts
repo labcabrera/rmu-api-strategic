@@ -66,7 +66,6 @@ export class CreateItemDto {
       dto.itemTypeId,
       dto.name,
       null, // carried is not provided in the DTO, defaulting to null
-      null, // affixes are not provided in the DTO, defaulting to null
       null, // info is not provided in the DTO, defaulting to null
       dto.amount,
       dto.description,
