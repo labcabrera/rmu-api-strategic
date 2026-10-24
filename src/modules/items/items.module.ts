@@ -58,6 +58,6 @@ import { ItemModifierStore } from './application/services/item-modifier.store';
       useClass: ApiItemClientAdapter,
     },
   ],
-  exports: ['ItemRepository', 'ItemClientPort'],
+  exports: ['ItemRepository', 'ItemClientPort', 'ItemEventProducer'],
 })
 export class ItemsModule {}

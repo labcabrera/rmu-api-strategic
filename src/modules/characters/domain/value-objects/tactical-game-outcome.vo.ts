@@ -1,5 +1,6 @@
 import { CharacterCondition } from './character-condition.vo';
 import { Injury } from './injury.vo';
+import type { ItemModifier } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 
 export type TacticalFate = 'dead' | 'permanent-unconscious';
 
@@ -28,6 +29,13 @@ export interface TacticalHpBySource {
   byAttacker: Array<{ attackerId: string; attackerName?: string; amount: number }>;
 }
 
+/** Modifiers an item of the character got in the game (spec 019): breakage damage, not the temporary one. */
+export interface TacticalItemOutcome {
+  itemId: string;
+  name?: string;
+  modifiers: ItemModifier[];
+}
+
 /** One element of TacticalGameOutcome.characters (rmu-api-tactical), applied to a strategic character. */
 export interface TacticalCharacterOutcome {
   tacticalGameId: string;
@@ -48,4 +56,6 @@ export interface TacticalCharacterOutcome {
   /** Conditions of the character (snapshot) that ended during the game */
   conditionsResolved?: string[];
   fate?: TacticalFate;
+  /** Spec 019: missing in outcomes of tactical versions before it. */
+  items?: TacticalItemOutcome[];
 }

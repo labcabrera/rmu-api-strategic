@@ -821,7 +821,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   /** Applies a tactical game outcome. Returns undefined when it was already applied (idempotent). */
-  applyTacticalOutcome(outcome: TacticalCharacterOutcome): OutcomeMergeSummary | undefined {
+  /** `itemsSummary`: what the outcome changed in the items of the character (spec 019), for the healing log. */
+  applyTacticalOutcome(outcome: TacticalCharacterOutcome, itemsSummary?: Record<string, unknown>): OutcomeMergeSummary | undefined {
     if (this.isTacticalGameApplied(outcome.tacticalGameId)) return undefined;
     const now = new Date().toISOString();
     const { state, summary } = TacticalOutcomeMerger.merge(
@@ -844,6 +845,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         // Spec 013, §1.1: the hits log stays out of the character, its totals go to the healing log.
         ...(outcome.hpBySource ? { hpBySource: outcome.hpBySource } : {}),
         ...(outcome.hpLog ? { hpLogEntries: outcome.hpLog.length } : {}),
+        ...(itemsSummary ?? {}),
       },
       {
         tacticalGameId: outcome.tacticalGameId,
