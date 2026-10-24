@@ -53,7 +53,7 @@ export type E2eApp = {
  * Kafka producer is replaced. AppModule is imported after setting the environment, because ConfigModule.forRoot()
  * reads it when the module is evaluated.
  */
-export async function startApp(env: Record<string, string> = {}): Promise<E2eApp> {
+export async function startApp(env: Record<string, string> = {}, beforeInit?: (app: NestExpressApplication) => void): Promise<E2eApp> {
   const mongo = await MongoMemoryServer.create();
   const jwks = new LocalJwks();
   await jwks.start();
@@ -106,6 +106,7 @@ export async function startApp(env: Record<string, string> = {}): Promise<E2eApp
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);
+  beforeInit?.(app);
   await app.init();
 
   return {

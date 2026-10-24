@@ -43,8 +43,8 @@ describe('strategic games (e2e)', () => {
         owner: 'e2e-owner',
         status: 'open',
       });
-      // The game is stored private, but the response carries neither accessType nor shortDescription [F-strategic-17]
-      expect(response.body).not.toHaveProperty('shortDescription');
+      // The response carries the short description and the access type, private at creation [F-strategic-17]
+      expect(response.body).toMatchObject({ shortDescription: 'Short', accessType: 'private' });
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.game.created.v1']);
       expect(e2e.events.published[0].event).toMatchObject({
         eventType: 'created',
@@ -153,7 +153,7 @@ describe('strategic games (e2e)', () => {
       expect(stale.body).toMatchObject({ statusCode: 409, error: 'ConflictError', code: 'version-conflict' });
       expect((await patch({ name: 'No version' })).body).toMatchObject({ name: 'No version', version: 2 });
       expect((await patch({ version: -1 })).status).toBe(400);
-      // An update writes every prop: the short description, not in the response (F-strategic-17), must survive it
+      // An update writes every prop: the short description must survive it
       const stored = await e2e.connection.collection('strategic-games').findOne({ _id: game.id as never });
       expect(stored).toMatchObject({ shortDescription: 'Short', version: 2 });
     });

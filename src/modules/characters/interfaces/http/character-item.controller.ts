@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { CharacterDto } from './dto/character.dto.js';
 import { EquipItemDto } from './dto/equip-item.dto.js';
@@ -58,7 +58,7 @@ export class CharacterItemController {
   @Post(':id/equipment')
   @ApiBody({ type: EquipItemDto })
   @ApiOperation({ operationId: 'equipItem', summary: 'Equip an item to a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiCreatedResponse({ type: CharacterDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async equipItem(@Param('id') id: string, @Body() dto: EquipItemDto, @CurrentUser() user: AuthenticatedUser) {
     this.logger.debug(`Equipping character ${id} item ${dto.itemId} for user ${user.id}`);

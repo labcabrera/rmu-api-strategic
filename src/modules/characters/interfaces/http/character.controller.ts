@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { CharacterDto, CharacterPageDto } from './dto/character.dto.js';
 import { CreateCharacterDto } from './dto/create-character.dto.js';
@@ -63,7 +63,7 @@ export class CharacterController {
   @Post('')
   @ApiBody({ type: CreateCharacterDto })
   @ApiOperation({ operationId: 'createCharacter', summary: 'Create a new character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiCreatedResponse({ type: CharacterDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async create(@Body() dto: CreateCharacterDto, @CurrentUser() user: AuthenticatedUser) {
     this.logger.debug(`Creating character ${dto.name} for user ${user.id}`);

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { GameDto, GamePageDto } from './dto/game.dto.js';
 import { GetGameQuery } from '../../application/cqrs/queries/get-game.query.js';
@@ -53,7 +53,7 @@ export class GameController {
 
   @Post('')
   @ApiOperation({ operationId: 'createGame', summary: 'Create a new game' })
-  @ApiOkResponse({ type: GameDto, description: 'Success' })
+  @ApiCreatedResponse({ type: GameDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async create(@Body() createGameDto: CreateGameDto, @CurrentUser() user: AuthenticatedUser) {
     const userId = user.id;

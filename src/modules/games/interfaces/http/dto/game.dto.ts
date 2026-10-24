@@ -1,3 +1,4 @@
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 import { ApiProperty } from '@nestjs/swagger';
 import type { GameStatus } from '../../../domain/value-objects/game-status.vo.js';
 import { Game } from '../../../domain/aggregates/game.js';
@@ -30,6 +31,9 @@ export class GameDto {
   @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto })
   powerLevel: GamePowerLevelDto;
 
+  @ApiProperty({ description: 'Game short description', type: String, required: false })
+  shortDescription: string | undefined;
+
   @ApiProperty({ description: 'Game description', type: String, required: false })
   description: string | undefined;
 
@@ -38,6 +42,12 @@ export class GameDto {
 
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
+
+  @ApiProperty({
+    description: 'Who can read the game, its factions and characters: its owner (private) or everyone',
+    enum: ['public', 'private'],
+  })
+  accessType: AccessType;
 
   static fromEntity(entity: Game): GameDto {
     const dto = new GameDto();
@@ -49,9 +59,11 @@ export class GameDto {
     dto.status = entity.status;
     dto.options = GameOptionsDto.fromEntity(entity.options);
     dto.powerLevel = GamePowerLevelDto.fromEntity(entity.powerLevel);
+    dto.shortDescription = entity.shortDescription;
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
+    dto.accessType = entity.accessType;
     return dto;
   }
 }
@@ -60,7 +72,6 @@ export class GamePageDto {
   @ApiProperty({
     type: [GameDto],
     description: 'Games',
-    isArray: true,
   })
   content: GameDto[];
   @ApiProperty({ type: PaginationDto, description: 'Pagination information' })

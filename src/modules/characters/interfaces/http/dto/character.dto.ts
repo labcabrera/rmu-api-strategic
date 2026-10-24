@@ -145,7 +145,7 @@ export class CharacterDto {
 }
 
 export class CharacterPageDto {
-  @ApiProperty({ type: [CharacterDto], description: 'Characters', isArray: true })
+  @ApiProperty({ type: [CharacterDto], description: 'Characters' })
   content: CharacterDto[];
 
   @ApiProperty({ type: PaginationDto, description: 'Pagination information' })

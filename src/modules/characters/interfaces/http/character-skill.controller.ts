@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, HttpCode, Logger, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiTags, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { AddSkillDto } from './dto/add-skill.dto.js';
 import { CharacterDto } from './dto/character.dto.js';
@@ -28,7 +28,7 @@ export class CharacterSkillController {
   @Post(':id/skills')
   @ApiBody({ type: AddSkillDto })
   @ApiOperation({ operationId: 'addSkill', summary: 'Add a new skill to a character' })
-  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiCreatedResponse({ type: CharacterDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async addSkill(@Param('id') id: string, @Body() dto: AddSkillDto, @CurrentUser() user: AuthenticatedUser) {
     this.logger.debug(`Adding character ${id} skill ${dto.skillId} for user ${user.id}`);
