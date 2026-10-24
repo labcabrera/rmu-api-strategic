@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
@@ -43,9 +44,12 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject(CULTURE_CLIENT) private readonly cultureClient: CultureClientPort,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterProcessorService: CharacterProcessorService,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
+    // rmu-user or rmu-admin (F-strategic-15).
+    this.characterAccess.checkCreate(command.roles);
     const game = await this.gameRepository.findById(command.gameId);
     if (!game) throw new ValidationError(`Game with id ${command.gameId} not found`);
 

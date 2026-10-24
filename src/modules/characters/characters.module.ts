@@ -1,3 +1,4 @@
+import { CharacterAccess } from './application/services/character-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -139,6 +140,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateCharacterRaceHandler,
     UpdateTemporaryStatHandler,
     CharacterHealthStore,
+    CharacterAccess,
     ApplyTacticalOutcomeHandler,
     TacticalOutcomeItemsMerger,
     AddInjuryHandler,
@@ -190,6 +192,6 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
       useClass: ApiCultureClientAdapter,
     },
   ],
-  exports: [CHARACTER_REPOSITORY, CharacterProcessorService],
+  exports: [CHARACTER_REPOSITORY, CharacterProcessorService, CharacterAccess],
 })
 export class CharactersModule {}

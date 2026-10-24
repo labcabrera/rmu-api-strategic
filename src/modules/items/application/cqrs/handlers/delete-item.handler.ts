@@ -3,7 +3,7 @@ import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
 import { DeleteItemCommand } from '../commands/delete-item.command.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
-import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
+import { ItemAccess } from '../../services/item-access.service.js';
 import { ItemDeletedEvent } from '../../../domain/events/item.events.js';
 import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../../../characters/application/ports/character-repository.port.js';
 import { UnequipItemCommand } from '../../../../characters/application/cqrs/commands/unequip-item.command.js';
@@ -14,7 +14,7 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
   constructor(
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
-    @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
+    private readonly itemAccess: ItemAccess,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly commandBus: CommandBus,
   ) {}
@@ -23,7 +23,7 @@ export class DeleteItemHandler implements ICommandHandler<DeleteItemCommand> {
     const item = await this.itemRepository.findById(command.id);
     if (!item) throw new NotFoundError('Item', command.id);
 
-    this.itemGuard.checkDelete(item, command.userId, command.roles);
+    await this.itemAccess.checkChange(item, command.userId, command.roles);
 
     if (item.characterId) {
       const character = await this.characterRepository.findById(item.characterId);

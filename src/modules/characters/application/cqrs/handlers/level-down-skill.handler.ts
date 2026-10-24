@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -13,6 +14,7 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
     private readonly characterProcessorService: CharacterProcessorService,
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: LevelDownSkillCommand): Promise<Character> {
@@ -20,6 +22,8 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     character.levelDownSkill(command.skillId, command.specialization);
     const items = await this.itemRepository.findByCharacterId(character.id);

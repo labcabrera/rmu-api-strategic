@@ -1,3 +1,4 @@
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { CreateItemCommand } from '../commands/create-item.command.js';
@@ -27,6 +28,7 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(ITEM_GUARD) private readonly itemGuard: ItemGuardPort,
     @Inject(ITEM_CLIENT) private readonly itemClientPort: ItemClientPort,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(command: CreateItemCommand): Promise<Item> {
@@ -45,6 +47,13 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     // Add item to faction
     if (command.factionId) {
       faction = await this.readFaction(command.factionId);
+      // The gold of a faction is managed by the owner of its game or an admin.
+      this.gameAccess.checkManage(
+        await this.gameAccess.findGame(faction.gameId),
+        command.userId,
+        command.roles,
+        'the items of this faction',
+      );
       if (totalCost > faction.management.availableGold) {
         throw new ValidationError(`Faction cannot afford the item. Required: ${totalCost}, Available: ${faction.management.availableGold}`);
       }
@@ -54,6 +63,10 @@ export class CreateItemHandler implements ICommandHandler<CreateItemCommand, Ite
     // Add item to character
     if (command.characterId) {
       character = await this.readCharacter(command.characterId);
+      // The owner of the character, the owner of its game or an admin.
+      if (!GameAccess.isAdmin(command.roles) && character.owner !== command.userId) {
+        this.gameAccess.checkManage(await this.gameAccess.findGame(character.gameId), command.userId, command.roles, 'this character');
+      }
       faction = await this.readFaction(character.faction.id);
 
       characterGoldItem = await this.itemRepository.findByCharacterIdAndItemTypeId(command.characterId, goldCoin);

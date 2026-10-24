@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -13,6 +14,7 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
     private readonly characterProcessorService: CharacterProcessorService,
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: UpdateSkillCommand): Promise<Character> {
@@ -21,6 +23,8 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
 
     const character = await this.characterRepository.findById(characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     const skill = character.skills.find(skill => skill.skillId === skillId) || null;
     if (!skill) throw new ValidationError(`Skill ${skillId} not found for character ${characterId}`);

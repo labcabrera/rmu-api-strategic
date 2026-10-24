@@ -1,3 +1,4 @@
+import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
 import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler.js';
 import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command.js';
@@ -64,6 +65,7 @@ const setup = (powerLevel: Partial<GamePowerLevel>) => {
     { getTraitById: vi.fn((id: string) => Promise.resolve(catalog[id] as TraitResponse)) },
     fakeEventPublisher().publisher,
     gameRepository as unknown as GameRepository,
+    allowAllCharacterAccess,
   );
   return { character, handler };
 };

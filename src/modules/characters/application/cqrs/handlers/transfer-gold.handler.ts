@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -20,6 +21,7 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     private readonly commandBus: CommandBus,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: TransferGoldCommand): Promise<Character> {
@@ -28,6 +30,8 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     const faction = await this.factionRepository.findById(character.faction.id);
     if (!faction) throw new NotFoundError('Faction', character.faction.id);

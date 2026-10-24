@@ -1,3 +1,4 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -24,6 +25,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     @Inject(SKILL_CATEGORY_CLIENT) private readonly skillCategoryClient: SkillCategoryClientPort,
     @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
@@ -33,6 +35,8 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     if (character.findSkill(skillId, specialization)) {
       throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
