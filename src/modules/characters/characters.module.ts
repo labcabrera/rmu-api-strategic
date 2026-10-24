@@ -68,6 +68,7 @@ import { RollPermanentInjuryHandler } from './application/cqrs/handlers/roll-per
 import { RestCharacterHandler } from './application/cqrs/handlers/rest-character.handler.js';
 import { ResolveConditionHandler } from './application/cqrs/handlers/resolve-condition.handler.js';
 import { GetHealingLogHandler } from './application/cqrs/handlers/get-healing-log.handler.js';
+import { GetTreatmentDifficultyHandler } from './application/cqrs/handlers/get-treatment-difficulty.handler.js';
 import { ApiHealingTablesClientAdapter } from './infrastructure/api-clients/api.healing-tables-client.adapter.js';
 import { ApiManeuverClientAdapter } from './infrastructure/api-clients/api.maneuver-client.adapter.js';
 import { MongoHealingLogRepository } from './infrastructure/db/mongo.healing-log.repository.js';
@@ -153,6 +154,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     RestCharacterHandler,
     ResolveConditionHandler,
     GetHealingLogHandler,
+    GetTreatmentDifficultyHandler,
     {
       provide: HEALING_LOG_REPOSITORY,
       useClass: MongoHealingLogRepository,

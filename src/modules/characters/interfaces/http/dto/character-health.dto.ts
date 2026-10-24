@@ -25,6 +25,7 @@ import type {
   InjuryStatus,
   InjuryType,
   TreatmentContext,
+  TreatmentDifficultySource,
   TreatmentProcedure,
   TreatmentResult,
 } from '../../../domain/value-objects/injury.vo.js';
@@ -63,6 +64,8 @@ export class InjuryHealerDto {
   external?: boolean;
   @ApiProperty({ description: 'Medicine bonus' })
   bonus: number;
+  @ApiPropertyOptional({ description: 'Own penalties of a healer character, added to the roll' })
+  penalty?: number;
 }
 
 export class InjuryTreatmentDto {
@@ -74,6 +77,8 @@ export class InjuryTreatmentDto {
   healer: InjuryHealerDto;
   @ApiProperty()
   difficulty: number;
+  @ApiPropertyOptional({ enum: ['table', 'override'], description: 'Core table (or its default) or the game master' })
+  difficultySource?: TreatmentDifficultySource;
   @ApiProperty()
   roll: number;
   @ApiProperty()
@@ -90,6 +95,8 @@ export class InjuryTreatmentDto {
   context: TreatmentContext;
   @ApiPropertyOptional()
   tacticalGameId?: string;
+  @ApiPropertyOptional({ description: 'Heat critical severity of a cauterization, for the game master', example: 'A' })
+  heatCritical?: string;
 }
 
 export class InjuryRecoveryDto {
@@ -109,6 +116,10 @@ export class InjuryRecoveryDto {
   remainingDays: number;
   @ApiProperty()
   startedAt: string;
+  @ApiPropertyOptional({ description: 'Treatment the roll used: one recovery roll per treatment' })
+  treatmentId?: string;
+  @ApiPropertyOptional({ description: 'Rolled without care: the injury becomes permanent when the recovery ends' })
+  untreated?: boolean;
 }
 
 export class InjuryPermanentDto {

@@ -9,6 +9,7 @@ import type {
 import type { Profession, ProfessionClientPort } from '../../../src/modules/characters/application/ports/profession-client.port.js';
 import type { TraitClientPort, TraitResponse } from '../../../src/modules/characters/application/ports/trait-client.port.js';
 import type { Culture, CultureClientPort } from '../../../src/modules/characters/application/ports/culture-client.port.js';
+import type { HealingTables } from '../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
 import type { HealingTablesClientPort } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
 import type {
   AbsoluteManeuverResponse,
@@ -81,6 +82,32 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
   },
 };
 
+/**
+ * GET /v1/healing-tables of core: the unit fixture plus invented treatment difficulties in the shape of spec 022
+ * (`treatmentDifficulties` and `treatmentRules`).
+ */
+export const CORE_HEALING_TABLES: HealingTables = {
+  ...TABLES,
+  treatmentDifficulties: [
+    { procedure: 'dress', injuryType: 'skin-tissue', severity: 'light', difficulty: 'r' },
+    { procedure: 'splint', injuryType: 'bone', severity: 'light', difficulty: 'e' },
+    { procedure: 'splint', injuryType: 'bone', severity: 'medium', difficulty: 'e' },
+    { procedure: 'stitches', injuryType: 'cut-burn', severity: 'medium', difficulty: 'm' },
+    { procedure: 'pressure', injuryType: 'cut-burn', severity: 'severe', difficulty: 'e' },
+    { procedure: 'cauterize', injuryType: 'cut-burn', severity: 'severe', difficulty: 'r' },
+    { procedure: 'cauterize', injuryType: 'cut-burn', severity: 'medium', difficulty: 'r' },
+  ],
+  treatmentRules: {
+    headDifficultySteps: 1,
+    cauterizePenaltyPerBleeding: -5,
+    bleedingProcedures: ['pressure', 'stitches', 'tourniquet', 'cauterize'],
+    tourniquetLocations: ['arm', 'leg'],
+  },
+};
+
+/** Results the fake medical maneuver table answers, in order (then success), and the totals it got. */
+export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; totals: number[] } = { results: [], totals: [] };
+
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
   const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(id === REALM.id ? REALM : undefined) };
@@ -105,9 +132,14 @@ export function apiFakes() {
   const cultureClient: CultureClientPort = {
     getCultureById: id => (id === CULTURE.id ? Promise.resolve(CULTURE) : Promise.reject(new NotFoundError('Culture', id))),
   };
-  const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
+  const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
   const maneuverClient: ManeuverClientPort = {
-    absolute: () => Promise.resolve<AbsoluteManeuverResponse>({ result: 'success', message: 'success', effects: [] }),
+    absolute: (total: number) => {
+      maneuverCalls.totals.push(total);
+      const result = maneuverCalls.results.shift() ?? 'success';
+      const effects = result === 'absolute-failure' ? [{ status: 'injuryPenalty', value: 10 }] : [];
+      return Promise.resolve<AbsoluteManeuverResponse>({ result, message: result, effects });
+    },
   };
   return {
     realmClient,

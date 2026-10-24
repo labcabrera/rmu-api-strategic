@@ -28,6 +28,25 @@ import type { ItemRepository } from '../../../../src/modules/items/application/p
 import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
 import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo.js';
 import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture.js';
+import type { HealingTables } from '../../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
+import { GetTreatmentDifficultyHandler } from '../../../../src/modules/characters/application/cqrs/handlers/get-treatment-difficulty.handler.js';
+import { GetTreatmentDifficultyQuery } from '../../../../src/modules/characters/application/cqrs/queries/get-treatment-difficulty.query.js';
+import type { CharacterAccess } from '../../../../src/modules/characters/application/services/character-access.service.js';
+
+/** Invented difficulties: the rulebook ones live only in the gitignored data directory. */
+const DIFFICULTY_TABLES: HealingTables = {
+  ...TABLES,
+  treatmentDifficulties: [
+    { procedure: 'splint', injuryType: 'bone', severity: 'light', difficulty: 'e' },
+    { procedure: 'surgery', injuryType: 'bone', severity: 'severe', difficulty: 'sf' },
+  ],
+  treatmentRules: {
+    headDifficultySteps: 1,
+    cauterizePenaltyPerBleeding: -5,
+    bleedingProcedures: ['pressure', 'stitches', 'tourniquet', 'cauterize'],
+    tourniquetLocations: ['arm', 'leg'],
+  },
+};
 
 const MASTER = 'master-001';
 
@@ -47,7 +66,7 @@ const character = (id: string, props: { gameId?: string; skills?: CharacterSkill
   return rebuilt;
 };
 
-const setup = (characters: Character[], results: AbsoluteManeuverResponse['result'][] = []) => {
+const setup = (characters: Character[], results: AbsoluteManeuverResponse['result'][] = [], healingTables: HealingTables = TABLES) => {
   const byId = new Map(characters.map(c => [c.id, c]));
   const update = vi.fn((c: Character) => Promise.resolve(c));
   const characterRepository = {
@@ -61,7 +80,7 @@ const setup = (characters: Character[], results: AbsoluteManeuverResponse['resul
   const healingLogRepository = { saveAll } as unknown as HealingLogRepository;
   const { publisher, publish } = fakeEventPublisher();
   const store = new CharacterHealthStore(characterRepository, gameRepository, healingLogRepository, publisher);
-  const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
+  const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(healingTables) };
   const queue = [...results];
   const rolls: number[] = [];
   const absolute = vi.fn((roll: number) => {
@@ -306,6 +325,63 @@ describe('Health handlers', () => {
       expect(treated.injuries[0].treatments[0]).toMatchObject({ result: 'partial-success', recoveryModifier: -25 });
     });
 
+    it('computes the difficulty on the server from the core table unless the game master overrides it (D4/D5)', async () => {
+      const head = character('patient');
+      head.injuries = [injury({ id: 'i-1', location: 'head' })];
+      const { store, tables, maneuvers, rolls } = setup([head], ['success', 'success'], DIFFICULTY_TABLES);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      // splint is easy (+20), one step harder on the head: light (+10)
+      const result = await handler.execute(treat({ healer: { name: 'Healer', bonus: 10 } }));
+      expect(rolls).toEqual([70 + 10 + 10]);
+      expect(result.injuries[0].treatments[0]).toMatchObject({ difficulty: 10, difficultySource: 'table' });
+      const overridden = await handler.execute(treat({ healer: { name: 'Healer', bonus: 10 }, difficulty: -30 }));
+      expect(rolls[1]).toBe(70 + 10 - 30);
+      expect(overridden.injuries[0].treatments[1]).toMatchObject({ difficulty: -30, difficultySource: 'override' });
+      // No row for dressing a bone: refused unless the game master sets the difficulty
+      await expect(handler.execute(treat({ procedure: 'dress', healer: { name: 'Healer', bonus: 10 } }))).rejects.toMatchObject({
+        code: 'err-treatment-not-applicable',
+      });
+      await expect(
+        handler.execute(treat({ procedure: 'dress', healer: { name: 'Healer', bonus: 10 }, difficulty: 0 })),
+      ).resolves.toBeDefined();
+    });
+
+    it('subtracts the injury penalties of a healer character from its Medicine and Herbalism (D10)', async () => {
+      const healer = character('healer', { skills: [ranked('medicine', 5, 35), ranked('herbalism', 2, 12)] });
+      healer.injuries = [injury({ id: 'h-1', penalty: -15 }), injury({ id: 'h-2', penalty: -40, status: 'healed' })];
+      const { store, tables, maneuvers, rolls } = setup([withInjury(), healer], ['success', 'success']);
+      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+        treat({ healerCharacterId: 'healer', difficulty: 0, herbalism: { roll: 50, healerCharacterId: 'healer' } }),
+      );
+      expect(rolls).toEqual([50 + 12 - 15, 70 + 35 - 15 + TABLES.herbalismBonus]);
+      expect(result.injuries[0].treatments[0].healer).toMatchObject({ bonus: 35, penalty: -15 });
+    });
+
+    it('treats the injuries of a dead character (D9) and rejects stitches on a severe injury (D2)', async () => {
+      const dead = withInjury();
+      dead.status = 'dead';
+      const { store, tables, maneuvers, absolute } = setup([dead]);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      await expect(handler.execute(treat({ healer: { name: 'Healer', bonus: 10 } }))).resolves.toBeDefined();
+      dead.injuries[0].severity = 'severe';
+      absolute.mockClear();
+      await expect(handler.execute(treat({ procedure: 'stitches', healer: { name: 'Healer', bonus: 10 } }))).rejects.toMatchObject({
+        code: 'err-treatment-invalid-severity',
+      });
+      expect(absolute).not.toHaveBeenCalled();
+    });
+
+    it('stores the heat critical of a cauterization and does not worsen the penalty on its absolute failure', async () => {
+      const patient = character('patient');
+      patient.injuries = [injury({ id: 'i-1', bleeding: 4 })];
+      const { store, tables, maneuvers } = setup([patient], ['absolute-failure']);
+      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+        treat({ procedure: 'cauterize', healer: { name: 'Healer', bonus: 10 } }),
+      );
+      expect(result.injuries[0]).toMatchObject({ penalty: -10, bleeding: 4 });
+      expect(result.injuries[0].treatments[0]).toMatchObject({ heatCritical: 'D', difficulty: -20 });
+    });
+
     it('treats with magic without a Medicine roll and honours the requested type of healing', async () => {
       const { store, tables, maneuvers, absolute } = setup([withInjury()]);
       const handler = new TreatInjuryHandler(store, tables, maneuvers);
@@ -335,6 +411,25 @@ describe('Health handlers', () => {
       expect(result.injuries[0].recovery).toMatchObject({ roll: 44, modifiers: 0, total: 44, baseDays: 30, multiplier: 1, totalDays: 30 });
       expect(result.injuries[0].status).toBe('recovering');
       expect(permanentCheckRequired).toBe(true);
+    });
+
+    it('rolls an untreated injury at the none modifier, always asks for the permanent roll and allows one roll (D3/D10)', async () => {
+      const patient = character('patient');
+      patient.injuries = [injury({ id: 'i-1', penalty: -10 })];
+      const { store, tables } = setup([patient]);
+      const handler = new RollInjuryRecoveryHandler(store, tables);
+      const first = await handler.execute(new RollInjuryRecoveryCommand('patient', 'i-1', 37, MASTER, []));
+      // 37 + 4 ranks + 6 Co - 90 none - 10 penalty = -53 -> first band (30 days, bone)
+      expect(first.permanentCheckRequired).toBe(true);
+      expect(first.character.injuries[0].recovery).toMatchObject({ total: -53, totalDays: 30, untreated: true });
+      await expect(handler.execute(new RollInjuryRecoveryCommand('patient', 'i-1', 90, MASTER, []))).rejects.toMatchObject({
+        code: 'err-injury-recovery-rolled',
+        statusCode: 409,
+      });
+      patient.injuries[0].treatments = [treatment({ id: 't-1' })];
+      const second = await handler.execute(new RollInjuryRecoveryCommand('patient', 'i-1', 90, MASTER, []));
+      expect(second.permanentCheckRequired).toBe(false);
+      expect(second.character.injuries[0].recovery).toMatchObject({ treatmentId: 't-1', untreated: false });
     });
 
     it('requires the recovery before the permanent roll and then stores the permanent penalty', async () => {
@@ -369,6 +464,33 @@ describe('Health handlers', () => {
       });
       const result = await handler.execute(new RestCharacterCommand('patient', 4, 0, false, MASTER, []));
       expect(result.hp.current).toBe(6);
+    });
+  });
+
+  describe('GetTreatmentDifficultyHandler', () => {
+    it('returns the server difficulty after checking the read access', async () => {
+      const patient = character('patient');
+      patient.injuries = [injury({ id: 'i-1', type: 'bone', severity: 'severe', location: 'head' })];
+      const { tables } = setup([patient], [], DIFFICULTY_TABLES);
+      const repository = {
+        findById: vi.fn((id: string) => Promise.resolve(id === 'patient' ? patient : null)),
+      } as unknown as CharacterRepository;
+      const checkRead = vi.fn(() => Promise.resolve());
+      const handler = new GetTreatmentDifficultyHandler(repository, tables, { checkRead } as unknown as CharacterAccess);
+      await expect(handler.execute(new GetTreatmentDifficultyQuery('patient', 'i-1', 'surgery', MASTER, []))).resolves.toMatchObject({
+        grade: 'a',
+        headSteps: 1,
+        difficulty: -70,
+        matched: true,
+        applicable: true,
+      });
+      expect(checkRead).toHaveBeenCalledWith(patient, MASTER, []);
+      await expect(handler.execute(new GetTreatmentDifficultyQuery('missing', 'i-1', 'surgery', MASTER, []))).rejects.toMatchObject({
+        code: 'err-character-not-found',
+      });
+      await expect(handler.execute(new GetTreatmentDifficultyQuery('patient', 'nope', 'surgery', MASTER, []))).rejects.toMatchObject({
+        code: 'err-injury-not-found',
+      });
     });
   });
 });

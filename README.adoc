@@ -29,6 +29,32 @@ has a series of factions that function as if they were independent gangs.
 
 * *Character*: Represents a character belonging to a gang with characteristics such as attributes, skills, items, etc.
 
+== Health
+
+Injuries, treatments, recovery and rest (workspace specs 013 and 022) under `/v1/characters/{id}`. The numbers come
+from `GET /v1/healing-tables` of rmu-api-core; this repository holds only the formulas
+(`domain/services/healing`).
+
+* *Treatment difficulty*: computed on the server from `treatmentDifficulties` (procedure, injury type and severity),
+one or more steps harder on the head and, when cauterizing, by the bleeding (`treatmentRules`). A procedure without a
+row does not apply (400 `err-treatment-not-applicable`). The game master may still send `difficulty`, which overrides
+it (stored as `difficultySource: 'override'`). `GET injuries/{injuryId}/treatment-difficulty?procedure=` previews it.
+While core has no table (documents imported before spec 022) every procedure applies at medium.
+* *Success*: a treatment works on a success or an absolute success, as in rmu-api-tactical; a partial success only
+keeps its recovery roll modifier. Pressure stops a light bleeding and slows the rest by 4; stitches (light and medium
+injuries only) stop it and halve the penalty and its recovery base, toward zero; tourniquet (limbs) and magic stop it;
+cauterizing stops it (a partial success too), halves it on a failure and stores the heat critical for the game master.
+An absolute failure worsens the penalty and its recovery base; the severity is computed again.
+* *Healer*: a healer character subtracts its own injury penalties from Medicine and Herbalism (`healer.penalty`).
+Strategic keeps no fatigue, so that is not counted.
+* *Recovery*: one roll per treatment (409 `err-injury-recovery-rolled`). An untreated injury (no treatment, or a
+failed one) rolls at the `none` modifier, always asks for the permanent roll and becomes permanent when it ends: with
+the penalty of that roll, or all of it when it was not made (the game master can edit it).
+* *Daily reduction*: front-loaded. A penalty `m` over `t` days loses `floor(m / t)` a day, and one more on each of the
+first `m mod t` days.
+* *Dead characters*: their injuries can be treated (the departure of the soul is out of scope), but they do not roll
+recovery or rest.
+
 == Development
 
 This API follows the platform and conventions of https://github.com/labcabrera/rmu-api-core[rmu-api-core] (workspace

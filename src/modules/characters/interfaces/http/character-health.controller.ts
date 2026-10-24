@@ -16,7 +16,9 @@ import { HealingLogEntryDto, HealingLogPageDto } from './dto/character-health.dt
 import { TacticalOutcomeDto } from './dto/tactical-outcome.dto.js';
 import { AddInjuryDto } from './dto/add-injury.dto.js';
 import { UpdateInjuryDto } from './dto/update-injury.dto.js';
-import { TreatInjuryDto } from './dto/treat-injury.dto.js';
+import { TreatInjuryDto, TreatmentDifficultyDto, TreatmentDifficultyQueryDto } from './dto/treat-injury.dto.js';
+import { GetTreatmentDifficultyQuery } from '../../application/cqrs/queries/get-treatment-difficulty.query.js';
+import type { TreatmentDifficulty } from '../../domain/services/healing/injury-treatment-rules.js';
 import { InjuryRollDto } from './dto/injury-roll.dto.js';
 import { RestDto } from './dto/rest.dto.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
@@ -24,7 +26,10 @@ import { CurrentUser } from '../../../shared/interfaces/http/current-user.decora
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 
 export class CharacterRecoveryDto extends CharacterDto {
-  @ApiProperty({ description: 'Medium or severe injury with doubles: a permanent injury roll is required', required: false })
+  @ApiProperty({
+    description: 'Untreated injury, or medium or severe with doubles: a permanent injury roll is required',
+    required: false,
+  })
   permanentCheckRequired?: boolean;
 }
 
@@ -35,6 +40,7 @@ export class CharacterRecoveryDto extends CharacterDto {
   403: 'Not allowed to change the health of the character',
   404: 'Character, injury or condition not found',
   400: 'Bad request, invalid data',
+  409: 'Recovery already rolled for the latest treatment, or the character changed meanwhile',
 })
 export class CharacterHealthController {
   constructor(
@@ -99,10 +105,30 @@ export class CharacterHealthController {
     return CharacterDto.fromEntity(await this.commandBus.execute<typeof command, Character>(command));
   }
 
+  @Get(':id/injuries/:injuryId/treatment-difficulty')
+  @ApiOperation({
+    operationId: 'getTreatmentDifficulty',
+    summary: 'Difficulty the server uses for a procedure on the injury (core table, head and bleeding)',
+  })
+  @ApiOkResponse({ type: TreatmentDifficultyDto })
+  async getTreatmentDifficulty(
+    @Param('id') id: string,
+    @Param('injuryId') injuryId: string,
+    @Query() dto: TreatmentDifficultyQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<TreatmentDifficultyDto> {
+    const query = new GetTreatmentDifficultyQuery(id, injuryId, dto.procedure, user.id, user.roles);
+    return TreatmentDifficultyDto.fromResult(await this.queryBus.execute<GetTreatmentDifficultyQuery, TreatmentDifficulty>(query));
+  }
+
   @Post(':id/injuries/:injuryId/recovery')
   @HttpCode(200)
   @ApiBody({ type: InjuryRollDto })
-  @ApiOperation({ operationId: 'rollInjuryRecovery', summary: 'Recovery roll of an injury: sets its days to heal' })
+  @ApiOperation({
+    operationId: 'rollInjuryRecovery',
+    summary: 'Recovery roll of an injury: sets its days to heal',
+    description: 'One roll per treatment: a second roll without a new treatment answers 409 err-injury-recovery-rolled.',
+  })
   @ApiOkResponse({ type: CharacterRecoveryDto })
   async rollRecovery(
     @Param('id') id: string,

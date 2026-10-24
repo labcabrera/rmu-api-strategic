@@ -1,9 +1,9 @@
 import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
 import { CharacterUpdatedEvent } from '../../../../../src/modules/characters/domain/events/character.events.js';
 import { TacticalOutcomeDto } from '../../../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto.js';
-import { NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { ConflictError, NotFoundError, ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
 import { buildCharacter, skill } from '../traits/character.fixture.js';
-import { injury, treatment } from './healing.fixture.js';
+import { injury, TABLES, treatment } from './healing.fixture.js';
 
 const NOW = '2026-10-22T00:00:00.000Z';
 
@@ -98,27 +98,74 @@ describe('Character health', () => {
     ).not.toHaveProperty('hpLog');
   });
 
-  it('worsens the penalty on a treatment with absolute failure', () => {
+  it('worsens the penalty and its recovery base on an absolute failure, and computes the severity again (D1)', () => {
     const character = patient();
     character.injuries = [injury({ id: 'a', penalty: -10, initialPenalty: -10 })];
-    character.addInjuryTreatment('a', treatment({ result: 'absolute-failure', healingType: 'none' }), 10);
-    expect(character.injuries[0]).toMatchObject({ penalty: -20, initialPenalty: -20 });
+    character.addInjuryTreatment('a', treatment({ result: 'absolute-failure', healingType: 'none' }), TABLES, 10);
+    expect(character.injuries[0]).toMatchObject({ penalty: -20, initialPenalty: -20, severity: 'medium' });
     expect(character.injuries[0].treatments).toHaveLength(1);
-    expect(character.pullHealingLog()[0]).toMatchObject({ kind: 'treatment', injuryId: 'a', healerName: 'Healer' });
+    expect(character.pullHealingLog()[0]).toMatchObject({
+      kind: 'treatment',
+      injuryId: 'a',
+      healerName: 'Healer',
+      summary: expect.objectContaining({ penaltyWorsening: 10, penalty: -20, severity: 'medium' }) as unknown,
+    });
   });
 
-  it('stops the bleeding with a successful stitch', () => {
+  it('stitches stop the bleeding and halve the penalty and its recovery base, toward zero (D2)', () => {
     const character = patient();
-    character.injuries = [injury({ id: 'a', bleeding: 3 })];
-    character.addInjuryTreatment('a', treatment({ procedure: 'stitches' }));
-    expect(character.injuries[0]).toMatchObject({ bleeding: 0, bleedingControl: 'stitches' });
+    character.injuries = [injury({ id: 'a', severity: 'medium', penalty: -15, initialPenalty: -25, bleeding: 3 })];
+    character.addInjuryTreatment('a', treatment({ procedure: 'stitches' }), TABLES);
+    expect(character.injuries[0]).toMatchObject({
+      bleeding: 0,
+      bleedingControl: 'stitches',
+      penalty: -7,
+      initialPenalty: -12,
+      severity: 'medium',
+    });
+  });
+
+  it('rejects stitches on a severe injury and a tourniquet off a limb (D2)', () => {
+    const character = patient();
+    character.injuries = [injury({ id: 'a', severity: 'severe', penalty: -50, bleeding: 8, location: 'chest' })];
+    expect(() => character.addInjuryTreatment('a', treatment({ procedure: 'stitches' }), TABLES)).toThrow(
+      expect.objectContaining({ code: 'err-treatment-invalid-severity', statusCode: 400 }) as Error,
+    );
+    expect(() => character.addInjuryTreatment('a', treatment({ procedure: 'tourniquet' }), TABLES)).toThrow(
+      expect.objectContaining({ code: 'err-treatment-invalid-location' }) as Error,
+    );
+    expect(character.injuries[0].treatments).toHaveLength(0);
   });
 
   it('rejects treating unknown or healed injuries', () => {
     const character = patient();
     character.injuries = [injury({ id: 'a', status: 'healed' })];
-    expect(() => character.addInjuryTreatment('missing', treatment())).toThrow(NotFoundError);
-    expect(() => character.addInjuryTreatment('a', treatment())).toThrow(ValidationError);
+    expect(() => character.addInjuryTreatment('missing', treatment(), TABLES)).toThrow(NotFoundError);
+    expect(() => character.addInjuryTreatment('a', treatment(), TABLES)).toThrow(ValidationError);
+  });
+
+  it('allows one recovery roll per treatment (D10)', () => {
+    const character = patient();
+    const recovery = { roll: 50, modifiers: 0, total: 50, baseDays: 2, multiplier: 1, totalDays: 2, remainingDays: 2, startedAt: NOW };
+    character.injuries = [injury({ id: 'a', treatments: [treatment({ id: 't-1' })] })];
+    character.setInjuryRecovery('a', { ...recovery, treatmentId: 't-1' }, false);
+    expect(() => character.setInjuryRecovery('a', { ...recovery, treatmentId: 't-1' }, false)).toThrow(ConflictError);
+    character.addInjuryTreatment('a', treatment({ id: 't-2' }), TABLES);
+    expect(() => character.setInjuryRecovery('a', { ...recovery, treatmentId: 't-2' }, false)).not.toThrow();
+
+    character.injuries = [injury({ id: 'b' })];
+    character.setInjuryRecovery('b', { ...recovery, untreated: true }, true);
+    expect(() => character.setInjuryRecovery('b', recovery, true)).toThrow(
+      expect.objectContaining({ code: 'err-injury-recovery-rolled', statusCode: 409 }) as Error,
+    );
+  });
+
+  it('heals an untreated injury made permanent at its end when a late permanent roll leaves nothing (D3)', () => {
+    const character = patient();
+    const recovery = { roll: 5, modifiers: -90, total: -85, baseDays: 2, multiplier: 1, totalDays: 2, remainingDays: 0, startedAt: NOW };
+    character.injuries = [injury({ id: 'a', status: 'permanent', penalty: -10, permanent: { penalty: -10 }, recovery })];
+    character.setInjuryPermanent('a', { penalty: 0, roll: 99 }, {});
+    expect(character.injuries[0]).toMatchObject({ status: 'healed', penalty: 0 });
   });
 
   it('requires a recovery roll before the permanent injury roll', () => {

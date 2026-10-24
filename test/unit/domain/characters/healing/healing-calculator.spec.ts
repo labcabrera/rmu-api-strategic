@@ -104,12 +104,27 @@ describe('HealingCalculator', () => {
         totalDays: 15,
         remainingDays: 15,
         startedAt: NOW,
+        untreated: true,
       });
+      const treated = calculator.recovery(injury({ treatments: [treatment({ id: 't-1' })] }), 40, 20, 1, NOW);
+      expect(treated).toMatchObject({ treatmentId: 't-1', untreated: false });
+      const failed = injury({ treatments: [treatment({ id: 't-2', result: 'failure', healingType: 'none' })] });
+      expect(calculator.recovery(failed, 40, 20, 1, NOW)).toMatchObject({ treatmentId: 't-2', untreated: true });
+    });
+
+    it('knows whether the latest treatment already has its recovery roll (D10)', () => {
+      const recovery = calculator.recovery(injury({ treatments: [treatment({ id: 't-1' })] }), 40, 20, 1, NOW);
+      expect(HealingCalculator.isRecoveryRolled(injury())).toBe(false);
+      expect(HealingCalculator.isRecoveryRolled(injury({ treatments: [treatment({ id: 't-1' })], recovery }))).toBe(true);
+      const retreated = injury({ treatments: [treatment({ id: 't-1' }), treatment({ id: 't-2' })], recovery });
+      expect(HealingCalculator.isRecoveryRolled(retreated)).toBe(false);
+      expect(HealingCalculator.isRecoveryRolled(injury({ recovery: { ...recovery, treatmentId: undefined } }))).toBe(true);
     });
   });
 
   it('checks doubles of the unmodified roll for permanent injuries', () => {
     expect(HealingCalculator.isPermanentCheckRequired('light', 22)).toBe(false);
+    expect(HealingCalculator.isPermanentCheckRequired('light', 37, true)).toBe(true);
     expect(HealingCalculator.isPermanentCheckRequired('medium', 22)).toBe(true);
     expect(HealingCalculator.isPermanentCheckRequired('medium', 100)).toBe(true);
     expect(HealingCalculator.isPermanentCheckRequired('medium', 33)).toBe(false);
@@ -142,11 +157,20 @@ describe('HealingCalculator', () => {
       expect(calculator.restDays(3, true)).toBe(6);
     });
 
-    it('reduces the penalty linearly, more on the first days', () => {
+    it('front-loads the daily reduction (D6)', () => {
       // -15 over 10 days: -2 per day for the first 5 days, then -1 per day
       const penalties = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(remaining => HealingCalculator.penaltyAfter(-15, 10, remaining));
-      expect(penalties).toEqual([-13, -12, -10, -9, -7, -6, -4, -3, -1, 0]);
+      expect(penalties).toEqual([-13, -11, -9, -7, -5, -4, -3, -2, -1, 0]);
+      // -30 over 20 days: -2 per day for the first 10 days, then -1 per day
       expect(HealingCalculator.penaltyAfter(-30, 20, 20)).toBe(-30);
+      expect(HealingCalculator.penaltyAfter(-30, 20, 10)).toBe(-10);
+      expect(HealingCalculator.penaltyAfter(-30, 20, 5)).toBe(-5);
+      // Fewer points than days: one per day until it is gone
+      expect(HealingCalculator.penaltyAfter(-3, 10, 8)).toBe(-1);
+      expect(HealingCalculator.penaltyAfter(-3, 10, 6)).toBe(0);
+      expect(Object.is(HealingCalculator.penaltyAfter(-3, 10, 6), -0)).toBe(false);
+      expect(HealingCalculator.penaltyAfter(-20, 10, 0)).toBe(0);
+      expect(HealingCalculator.penaltyAfter(-20, 0, 5)).toBe(0);
     });
   });
 
@@ -180,14 +204,31 @@ describe('HealingCalculator', () => {
       expect(progress.injury.healedAt).toBeUndefined();
     });
 
-    it('does not improve without recovery roll or when medium and untreated', () => {
+    it('does not improve without recovery roll or when permanent', () => {
       expect(HealingCalculator.advance(injury(), 5, NOW)).toMatchObject({ days: 0, finished: false });
-      const untreated = { ...recovering, severity: 'medium' as const, treatments: [] };
-      expect(HealingCalculator.advance(untreated, 5, NOW).injury).toBe(untreated);
-      const untreatedLight = { ...recovering, treatments: [] };
-      expect(HealingCalculator.advance(untreatedLight, 5, NOW).days).toBe(5);
       const permanent = { ...recovering, status: 'permanent' as const };
       expect(HealingCalculator.advance(permanent, 5, NOW).days).toBe(0);
+    });
+
+    it('improves an untreated injury, light ones too, and leaves it permanent at the end (D3)', () => {
+      const untreated = {
+        ...recovering,
+        severity: 'medium' as const,
+        treatments: [],
+        recovery: { ...recovering.recovery!, untreated: true },
+      };
+      expect(HealingCalculator.advance(untreated, 5, NOW)).toMatchObject({ days: 5, injury: { status: 'recovering', penalty: -5 } });
+      const ended = HealingCalculator.advance(untreated, 10, NOW).injury;
+      expect(ended).toMatchObject({ status: 'permanent', penalty: -10, permanent: { penalty: -10 } });
+      expect(ended.healedAt).toBeUndefined();
+      const rolled = HealingCalculator.advance({ ...untreated, permanent: { penalty: -6, roll: 40 } }, 10, NOW).injury;
+      expect(rolled).toMatchObject({ status: 'permanent', penalty: -6 });
+      const spared = HealingCalculator.advance({ ...untreated, permanent: { penalty: 0, roll: 99 } }, 10, NOW).injury;
+      expect(spared).toMatchObject({ status: 'healed', penalty: 0 });
+      const light = { ...untreated, severity: 'light' as const };
+      expect(HealingCalculator.advance(light, 10, NOW).injury.status).toBe('permanent');
+      const noPenalty = { ...untreated, penalty: 0, initialPenalty: 0, bleeding: 2 };
+      expect(HealingCalculator.advance(noPenalty, 10, NOW).injury).toMatchObject({ status: 'healed', bleeding: 0 });
     });
   });
 });

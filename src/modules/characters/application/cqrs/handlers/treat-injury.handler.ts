@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { Character } from '../../../domain/aggregates/character.js';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator.js';
+import { InjuryTreatmentRules } from '../../../domain/services/healing/injury-treatment-rules.js';
 import type { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo.js';
 import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
 import { type AbsoluteManeuverResponse, type ManeuverClientPort, MANEUVER_CLIENT } from '../../ports/maneuver-client.port.js';
@@ -18,6 +19,12 @@ const DEFAULT_ABSOLUTE_FAILURE_WORSENING = 10;
 
 const SUCCESSES: TreatmentResult[] = ['success', 'absolute-success'];
 
+/**
+ * Own penalties of a healer character for its maneuvers (spec 022, D10): its injury penalties. Strategic keeps no
+ * fatigue or other temporary penalties, so those are not counted.
+ */
+const healerPenalty = (healer: Character): number => healer.healthSummary.injuryPenalty || 0;
+
 interface ResolvedHealer {
   healer: InjuryHealer;
   herbalismBonus: number | undefined;
@@ -31,15 +38,28 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     @Inject(MANEUVER_CLIENT) private readonly maneuverClient: ManeuverClientPort,
   ) {}
 
+  /**
+   * Medicine roll of a treatment (spec 022): the difficulty comes from the core table unless the game master overrides
+   * it (a procedure without a row in the table is refused, unless overridden), the healer character subtracts its own injury penalties, and the injuries of a dead character can still be
+   * treated (§13.2; the departure of the soul is out of scope).
+   */
   async execute(command: TreatInjuryCommand): Promise<Character> {
     const character = await this.store.load(command.characterId, command.userId, command.roles);
-    if (character.status === 'dead') throw new ValidationError(`Character ${character.id} is dead`, 'err-character-dead');
     const injury = character.findInjury(command.injuryId);
-    if (injury.status === 'healed') throw new ValidationError(`Injury ${injury.id} is already healed`, 'err-injury-healed');
     const tables = await this.healingTablesClient.getHealingTables();
+    InjuryTreatmentRules.validate(command.procedure, injury, tables);
+    const override = command.difficulty !== undefined && command.difficulty !== null;
+    const computed = InjuryTreatmentRules.difficulty(command.procedure, injury, tables);
+    // No row in the core table: the procedure does not apply, unless the game master sets the difficulty
+    if (!override && !computed.applicable) {
+      throw new ValidationError(
+        `Procedure ${command.procedure} does not apply to a ${injury.severity} ${injury.type} injury`,
+        'err-treatment-not-applicable',
+      );
+    }
+    const difficulty = override ? command.difficulty : computed.difficulty;
     const { healer, herbalismBonus } = await this.resolveHealer(character, command);
     const herbalismSuccess = await this.rollHerbalism(character, command, herbalismBonus);
-    const difficulty = command.difficulty ?? 0;
 
     let total = command.roll ?? 0;
     let result: TreatmentResult = 'success';
@@ -49,18 +69,20 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       if (command.roll === undefined || command.roll === null) {
         throw new ValidationError('The treatment requires a Medicine roll', 'err-treatment-roll-required');
       }
-      total = command.roll + healer.bonus + difficulty + (herbalismSuccess ? tables.herbalismBonus : 0);
+      total = command.roll + healer.bonus + (healer.penalty ?? 0) + difficulty + (herbalismSuccess ? tables.herbalismBonus : 0);
       maneuver = await this.maneuverClient.absolute(total, MEDICAL_MANEUVER_TABLE);
       result = maneuver.result;
     }
     const recoveryModifier = this.effectValue(maneuver, 'recoveryRollModifier') ?? 0;
     const worsening =
       result === 'absolute-failure' ? (this.effectValue(maneuver, 'injuryPenalty') ?? DEFAULT_ABSOLUTE_FAILURE_WORSENING) : 0;
+    const heatCritical = InjuryTreatmentRules.heatCritical(command.procedure, result);
     const treatment: InjuryTreatment = {
       id: randomUUID(),
       procedure: command.procedure,
       healer,
       difficulty,
+      difficultySource: override ? 'override' : 'table',
       roll: command.roll ?? 0,
       total,
       result,
@@ -68,8 +90,9 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       recoveryModifier,
       at: new Date().toISOString(),
       context: 'strategic',
+      ...(heatCritical ? { heatCritical } : {}),
     };
-    character.addInjuryTreatment(injury.id, treatment, worsening);
+    character.addInjuryTreatment(injury.id, treatment, tables, Math.abs(worsening));
     return this.store.save(character);
   }
 
@@ -80,9 +103,15 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
   private async resolveHealer(patient: Character, command: TreatInjuryCommand): Promise<ResolvedHealer> {
     if (command.healerCharacterId) {
       const healer = await this.findHealer(patient, command.healerCharacterId);
+      const penalty = healerPenalty(healer);
       return {
-        healer: { characterId: healer.id, name: healer.name, bonus: healer.getSkillBonus(MEDICINE_SKILL, null) },
-        herbalismBonus: healer.getSkillBonus(HERBALISM_SKILL, null),
+        healer: {
+          characterId: healer.id,
+          name: healer.name,
+          bonus: healer.getSkillBonus(MEDICINE_SKILL, null),
+          ...(penalty ? { penalty } : {}),
+        },
+        herbalismBonus: healer.getSkillBonus(HERBALISM_SKILL, null) + penalty,
       };
     }
     if (command.healer) {
@@ -111,7 +140,8 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     if (!herbalism) return false;
     let bonus = herbalism.bonus;
     if (bonus === undefined && herbalism.healerCharacterId) {
-      bonus = (await this.findHealer(patient, herbalism.healerCharacterId)).getSkillBonus(HERBALISM_SKILL, null);
+      const herbalist = await this.findHealer(patient, herbalism.healerCharacterId);
+      bonus = herbalist.getSkillBonus(HERBALISM_SKILL, null) + healerPenalty(herbalist);
     }
     if (bonus === undefined) bonus = healerHerbalismBonus;
     if (bonus === undefined) {

@@ -4,6 +4,8 @@ import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'c
 import { TreatInjuryCommand } from '../../../application/cqrs/commands/treat-injury.command.js';
 import { HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo.js';
 import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
+import { DIFFICULTIES, type Difficulty } from '../../../domain/value-objects/difficulty.vo.js';
+import type { TreatmentDifficulty } from '../../../domain/services/healing/injury-treatment-rules.js';
 
 export class ExternalHealerDto {
   @ApiProperty({ example: 'Village healer' })
@@ -58,7 +60,10 @@ export class TreatInjuryDto {
   @IsOptional()
   roll?: number;
 
-  @ApiPropertyOptional({ description: 'Difficulty modifier', example: 0 })
+  @ApiPropertyOptional({
+    description: 'Difficulty modifier chosen by the game master. Without it the server computes it from the core table',
+    example: 0,
+  })
   @IsInt()
   @IsOptional()
   difficulty?: number;
@@ -90,5 +95,41 @@ export class TreatInjuryDto {
       userId,
       roles,
     );
+  }
+}
+
+export class TreatmentDifficultyQueryDto {
+  @ApiProperty({ type: String, enum: TREATMENT_PROCEDURES, example: 'stitches' })
+  @IsIn(TREATMENT_PROCEDURES)
+  procedure: TreatmentProcedure;
+}
+
+export class TreatmentDifficultyDto {
+  @ApiProperty({ type: String, enum: TREATMENT_PROCEDURES })
+  procedure: TreatmentProcedure;
+
+  @ApiPropertyOptional({ type: String, enum: DIFFICULTIES, description: 'Difficulty key, the head step included' })
+  grade?: Difficulty;
+
+  @ApiProperty({ description: 'Steps harder because the injury is on the head', example: 0 })
+  headSteps: number;
+
+  @ApiProperty({ description: 'Modifier of the difficulty, the head step included', example: 0 })
+  base: number;
+
+  @ApiProperty({ description: 'Extra modifier of cauterizing a bleeding wound', example: 0 })
+  bleedingModifier: number;
+
+  @ApiProperty({ description: 'Difficulty modifier of the Medicine roll', example: 0 })
+  difficulty: number;
+
+  @ApiProperty({ description: 'A row of the core table matched (false: the medium default)' })
+  matched: boolean;
+
+  @ApiProperty({ description: 'The procedure applies to the injury (without an override, a treatment that does not is refused)' })
+  applicable: boolean;
+
+  static fromResult(result: TreatmentDifficulty): TreatmentDifficultyDto {
+    return Object.assign(new TreatmentDifficultyDto(), result);
   }
 }
