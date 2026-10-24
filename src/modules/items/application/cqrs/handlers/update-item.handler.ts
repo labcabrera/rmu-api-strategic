@@ -30,6 +30,8 @@ export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Ite
     }
     current.checkVersion(command.expectedVersion);
     current.update({ name: command.name, weapon });
+    // Spec 021, decision 9: a PATCH without changes neither writes nor publishes.
+    if (!current.hasChanges()) return current;
     const updated = await this.itemRepository.update(current);
     await this.events.publishChanges('item', current);
     return updated;

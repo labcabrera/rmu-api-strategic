@@ -35,6 +35,8 @@ export class UpdateCharacterHandler implements ICommandHandler<UpdateCharacterCo
     });
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
+    // Spec 021, decision 9: a PATCH without changes neither writes nor publishes.
+    if (!character.hasChanges()) return character;
     const updated = await this.characterRepository.update(character);
     await this.events.publishChanges('character', character);
     return updated;

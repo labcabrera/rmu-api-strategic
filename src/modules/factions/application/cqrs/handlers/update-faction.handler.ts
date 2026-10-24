@@ -26,6 +26,8 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
       description: command.description,
       imageUrl: command.imageUrl,
     });
+    // Spec 021, decision 9: a PATCH without changes neither writes nor publishes.
+    if (!faction.hasChanges()) return faction;
     const updated = await this.factionRepository.update(faction);
     await this.events.publishChanges('faction', faction);
     return updated;
