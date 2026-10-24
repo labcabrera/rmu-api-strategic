@@ -1,3 +1,4 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
 import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
@@ -15,6 +16,7 @@ export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, C
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: UnequipItemCommand): Promise<Character> {
@@ -31,6 +33,6 @@ export class UnequipItemHandler implements ICommandHandler<UnequipItemCommand, C
     character.unequipItem(item.id);
 
     this.characterProcessorService.process(character, items);
-    return await this.characterRepository.update(character);
+    return await this.characterWriter.save(character);
   }
 }

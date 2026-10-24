@@ -153,13 +153,46 @@ describe('characters (e2e)', () => {
   });
 
   describe('experience and equipment', () => {
-    it('adds experience without publishing character.updated [F-strategic-14]', async () => {
+    it('publishes character.updated with the final state on each mutation [F-strategic-14]', async () => {
       const character = await createCharacter(e2e, gameId, factionId);
+      const item = await createItem(e2e, { gameId, characterId: character.id });
       e2e.events.clear();
       const response = await as('owner').post(`/v1/characters/${character.id}/xp`, { xp: 1500 });
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({ experience: { xp: 1500 } });
+      expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.character.updated.v1']);
+      expect(e2e.events.published[0].event).toMatchObject({ data: { id: character.id, experience: { xp: 1500 } } });
+      e2e.events.clear();
+      const carry = (carried: boolean) =>
+        request(e2e.server)
+          .put(`/v1/characters/${character.id}/items/${item.id}/carried/${carried}`)
+          .set('Authorization', e2e.auth('owner'));
+      expect((await carry(true)).status).toBe(200);
+      expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
+      expect((await as('owner').delete(`/v1/characters/${character.id}/equipment/${item.id}`)).status).toBe(200);
+      expect(e2e.events.topics().every(topic => topic === 'internal.rmu-strategic.character.updated.v1')).toBe(true);
+      expect(e2e.events.topics().length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('neither writes nor publishes a mutation that changes nothing', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      e2e.events.clear();
+      const response = await as('owner').post(`/v1/characters/${character.id}/xp`, { xp: 0 });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ version: 0 });
       expect(e2e.events.topics()).toEqual([]);
+    });
+
+    it('publishes the gold moved between the faction and the character [F-strategic-14]', async () => {
+      const rich = (await as('owner').post('/v1/factions', { gameId, name: 'Rich', management: { availableGold: 10, availableXP: 0 } }))
+        .body as { id: string };
+      const character = await createCharacter(e2e, gameId, rich.id);
+      e2e.events.clear();
+      const response = await as('owner').patch(`/v1/characters/${character.id}/transfer-faction-gold`, { amount: 4 });
+      expect(response.status).toBe(200);
+      expect(e2e.events.topics()).toEqual(
+        expect.arrayContaining(['internal.rmu-strategic.item.updated.v1', 'internal.rmu-strategic.faction.updated.v1']),
+      );
     });
 
     it('carries an item of the character and refuses to equip an item it does not have', async () => {

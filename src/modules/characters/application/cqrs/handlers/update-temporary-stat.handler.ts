@@ -1,3 +1,4 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
 import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
@@ -18,6 +19,7 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: UpdateTemporaryStatCommand): Promise<Character> {
@@ -34,7 +36,7 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
     character.updateTemporaryStat(command.stat, command.value, { bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel });
     const items = await this.itemRepository.findByCharacterId(command.characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character);
+    await this.characterWriter.save(character);
     //TODO propagate events
     return character;
   }

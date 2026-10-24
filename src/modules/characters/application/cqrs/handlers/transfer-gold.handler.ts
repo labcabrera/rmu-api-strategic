@@ -1,3 +1,6 @@
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import { ItemUpdatedEvent } from '../../../../items/domain/events/item.events.js';
+import { FactionUpdatedEvent } from '../../../../factions/domain/events/faction.events.js';
 import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
@@ -21,6 +24,7 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     private readonly commandBus: CommandBus,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterAccess: CharacterAccess,
   ) {}
 
@@ -48,8 +52,11 @@ export class TransferGoldHandler implements ICommandHandler<TransferGoldCommand,
     if (faction.management.availableGold < 0)
       throw new ValidationError(`Faction's available gold cannot be negative: ${faction.management.availableGold}`);
 
-    await this.itemRepository.update(goldCoinItem);
-    await this.factionRepository.update(faction);
+    const item = await this.itemRepository.update(goldCoinItem);
+    const updatedFaction = await this.factionRepository.update(faction);
+    // The gold moved between the faction and the coins of the character (F-strategic-14)
+    await this.events.publish('item', new ItemUpdatedEvent(item.getProps()));
+    await this.events.publish('faction', new FactionUpdatedEvent(updatedFaction));
 
     return character;
   }

@@ -1,3 +1,4 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
 import { CharacterAccess } from '../../services/character-access.service.js';
 import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
 import { Inject, Logger } from '@nestjs/common';
@@ -20,6 +21,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     private readonly characterProcessorService: CharacterProcessorService,
     private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -41,7 +43,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
     await this.itemRepository.updateCarriedStatus(item.id, true);
 
-    return await this.characterRepository.update(character);
+    return await this.characterWriter.save(character);
   }
 
   private equip(character: Character, items: Item[], command: EquipItemCommand): void {

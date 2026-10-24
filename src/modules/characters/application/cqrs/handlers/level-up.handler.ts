@@ -1,3 +1,4 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
 import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
@@ -15,6 +16,7 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
     private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: LevelUpCommand): Promise<Character> {
@@ -27,7 +29,7 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
     character.levelUp(command.force);
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
-    const updated = await this.characterRepository.update(character);
+    const updated = await this.characterWriter.save(character);
     //TODO propagate events
     return updated;
   }
