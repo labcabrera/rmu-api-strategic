@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { DomainError } from '../../domain/errors/errors.js';
 import type { ErrorDto } from './dto/error-dto.js';
 
-type ErrorBody = Pick<ErrorDto, 'statusCode' | 'error' | 'code' | 'message' | 'errorCode'>;
+type ErrorBody = Pick<ErrorDto, 'statusCode' | 'error' | 'code' | 'message'>;
 
 /** The code of a Nest HTTP exception, from its status. */
 const HTTP_CODES: Record<number, string> = {
@@ -53,9 +53,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 function toErrorBody(exception: unknown): ErrorBody {
   if (exception instanceof DomainError) {
-    // rmu-mfe-strategic translates the rule errors by `errorCode` (err-trait-max-cost...): kept until it reads `code`.
-    const legacy = exception.code.startsWith('err-') ? { errorCode: exception.code } : {};
-    return { statusCode: exception.statusCode, error: exception.name, code: exception.code, ...legacy, message: exception.message };
+    return { statusCode: exception.statusCode, error: exception.name, code: exception.code, message: exception.message };
   }
   if (exception instanceof HttpException) {
     const response = exception.getResponse();

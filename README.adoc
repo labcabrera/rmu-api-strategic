@@ -61,5 +61,5 @@ gateway), `RMU_THROTTLE_LIMIT` / `RMU_THROTTLE_TTL_MS` (`300` per `60000` ms and
 `RMU_TRUST_PROXY` (`loopback, linklocal, uniquelocal`).
 
 Errors answer `{ statusCode, error, code, message, timestamp, path }`. Responses carry the `version` of the entity and a
-`PATCH` may send it back: a stale one is a 409 `version-conflict`. `size` goes up to 100. `GET /v1/characters` and `GET /v1/items` accept up to 1000 (`CatalogPagedQueryDto`), because rmu-api-tactical loads them whole. Error bodies of rule violations (`err-*` codes) also carry the deprecated `errorCode` that rmu-mfe-strategic still reads.
+`PATCH` may send it back: a stale one is a 409 `version-conflict`. `size` goes up to 100. `GET /v1/characters` and `GET /v1/items` accept up to 1000 (`CatalogPagedQueryDto`), because rmu-api-tactical loads them whole. Rule violations carry their `err-*` key in `code`, which rmu-mfe-strategic translates (the deprecated `errorCode` alias was removed in workspace spec 021).
 Open problems found during the migration are listed in `docs/reports/api-template-rollout-findings.md` of the workspace.
