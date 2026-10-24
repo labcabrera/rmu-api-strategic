@@ -7,6 +7,7 @@ import { CHARACTER_CONDITION_STATUSES } from 'src/modules/characters/domain/valu
 import type { Injury, InjurySource } from 'src/modules/characters/domain/value-objects/injury.vo';
 import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from 'src/modules/characters/domain/value-objects/injury.vo';
 import type {
+  TacticalItemOutcome,
   TacticalFate,
   TacticalHpBySource,
   TacticalHpLogEntry,
@@ -15,6 +16,25 @@ import type {
 import { TACTICAL_HP_LOG_KINDS } from 'src/modules/characters/domain/value-objects/tactical-game-outcome.vo';
 import { ValidationError } from 'src/modules/shared/domain/errors/errors';
 import { CharacterConditionDto, InjuryDto } from './character-health.dto';
+import { ItemModifierDto } from 'src/modules/items/interfaces/http/dtos/item-modifier.dto';
+import { type ItemModifier, ItemModifiers } from 'src/modules/items/domain/value-objects/item-modifier.vo';
+
+/** Modifiers an item of the character got in the game (spec 019). */
+export class TacticalItemOutcomeDto {
+  @ApiProperty({ description: 'Strategic item identifier', example: 'item-001' })
+  @IsString()
+  @IsNotEmpty()
+  itemId: string;
+
+  @ApiPropertyOptional({ example: 'Broadsword' })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiProperty({ type: [ItemModifierDto] })
+  @IsArray()
+  modifiers: ItemModifier[];
+}
 
 export class TacticalOutcomeHpDto {
   @ApiProperty({ example: 40 })
@@ -109,6 +129,13 @@ export class TacticalOutcomeDto {
   @IsOptional()
   fate?: TacticalFate;
 
+  @ApiPropertyOptional({ description: 'Modifiers the items of the character got in the game (spec 019)', type: [TacticalItemOutcomeDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TacticalItemOutcomeDto)
+  @IsOptional()
+  items?: TacticalItemOutcomeDto[];
+
   static toCommand(characterId: string, dto: TacticalOutcomeDto, userId: string, roles: string[]): ApplyTacticalOutcomeCommand {
     return new ApplyTacticalOutcomeCommand(
       characterId,
@@ -127,10 +154,32 @@ export class TacticalOutcomeDto {
         conditions: (dto.conditions || []).map(condition => TacticalOutcomeDto.toCondition(condition)),
         conditionsResolved: (dto.conditionsResolved || []).map(String),
         fate: dto.fate,
+        ...(dto.items ? { items: dto.items.map(item => TacticalOutcomeDto.toItemOutcome(item)) } : {}),
       },
       userId,
       roles,
     );
+  }
+
+  /** Temporary damage does not last after the game: it is dropped. The others must be valid modifiers. */
+  private static toItemOutcome(dto: TacticalItemOutcomeDto): TacticalItemOutcome {
+    const modifiers = (dto.modifiers || [])
+      .filter(modifier => !!modifier && typeof modifier === 'object' && !modifier.temporary)
+      .map(modifier => {
+        const result: ItemModifier = {
+          id: String(modifier.id),
+          type: modifier.type,
+          value: Number(modifier.value),
+          appliesTo: modifier.appliesTo,
+          ...(modifier.broken ? { broken: true } : {}),
+          ...(modifier.source ? { source: { ...modifier.source } } : {}),
+          ...(modifier.description ? { description: String(modifier.description) } : {}),
+          createdAt: modifier.createdAt ? String(modifier.createdAt) : new Date().toISOString(),
+        };
+        ItemModifiers.validate(result);
+        return result;
+      });
+    return { itemId: dto.itemId, ...(dto.name ? { name: dto.name } : {}), modifiers };
   }
 
   // The hits log is informative: entries and totals of an unknown shape are dropped, not rejected

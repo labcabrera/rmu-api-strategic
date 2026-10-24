@@ -19,6 +19,11 @@ import { CharacterSkill } from 'src/modules/characters/domain/value-objects/char
 import type { GameRepository } from 'src/modules/games/application/ports/game.repository';
 import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
 import { buildCharacter, skill, trait } from '../../domain/characters/traits/character.fixture';
+import { TacticalOutcomeItemsMerger } from 'src/modules/characters/application/services/tactical-outcome-items.merger';
+import { CharacterProcessorService } from 'src/modules/characters/domain/services/character-processor.service';
+import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import type { ItemModifier } from 'src/modules/items/domain/value-objects/item-modifier.vo';
 import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture';
 
 const MASTER = 'master-001';
@@ -72,6 +77,53 @@ const setup = (characters: Character[], results: AbsoluteManeuverResponse['resul
   return { store, tables, maneuvers, rolls, update, saveAll, publish, absolute };
 };
 
+const buildItem = (id: string, characterId: string, modifiers: ItemModifier[] = []): Item =>
+  Item.fromProps({
+    id,
+    gameId: 'game-001',
+    factionId: null,
+    characterId,
+    itemTypeId: 'broadsword',
+    name: 'Broadsword',
+    category: 'weapon',
+    carried: true,
+    weapon: null,
+    armor: null,
+    shield: null,
+    modifiers,
+    amount: null,
+    info: { length: 1, weight: 1, strength: 80, stackable: false },
+    description: null,
+    createdAt: new Date(),
+    updatedAt: null,
+    accessType: 'public',
+    owner: MASTER,
+  });
+
+const breakage = (id: string, value: number, extra: Partial<ItemModifier> = {}): ItemModifier => ({
+  id,
+  type: 'breakage',
+  value,
+  appliesTo: 'all',
+  source: { kind: 'tactical', tacticalGameId: 'tactical-001' },
+  createdAt: '2026-10-24T10:00:00.000Z',
+  ...extra,
+});
+
+/** The outcome handler with its items: the repository keeps them by id and the processor is a spy. */
+const outcomeHandler = (store: CharacterHealthStore, items: Item[] = []) => {
+  const itemUpdate = jest.fn((_id: string, item: Item) => Promise.resolve(item));
+  const itemRepository = {
+    findByCharacterId: jest.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
+    update: itemUpdate,
+  } as unknown as ItemRepository;
+  const itemPublish = jest.fn();
+  const merger = new TacticalOutcomeItemsMerger(itemRepository, { publish: itemPublish });
+  const process = jest.fn();
+  const processor = { process } as unknown as CharacterProcessorService;
+  return { handler: new ApplyTacticalOutcomeHandler(store, merger, processor), itemUpdate, itemPublish, process };
+};
+
 const treat = (props: Partial<ConstructorParameters<typeof TreatInjuryCommand>[number]> & Record<string, unknown> = {}) =>
   new TreatInjuryCommand(
     'patient',
@@ -105,7 +157,7 @@ describe('Health handlers', () => {
     it('lets the service account apply the outcome once, storing log and event', async () => {
       const patient = character('patient');
       const { store, saveAll, publish, update } = setup([patient]);
-      const handler = new ApplyTacticalOutcomeHandler(store);
+      const { handler } = outcomeHandler(store);
       const service = ['rmu-service'];
       const result = await handler.execute(new ApplyTacticalOutcomeCommand('patient', outcome, 'sa', service));
       expect(result.hp.current).toBe(10);
@@ -120,16 +172,69 @@ describe('Health handlers', () => {
 
     it('allows the game owner and rejects other users, including the character owner', async () => {
       const { store } = setup([character('patient')]);
-      const handler = new ApplyTacticalOutcomeHandler(store);
+      const { handler } = outcomeHandler(store);
       await expect(handler.execute(new ApplyTacticalOutcomeCommand('patient', outcome, 'player-001', ['rmu-user']))).rejects.toMatchObject({
         errorCode: 'err-character-health-forbidden',
       });
       await expect(handler.execute(new ApplyTacticalOutcomeCommand('patient', outcome, MASTER, ['rmu-user']))).resolves.toBeDefined();
     });
 
+    it('adds the breakage of the game to the items of the character, once, and processes the character', async () => {
+      const patient = character('patient');
+      const sword = buildItem('item-001', 'patient');
+      const shield = buildItem('item-002', 'patient');
+      const { store, saveAll } = setup([patient]);
+      const { handler, itemUpdate, itemPublish, process } = outcomeHandler(store, [sword, shield, buildItem('item-009', 'other')]);
+      const withItems = {
+        ...outcome,
+        items: [
+          { itemId: 'item-001', modifiers: [breakage('m-1', -20)] },
+          { itemId: 'item-002', modifiers: [breakage('m-2', 0, { broken: true })] },
+          { itemId: 'item-009', modifiers: [breakage('m-9', -10)] },
+        ],
+      };
+      await handler.execute(new ApplyTacticalOutcomeCommand('patient', withItems, 'sa', ['rmu-service']));
+      expect(sword.getCondition()).toEqual({ breakagePenalty: -20, broken: false });
+      expect(shield.getCondition().broken).toBe(true);
+      expect(itemUpdate).toHaveBeenCalledTimes(2);
+      expect(itemPublish).toHaveBeenCalledTimes(2);
+      expect(process).toHaveBeenCalledWith(patient, [sword, shield]);
+      expect(saveAll).toHaveBeenCalledWith('patient', 'game-001', [
+        expect.objectContaining({
+          summary: expect.objectContaining({ itemsDamaged: ['item-001'], itemsBroken: ['item-002'], itemsIgnored: ['item-009'] }),
+        }),
+      ]);
+
+      await handler.execute(new ApplyTacticalOutcomeCommand('patient', withItems, 'sa', ['rmu-service']));
+      expect(itemUpdate).toHaveBeenCalledTimes(2);
+      expect(sword.modifiers).toHaveLength(1);
+    });
+
+    it('a retry after a failure adds no modifier twice', async () => {
+      const patient = character('patient');
+      const sword = buildItem('item-001', 'patient', [breakage('m-1', -20)]);
+      const { store } = setup([patient]);
+      const { handler, itemUpdate, process } = outcomeHandler(store, [sword]);
+      const withItems = { ...outcome, items: [{ itemId: 'item-001', modifiers: [breakage('m-1', -20)] }] };
+      await handler.execute(new ApplyTacticalOutcomeCommand('patient', withItems, 'sa', ['rmu-service']));
+      expect(itemUpdate).not.toHaveBeenCalled();
+      expect(sword.modifiers).toHaveLength(1);
+      expect(process).toHaveBeenCalledTimes(1);
+      expect(patient.isTacticalGameApplied('tactical-001')).toBe(true);
+    });
+
+    it('does not process the character for an outcome without item changes', async () => {
+      const { store } = setup([character('patient')]);
+      const { handler, process } = outcomeHandler(store, [buildItem('item-001', 'patient')]);
+      await handler.execute(
+        new ApplyTacticalOutcomeCommand('patient', { ...outcome, items: [{ itemId: 'item-001', modifiers: [] }] }, 'sa', ['rmu-service']),
+      );
+      expect(process).not.toHaveBeenCalled();
+    });
+
     it('rejects an outcome of another character', async () => {
       const { store } = setup([character('patient')]);
-      const handler = new ApplyTacticalOutcomeHandler(store);
+      const { handler } = outcomeHandler(store);
       await expect(
         handler.execute(new ApplyTacticalOutcomeCommand('patient', { ...outcome, characterId: 'other' }, 'sa', ['rmu-service'])),
       ).rejects.toMatchObject({ errorCode: 'err-outcome-character-mismatch' });

@@ -59,6 +59,7 @@ import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-t
 import { CharacterHealthController } from './interfaces/http/character-health.controller';
 import { CharacterHealthStore } from './application/services/character-health.store';
 import { ApplyTacticalOutcomeHandler } from './application/cqrs/handlers/apply-tactical-outcome.handler';
+import { TacticalOutcomeItemsMerger } from './application/services/tactical-outcome-items.merger';
 import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler';
 import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler';
 import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler';
@@ -132,6 +133,7 @@ import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastru
     UpdateTemporaryStatHandler,
     CharacterHealthStore,
     ApplyTacticalOutcomeHandler,
+    TacticalOutcomeItemsMerger,
     AddInjuryHandler,
     UpdateInjuryHandler,
     TreatInjuryHandler,
