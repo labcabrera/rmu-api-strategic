@@ -5,6 +5,8 @@ import type { GameRepository } from '../../application/ports/game-repository.por
 import { GameModel, type GameDocument } from '../persistence/models/game.model.js';
 import { Game } from '../../domain/aggregates/game.js';
 import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
+import type { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
+import { MongoQueryCriteriaMapper } from '../../../shared/infrastructure/db/mongo-query-criteria.mapper.js';
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
 import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo.js';
 import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo.js';
@@ -18,6 +20,11 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
   async findByRealm(realmId: string): Promise<Game[]> {
     const docs = await this.model.find({ realm: realmId }).sort({ name: 1 });
     return docs.map(doc => this.toEntity(doc));
+  }
+
+  async findIds(criteria: QueryCriteria): Promise<string[]> {
+    const docs = await this.model.find(MongoQueryCriteriaMapper.toFilterQuery(criteria), { _id: 1 }).lean<{ _id: string }[]>();
+    return docs.map(doc => String(doc._id));
   }
 
   private mapPowerLevel(doc: GameDocument): GamePowerLevel {

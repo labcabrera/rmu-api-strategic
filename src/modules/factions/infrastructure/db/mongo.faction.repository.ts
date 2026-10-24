@@ -6,6 +6,7 @@ import { FactionModel, type FactionDocument } from '../persistence/models/factio
 import { Faction } from '../../domain/aggregates/faction.js';
 import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
+import type { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
 import { Page } from '../../../shared/application/pagination/page.js';
 
 @Injectable()
@@ -14,9 +15,9 @@ export class MongoFactionRepository extends MongoBaseRepository<Faction, Faction
     super(model, rsqlParser);
   }
 
-  // Factions are listed by name
-  override findByRsql(rsql: string | undefined, page: number, size: number): Promise<Page<Faction>> {
-    return super.findByRsql(rsql, page, size, undefined, { name: 'asc' });
+  // Factions are listed by name; the filter is what the user can read
+  override findByRsql(rsql: string | undefined, page: number, size: number, filter?: QueryCriteria): Promise<Page<Faction>> {
+    return super.findByRsql(rsql, page, size, filter, { name: 'asc' });
   }
 
   protected mapToEntity(doc: FactionDocument): Faction {

@@ -1,3 +1,4 @@
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Faction } from '../../../domain/aggregates/faction.js';
@@ -11,17 +12,18 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
   constructor(
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(command: UpdateFactionCommand): Promise<Faction> {
     const faction = await this.factionRepository.findById(command.factionId);
     if (!faction) throw new NotFoundError('Faction', command.factionId);
+    this.gameAccess.checkManage(await this.gameAccess.findGame(faction.gameId), command.userId, command.roles, 'this faction');
 
     faction.checkVersion(command.expectedVersion);
 
     faction.update({
       name: command.name,
-      management: command.management,
       shortDescription: command.shortDescription,
       description: command.description,
       imageUrl: command.imageUrl,

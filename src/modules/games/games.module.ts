@@ -1,3 +1,4 @@
+import { GameAccess } from './application/services/game-access.service.js';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -27,6 +28,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     CreateGameHandler,
     UpdateGameHandler,
     DeleteGameHandler,
+    GameAccess,
     {
       provide: GAME_REPOSITORY,
       useClass: MongoGameRepository,
@@ -40,6 +42,6 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
       useClass: GameGuardAdapter,
     },
   ],
-  exports: [GAME_REPOSITORY],
+  exports: [GAME_REPOSITORY, GameAccess],
 })
 export class GamesModule {}
