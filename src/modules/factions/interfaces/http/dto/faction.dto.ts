@@ -57,7 +57,6 @@ export class FactionPageDto {
   @ApiProperty({
     type: [FactionDto],
     description: 'Factions',
-    isArray: true,
   })
   content: FactionDto[];
   @ApiProperty({ type: PaginationDto, description: 'Pagination information' })

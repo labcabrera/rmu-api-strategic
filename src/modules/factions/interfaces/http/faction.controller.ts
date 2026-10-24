@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { GetFactionQuery } from '../../application/cqrs/queries/get-faction.query.js';
@@ -54,7 +54,7 @@ export class FactionController {
 
   @Post('')
   @ApiOperation({ operationId: 'createFaction', summary: 'Create a new faction' })
-  @ApiOkResponse({ type: FactionDto, description: 'Success' })
+  @ApiCreatedResponse({ type: FactionDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async create(@Body() createFactionDto: CreateFactionDto, @CurrentUser() user: AuthenticatedUser) {
     const command = CreateFactionDto.toCommand(createFactionDto, user.id, user.roles);

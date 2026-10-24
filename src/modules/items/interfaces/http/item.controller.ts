@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
 import { Page } from '../../../shared/application/pagination/page.js';
 import { CatalogPagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
@@ -56,7 +56,7 @@ export class ItemController {
 
   @Post('')
   @ApiOperation({ operationId: 'createItem', summary: 'Create a new item' })
-  @ApiOkResponse({ type: ItemDto, description: 'Success' })
+  @ApiCreatedResponse({ type: ItemDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
   async create(@Body() dto: CreateItemDto, @CurrentUser() user: AuthenticatedUser) {
     const userId = user.id;
@@ -91,7 +91,7 @@ export class ItemController {
 
   @Post(':id/modifiers')
   @ApiOperation({ operationId: 'addItemModifier', summary: 'Add a modifier (breakage, quality...) to the item' })
-  @ApiOkResponse({ type: ItemDto, description: 'Success' })
+  @ApiCreatedResponse({ type: ItemDto, description: 'Success' })
   @ApiErrors({ 404: 'Item not found', 400: 'Bad request, invalid data' })
   async addModifier(@Param('id') id: string, @Body() dto: AddItemModifierDto, @CurrentUser() user: AuthenticatedUser) {
     const command = AddItemModifierDto.toCommand(id, dto, user.id, user.roles);

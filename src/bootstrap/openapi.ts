@@ -36,8 +36,9 @@ export function configureOpenApi(app: INestApplication) {
     )
     .build();
   const document = SwaggerModule.createDocument(app, openApiConfig);
-  // Apply security schema to all paths
-  for (const methods of Object.values(document.paths)) {
+  // Apply security schema to all paths but the health check, which answers without a token
+  for (const [path, methods] of Object.entries(document.paths)) {
+    if (path === '/v1/health') continue;
     for (const operation of Object.values(methods as Record<string, unknown>)) {
       if (operation && typeof operation === 'object' && 'responses' in operation) {
         (operation as { security?: Record<string, string[]>[] }).security = [{ oauth2: [], 'access-token': [] }];

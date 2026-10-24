@@ -94,7 +94,6 @@ export class ItemPageDto {
   @ApiProperty({
     type: [ItemDto],
     description: 'Games',
-    isArray: true,
   })
   content: ItemDto[];
   @ApiProperty({ type: PaginationDto, description: 'Pagination information' })
