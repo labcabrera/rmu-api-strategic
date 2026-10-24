@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient } from '../http/http-client.js';
+import { readBody, sendRequest, upstreamError } from '../http/http-client.js';
 
 interface TokenResponse {
   access_token: string;
@@ -15,11 +15,11 @@ interface TokenResponse {
 export class TokenService {
   private token: string | null = null;
   private expiresAt = 0;
+  private readonly timeoutMs: number;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly httpClient: HttpClient,
-  ) {}
+  constructor(private readonly configService: ConfigService) {
+    this.timeoutMs = Number(configService.get<number>('RMU_HTTP_TIMEOUT_MS') ?? 10_000);
+  }
 
   async getToken(): Promise<string> {
     const now = Date.now();
@@ -31,10 +31,14 @@ export class TokenService {
       client_id: this.configService.get<string>('RMU_IAM_CLIENT_ID')!,
       client_secret: this.configService.get<string>('RMU_IAM_CLIENT_SECRET')!,
     });
-    const data = await this.httpClient.post<TokenResponse>(uri, body);
+    // A form (fetch sets application/x-www-form-urlencoded); a failure reports Keycloak's answer.
+    const response = await sendRequest(uri, { method: 'POST', headers: { Accept: 'application/json' }, body }, this.timeoutMs);
+    const data = await readBody(response);
+    if (!response.ok) throw upstreamError(uri, response.status, response.statusText, data);
+    const { access_token, expires_in } = data as TokenResponse;
 
-    this.token = data.access_token;
-    this.expiresAt = now + data.expires_in * 1000 - 10_000; // 10s offset
+    this.token = access_token;
+    this.expiresAt = now + expires_in * 1000 - 10_000; // 10s offset
     return this.token;
   }
 }

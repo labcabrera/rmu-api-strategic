@@ -1,5 +1,5 @@
 export interface ProfessionClientPort {
-  getProfessionById(professionId: string): Promise<Profession>;
+  getProfessionById(professionId: string): Promise<Profession | undefined>;
 }
 
 export const PROFESSION_CLIENT = Symbol('ProfessionClientPort');

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client.js';
+import { HttpClient, isUpstreamHttpError } from '../../../shared/infrastructure/http/http-client.js';
 
 import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
 import type { RealmClientPort, RealmResponse } from '../../application/ports/realm-client.port.js';
@@ -20,7 +20,7 @@ export class ApiRealmClientAdapter implements RealmClientPort {
     try {
       return await this.httpClient.get<RealmResponse>(uri, { token });
     } catch (err) {
-      if (upstreamStatus(err) === 404) return undefined;
+      if (isUpstreamHttpError(err) && err.status === 404) return undefined;
       throw err;
     }
   }

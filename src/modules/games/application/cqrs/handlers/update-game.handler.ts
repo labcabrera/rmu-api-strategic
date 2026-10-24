@@ -27,6 +27,8 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
       description: command.description,
       imageUrl: command.imageUrl,
     });
+    // Spec 021, decision 9: a PATCH without changes neither writes nor publishes.
+    if (!current.hasChanges()) return current;
     const updated = await this.gameRepository.update(current);
     await this.events.publishChanges('game', current);
     return updated;

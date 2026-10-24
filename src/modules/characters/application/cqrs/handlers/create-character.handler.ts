@@ -240,12 +240,10 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     }
   }
 
+  // An unknown profession is the client's mistake (400); core failing is a 502/504 (F-strategic-12).
   private async fetchProfession(professionId: string): Promise<Profession> {
-    try {
-      return await this.professionClient.getProfessionById(professionId);
-    } catch (e) {
-      this.logger.error(e);
-      throw new ValidationError(`Profession with id ${professionId} not found.`);
-    }
+    const profession = await this.professionClient.getProfessionById(professionId);
+    if (!profession) throw new ValidationError(`Profession with id ${professionId} not found.`);
+    return profession;
   }
 }
