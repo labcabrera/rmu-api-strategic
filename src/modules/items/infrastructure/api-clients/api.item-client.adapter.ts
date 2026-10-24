@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpClient, upstreamStatus } from '../../../shared/infrastructure/http/http-client.js';
+import { HttpClient, isUpstreamHttpError } from '../../../shared/infrastructure/http/http-client.js';
 import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
 import { NotFoundError } from '../../../shared/domain/errors/errors.js';
 import type { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port.js';
@@ -20,7 +20,7 @@ export class ApiItemClientAdapter implements ItemClientPort {
     try {
       return await this.httpClient.get<ItemResponse>(uri, { token });
     } catch (err) {
-      if (upstreamStatus(err) === 404) throw new NotFoundError('Item', itemId);
+      if (isUpstreamHttpError(err) && err.status === 404) throw new NotFoundError('Item', itemId);
       throw err;
     }
   }

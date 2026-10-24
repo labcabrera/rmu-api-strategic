@@ -1,25 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { BadGatewayError, ValidationError } from '../../domain/errors/errors.js';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { BadGatewayError, GatewayTimeoutError, ValidationError } from '../../domain/errors/errors.js';
 
+/** Options of a call to another RMU API: the bearer token to send and any extra headers. */
 export interface HttpRequestOptions {
-  /** Sent as `Authorization: Bearer <token>`. */
   token?: string;
   headers?: Record<string, string>;
 }
 
-/**
- * The HTTP status another API answered, on the error HttpClient throws for it. A caller that treats a status in a
- * special way (a 404 that means "absent") checks it with `upstreamStatus(error) === 404`.
- */
-export interface UpstreamStatus {
-  readonly upstreamStatus: number;
-}
+/** Network errors that mean "the other API is not there" (refused, unknown host, reset, timed out). */
+const UNAVAILABLE_CODES = ['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNRESET', 'ETIMEDOUT', 'ECONNABORTED'];
 
-/** A 400 or 422 of another API: the request this API built from the client's data was rejected (answers 400). */
-export class UpstreamValidationError extends ValidationError implements UpstreamStatus {
+/**
+ * A non-2xx answer of a 400 or 422: the caller's input, so it maps to a ValidationError (400). `status` is the
+ * status the other API answered (it replaces the 400 of ValidationError.status, which no filter reads).
+ */
+export class UpstreamValidationError extends ValidationError {
   constructor(
     message: string,
-    public readonly upstreamStatus: number,
+    public readonly status: number,
   ) {
     super(message);
     this.name = 'ValidationError';
@@ -27,37 +26,45 @@ export class UpstreamValidationError extends ValidationError implements Upstream
   }
 }
 
-/** Any other non-2xx answer of another API (answers 502). */
-export class UpstreamHttpError extends BadGatewayError implements UpstreamStatus {
+/** Any other non-2xx answer (401/403 on our token, 404, 5xx): a failure of the other API, so a BadGatewayError (502). */
+export class UpstreamBadGatewayError extends BadGatewayError {
   constructor(
     message: string,
-    public readonly upstreamStatus: number,
+    public readonly status: number,
   ) {
     super(message);
     this.name = 'BadGatewayError';
-    Object.setPrototypeOf(this, UpstreamHttpError.prototype);
+    Object.setPrototypeOf(this, UpstreamBadGatewayError.prototype);
   }
 }
 
-/** The status another API answered, or undefined when the error is not an answer (network failure, other errors). */
-export function upstreamStatus(error: unknown): number | undefined {
-  return error instanceof UpstreamHttpError || error instanceof UpstreamValidationError ? error.upstreamStatus : undefined;
+/**
+ * The error of a call that got an answer, with its HTTP `status`. It is still the DomainError the status maps to (so
+ * it reaches the client as a 400 or a 502), and a caller that treats a status apart checks it:
+ * `if (isUpstreamHttpError(err) && err.status === 404) return null;`
+ */
+export type UpstreamHttpError = UpstreamValidationError | UpstreamBadGatewayError;
+
+export function isUpstreamHttpError(error: unknown): error is UpstreamHttpError {
+  return error instanceof UpstreamValidationError || error instanceof UpstreamBadGatewayError;
 }
 
 /**
- * The client of the other RMU APIs (spec 020, decision 5): JSON in and out over the global fetch of Node 24.
- *
- * Errors are domain errors, so the HTTP filter answers them:
- * - network failure (connection refused, unknown host…): `BadGatewayError('<host><path> is not available (<code>)')`;
- * - 400 or 422: `UpstreamValidationError('<host><path> answered <status>: <upstream message>')`, a ValidationError;
- * - any other non-2xx, 404 included: `UpstreamHttpError` (same text), a BadGatewayError.
- * Both carry the upstream status: callers that give a 404 its own meaning read it with `upstreamStatus(error)`.
- *
- * There is no timeout, as with axios before (F-strategic-11).
+ * JSON client for the other RMU APIs over the global fetch of Node 24 (spec 020, decision 5). A failed call becomes a
+ * DomainError, so the client gets the reason (which API, its status and its message) instead of a generic 500:
+ * - no answer (ECONNREFUSED, ENOTFOUND, EAI_AGAIN, ECONNRESET, ETIMEDOUT): `BadGatewayError('<host><path> is not available (<code>)')`;
+ * - 400 or 422: `ValidationError('<host><path> answered <status>: <upstream message>')` (UpstreamValidationError);
+ * - any other non-2xx: `BadGatewayError` with the same message (UpstreamBadGatewayError).
+ * - no answer within `RMU_HTTP_TIMEOUT_MS` (10000 by default): `GatewayTimeoutError('<host><path> did not answer in <ms> ms')`
+ *   (504, code `upstream-timeout`; spec 021, decision 7).
  */
 @Injectable()
 export class HttpClient {
-  private readonly logger = new Logger(HttpClient.name);
+  private readonly timeoutMs: number;
+
+  constructor(config: ConfigService) {
+    this.timeoutMs = Number(config.get<number>('RMU_HTTP_TIMEOUT_MS') ?? 10_000);
+  }
 
   get<T>(url: string, options?: HttpRequestOptions): Promise<T> {
     return this.request<T>('GET', url, undefined, options);
@@ -80,69 +87,84 @@ export class HttpClient {
   }
 
   private async request<T>(method: string, url: string, body: unknown, options: HttpRequestOptions = {}): Promise<T> {
-    const target = HttpClient.describe(url);
-    const headers: Record<string, string> = { Accept: 'application/json', ...options.headers };
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (options.token) headers.Authorization = `Bearer ${options.token}`;
-    let payload: string | URLSearchParams | undefined;
-    if (body instanceof URLSearchParams) {
-      // A form (the token request): fetch sets application/x-www-form-urlencoded.
-      payload = body;
-    } else if (body !== undefined) {
-      headers['Content-Type'] = 'application/json';
-      payload = JSON.stringify(body);
-    }
-
-    let response: Response;
-    try {
-      response = await fetch(url, { method, headers, body: payload });
-    } catch (error) {
-      const code = HttpClient.networkCode(error);
-      this.logger.error(`${method} ${target} failed: ${code}`);
-      throw new BadGatewayError(`${target} is not available (${code})`);
-    }
-
-    const text = await response.text();
-    if (!response.ok) {
-      const message = `${target} answered ${response.status}: ${HttpClient.upstreamMessage(text, response.statusText)}`;
-      this.logger.error(`${method} ${message}`);
-      if (response.status === 400 || response.status === 422) throw new UpstreamValidationError(message, response.status);
-      throw new UpstreamHttpError(message, response.status);
-    }
-    if (!text) return undefined as T;
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      throw new UpstreamHttpError(`${target} answered ${response.status} with a body that is not JSON`, response.status);
-    }
+    const response = await sendRequest(
+      url,
+      {
+        method,
+        headers: { ...headers, ...options.headers },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      },
+      this.timeoutMs,
+    );
+    const data = await readBody(response);
+    if (!response.ok) throw upstreamError(url, response.status, response.statusText, data);
+    return data as T;
   }
+}
 
-  /** `<host><path>`, without the query string. */
-  private static describe(url: string): string {
-    try {
-      const parsed = new URL(url);
-      return `${parsed.host}${parsed.pathname}`;
-    } catch {
-      return url;
+/** fetch with a timeout, with a network failure turned into a BadGatewayError and a timeout into a GatewayTimeoutError. */
+export async function sendRequest(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new GatewayTimeoutError(`${describeTarget(url)} did not answer in ${timeoutMs} ms`);
     }
+    throw networkError(error, url);
   }
+}
 
-  /** The system error code of a failed fetch (`TypeError: fetch failed` with `cause.code`: ECONNREFUSED, ENOTFOUND…). */
-  private static networkCode(error: unknown): string {
-    const cause = error instanceof Error ? (error.cause as { code?: unknown } | undefined) : undefined;
-    if (cause && typeof cause.code === 'string') return cause.code;
-    return error instanceof Error ? error.message : String(error);
+/** The body of an answer: parsed JSON, the text if it is not JSON, or undefined if it is empty. */
+export async function readBody(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text) return undefined;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
   }
+}
 
-  /** The `message` of an error body (string or array, as Nest answers), or the body itself. */
-  private static upstreamMessage(text: string, statusText: string): string {
-    if (!text) return statusText;
-    try {
-      const parsed = JSON.parse(text) as { message?: unknown };
-      if (typeof parsed.message === 'string') return parsed.message;
-      if (Array.isArray(parsed.message)) return parsed.message.map(String).join(', ');
-    } catch {
-      // not JSON: the text itself
-    }
-    return text.length > 200 ? `${text.slice(0, 200)}…` : text;
+/** The DomainError of a non-2xx answer (see HttpClient). */
+export function upstreamError(url: string, status: number, statusText: string, data: unknown): UpstreamHttpError {
+  const reason = upstreamMessage(data) ?? statusText ?? '';
+  const detail = `${describeTarget(url)} answered ${status}${reason ? `: ${reason}` : ''}`;
+  return status === 400 || status === 422 ? new UpstreamValidationError(detail, status) : new UpstreamBadGatewayError(detail, status);
+}
+
+/** The BadGatewayError of a call that got no answer. fetch rejects with `TypeError('fetch failed')` and the cause. */
+export function networkError(error: unknown, url: string): BadGatewayError {
+  const target = describeTarget(url);
+  const code = networkErrorCode(error);
+  if (code && UNAVAILABLE_CODES.includes(code)) return new BadGatewayError(`${target} is not available (${code})`);
+  const message = error instanceof Error ? error.message : String(error);
+  return new BadGatewayError(`${target} request failed: ${message}`);
+}
+
+function networkErrorCode(error: unknown): string | undefined {
+  const cause = (error as { cause?: unknown } | undefined)?.cause as { code?: unknown; errors?: { code?: unknown }[] } | undefined;
+  const code = cause?.code ?? cause?.errors?.[0]?.code ?? (error as { code?: unknown } | undefined)?.code;
+  return typeof code === 'string' ? code : undefined;
+}
+
+// For example `rmu-api-strategic/v1/strategic-games/<id>` (no scheme, port or query string).
+function describeTarget(url: string): string {
+  try {
+    const { hostname, pathname } = new URL(url);
+    return `${hostname}${pathname}`;
+  } catch {
+    return url;
   }
+}
+
+function upstreamMessage(data: unknown): string | undefined {
+  if (!data) return undefined;
+  if (typeof data === 'string') return data.slice(0, 300);
+  const message = (data as { message?: unknown }).message;
+  if (Array.isArray(message)) return message.join(', ');
+  if (typeof message === 'string') return message;
+  return undefined;
 }
