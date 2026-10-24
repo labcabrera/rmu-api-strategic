@@ -1,9 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GameAccess } from '../../../games/application/services/game-access.service.js';
 import { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
-import { ForbiddenError, NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { ForbiddenError } from '../../../shared/domain/errors/errors.js';
 import { Character } from '../../domain/aggregates/character.js';
-import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/character-repository.port.js';
 
 /**
  * Who may read and change a character (spec 021, decision 2; F-strategic-15):
@@ -17,18 +16,7 @@ import { type CharacterRepository, CHARACTER_REPOSITORY } from '../ports/charact
  */
 @Injectable()
 export class CharacterAccess {
-  constructor(
-    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
-    private readonly gameAccess: GameAccess,
-  ) {}
-
-  /** The character, or a 404; a 403 if the user may not change it. */
-  async loadForChange(characterId: string, userId: string, roles: string[]): Promise<Character> {
-    const character = await this.characterRepository.findById(characterId);
-    if (!character) throw new NotFoundError('Character', characterId);
-    await this.checkChange(character, userId, roles);
-    return character;
-  }
+  constructor(private readonly gameAccess: GameAccess) {}
 
   async checkChange(character: Character, userId: string, roles: string[]): Promise<void> {
     if (await this.canChange(character, userId, roles)) return;
