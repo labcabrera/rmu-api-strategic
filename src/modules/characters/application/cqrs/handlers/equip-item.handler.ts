@@ -86,6 +86,11 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
   }
 
   private validateEquipmentData(character: Character, item: Item, command: EquipItemCommand): void {
+    // Spec 023, decision 5: a broken item is repaired first (one already in a slot stays there)
+    const condition = item.getCondition();
+    if (condition.broken || condition.unrepairable) {
+      throw new ValidationError('A broken item cannot be equipped', 'err-item-broken');
+    }
     switch (command.slot) {
       case 'mainHand':
       case 'offHand':

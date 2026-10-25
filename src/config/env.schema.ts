@@ -25,5 +25,11 @@ export const envSchema = Joi.object({
   RMU_CORS_ORIGINS: Joi.string().allow('').default(''),
   RMU_THROTTLE_LIMIT: Joi.number().integer().min(0).default(300),
   RMU_THROTTLE_TTL_MS: Joi.number().integer().min(1).default(60_000),
+  // House rules of the economy (workspace spec 023): Core Law does not fix them, and each request can override them.
+  RMU_STRATEGIC_SALE_PERCENT: Joi.number().min(0).max(1000).default(50),
+  RMU_STRATEGIC_MATERIALS_PERCENT: Joi.number().min(0).max(1000).default(50),
+  RMU_STRATEGIC_CONDITION_PERCENTS: Joi.string()
+    .pattern(/^\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/)
+    .default('100,50,10'),
   RMU_TRUST_PROXY: Joi.string().default('loopback, linklocal, uniquelocal'),
 });

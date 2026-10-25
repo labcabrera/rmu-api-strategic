@@ -217,7 +217,8 @@ describe('characters (e2e)', () => {
       const response = await as('owner').patch(`/v1/characters/${character.id}/transfer-faction-gold`, { amount: 4 });
       expect(response.status).toBe(200);
       expect(e2e.events.topics()).toEqual(
-        expect.arrayContaining(['internal.rmu-strategic.item.updated.v1', 'internal.rmu-strategic.faction.updated.v1']),
+        // Spec 023: the first coins of the character are a new stack
+        expect.arrayContaining(['internal.rmu-strategic.item.created.v1', 'internal.rmu-strategic.faction.updated.v1']),
       );
     });
 

@@ -94,7 +94,7 @@ const setup = (characters: Character[], results: AbsoluteManeuverResponse['resul
           : [];
     return Promise.resolve({ result, message: result, effects });
   });
-  const maneuvers: ManeuverClientPort = { absolute };
+  const maneuvers: ManeuverClientPort = { absolute, percent: vi.fn() };
   return { store, tables, maneuvers, rolls, update, saveAll, publish, absolute };
 };
 

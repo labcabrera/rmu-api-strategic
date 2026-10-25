@@ -8,9 +8,12 @@ import { ItemInfo } from '../value-objects/item-info.vo.js';
 import type { AccessType } from '../../../shared/domain/entities/access-type.js';
 import { ItemShield } from '../value-objects/item-shield.vo.js';
 import { type ItemCondition, type ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo.js';
-import { NotFoundError } from '../../../shared/domain/errors/errors.js';
+import { NotFoundError, ValidationError } from '../../../shared/domain/errors/errors.js';
+import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
+import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
 
-export const goldCoin = 'gold-coin';
+/** Item type of the coins of a character (spec 023, decision 7: they weigh). */
+export const GOLD_COIN = 'gold-coin';
 
 export class Item extends BaseAggregateRoot<ItemProps> {
   private constructor(
@@ -33,6 +36,10 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     public updatedAt: Date | null,
     public accessType: AccessType,
     public owner: string,
+    public catalog: ItemCatalogInfo | null = null,
+    public value: number | null = null,
+    public acquiredPrice: number | null = null,
+    public unrepairable: boolean = false,
   ) {
     super(id);
   }
@@ -58,6 +65,10 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       null,
       'public', //TODO
       props.owner,
+      props.catalog ?? null,
+      props.value ?? null,
+      props.acquiredPrice ?? null,
+      props.unrepairable ?? false,
     );
     item.apply(new ItemCreatedEvent(item));
     return item;
@@ -84,6 +95,10 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.updatedAt,
       props.accessType,
       props.owner,
+      props.catalog ?? null,
+      props.value ?? null,
+      props.acquiredPrice ?? null,
+      props.unrepairable ?? false,
     );
   }
 
@@ -98,12 +113,59 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     this.apply(new ItemUpdatedEvent(this));
   }
 
+  /** Who holds it (spec 023, decision 1): stored as `characterId` or `factionId`. */
+  get holder(): ItemHolder {
+    return ItemHolders.of(this);
+  }
+
+  isHeldBy(holder: ItemHolder): boolean {
+    return ItemHolders.equals(this.holder, holder);
+  }
+
+  /** Units in the item: the stack amount, or 1. */
+  get units(): number {
+    return this.info.stackable ? (this.amount ?? 1) : 1;
+  }
+
+  /** Reference value of one unit (spec 023, decision 2): its own, or the average cost of its type. */
+  get unitValue(): number {
+    return this.value ?? this.catalog?.cost?.average ?? 0;
+  }
+
+  /** Moves the item to another holder (spec 023, decision 8). A new holder does not carry it until it chooses to. */
+  moveTo(holder: ItemHolder): void {
+    const ids = ItemHolders.ids(ItemHolders.validate(holder));
+    this.characterId = ids.characterId;
+    this.factionId = ids.factionId;
+    this.carried = false;
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
+  /** Takes `amount` units off a stack, which must keep at least one: a whole stack moves with moveTo. */
+  takeAmount(amount: number): void {
+    if (!this.info.stackable) throw new ValidationError('Only a stack can be split', 'err-item-not-stackable');
+    if (!(amount > 0) || amount >= this.units) {
+      throw new ValidationError(`Invalid amount ${amount} of a stack of ${this.units}`, 'err-item-invalid-amount');
+    }
+    this.addAmount(-amount);
+  }
+
+  /** The breakage modifiers after a repair (spec 023, decision 11); the other modifiers are kept. */
+  replaceBreakage(breakage: ItemModifier[], unrepairable = this.unrepairable): void {
+    this.modifiers = [...this.modifiers.filter(modifier => modifier.type !== 'breakage'), ...breakage];
+    this.unrepairable = unrepairable;
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
   addAmount(amount: number): void {
-    if (this.itemTypeId !== goldCoin && !Number.isInteger(amount)) {
+    if (this.itemTypeId !== GOLD_COIN && !Number.isInteger(amount)) {
       throw new Error('Amount must be an integer for non-gold coin items');
     }
     if (this.info.stackable) {
-      this.amount = (this.amount || 0) + amount;
+      // Gold is kept with three decimals (a copper piece is 0.001 gp)
+      this.amount = Math.round(((this.amount || 0) + amount) * 1000) / 1000;
       this.updatedAt = new Date();
       this.apply(new ItemUpdatedEvent(this));
     } else {
@@ -113,7 +175,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
 
   /** Spec 019, decision 3: the breakage state, derived from the modifiers. */
   getCondition(): ItemCondition {
-    return ItemModifiers.condition(this.modifiers);
+    return { ...ItemModifiers.condition(this.modifiers), ...(this.unrepairable ? { unrepairable: true } : {}) };
   }
 
   /** Adds the modifiers it has not yet (by id), so applying a tactical outcome twice adds nothing. Temporary ones are left out. */
@@ -159,6 +221,10 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       updatedAt: this.updatedAt,
       accessType: this.accessType,
       owner: this.owner,
+      catalog: this.catalog,
+      value: this.value,
+      acquiredPrice: this.acquiredPrice,
+      unrepairable: this.unrepairable,
     };
   }
 }

@@ -29,6 +29,10 @@ export class UpdateItemCarriedStatusHandler implements ICommandHandler<UpdateIte
 
     const item = await this.itemRepository.findById(command.itemId);
     if (!item) throw new ValidationError(`Item with id ${command.itemId} not found`);
+    // Spec 023, decision 16: only the items the character holds
+    if (item.characterId !== character.id) {
+      throw new ValidationError('The item does not belong to the character', 'err-item-other-holder');
+    }
 
     if (command.carried === false) {
       for (const slot of Object.keys(character.equipment.slots) as Array<keyof typeof character.equipment.slots>) {

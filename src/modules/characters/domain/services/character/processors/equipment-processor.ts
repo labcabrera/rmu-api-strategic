@@ -17,7 +17,8 @@ export class EquipmentProcessor {
     }
     this.cleanUp(character, items);
 
-    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
+    // Spec 023: a stack weighs each of its units
+    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight * item.units, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
 

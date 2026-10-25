@@ -55,6 +55,40 @@ first `m mod t` days.
 * *Dead characters*: their injuries can be treated (the departure of the soul is out of scope), but they do not roll
 recovery or rest.
 
+== Equipment and gold
+
+Items of characters and factions (workspace spec 023). An item is an instance of a catalog type of rmu-api-items: it
+copies what it needs of it (`catalog`: cost, rarity, production hours, image; `value`), and is customized with
+modifiers that keep their origin (`source.kind`: `tactical`, `manual`, `crafting`, `repair`, `catalog`). A +5 sword is
+`{type: 'quality', appliesTo: 'attack', value: 5}`; a masterwork is `{type: 'quality', appliesTo: 'breakage', value: 10}`
+(Strength in breakage checks).
+
+* *Holder*: a character or a faction (its armory) of the same game, stored as `characterId` or `factionId` and
+returned as `holder`. A character can act on its items (its owner); the armory and the gold of a faction are for the
+game master. A player may give items of its character to its faction or to a character of that faction.
+* *Gold*: `management.availableGold` of a faction, and a `gold-coin` stack of a character (coins weigh). Every write is
+conditional on the version read, and an operation undoes its earlier steps when a later one fails (the Mongo of
+compose is standalone, without transactions).
+* *Operations* (each with an entry in `GET /v1/item-ledger`, filterable by `itemId`, `holderIds`, `gameId`, `kind`):
+** `POST /v1/items/purchases`: average cost or asked `unitPrice`, times the Trading percent. A character pays with
+its coins, its faction (`payer: faction`) or both (`split`); spending faction gold needs the game master.
+`POST /v1/items` is kept as its alias.
+** `POST /v1/items/{id}/sale`: value × sale percent × condition percent × Trading percent, unless `unitPrice`.
+** `POST /v1/items/{id}/transfer`: to another holder; units of a stack join the stack of the new holder, and coins
+given to a faction become its gold.
+** `POST /v1/items/crafts`: Crafting maneuver on the `crafting` table of core. Materials (a percent of the average
+cost, or `materialsCost`) plus `enhancementsCost` are paid and lost on a failure; a success adds the enhancements
+and the Strength change of the result.
+** `POST /v1/items/{id}/repairs`: maneuver with the damage of the item as a penalty (-100 if broken) on the `repair`
+table of core (imported data, Core Law table 6-2); the result removes, halves or keeps the breakage modifiers, leaves
+a broken item at a permanent -10, or makes it unrepairable.
+** `POST /v1/items/{id}/discard` and `POST /v1/items/price-quotes` (the price of a purchase or sale without making it).
+* *Trading*: an opposed percent maneuver (`GET /v1/maneuvers/percent` of core). Buying, the price is 200% less the
+percent; selling, it is the percent; both between 50% and 200%. The Trading of the merchant goes in `modifiers`.
+* *House rules*: `RMU_STRATEGIC_SALE_PERCENT` (50), `RMU_STRATEGIC_MATERIALS_PERCENT` (50) and
+`RMU_STRATEGIC_CONDITION_PERCENTS` (`100,50,10`: intact, damaged, broken), shown by `GET /v1/economy-rules`; a request
+can override the sale percent and the materials cost.
+
 == Development
 
 This API follows the platform and conventions of https://github.com/labcabrera/rmu-api-core[rmu-api-core] (workspace

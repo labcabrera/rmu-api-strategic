@@ -6,6 +6,7 @@ import { ItemArmor } from './item-armor.model.js';
 import { ItemInfo } from './item-info.model.js';
 import { ItemShield } from './item-shield.model.js';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
+import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export type ItemDocument = ItemModel & Document;
 
@@ -60,6 +61,19 @@ export class ItemModel {
 
   @Prop({ type: String, required: false })
   description: string | null;
+
+  /** Spec 023: copy of the catalog type (cost, rarity, production hours, image). */
+  @Prop({ type: Object, required: false })
+  catalog?: ItemCatalogInfo | null;
+
+  @Prop({ type: Number, required: false })
+  value?: number | null;
+
+  @Prop({ type: Number, required: false })
+  acquiredPrice?: number | null;
+
+  @Prop({ type: Boolean, required: false })
+  unrepairable?: boolean;
 
   @Prop({ type: Date, required: true })
   createdAt: Date;

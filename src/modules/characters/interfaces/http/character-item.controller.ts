@@ -69,16 +69,17 @@ export class CharacterItemController {
     return CharacterDto.fromEntity(entity);
   }
 
-  @Delete(':id/equipment/:slot')
+  @Delete(':id/equipment/:itemId')
   @ApiBody({ type: EquipItemDto })
   @ApiOperation({ operationId: 'unequipItem', summary: 'Unequip an item from a character' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
-  async unequipItem(@Param('id') id: string, @Param('slot') slot: string, @CurrentUser() user: AuthenticatedUser) {
-    this.logger.debug(`Unequipping character ${id} slot ${slot} for user ${user.id}`);
+  async unequipItem(@Param('id') id: string, @Param('itemId') itemId: string, @CurrentUser() user: AuthenticatedUser) {
+    // The item leaves the slot it is in (spec 023, decision 16: the parameter was misnamed `slot`)
+    this.logger.debug(`Unequipping character ${id} item ${itemId} for user ${user.id}`);
     const userId = user.id;
     const roles = user.roles;
-    const command = new UnequipItemCommand(id, slot, userId, roles);
+    const command = new UnequipItemCommand(id, itemId, userId, roles);
     const entity = await this.commandBus.execute<UnequipItemCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }

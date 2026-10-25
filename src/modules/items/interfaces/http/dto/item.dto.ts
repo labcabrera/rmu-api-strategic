@@ -6,6 +6,8 @@ import { ItemInfoDto } from './item-info.dto.js';
 import { ItemArmorDto } from './item-armor.dto.js';
 import { ItemShieldDto } from './item-shield.dto.js';
 import { ItemConditionDto, ItemModifierDto } from './item-modifier.dto.js';
+import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
+import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export class ItemDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -64,6 +66,18 @@ export class ItemDto {
   @ApiProperty({ description: 'Breakage state derived from the modifiers', type: ItemConditionDto })
   condition: ItemConditionDto;
 
+  @ApiProperty({ description: 'Who holds it (spec 023): the character or the faction of characterId/factionId' })
+  holder: ItemHolder;
+
+  @ApiProperty({ description: 'Copy of the catalog type: cost, rarity, production hours, image (spec 023)', nullable: true })
+  catalog: ItemCatalogInfo | null;
+
+  @ApiProperty({ description: 'Reference gold of one unit: its value, or the average cost of the type', example: 25 })
+  value: number;
+
+  @ApiProperty({ description: 'Gold paid for one unit when it was bought or crafted', nullable: true })
+  acquiredPrice: number | null;
+
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
 
@@ -85,6 +99,10 @@ export class ItemDto {
     dto.info = ItemInfoDto.fromEntity(entity.info);
     dto.modifiers = (entity.modifiers || []).map(modifier => ItemModifierDto.fromEntity(modifier));
     dto.condition = ItemConditionDto.fromEntity(entity.getCondition());
+    dto.holder = entity.holder;
+    dto.catalog = entity.catalog ?? null;
+    dto.value = entity.unitValue;
+    dto.acquiredPrice = entity.acquiredPrice ?? null;
     dto.owner = entity.owner;
     return dto;
   }

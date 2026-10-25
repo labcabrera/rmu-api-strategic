@@ -72,6 +72,37 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
     shield: null,
     info: { cost: { min: 1, average: 2, max: 3 }, length: 10, strength: null, weight: 1, productionHours: undefined, stackable: false },
   },
+  sword: {
+    id: 'sword',
+    name: 'E2E sword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: {
+      cost: { min: 8, average: 10, max: 12 },
+      length: 1,
+      strength: 20,
+      weight: 3,
+      productionHours: 40,
+      stackable: false,
+      rarity: 'common',
+    },
+    modifiers: [{ type: 'bonus', value: 5 }],
+    imageUrl: 'images/items/sword.png',
+  },
+  arrow: {
+    id: 'arrow',
+    category: 'ammunition',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: { min: 0.1, average: 0.1, max: 0.1 }, length: null, strength: 5, weight: 0.1, productionHours: 1, stackable: true },
+  },
   'gold-coin': {
     id: 'gold-coin',
     category: 'currency',
@@ -106,7 +137,11 @@ export const CORE_HEALING_TABLES: HealingTables = {
 };
 
 /** Results the fake medical maneuver table answers, in order (then success), and the totals it got. */
-export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; totals: number[] } = { results: [], totals: [] };
+export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; totals: number[]; tables: string[] } = {
+  results: [],
+  totals: [],
+  tables: [],
+};
 
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
@@ -134,11 +169,26 @@ export function apiFakes() {
   };
   const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
   const maneuverClient: ManeuverClientPort = {
-    absolute: (total: number) => {
+    absolute: (total: number, table: string) => {
       maneuverCalls.totals.push(total);
+      maneuverCalls.tables.push(table);
       const result = maneuverCalls.results.shift() ?? 'success';
-      const effects = result === 'absolute-failure' ? [{ status: 'injuryPenalty', value: 10 }] : [];
+      const effects =
+        table === 'crafting'
+          ? result === 'absolute-success'
+            ? [{ status: 'itemBreakage', value: 10 }]
+            : result === 'partial-success'
+              ? [{ status: 'itemBreakage', value: -10 }]
+              : []
+          : result === 'absolute-failure'
+            ? [{ status: 'injuryPenalty', value: 10 }]
+            : [];
       return Promise.resolve<AbsoluteManeuverResponse>({ result, message: result, effects });
+    },
+    // Invented percent table: the total itself, between 0 and 150
+    percent: (total: number) => {
+      maneuverCalls.totals.push(total);
+      return Promise.resolve({ percent: Math.max(0, Math.min(150, total)), message: 'percent' });
     },
   };
   return {
