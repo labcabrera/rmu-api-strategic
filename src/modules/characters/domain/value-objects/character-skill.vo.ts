@@ -28,6 +28,8 @@ export class CharacterSkill {
     public devPointsSpent: SkillDevPointsSpent = { normal: 0, bonus: 0 },
     // Knack bonus taken from the game power level when the knack was assigned
     public knackBonus?: number,
+    // Spec 024: imported from a file whose skill the core catalog of this installation does not have
+    public missingReference?: boolean,
   ) {}
 
   static empty(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number) {

@@ -24,6 +24,9 @@ export class CharacterTraitDto {
   })
   paidWith: TraitPayment | undefined;
 
+  @ApiProperty({ description: 'Imported without its entry in the core catalog: it has no effect (spec 024)', required: false })
+  missingReference?: boolean;
+
   static fromEntity(entity: CharacterTrait): CharacterTraitDto {
     const dto = new CharacterTraitDto();
     dto.traitId = entity.traitId;
@@ -34,6 +37,7 @@ export class CharacterTraitDto {
     dto.specialization = entity.specialization;
     dto.source = entity.source ?? 'character';
     dto.paidWith = entity.paidWith;
+    if (entity.missingReference) dto.missingReference = true;
     return dto;
   }
 }

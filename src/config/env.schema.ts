@@ -31,5 +31,10 @@ export const envSchema = Joi.object({
   RMU_STRATEGIC_CONDITION_PERCENTS: Joi.string()
     .pattern(/^\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/)
     .default('100,50,10'),
+  // Body limit of the import routes (workspace spec 024): an export file of a whole faction. The other routes keep 100 KB.
+  RMU_STRATEGIC_IMPORT_MAX_BYTES: Joi.number()
+    .integer()
+    .min(1024)
+    .default(5 * 1024 * 1024),
   RMU_TRUST_PROXY: Joi.string().default('loopback, linklocal, uniquelocal'),
 });

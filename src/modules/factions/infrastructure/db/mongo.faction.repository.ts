@@ -32,6 +32,7 @@ export class MongoFactionRepository extends MongoBaseRepository<Faction, Faction
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      importId: doc.importId,
     });
   }
 }

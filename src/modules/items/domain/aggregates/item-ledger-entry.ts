@@ -4,8 +4,18 @@ import type { ItemHolder } from '../value-objects/item-holder.vo.js';
 import type { PriceBreakdown } from '../services/price-calculator.js';
 
 /** Operations of the item ledger (workspace spec 023, decision 6). */
-export type ItemLedgerKind = 'purchase' | 'sale' | 'transfer' | 'craft' | 'repair' | 'discard' | 'gold-transfer';
-export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = ['purchase', 'sale', 'transfer', 'craft', 'repair', 'discard', 'gold-transfer'];
+/** Spec 024 adds `import`: an item or gold that came from an export file. */
+export type ItemLedgerKind = 'purchase' | 'sale' | 'transfer' | 'craft' | 'repair' | 'discard' | 'gold-transfer' | 'import';
+export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
+  'purchase',
+  'sale',
+  'transfer',
+  'craft',
+  'repair',
+  'discard',
+  'gold-transfer',
+  'import',
+];
 
 /** Gold that moved in an operation: negative when the holder paid it, positive when it received it. */
 export interface LedgerPayment {
@@ -46,15 +56,17 @@ export interface ItemLedgerEntryProps {
   /** Outcome key of a craft or repair (translated by the clients). */
   outcome: string | null;
   note: string | null;
+  /** Spec 024: data of the operation, like the file of an import (format and app versions, source game, file name). */
+  details?: Record<string, unknown> | null;
   userId: string;
   createdAt: Date;
 }
 
 export type NewItemLedgerEntry = Omit<
   ItemLedgerEntryProps,
-  'id' | 'holderIds' | 'createdAt' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note'
+  'id' | 'holderIds' | 'createdAt' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'
 > &
-  Partial<Pick<ItemLedgerEntryProps, 'id' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note'>>;
+  Partial<Pick<ItemLedgerEntryProps, 'id' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'>>;
 
 /** One operation on items or gold: append only, never changed after it is stored. */
 export class ItemLedgerEntry extends BaseAggregateRoot<ItemLedgerEntryProps> {

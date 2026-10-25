@@ -27,6 +27,10 @@ export type CharacterDocument = CharacterModel & Document;
 
 @Schema({ collection: 'characters', _id: false, versionKey: false })
 export class CharacterModel {
+  /** Spec 024: the import that created it. */
+  @Prop({ type: String, required: false, index: { sparse: true } })
+  importId?: string;
+
   @Prop({ required: true })
   _id: string;
 

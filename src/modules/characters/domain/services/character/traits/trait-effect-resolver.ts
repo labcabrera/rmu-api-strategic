@@ -8,16 +8,19 @@ export interface AppliedTraitEffect {
   value: number;
 }
 
-// When the same trait is present twice (race and character), only the highest tier counts
+// When the same trait is present twice (race and character), only the highest tier counts. A trait imported without
+// its catalog entry (spec 024) has no effect
 export function getEffectiveTraits(traits: CharacterTrait[] | undefined | null): CharacterTrait[] {
   const result = new Map<string, CharacterTrait>();
-  (traits || []).forEach(trait => {
-    const key = `${trait.traitId}|${trait.specialization ?? ''}`;
-    const current = result.get(key);
-    if (!current || (trait.tier ?? 0) > (current.tier ?? 0)) {
-      result.set(key, trait);
-    }
-  });
+  (traits || [])
+    .filter(trait => !trait.missingReference)
+    .forEach(trait => {
+      const key = `${trait.traitId}|${trait.specialization ?? ''}`;
+      const current = result.get(key);
+      if (!current || (trait.tier ?? 0) > (current.tier ?? 0)) {
+        result.set(key, trait);
+      }
+    });
   return Array.from(result.values());
 }
 

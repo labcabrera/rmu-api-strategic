@@ -26,4 +26,7 @@ export class CharacterTrait {
 
   @Prop({ type: Object, required: false })
   paidWith?: TraitPayment;
+
+  @Prop({ type: Boolean, required: false })
+  missingReference?: boolean;
 }

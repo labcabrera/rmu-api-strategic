@@ -16,6 +16,8 @@ import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js
 export const GOLD_COIN = 'gold-coin';
 
 export class Item extends BaseAggregateRoot<ItemProps> {
+  public importId: string | undefined = undefined;
+
   private constructor(
     public id: string,
     public gameId: string,
@@ -70,12 +72,13 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.acquiredPrice ?? null,
       props.unrepairable ?? false,
     );
+    item.importId = props.importId;
     item.apply(new ItemCreatedEvent(item));
     return item;
   }
 
   static fromProps(props: ItemProps): Item {
-    return new Item(
+    const item = new Item(
       props.id,
       props.gameId,
       props.factionId,
@@ -100,6 +103,8 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.acquiredPrice ?? null,
       props.unrepairable ?? false,
     );
+    item.importId = props.importId;
+    return item;
   }
 
   update(props: Partial<Omit<ItemProps, 'id' | 'gameId' | 'createdAt' | 'updatedAt'>>): void {
@@ -225,6 +230,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       value: this.value,
       acquiredPrice: this.acquiredPrice,
       unrepairable: this.unrepairable,
+      ...(this.importId ? { importId: this.importId } : {}),
     };
   }
 }

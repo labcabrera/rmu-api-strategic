@@ -54,4 +54,7 @@ export class CharacterSkill {
 
   @Prop({ type: Number, required: false })
   knackBonus?: number;
+
+  @Prop({ type: Boolean, required: false })
+  missingReference?: boolean;
 }

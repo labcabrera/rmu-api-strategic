@@ -86,6 +86,10 @@ export class ItemModel {
 
   @Prop({ type: String, required: true })
   owner: string;
+
+  /** Spec 024: the import that created it. */
+  @Prop({ type: String, required: false, index: { sparse: true } })
+  importId?: string;
 }
 
 export const ItemSchema = SchemaFactory.createForClass(ItemModel);

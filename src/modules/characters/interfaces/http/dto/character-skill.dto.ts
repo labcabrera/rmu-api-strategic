@@ -52,6 +52,9 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Total bonus', example: 10 })
   totalBonus: number;
 
+  @ApiProperty({ description: 'Imported without its entry in the core catalog (spec 024)', required: false, example: true })
+  missingReference?: boolean;
+
   static fromEntity(skill: CharacterSkill): CharacterSkillDto {
     const dto = new CharacterSkillDto();
     dto.skillId = skill.skillId;
@@ -70,6 +73,7 @@ export class CharacterSkillDto {
     dto.customBonus = skill.customBonus;
     dto.traitBonus = skill.traitBonus ?? 0;
     dto.totalBonus = skill.totalBonus;
+    if (skill.missingReference) dto.missingReference = true;
     return dto;
   }
 }

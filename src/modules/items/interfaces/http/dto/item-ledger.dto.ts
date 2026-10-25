@@ -62,6 +62,9 @@ export class ItemLedgerEntryDto {
   @ApiProperty({ nullable: true })
   note: string | null;
 
+  @ApiProperty({ nullable: true, required: false, description: 'Data of the operation, like the file of an import (spec 024)' })
+  details?: Record<string, unknown> | null;
+
   @ApiProperty()
   userId: string;
 

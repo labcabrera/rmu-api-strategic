@@ -48,4 +48,6 @@ export interface CharacterProps {
   owner: string;
   createdAt: Date;
   updatedAt: Date | undefined;
+  /** Spec 024: the import that created it, to undo a failed import. */
+  importId?: string;
 }

@@ -21,6 +21,13 @@ export class ErrorDto {
   })
   message: string | string[];
 
+  @ApiProperty({
+    description: 'Optional data of the error, like the failures of an imported file by JSON path',
+    required: false,
+    type: Object,
+  })
+  details?: unknown;
+
   @ApiProperty({ description: 'Timestamp', example: '2023-01-01T00:00:00Z' })
   timestamp: string;
 

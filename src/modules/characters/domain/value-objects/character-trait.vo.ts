@@ -21,5 +21,7 @@ export class CharacterTrait {
     public readonly specialization: string | undefined,
     public readonly source: CharacterTraitSource = 'character',
     public readonly paidWith?: TraitPayment,
+    // Spec 024: imported from a file whose trait the core catalog of this installation does not have. It has no effect
+    public readonly missingReference?: boolean,
   ) {}
 }

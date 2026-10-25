@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { DomainError } from '../../domain/errors/errors.js';
 import type { ErrorDto } from './dto/error-dto.js';
 
-type ErrorBody = Pick<ErrorDto, 'statusCode' | 'error' | 'code' | 'message'>;
+type ErrorBody = Pick<ErrorDto, 'statusCode' | 'error' | 'code' | 'message' | 'details'>;
 
 /** The code of a Nest HTTP exception, from its status. */
 const HTTP_CODES: Record<number, string> = {
@@ -12,6 +12,7 @@ const HTTP_CODES: Record<number, string> = {
   403: 'forbidden',
   404: 'not-found',
   409: 'conflict',
+  422: 'unprocessable',
   413: 'payload-too-large',
   429: 'too-many-requests',
 };
@@ -53,7 +54,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 function toErrorBody(exception: unknown): ErrorBody {
   if (exception instanceof DomainError) {
-    return { statusCode: exception.statusCode, error: exception.name, code: exception.code, message: exception.message };
+    const details = exception.details === undefined ? {} : { details: exception.details };
+    return { statusCode: exception.statusCode, error: exception.name, code: exception.code, message: exception.message, ...details };
   }
   if (exception instanceof HttpException) {
     const response = exception.getResponse();

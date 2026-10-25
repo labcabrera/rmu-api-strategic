@@ -21,6 +21,9 @@ export interface ItemModifierSource {
   round?: number;
   actionId?: string;
   ledgerEntryId?: string;
+  /** Spec 024: character who crafted or repaired it, and its name (kept alone when the character is not in this game). */
+  crafterId?: string;
+  crafterName?: string;
 }
 
 /** A modifier of an item (spec 019, decision 2). Breakage damage is `type: 'breakage', appliesTo: 'all'`. */
