@@ -95,6 +95,21 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
     modifiers: [{ type: 'bonus', value: 5 }],
     imageUrl: 'images/items/sword.png',
   },
+  // A sword that can be equipped: the attacks need the `<skill>@<specialization>` form (spec 024)
+  longsword: {
+    id: 'longsword',
+    name: 'E2E longsword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: { cost: { min: 8, average: 10, max: 12 }, length: 1, strength: 20, weight: 3, productionHours: 40, stackable: false },
+    modifiers: [{ type: 'bonus', value: 5 }],
+  },
   arrow: {
     id: 'arrow',
     category: 'ammunition',

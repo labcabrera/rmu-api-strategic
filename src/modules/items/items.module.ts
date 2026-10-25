@@ -107,6 +107,6 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
       useClass: ApiItemClientAdapter,
     },
   ],
-  exports: [ITEM_REPOSITORY, ITEM_CLIENT],
+  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger],
 })
 export class ItemsModule {}

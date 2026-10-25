@@ -7,6 +7,7 @@ import { SharedModule } from './modules/shared/shared.module.js';
 import { GamesModule } from './modules/games/games.module.js';
 import { CharactersModule } from './modules/characters/characters.module.js';
 import { FactionsModule } from './modules/factions/factions.module.js';
+import { ExportsModule } from './modules/exports/exports.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { FactionsModule } from './modules/factions/factions.module.js';
     GamesModule,
     FactionsModule,
     CharactersModule,
+    ExportsModule,
   ],
 })
 export class AppModule {}

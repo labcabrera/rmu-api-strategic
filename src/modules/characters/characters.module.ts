@@ -194,6 +194,17 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
       useClass: ApiCultureClientAdapter,
     },
   ],
-  exports: [CHARACTER_REPOSITORY, CharacterProcessorService, CharacterAccess, MANEUVER_CLIENT],
+  exports: [
+    CHARACTER_REPOSITORY,
+    CharacterProcessorService,
+    CharacterAccess,
+    MANEUVER_CLIENT,
+    // The catalogs of core, for the import of export files (spec 024)
+    RACE_CLIENT,
+    PROFESSION_CLIENT,
+    CULTURE_CLIENT,
+    SKILL_CLIENT,
+    TRAIT_CLIENT,
+  ],
 })
 export class CharactersModule {}

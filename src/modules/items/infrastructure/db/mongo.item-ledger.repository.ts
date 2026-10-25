@@ -41,6 +41,7 @@ export class MongoItemLedgerRepository
       actorId: doc.actorId ?? null,
       outcome: doc.outcome ?? null,
       note: doc.note ?? null,
+      ...(doc.details ? { details: doc.details } : {}),
       userId: doc.userId,
       createdAt: doc.createdAt,
     });

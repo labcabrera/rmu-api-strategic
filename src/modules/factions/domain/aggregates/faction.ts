@@ -6,6 +6,8 @@ import type { CreateFactionProps, FactionProps, UpdateFactionProps } from './fac
 import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
 
 export class Faction extends BaseAggregateRoot<FactionProps> {
+  public importId: string | undefined = undefined;
+
   private constructor(
     id: string,
     public readonly gameId: string,
@@ -34,12 +36,13 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       new Date(),
       undefined,
     );
+    faction.importId = props.importId;
     faction.apply(new FactionCreatedEvent(faction));
     return faction;
   }
 
   static fromProps(props: FactionProps) {
-    return new Faction(
+    const faction = new Faction(
       props.id,
       props.gameId,
       props.name,
@@ -51,6 +54,8 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       props.createdAt,
       props.updatedAt,
     );
+    faction.importId = props.importId;
+    return faction;
   }
 
   update(props: UpdateFactionProps) {
@@ -97,6 +102,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       owner: this.owner,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      ...(this.importId ? { importId: this.importId } : {}),
     };
   }
 }

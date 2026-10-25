@@ -111,6 +111,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   public injuries: Injury[] = [];
   public conditions: CharacterCondition[] = [];
   public appliedTacticalGames: string[] = [];
+  public importId: string | undefined = undefined;
   private pendingHealingLog: HealingLogEntry[] = [];
 
   private constructor(
@@ -227,6 +228,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     character.injuries = props.injuries || [];
     character.conditions = props.conditions || [];
     character.appliedTacticalGames = props.appliedTacticalGames || [];
+    character.importId = props.importId;
     return character;
   }
 
@@ -896,6 +898,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       owner: this.owner,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      ...(this.importId ? { importId: this.importId } : {}),
     };
   }
 

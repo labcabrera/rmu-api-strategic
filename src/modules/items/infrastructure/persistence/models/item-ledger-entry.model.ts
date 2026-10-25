@@ -60,6 +60,10 @@ export class ItemLedgerEntryModel {
   @Prop({ type: String, required: false })
   note: string | null;
 
+  /** Spec 024: data of the operation, like the file of an import. */
+  @Prop({ type: Object, required: false })
+  details?: Record<string, unknown> | null;
+
   @Prop({ type: String, required: true })
   userId: string;
 

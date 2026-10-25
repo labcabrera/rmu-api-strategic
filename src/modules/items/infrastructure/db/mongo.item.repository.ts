@@ -69,6 +69,7 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       value: doc.value ?? null,
       acquiredPrice: doc.acquiredPrice ?? null,
       unrepairable: doc.unrepairable ?? false,
+      importId: doc.importId,
     });
   }
 }

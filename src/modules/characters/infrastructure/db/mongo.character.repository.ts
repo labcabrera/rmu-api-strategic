@@ -78,6 +78,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       owner: doc.owner,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      importId: doc.importId,
     });
   }
 
@@ -121,6 +122,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
         s.cultureRanks ?? 0,
         { normal: spent?.normal ?? 0, bonus: spent?.bonus ?? 0 },
         s.knackBonus ?? undefined,
+        s.missingReference || undefined,
       );
     });
   }
@@ -138,6 +140,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
           t.specialization ?? undefined,
           t.source === 'race' ? 'race' : 'character',
           t.paidWith ?? undefined,
+          t.missingReference || undefined,
         ),
     );
   }

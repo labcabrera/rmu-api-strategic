@@ -6,6 +6,10 @@ export type FactionDocument = FactionModel & Document;
 
 @Schema({ collection: 'factions', _id: false, versionKey: false })
 export class FactionModel {
+  /** Spec 024: the import that created it. */
+  @Prop({ type: String, required: false, index: { sparse: true } })
+  importId?: string;
+
   @Prop({ required: true })
   _id: string;
 
