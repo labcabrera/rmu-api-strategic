@@ -89,6 +89,36 @@ percent; selling, it is the percent; both between 50% and 200%. The Trading of t
 `RMU_STRATEGIC_CONDITION_PERCENTS` (`100,50,10`: intact, damaged, broken), shown by `GET /v1/economy-rules`; a request
 can override the sale percent and the materials cost.
 
+== Export format
+
+Characters and factions go to a JSON file and back (workspace spec 024), to copy them to another game or installation.
+
+* *Export*: `GET /v1/characters/{id}/export` (its owner, the owner of the game or an admin) and
+`GET /v1/factions/{id}/export` (the owner of the game or an admin) answer the file as an attachment,
+`character-<slug>-<yyyymmdd>.rmu.json` or `faction-<slug>-<yyyymmdd>.rmu.json`.
+* *File*: `{format: 'rmu-strategic-export', formatVersion, kind: 'character' | 'faction', exportedAt, source, references,
+data}`. It holds only user data: the own data and the temporary state of each character (hits, endurance, power,
+temporary stats, injuries with their recovery, conditions), its items with their modifiers and gold, and for a faction its
+gold, experience and armory. Ids, owners, games and derived values are left out; characters and items carry local refs
+(`c1`, `i1`...) that slots and crafters point to. `references` lists the catalog ids of core and items with their names,
+never their content. Example files: `test/fixtures/exports/v<N>/`.
+* *Import*: `POST /v1/factions/{id}/character-imports` (whoever can create a character; it also takes one character of a
+faction file with `?characterRef=c2`) and `POST /v1/strategic-games/{id}/faction-imports` (the owner of the game or an
+admin). The body is the file (up to `RMU_STRATEGIC_IMPORT_MAX_BYTES`, 5 MB; 200 characters and 2000 items), and
+`X-RMU-File-Name` its name. `?dryRun=true` answers the preview: versions, upgrade steps, summary, warnings and errors.
+** Everything is created with new ids and owned by whoever imports. Derived values come from the destination race and
+catalog; current hits and power are kept up to their maximum.
+** A missing race, profession or culture blocks the import (`export-missing-reference`). A missing skill or trait is
+kept without effect and marked `missingReference: true`; a missing item type only warns, as the item keeps its copy.
+** There are no transactions: every created document carries `importId`, and a failed import removes them. Each item
+gets an `import` entry in the item ledger, and the gold of a faction an `import` gold entry.
+** Errors: `export-invalid-file` (400, with `details.issues` by JSON path), `export-too-large` (413),
+`export-unknown-format`, `export-format-too-new`, `export-wrong-kind`, `export-missing-reference` and
+`export-character-ref-required` (422).
+* *Versions*: `formatVersion` is an integer of the format, raised only when the file changes shape; `appVersion` is the
+semver of this API, for information. An older file goes through the upcasters (`src/modules/exports/domain/upcasters/`)
+up to the current version; a newer one is rejected. See `AGENTS.md` and ADR 0008 of rmu-platform.
+
 == Development
 
 This API follows the platform and conventions of https://github.com/labcabrera/rmu-api-core[rmu-api-core] (workspace
