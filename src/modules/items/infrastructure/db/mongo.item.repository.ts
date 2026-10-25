@@ -6,6 +6,7 @@ import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.bas
 import { type ItemDocument, ItemModel } from '../persistence/models/item.model.js';
 import { Item } from '../../domain/aggregates/item.js';
 import type { ItemRepository } from '../../application/ports/item-repository.port.js';
+import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-holder.vo.js';
 
 @Injectable()
 export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument> implements ItemRepository {
@@ -16,6 +17,16 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
   async findByCharacterId(characterId: string): Promise<Item[]> {
     const items = await this.model.find({ characterId });
     return items.map(doc => this.toEntity(doc));
+  }
+
+  async findByFactionId(factionId: string): Promise<Item[]> {
+    const items = await this.model.find({ factionId });
+    return items.map(doc => this.toEntity(doc));
+  }
+
+  async findStack(holder: ItemHolder, itemTypeId: string): Promise<Item | null> {
+    const doc = await this.model.findOne({ ...ItemHolders.ids(holder), itemTypeId });
+    return doc ? this.toEntity(doc) : null;
   }
 
   async findByCharacterIdAndItemTypeId(characterId: string, itemTypeId: string): Promise<Item | null> {
@@ -54,6 +65,10 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       updatedAt: doc.updatedAt,
       accessType: doc.accessType,
       owner: doc.owner,
+      catalog: doc.catalog ?? null,
+      value: doc.value ?? null,
+      acquiredPrice: doc.acquiredPrice ?? null,
+      unrepairable: doc.unrepairable ?? false,
     });
   }
 }

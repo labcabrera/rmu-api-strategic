@@ -50,10 +50,14 @@ export class ItemConditionDto {
   @ApiProperty({ description: 'The item is broken', example: false })
   broken: boolean;
 
+  @ApiProperty({ description: 'It can no longer be repaired (spec 023)', required: false })
+  unrepairable?: boolean;
+
   static fromEntity(entity: ItemCondition): ItemConditionDto {
     const dto = new ItemConditionDto();
     dto.breakagePenalty = entity.breakagePenalty;
     dto.broken = entity.broken;
+    if (entity.unrepairable) dto.unrepairable = true;
     return dto;
   }
 }

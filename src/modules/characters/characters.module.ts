@@ -37,7 +37,6 @@ import { MongoCharacterRepository } from './infrastructure/db/mongo.character.re
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model.js';
 import { LevelDownSkillHandler } from './application/cqrs/handlers/level-down-skill.handler.js';
 import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.handler.js';
-import { TransferGoldHandler } from './application/cqrs/handlers/transfer-gold.handler.js';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler.js';
 import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler.js';
 import { AddTraitHandler } from './application/cqrs/handlers/add-trait.handler.js';
@@ -136,7 +135,6 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     LevelUpSkillHandler,
     LevelDownSkillHandler,
     SetupProfessionSkillHandler,
-    TransferGoldHandler,
     AddTraitHandler,
     DeleteTraitHandler,
     UpdateCharacterRaceHandler,
@@ -196,6 +194,6 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
       useClass: ApiCultureClientAdapter,
     },
   ],
-  exports: [CHARACTER_REPOSITORY, CharacterProcessorService, CharacterAccess],
+  exports: [CHARACTER_REPOSITORY, CharacterProcessorService, CharacterAccess, MANEUVER_CLIENT],
 })
 export class CharactersModule {}

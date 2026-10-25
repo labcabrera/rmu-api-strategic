@@ -19,6 +19,18 @@ import { DeleteItemModifierCommand } from '../../application/cqrs/commands/delet
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
 import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
+import type { ItemOperationResult } from '../../application/services/item-stock.service.js';
+import type { PriceQuote } from '../../application/cqrs/handlers/quote-price.handler.js';
+import { ItemOperationResultDto, PriceQuoteDto } from './dto/item-ledger.dto.js';
+import {
+  CraftItemDto,
+  DiscardItemDto,
+  PurchaseItemDto,
+  QuotePriceDto,
+  RepairItemDto,
+  SellItemDto,
+  TransferItemDto,
+} from './dto/item-operations.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/items')
@@ -28,6 +40,71 @@ export class ItemController {
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}
+
+  @Post('purchases')
+  @ApiOperation({ operationId: 'purchaseItem', summary: 'Buy items of a catalog type for a character or a faction (spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 400: 'Invalid data or not enough gold', 403: 'Not allowed to spend that gold' })
+  async purchase(@Body() dto: PurchaseItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(PurchaseItemDto.toCommand(dto, user.id, user.roles));
+  }
+
+  @Post('crafts')
+  @ApiOperation({ operationId: 'craftItem', summary: 'A craftsman makes an item of a catalog type (spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto, description: 'The item is null when the maneuver failed' })
+  @ApiErrors({ 400: 'Invalid data or not enough gold', 403: 'Not allowed' })
+  async craft(@Body() dto: CraftItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(CraftItemDto.toCommand(dto, user.id, user.roles));
+  }
+
+  @Post('price-quotes')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'quoteItemPrice', summary: 'Price of a purchase or a sale, without making it (spec 023)' })
+  @ApiOkResponse({ type: PriceQuoteDto })
+  @ApiErrors({ 400: 'Invalid data' })
+  async quote(@Body() dto: QuotePriceDto, @CurrentUser() user: AuthenticatedUser) {
+    const quote = await this.queryBus.execute<ReturnType<typeof QuotePriceDto.toQuery>, PriceQuote>(
+      QuotePriceDto.toQuery(dto, user.id, user.roles),
+    );
+    return PriceQuoteDto.of(quote);
+  }
+
+  @Post(':id/sale')
+  @ApiOperation({ operationId: 'sellItem', summary: 'Sell an item or units of a stack: its holder gets the gold (spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 404: 'Item not found', 400: 'Invalid data' })
+  async sell(@Param('id') id: string, @Body() dto: SellItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(SellItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  @Post(':id/transfer')
+  @ApiOperation({ operationId: 'transferItem', summary: 'Give an item or units of a stack to another holder of the game (spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 404: 'Item not found', 400: 'Invalid data', 403: 'Not allowed' })
+  async transfer(@Param('id') id: string, @Body() dto: TransferItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(TransferItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  @Post(':id/repairs')
+  @ApiOperation({ operationId: 'repairItem', summary: 'Repair a damaged or broken item (§6.2, spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 404: 'Item not found', 400: 'Not damaged, unrepairable or invalid data' })
+  async repair(@Param('id') id: string, @Body() dto: RepairItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(RepairItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  @Post(':id/discard')
+  @ApiOperation({ operationId: 'discardItem', summary: 'Throw away an item or units of a stack, with a ledger entry (spec 023)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 404: 'Item not found', 400: 'Invalid data' })
+  async discard(@Param('id') id: string, @Body() dto: DiscardItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(DiscardItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  private async operation(command: object): Promise<ItemOperationResultDto> {
+    const result = await this.commandBus.execute<object, ItemOperationResult>(command);
+    return ItemOperationResultDto.fromResult(result);
+  }
 
   @Get(':id')
   @ApiOperation({ operationId: 'findItemById', summary: 'Find game by id' })

@@ -8,12 +8,19 @@ export const ITEM_MODIFIER_TYPES: ItemModifierType[] = ['breakage', 'quality', '
 export type ItemModifierTarget = 'all' | 'breakage' | 'attack' | 'defense' | 'maneuver';
 export const ITEM_MODIFIER_TARGETS: ItemModifierTarget[] = ['all', 'breakage', 'attack', 'defense', 'maneuver'];
 
+/**
+ * Where a modifier comes from: a tactical game, the game master, or (workspace spec 023, decision 3) the crafting or
+ * repair of the item, or its catalog type. `ledgerEntryId` points to the operation in the item ledger.
+ */
+export type ItemModifierSourceKind = 'tactical' | 'manual' | 'crafting' | 'repair' | 'catalog';
+
 export interface ItemModifierSource {
-  kind: 'tactical' | 'manual';
+  kind: ItemModifierSourceKind;
   tacticalGameId?: string;
   tacticalGameName?: string;
   round?: number;
   actionId?: string;
+  ledgerEntryId?: string;
 }
 
 /** A modifier of an item (spec 019, decision 2). Breakage damage is `type: 'breakage', appliesTo: 'all'`. */
@@ -36,6 +43,8 @@ export interface ItemCondition {
   /** Sum of the breakage modifiers, never above 0: a partial repair is a positive one. */
   breakagePenalty: number;
   broken: boolean;
+  /** Spec 023: it can no longer be repaired. */
+  unrepairable?: boolean;
 }
 
 /** Breakage damage beyond which an armor piece leaves its area unprotected (§6.1). */

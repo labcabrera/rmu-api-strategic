@@ -66,7 +66,7 @@ describe('items (e2e)', () => {
       // F-strategic-19: an unknown item type is a 400, not the 404 of the items API
       const unknown = await as('owner').post('/v1/items', { gameId, factionId, itemTypeId: 'unknown' });
       expect(unknown.status).toBe(400);
-      expect(unknown.body).toMatchObject({ code: 'validation', message: 'Invalid item type unknown' });
+      expect(unknown.body).toMatchObject({ code: 'err-item-type-not-found', message: 'Invalid item type unknown' });
       expect((await as('owner').post('/v1/items', { gameId, itemTypeId: 'stone' })).status).toBe(400);
       const character = await createCharacter(e2e, gameId, factionId);
       expect((await as('owner').post('/v1/items', { gameId, factionId, characterId: character.id, itemTypeId: 'stone' })).status).toBe(400);
