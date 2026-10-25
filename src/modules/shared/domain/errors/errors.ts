@@ -7,6 +7,8 @@ export class DomainError extends Error {
     public readonly message: string,
     public readonly statusCode: number = 500,
     public readonly code: string = 'internal-error',
+    /** Optional data for clients, like the failures of a file by JSON path (spec 024). */
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = 'DomainError';
@@ -29,10 +31,28 @@ export class ConflictError extends DomainError {
 }
 
 export class ValidationError extends DomainError {
-  constructor(message: string, code = 'validation') {
-    super(message, 400, code);
+  constructor(message: string, code = 'validation', details?: unknown) {
+    super(message, 400, code, details);
     this.name = 'ValidationError';
     Object.setPrototypeOf(this, ValidationError.prototype);
+  }
+}
+
+/** A well formed request that cannot be processed, like an export file of a newer format (spec 024): 422. */
+export class UnprocessableError extends DomainError {
+  constructor(message: string, code = 'unprocessable', details?: unknown) {
+    super(message, 422, code, details);
+    this.name = 'UnprocessableError';
+    Object.setPrototypeOf(this, UnprocessableError.prototype);
+  }
+}
+
+/** A request body above the configured limit (spec 024): 413. */
+export class PayloadTooLargeError extends DomainError {
+  constructor(message: string, code = 'payload-too-large', details?: unknown) {
+    super(message, 413, code, details);
+    this.name = 'PayloadTooLargeError';
+    Object.setPrototypeOf(this, PayloadTooLargeError.prototype);
   }
 }
 
