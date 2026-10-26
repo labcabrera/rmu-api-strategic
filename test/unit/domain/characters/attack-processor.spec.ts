@@ -74,6 +74,13 @@ describe('AttackProcessor', () => {
     expect(attacks[1].wrongSize).toBe(false);
   });
 
+  it('uses the one-handed melee fumble table for the shield bash', () => {
+    const shield = { id: 'item-002', itemTypeId: 'shield', weapon: null, shield: { db: 20, blockCount: 1 } } as unknown as Item;
+    const [attack] = generateAttacks(buildCharacter('medium', { mainHand: null, offHand: 'item-002' }), [shield]);
+    expect(attack.attackTable).toBe('shield');
+    expect(attack.fumbleTable).toBe('melee-one-hand');
+  });
+
   it('applies the wrong-size penalty and uses the weapon size for the attack', () => {
     const item = buildWeapon('item-001', 'broadsword', [mode('one-hand', 0)], 'big');
     const [attack] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }), [item]);
