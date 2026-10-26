@@ -64,7 +64,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
     if (!readedRace) throw new NotFoundError('Race', character.info.race.id);
 
-    this.validateSpecialization(readedSkill, specialization);
+    validateSkillSpecialization(readedSkill, specialization);
 
     const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
     if (!readedCategory) throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
@@ -97,14 +97,15 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     if (character.findSkill(skillId, specialization)) return true;
     return isSpellListSkill(skillId) && character.skills.some(s => isSpellListSkill(s.skillId) && s.specialization === specialization);
   }
+}
 
-  private validateSpecialization(skill: SkillResponse, specialization: string | null): void {
-    if (skill.specialization) {
-      if (!specialization) {
-        throw new ValidationError(`Skill ${skill.id} requires a specialization`);
-      }
-    } else if (specialization) {
-      throw new ValidationError(`Skill ${skill.id} does not allow specialization`);
+/** A skill with a specialization category needs one unless it is optional; a skill without one allows none. */
+export function validateSkillSpecialization(skill: SkillResponse, specialization: string | null): void {
+  if (skill.specialization) {
+    if (!specialization && !skill.specializationOptional) {
+      throw new ValidationError(`Skill ${skill.id} requires a specialization`);
     }
+  } else if (specialization) {
+    throw new ValidationError(`Skill ${skill.id} does not allow specialization`);
   }
 }

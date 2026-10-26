@@ -13,4 +13,6 @@ export interface SkillResponse {
   categoryId: string;
   bonus: string[];
   specialization: string | undefined;
+  /** The specialization may be left empty (crafting skills, spec 037). */
+  specializationOptional?: boolean;
 }
