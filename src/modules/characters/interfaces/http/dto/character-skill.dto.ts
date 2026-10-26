@@ -1,7 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CharacterSkill, type SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo.js';
+import { isFightingStyleSkill } from '../../../domain/value-objects/fighting-styles.vo.js';
+import { freeStyleRanks, unallocatedStyleBonus } from '../../../domain/services/fighting-styles/style-allocation.js';
 import type { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo.js';
+
+export class StyleAbilitySelectionDto {
+  @ApiProperty({ description: 'Ability of the fighting style', example: 'lightning-reflexes' })
+  abilityId: string;
+
+  @ApiProperty({ description: 'Times selected', example: 1 })
+  times: number;
+
+  @ApiProperty({ description: 'Ranks each selection cost', example: 4 })
+  cost: number;
+}
 
 export class CharacterSkillDto {
   @ApiProperty({ description: 'Skill identifier', example: 'animal-handling' })
@@ -55,6 +68,23 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Imported without its entry in the core catalog (spec 024)', required: false, example: true })
   missingReference?: boolean;
 
+  @ApiProperty({
+    type: [StyleAbilitySelectionDto],
+    required: false,
+    description: 'Fighting style skills only (spec 032): ranks allocated to the abilities of the style',
+  })
+  styleAbilities?: StyleAbilitySelectionDto[];
+
+  @ApiProperty({ required: false, description: 'Fighting style skills only (spec 032): ranks not allocated to abilities', example: 2 })
+  styleFreeRanks?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Fighting style skills only (spec 032): OB of the free ranks (+2 each, max +10)',
+    example: 4,
+  })
+  styleFreeRanksBonus?: number;
+
   static fromEntity(skill: CharacterSkill): CharacterSkillDto {
     const dto = new CharacterSkillDto();
     dto.skillId = skill.skillId;
@@ -74,6 +104,11 @@ export class CharacterSkillDto {
     dto.traitBonus = skill.traitBonus ?? 0;
     dto.totalBonus = skill.totalBonus;
     if (skill.missingReference) dto.missingReference = true;
+    if (isFightingStyleSkill(skill.skillId)) {
+      dto.styleAbilities = (skill.styleAbilities || []).map(a => ({ abilityId: a.abilityId, times: a.times, cost: a.cost }));
+      dto.styleFreeRanks = freeStyleRanks(skill);
+      dto.styleFreeRanksBonus = unallocatedStyleBonus(dto.styleFreeRanks);
+    }
     return dto;
   }
 }

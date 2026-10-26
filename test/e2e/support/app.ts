@@ -13,6 +13,7 @@ import { SKILL_CATEGORY_CLIENT } from '../../../src/modules/characters/applicati
 import { PROFESSION_CLIENT } from '../../../src/modules/characters/application/ports/profession-client.port.js';
 import { TRAIT_CLIENT } from '../../../src/modules/characters/application/ports/trait-client.port.js';
 import { CULTURE_CLIENT } from '../../../src/modules/characters/application/ports/culture-client.port.js';
+import { FIGHTING_STYLES_CLIENT } from '../../../src/modules/characters/application/ports/fighting-styles-client.port.js';
 import { HEALING_TABLES_CLIENT } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
 import { SPELL_LIST_CLIENT } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import { MANEUVER_CLIENT } from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
@@ -103,6 +104,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.cultureClient)
     .overrideProvider(HEALING_TABLES_CLIENT)
     .useValue(fakes.healingTablesClient)
+    .overrideProvider(FIGHTING_STYLES_CLIENT)
+    .useValue(fakes.fightingStylesClient)
     .overrideProvider(MANEUVER_CLIENT)
     .useValue(fakes.maneuverClient)
     .overrideProvider(SPELL_LIST_CLIENT)

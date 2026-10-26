@@ -9,6 +9,8 @@ import { DEFAULT_KNACK_BONUS } from '../../../../../games/domain/value-objects/g
 import { REALM_STAT_TOKEN } from '../../../value-objects/character-realm.vo.js';
 import { realmStatBonus } from '../../realms-rules.js';
 import { rankBonus } from '../../skills/rank-bonus.js';
+import { isFightingStyleSkill } from '../../../value-objects/fighting-styles.vo.js';
+import { trimStyleAbilities } from '../../fighting-styles/style-allocation.js';
 
 @Injectable()
 export class SkillProcessor {
@@ -36,6 +38,7 @@ export class SkillProcessor {
     skill.customBonus = customBonus;
     skill.traitBonus = traitBonus;
     skill.totalBonus = totalBonus;
+    if (isFightingStyleSkill(skill.skillId)) trimStyleAbilities(skill);
   }
 
   private getStatBonus(character: Partial<Character>, statistics: string[]): number {

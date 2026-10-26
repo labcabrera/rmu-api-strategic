@@ -11,6 +11,9 @@ import { DeleteSkillCommand } from '../../application/cqrs/commands/delete-skill
 import { LevelDownSkillCommand } from '../../application/cqrs/commands/level-down-skill.command.js';
 import { LevelUpSkillCommand } from '../../application/cqrs/commands/level-up-skill.command.js';
 import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/setup-professional-skill.command.js';
+import { AddStyleAbilityCommand } from '../../application/cqrs/commands/add-style-ability.command.js';
+import { RemoveStyleAbilityCommand } from '../../application/cqrs/commands/remove-style-ability.command.js';
+import { AddStyleAbilityDto } from './dto/add-style-ability.dto.js';
 import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command.js';
 import { Character } from '../../domain/aggregates/character.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
@@ -127,6 +130,50 @@ export class CharacterSkillController {
     const specialization = req.query.specialization as string | null;
     const command = UpdateProfessionalSkillDto.toCommand(id, skillId, specialization, dto, userId, roles);
     const entity = await this.commandBus.execute<SetUpProfessionalSkillCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Post(':id/skills/:skillId/style-abilities')
+  @ApiBody({ type: AddStyleAbilityDto })
+  @ApiOperation({
+    operationId: 'addStyleAbility',
+    summary: 'Allocate ranks of a fighting style to one of its abilities',
+    description: 'Uses free ranks of the style (spec 032). Selections are permanent for the player.',
+  })
+  @ApiParam({ name: 'skillId', required: true, type: String, description: 'Fighting style skill', example: 'combat-styles' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiErrors({ 400: 'Not a style ability, not enough free ranks or missing requirements' })
+  @HttpCode(200)
+  async addStyleAbility(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Body() dto: AddStyleAbilityDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const command = AddStyleAbilityDto.toCommand(id, skillId, dto, user.id, user.roles);
+    const entity = await this.commandBus.execute<AddStyleAbilityCommand, Character>(command);
+    return CharacterDto.fromEntity(entity);
+  }
+
+  @Delete(':id/skills/:skillId/style-abilities/:abilityId')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'removeStyleAbility',
+    summary: 'Undo one selection of a fighting style ability',
+    description: 'Only the owner of the strategic game or an admin (spec 032).',
+  })
+  @ApiQuery({ name: 'specialization', required: true, type: String, description: 'Fighting style', example: 'fencing' })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiErrors({ 400: 'The ability is not selected', 403: 'Not the game master' })
+  async removeStyleAbility(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Param('abilityId') abilityId: string,
+    @Query('specialization') specialization: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const command = new RemoveStyleAbilityCommand(id, skillId, specialization, abilityId, user.id, user.roles);
+    const entity = await this.commandBus.execute<RemoveStyleAbilityCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }
 

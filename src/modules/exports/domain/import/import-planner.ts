@@ -139,6 +139,7 @@ function buildCharacter(data: CharacterExport, id: string, itemIds: Map<ExportRe
           { ...skill.devPointsSpent },
           skill.knackBonus ?? undefined,
           target.missingSkills.has(skill.skillId) || undefined,
+          skill.styleAbilities?.map(a => ({ ...a })),
         ),
     ),
     equipment: new CharacterEquipment(slots, 0, 0, 0, 0, 0, 0, 0, 0, 'e'),

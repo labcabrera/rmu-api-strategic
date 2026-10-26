@@ -147,6 +147,7 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
       cultureRanks: skill.cultureRanks ?? 0,
       devPointsSpent: { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 },
       knackBonus: orNull(skill.knackBonus),
+      ...(skill.styleAbilities?.length ? { styleAbilities: skill.styleAbilities.map(a => ({ ...a })) } : {}),
     })),
     traits: character.traits
       .filter(trait => trait.source !== 'race')

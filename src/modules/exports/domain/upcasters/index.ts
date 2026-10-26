@@ -49,6 +49,12 @@ export const UPCASTERS: Upcaster[] = [
       };
     },
   },
+  {
+    // Workspace spec 032: the skills of a fighting style may have styleAbilities; older files have none to change
+    from: 2,
+    description: 'Allows the fighting style abilities of the skills',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {

@@ -28,6 +28,13 @@ export class CharacterAccess {
     return this.gameAccess.canManage(await this.gameAccess.findGame(character.gameId), userId, roles);
   }
 
+  /** Changes its owner may not make alone (spec 032: undoing a fighting style ability): the game owner or an admin. */
+  async checkManage(character: Character, userId: string, roles: string[]): Promise<void> {
+    if (GameAccess.isAdmin(roles)) return;
+    if (this.gameAccess.canManage(await this.gameAccess.findGame(character.gameId), userId, roles)) return;
+    throw new ForbiddenError('Only the game master can change this of the character');
+  }
+
   async checkRead(character: Character, userId: string, roles: string[]): Promise<void> {
     if (GameAccess.readsAll(roles) || character.owner === userId) return;
     await this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
