@@ -59,7 +59,11 @@ function weaponToExport(weapon: ItemWeapon): ItemWeapon {
       ranges: mode.ranges ? mode.ranges.map(range => ({ from: range.from, to: range.to, bonus: range.bonus })) : null,
     })),
   };
-  return weapon.wielderSize ? { ...result, wielderSize: weapon.wielderSize } : result;
+  return {
+    ...result,
+    ...(weapon.wielderSize ? { wielderSize: weapon.wielderSize } : {}),
+    ...(weapon.tags?.length ? { tags: [...weapon.tags] } : {}),
+  };
 }
 
 const armorToExport = (armor: ItemArmor): ItemArmor => ({

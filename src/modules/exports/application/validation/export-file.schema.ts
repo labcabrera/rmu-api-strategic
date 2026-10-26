@@ -305,6 +305,7 @@ const item = Joi.object({
         .max(10)
         .required(),
       wielderSize: Joi.string().valid('small', 'medium', 'big'),
+      tags: Joi.array().items(id()).max(20),
     }),
   ).required(),
   armor: nullable(

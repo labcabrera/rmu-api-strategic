@@ -3840,6 +3840,42 @@
                               "medium",
                               "big"
                             ]
+                          },
+                          "tags": {
+                            "type": "array",
+                            "rules": [
+                              {
+                                "name": "max",
+                                "args": {
+                                  "limit": 20
+                                }
+                              }
+                            ],
+                            "items": [
+                              {
+                                "type": "string",
+                                "rules": [
+                                  {
+                                    "name": "trim",
+                                    "args": {
+                                      "enabled": true
+                                    }
+                                  },
+                                  {
+                                    "name": "min",
+                                    "args": {
+                                      "limit": 1
+                                    }
+                                  },
+                                  {
+                                    "name": "max",
+                                    "args": {
+                                      "limit": 200
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         }
                       },
@@ -4936,6 +4972,42 @@
                               "small",
                               "medium",
                               "big"
+                            ]
+                          },
+                          "tags": {
+                            "type": "array",
+                            "rules": [
+                              {
+                                "name": "max",
+                                "args": {
+                                  "limit": 20
+                                }
+                              }
+                            ],
+                            "items": [
+                              {
+                                "type": "string",
+                                "rules": [
+                                  {
+                                    "name": "trim",
+                                    "args": {
+                                      "enabled": true
+                                    }
+                                  },
+                                  {
+                                    "name": "min",
+                                    "args": {
+                                      "limit": 1
+                                    }
+                                  },
+                                  {
+                                    "name": "max",
+                                    "args": {
+                                      "limit": 200
+                                    }
+                                  }
+                                ]
+                              }
                             ]
                           }
                         }
@@ -8684,6 +8756,42 @@
                                       "small",
                                       "medium",
                                       "big"
+                                    ]
+                                  },
+                                  "tags": {
+                                    "type": "array",
+                                    "rules": [
+                                      {
+                                        "name": "max",
+                                        "args": {
+                                          "limit": 20
+                                        }
+                                      }
+                                    ],
+                                    "items": [
+                                      {
+                                        "type": "string",
+                                        "rules": [
+                                          {
+                                            "name": "trim",
+                                            "args": {
+                                              "enabled": true
+                                            }
+                                          },
+                                          {
+                                            "name": "min",
+                                            "args": {
+                                              "limit": 1
+                                            }
+                                          },
+                                          {
+                                            "name": "max",
+                                            "args": {
+                                              "limit": 200
+                                            }
+                                          }
+                                        ]
+                                      }
                                     ]
                                   }
                                 }

@@ -86,6 +86,7 @@ export class AttackProcessor {
             wrongSize: wrongSize,
             skillId: skillId,
             itemId: item.id,
+            ...(item.weapon!.tags?.length ? { weaponTags: [...item.weapon!.tags] } : {}),
           });
           attacks.push(attack);
         });

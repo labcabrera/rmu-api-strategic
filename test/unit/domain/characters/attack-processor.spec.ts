@@ -48,6 +48,17 @@ describe('AttackProcessor', () => {
     expect(attack.weaponCategory).toBe('dagger');
   });
 
+  it('copies the tags of the weapon type to its attacks (spec 032)', () => {
+    const item = buildWeapon('item-001', 'rapier', [mode('one-hand', 0)]);
+    (item as { weapon: ItemWeapon }).weapon = new ItemWeapon('melee-weapon@blade', 3, [mode('one-hand', 0)], undefined, ['fencing']);
+    const [attack] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }), [item]);
+    expect(attack.weaponTags).toEqual(['fencing']);
+    const [untagged] = generateAttacks(buildCharacter('medium', { mainHand: 'item-002', offHand: null }), [
+      buildWeapon('item-002', 'broadsword', [mode('one-hand', 0)]),
+    ]);
+    expect(untagged.weaponTags).toBeUndefined();
+  });
+
   it('classifies a weapon with a negative size adjustment as light', () => {
     const item = buildWeapon('item-001', 'short-sword', [mode('one-hand', -1)]);
     const [attack] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }), [item]);
