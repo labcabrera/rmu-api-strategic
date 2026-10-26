@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, Min } from 'class-validator';
-import type { KnownSpell, KnownSpellList } from '../../../application/cqrs/handlers/get-character-spells.handler.js';
+import type { CharacterSpellcasting } from '../../../application/cqrs/handlers/get-character-spellcasting.handler.js';
+import type { KnownSpell, KnownSpellList } from '../../../application/services/known-spells.reader.js';
+import { CharacterPowerDto } from './character-power.dto.js';
 
 export class PowerAmountDto {
   @ApiProperty({ description: 'Power points', example: 5 })
@@ -63,6 +65,37 @@ export class KnownSpellListDto {
     dto.ranks = entity.ranks;
     dto.listTypeModifier = entity.listTypeModifier;
     dto.spells = entity.spells.map(spell => KnownSpellDto.fromEntity(spell));
+    return dto;
+  }
+}
+
+export class CharacterSpellcastingDto {
+  @ApiProperty({ example: '6a1f0c2e-0000-4000-8000-000000000000' })
+  characterId: string;
+
+  @ApiProperty({ type: [String], example: ['essence'] })
+  realms: string[];
+
+  @ApiProperty({ description: 'Realm stat bonus (the lowest one for a hybrid)', example: 8 })
+  realmStatBonus: number;
+
+  @ApiProperty({ description: 'Caster level', example: 3 })
+  level: number;
+
+  @ApiProperty({ type: CharacterPowerDto, nullable: true })
+  power: CharacterPowerDto | null;
+
+  @ApiProperty({ type: [KnownSpellListDto] })
+  lists: KnownSpellListDto[];
+
+  static fromEntity(entity: CharacterSpellcasting): CharacterSpellcastingDto {
+    const dto = new CharacterSpellcastingDto();
+    dto.characterId = entity.characterId;
+    dto.realms = entity.realms;
+    dto.realmStatBonus = entity.realmStatBonus;
+    dto.level = entity.level;
+    dto.power = entity.power ? CharacterPowerDto.fromEntity(entity.power) : null;
+    dto.lists = entity.lists.map(list => KnownSpellListDto.fromEntity(list));
     return dto;
   }
 }

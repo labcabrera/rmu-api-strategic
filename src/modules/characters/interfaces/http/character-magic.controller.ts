@@ -8,9 +8,11 @@ import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenti
 import { Character } from '../../domain/aggregates/character.js';
 import { ChangePowerCommand, type PowerChange } from '../../application/cqrs/commands/change-power.command.js';
 import { GetCharacterSpellsQuery } from '../../application/cqrs/queries/get-character-spells.query.js';
-import type { KnownSpellList } from '../../application/cqrs/handlers/get-character-spells.handler.js';
+import type { KnownSpellList } from '../../application/services/known-spells.reader.js';
+import { GetCharacterSpellcastingQuery } from '../../application/cqrs/queries/get-character-spellcasting.query.js';
+import type { CharacterSpellcasting } from '../../application/cqrs/handlers/get-character-spellcasting.handler.js';
 import { CharacterDto } from './dto/character.dto.js';
-import { KnownSpellListDto, PowerAmountDto } from './dto/character-magic.dto.js';
+import { CharacterSpellcastingDto, KnownSpellListDto, PowerAmountDto } from './dto/character-magic.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('v1/characters')
@@ -33,6 +35,17 @@ export class CharacterMagicController {
     const query = new GetCharacterSpellsQuery(id, user.id, user.roles);
     const lists = await this.queryBus.execute<GetCharacterSpellsQuery, KnownSpellList[]>(query);
     return lists.map(list => KnownSpellListDto.fromEntity(list));
+  }
+
+  @Get(':id/spellcasting')
+  @ApiOperation({
+    operationId: 'findCharacterSpellcasting',
+    summary: 'Known spells plus realms, realm stat bonus, level and power points: what a Spellcasting Roll needs (spec 030)',
+  })
+  @ApiOkResponse({ type: CharacterSpellcastingDto })
+  async findSpellcasting(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<CharacterSpellcastingDto> {
+    const query = new GetCharacterSpellcastingQuery(id, user.id, user.roles);
+    return CharacterSpellcastingDto.fromEntity(await this.queryBus.execute<GetCharacterSpellcastingQuery, CharacterSpellcasting>(query));
   }
 
   @Post(':id/power/spend')

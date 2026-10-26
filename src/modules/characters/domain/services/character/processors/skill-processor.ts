@@ -6,7 +6,8 @@ import { Item } from '../../../../../items/domain/aggregates/item.js';
 import { type AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 import { matchesSkill } from '../traits/trait-specialization-matcher.js';
 import { DEFAULT_KNACK_BONUS } from '../../../../../games/domain/value-objects/game-power-level.vo.js';
-import { characterRealms, REALM_STAT_TOKEN, REALM_STATS } from '../../../value-objects/character-realm.vo.js';
+import { REALM_STAT_TOKEN } from '../../../value-objects/character-realm.vo.js';
+import { realmStatBonus } from '../../realms-rules.js';
 import { rankBonus } from '../../skills/rank-bonus.js';
 
 @Injectable()
@@ -54,8 +55,7 @@ export class SkillProcessor {
 
   // Realm stat bonus: the lowest of the realm stats for a hybrid (Spell Law 4.0)
   private getRealmStatBonus(character: Partial<Character>): number {
-    const bonuses = characterRealms(character.info).map(realm => character.statistics?.[REALM_STATS[realm]]?.totalBonus || 0);
-    return bonuses.length > 0 ? Math.min(...bonuses) : 0;
+    return realmStatBonus(character.info, character.statistics);
   }
 
   private getProfessionalBonus(skill: CharacterSkill): number {
