@@ -13,6 +13,8 @@ import { matchesAttack } from '../traits/trait-specialization-matcher.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 const SHIELD_FUMBLE = 4;
+// Core Law has no fumble column for shield bashes: the one-handed melee one is used (workspace spec 034)
+const SHIELD_FUMBLE_TABLE = 'melee-one-hand';
 const WRONG_SIZE_PENALTY = -20;
 const SHIELD_SKILL_ID = 'shield';
 
@@ -99,7 +101,7 @@ export class AttackProcessor {
           attackName: slot,
           attackTable: 'shield',
           sizeAdjustment: this.getTraitSizeAdjustment(character, SHIELD_SKILL_ID),
-          fumbleTable: 'shield',
+          fumbleTable: SHIELD_FUMBLE_TABLE,
           fumble: fumble,
           weaponFumble: SHIELD_FUMBLE,
           type: 'melee',
