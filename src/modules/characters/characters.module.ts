@@ -59,6 +59,8 @@ import { CharacterHealthController } from './interfaces/http/character-health.co
 import { CharacterMagicController } from './interfaces/http/character-magic.controller.js';
 import { ChangePowerHandler } from './application/cqrs/handlers/change-power.handler.js';
 import { GetCharacterSpellsHandler } from './application/cqrs/handlers/get-character-spells.handler.js';
+import { GetCharacterSpellcastingHandler } from './application/cqrs/handlers/get-character-spellcasting.handler.js';
+import { KnownSpellsReader } from './application/services/known-spells.reader.js';
 import { SpellListSkillResolver } from './application/services/spell-list-skill.resolver.js';
 import { SPELL_LIST_CLIENT } from './application/ports/spell-list-client.port.js';
 import { ApiSpellListClientAdapter } from './infrastructure/api-clients/api.spell-list-client.adapter.js';
@@ -159,6 +161,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     RestCharacterHandler,
     ChangePowerHandler,
     GetCharacterSpellsHandler,
+    GetCharacterSpellcastingHandler,
+    KnownSpellsReader,
     SpellListSkillResolver,
     ResolveConditionHandler,
     GetHealingLogHandler,

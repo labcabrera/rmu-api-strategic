@@ -150,6 +150,19 @@ describe('character magic (e2e)', () => {
       ]);
       expect((await as('other').get(`/v1/characters/${id}/spells`)).status).toBe(403);
     });
+
+    it('answers what a Spellcasting Roll needs: realms, realm stat bonus, level, power and known spells (spec 030)', async () => {
+      const { id } = await createMagician();
+      await addSkill(id, 'base-spell-list', 'e2e-base');
+      await levelUp(id, 'base-spell-list', 'e2e-base');
+      const response = await as('owner').get(`/v1/characters/${id}/spellcasting`);
+      expect(response.status).toBe(200);
+      const body = response.body as { realms: string[]; realmStatBonus: number; level: number; lists: { code: string }[] };
+      expect(body).toMatchObject({ characterId: id, realms: ['essence'], level: 0, power: null });
+      expect(typeof body.realmStatBonus).toBe('number');
+      expect(body.lists.map(list => list.code)).toEqual(['e2e-base']);
+      expect((await as('other').get(`/v1/characters/${id}/spellcasting`)).status).toBe(403);
+    });
   });
 
   describe('power points', () => {

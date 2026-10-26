@@ -1,5 +1,6 @@
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
-import { CHARACTER_REALMS, type CharacterRealm } from '../value-objects/character-realm.vo.js';
+import { CHARACTER_REALMS, characterRealms, REALM_STATS, type CharacterRealm } from '../value-objects/character-realm.vo.js';
+import type { StatKey } from '../value-objects/character-stat.vo.js';
 
 export interface ProfessionRealms {
   fixedRealmTypes?: string[] | null;
@@ -27,4 +28,13 @@ export function validateRealms(realms: string[], profession: ProfessionRealms): 
     throw new ValidationError(`The profession allows one realm of ${available.join(', ')}`, 'err-invalid-realm');
   }
   return unique as CharacterRealm[];
+}
+
+/** Realm stat bonus of a character (Spell Law 4.0): the bonus of its realm stat, the lowest one for a hybrid. */
+export function realmStatBonus(
+  info: Parameters<typeof characterRealms>[0],
+  statistics: Partial<Record<StatKey, { totalBonus?: number | null }>> | undefined,
+): number {
+  const bonuses = characterRealms(info).map(realm => statistics?.[REALM_STATS[realm]]?.totalBonus || 0);
+  return bonuses.length > 0 ? Math.min(...bonuses) : 0;
 }

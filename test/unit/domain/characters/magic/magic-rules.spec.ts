@@ -7,7 +7,7 @@ import {
   spellListSkill,
   type SpellListInfo,
 } from '../../../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
-import { validateRealms } from '../../../../../src/modules/characters/domain/services/realms-rules.js';
+import { realmStatBonus, validateRealms } from '../../../../../src/modules/characters/domain/services/realms-rules.js';
 import { restPowerPeriods, restPowerRecovery } from '../../../../../src/modules/characters/domain/services/power/power-rules.js';
 import { characterRealms } from '../../../../../src/modules/characters/domain/value-objects/character-realm.vo.js';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
@@ -72,6 +72,21 @@ describe('characterRealms', () => {
     expect(characterRealms({ realmType: 'essence', realmTypes: ['essence', 'mentalism'] })).toEqual(['essence', 'mentalism']);
     expect(characterRealms({ realmType: 'channeling' })).toEqual(['channeling']);
     expect(characterRealms(undefined)).toEqual([]);
+  });
+});
+
+describe('realmStatBonus', () => {
+  const stats = { in: { totalBonus: 4 }, em: { totalBonus: 9 }, pr: { totalBonus: -2 } };
+
+  it('is the bonus of the realm stat, the lowest one for a hybrid', () => {
+    expect(realmStatBonus({ realmTypes: ['essence'] }, stats)).toBe(9);
+    expect(realmStatBonus({ realmTypes: ['channeling', 'essence'] }, stats)).toBe(4);
+    expect(realmStatBonus({ realmTypes: ['essence', 'mentalism'] }, stats)).toBe(-2);
+  });
+
+  it('is 0 without realms or stats', () => {
+    expect(realmStatBonus(undefined, stats)).toBe(0);
+    expect(realmStatBonus({ realmTypes: ['mentalism'] }, undefined)).toBe(0);
   });
 });
 
