@@ -48,8 +48,11 @@ import { HealingCalculator, type InjuryProgress } from '../services/healing/heal
 import { InjuryTreatmentRules } from '../services/healing/injury-treatment-rules.js';
 import type { HealingTables } from '../value-objects/healing-tables.vo.js';
 import { type OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger.js';
+import { UNRANKED_RANK_BONUS } from '../services/skills/rank-bonus.js';
+import { restPowerRecovery } from '../services/power/power-rules.js';
 
-export const UNRANKED_SKILL_BONUS = -20;
+// A character without the skill: no ranks (Core Law table 3-0b)
+export const UNRANKED_SKILL_BONUS = UNRANKED_RANK_BONUS;
 export const MAX_RANKS_PER_LEVEL = 2;
 export const MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK = 3;
 
@@ -103,6 +106,9 @@ export interface RestResult {
   days: number;
   injuries: { injuryId: string; days: number; penalty: number; remainingDays: number; status: string }[];
   resolvedConditions: string[];
+  /** Power points before and after the rest: null without power */
+  powerBefore: number | null;
+  powerAfter: number | null;
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -758,8 +764,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   /** Passes time resting: hits per rest period and days off the injury counters. */
-  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>): RestResult {
+  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>, powerPeriods = 0): RestResult {
     const hpBefore = this.hp.current;
+    const powerBefore = this.power ? this.power.current : null;
+    if (this.power) {
+      const recovered = restPowerRecovery(this.power.max, powerPeriods);
+      this.power = { ...this.power, current: Math.max(this.power.current, Math.min(this.power.max, this.power.current + recovered)) };
+    }
     this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
     const progress: InjuryProgress[] = this.injuries.map(injury => HealingCalculator.advance(injury, days, now));
     this.injuries = progress.map(p => p.injury);
@@ -778,10 +789,32 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
           status: p.injury.status,
         })),
       resolvedConditions,
+      powerBefore,
+      powerAfter: this.power ? this.power.current : null,
     };
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
+  }
+
+  /** Spends power points (casting a spell). Not enough points is an error. */
+  spendPower(amount: number): void {
+    if (!this.power) throw new ValidationError(`Character ${this.id} has no power points`, 'err-no-power');
+    if (amount > this.power.current) {
+      throw new ValidationError(
+        `Character ${this.id} has ${this.power.current} power points, ${amount} required`,
+        'err-insufficient-power',
+      );
+    }
+    this.power = { ...this.power, current: this.power.current - amount };
+    this.touch();
+  }
+
+  /** Gives back power points (game master or a correction), up to the maximum. */
+  restorePower(amount: number): void {
+    if (!this.power) throw new ValidationError(`Character ${this.id} has no power points`, 'err-no-power');
+    this.power = { ...this.power, current: Math.min(this.power.max, this.power.current + amount) };
+    this.touch();
   }
 
   /** Resolves the unconscious conditions once the hits are above 0. */

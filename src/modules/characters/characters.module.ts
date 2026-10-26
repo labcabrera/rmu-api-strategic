@@ -56,6 +56,12 @@ import { ApiCultureClientAdapter } from './infrastructure/api-clients/api.cultur
 import { ItemsModule } from '../items/items.module.js';
 import { UpdateTemporaryStatHandler } from './application/cqrs/handlers/update-temporary-stat.handler.js';
 import { CharacterHealthController } from './interfaces/http/character-health.controller.js';
+import { CharacterMagicController } from './interfaces/http/character-magic.controller.js';
+import { ChangePowerHandler } from './application/cqrs/handlers/change-power.handler.js';
+import { GetCharacterSpellsHandler } from './application/cqrs/handlers/get-character-spells.handler.js';
+import { SpellListSkillResolver } from './application/services/spell-list-skill.resolver.js';
+import { SPELL_LIST_CLIENT } from './application/ports/spell-list-client.port.js';
+import { ApiSpellListClientAdapter } from './infrastructure/api-clients/api.spell-list-client.adapter.js';
 import { CharacterHealthStore } from './application/services/character-health.store.js';
 import { ApplyTacticalOutcomeHandler } from './application/cqrs/handlers/apply-tactical-outcome.handler.js';
 import { TacticalOutcomeItemsMerger } from './application/services/tactical-outcome-items.merger.js';
@@ -103,6 +109,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     CharacterItemController,
     CharacterTraitController,
     CharacterHealthController,
+    CharacterMagicController,
     KafkaRaceEventConsumer,
     KafkaCharacterEventConsumer,
   ],
@@ -150,6 +157,9 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     RollInjuryRecoveryHandler,
     RollPermanentInjuryHandler,
     RestCharacterHandler,
+    ChangePowerHandler,
+    GetCharacterSpellsHandler,
+    SpellListSkillResolver,
     ResolveConditionHandler,
     GetHealingLogHandler,
     GetTreatmentDifficultyHandler,
@@ -192,6 +202,10 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     {
       provide: CULTURE_CLIENT,
       useClass: ApiCultureClientAdapter,
+    },
+    {
+      provide: SPELL_LIST_CLIENT,
+      useClass: ApiSpellListClientAdapter,
     },
   ],
   exports: [

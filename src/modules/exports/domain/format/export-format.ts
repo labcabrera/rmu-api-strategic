@@ -21,7 +21,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 1;
+export const CURRENT_FORMAT_VERSION = 2;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -67,7 +67,10 @@ export interface CharacterExportInfo {
   raceName: string;
   professionId: string;
   sizeId: string;
+  /** Deprecated: the first realm, kept for older readers */
   realmType: CharacterRealm;
+  /** Spec 029 (format 2): the realms, two for a hybrid */
+  realmTypes: CharacterRealm[];
   height: number;
   weight: number;
   cultureId: string | null;

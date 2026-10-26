@@ -1,3 +1,4 @@
+import { characterRealms } from '../../../characters/domain/value-objects/character-realm.vo.js';
 import type { Character } from '../../../characters/domain/aggregates/character.js';
 import type { EquipmentSlot } from '../../../characters/domain/value-objects/character-equipment.vo.js';
 import { STAT_KEYS, type StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
@@ -114,7 +115,8 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
       raceName: character.info.race.name,
       professionId: character.info.professionId,
       sizeId: character.info.sizeId,
-      realmType: character.info.realmType,
+      realmType: characterRealms(character.info)[0],
+      realmTypes: characterRealms(character.info),
       height: character.info.height,
       weight: character.info.weight,
       cultureId: orNull(character.info.cultureId),

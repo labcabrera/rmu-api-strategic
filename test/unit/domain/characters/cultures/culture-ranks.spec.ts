@@ -223,6 +223,7 @@ describe('CreateCharacterHandler', () => {
       fakeEventPublisher().publisher,
       { process: vi.fn() } as unknown as CharacterProcessorService,
       allowAllCharacterAccess,
+      { resolve: (skillId: string) => Promise.resolve(skillId) } as never,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>
       handler.execute(
@@ -230,7 +231,7 @@ describe('CreateCharacterHandler', () => {
           'game-001',
           'faction-001',
           'Test',
-          new CreateCharacterInfo('race-001', 'fighter', 'medium', 'essence', 1.8, 80),
+          new CreateCharacterInfo('race-001', 'fighter', 'medium', ['essence'], 1.8, 80),
           { gender: undefined, age: undefined },
           5,
           ['melee', 'ranged', 'shield', 'unarmed'],

@@ -19,6 +19,8 @@ import type { DomainEventPublisher } from '../../../src/modules/shared/applicati
 import type { BaseAggregateRoot } from '../../../src/modules/shared/domain/aggregates/base-aggregate.js';
 import type { DomainEvent } from '../../../src/modules/shared/domain/events/domain-event.js';
 import { NotFoundError } from '../../../src/modules/shared/domain/errors/errors.js';
+import type { SpellListClientPort, SpellResponse } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
+import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
 import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
 // Invented catalog data (not book data): the minimum the strategic API reads from core and items.
@@ -30,15 +32,60 @@ export const SKILLS: SkillResponse[] = [
   { id: 'perception', categoryId: 'awareness', bonus: ['in'], specialization: undefined },
   { id: 'jumping', categoryId: 'athletic', bonus: ['ag'], specialization: undefined },
   { id: 'melee-weapon', categoryId: 'combat', bonus: ['st'], specialization: 'weapon' },
+  { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
+  ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
+    id: `${type}-spell-list`,
+    categoryId: 'spellcasting',
+    bonus: ['me'],
+    specialization: 'spell-list',
+  })),
 ];
 
-export const SKILL_CATEGORIES: SkillCategoryResponse[] = ['physical', 'awareness', 'athletic', 'combat'].map(id => ({ id, bonus: [] }));
+export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
+  ...['physical', 'awareness', 'athletic', 'combat'].map(id => ({ id, bonus: [] })),
+  // Spec 029: the realm stat counts twice (R*+R*)
+  ...['spellcasting', 'power-manipulation'].map(id => ({ id, bonus: [], realmBonus: 2 })),
+];
 
 export const PROFESSION: Profession = {
   id: 'fighter',
   professionalSkills: [],
   skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8] },
 };
+
+/** A pure spellcaster of essence, with invented costs. */
+export const MAGICIAN: Profession = {
+  id: 'magician',
+  professionalSkills: [],
+  fixedRealmTypes: ['essence'],
+  availableRealmTypes: [],
+  skillCosts: {
+    physical: [2, 6],
+    awareness: [2, 4],
+    'spells-base-open': [1, 2],
+    'spells-closed': [2, 4],
+    'spells-restricted': [6, 8],
+    'power-manipulation': [2, 3],
+  },
+};
+
+/** Invented spell lists and spells of rmu-api-spells (not book data). */
+export const SPELL_LISTS: SpellListInfo[] = [
+  { id: 'list-base', code: 'e2e-base', name: 'E2E base', realms: ['essence'], type: 'base', professionId: 'magician' },
+  { id: 'list-other-base', code: 'e2e-other-base', name: 'E2E other base', realms: ['essence'], type: 'base', professionId: 'illusionist' },
+  { id: 'list-open', code: 'e2e-open', name: 'E2E open', realms: ['essence'], type: 'open', professionId: null },
+  { id: 'list-evil', code: 'e2e-evil', name: 'E2E evil', realms: ['essence'], type: 'evil', professionId: null },
+  { id: 'list-channeling', code: 'e2e-channeling', name: 'E2E channeling', realms: ['channeling'], type: 'open', professionId: null },
+];
+
+export const SPELLS: SpellResponse[] = [1, 2, 3].map(level => ({
+  id: `spell-base-${level}`,
+  spellListId: 'list-base',
+  name: `E2E spell ${level}`,
+  level,
+  modifiers: { powerPoints: level === 2 ? 0 : null },
+  effects: [],
+}));
 
 export const RACE = {
   id: 'race-001',
@@ -175,7 +222,13 @@ export function apiFakes() {
     getAllSkillCategories: () => Promise.resolve(SKILL_CATEGORIES),
     getSkillCategoryById: (id: string) => Promise.resolve(SKILL_CATEGORIES.find(category => category.id === id)!),
   };
-  const professionClient: ProfessionClientPort = { getProfessionById: () => Promise.resolve(PROFESSION) };
+  const professionClient: ProfessionClientPort = {
+    getProfessionById: id => Promise.resolve(id === MAGICIAN.id ? MAGICIAN : PROFESSION),
+  };
+  const spellListClient: SpellListClientPort = {
+    getSpellListByCode: code => Promise.resolve(SPELL_LISTS.find(list => list.code === code)),
+    getSpellsByListId: id => Promise.resolve(SPELLS.filter(spell => spell.spellListId === id)),
+  };
   const traitClient: TraitClientPort = {
     getTraitById: (id: string) => Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
   };
@@ -217,6 +270,7 @@ export function apiFakes() {
     cultureClient,
     healingTablesClient,
     maneuverClient,
+    spellListClient,
   };
 }
 

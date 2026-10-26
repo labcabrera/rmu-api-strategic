@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { REALM_STAT_TOKEN } from '../../../characters/domain/value-objects/character-realm.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../characters/domain/value-objects/character-condition.vo.js';
 import { STAT_KEYS } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import {
@@ -145,6 +146,10 @@ const character = Joi.object({
       .valid(...SIZES)
       .required(),
     realmType: Joi.string().valid('channeling', 'essence', 'mentalism').required(),
+    realmTypes: Joi.array()
+      .items(Joi.string().valid('channeling', 'essence', 'mentalism'))
+      .min(1)
+      .max(2),
     height: num().min(0).required(),
     weight: num().min(0).required(),
     cultureId: nullable(id()).required(),
@@ -183,7 +188,8 @@ const character = Joi.object({
         skillId: id().required(),
         specialization: nullable(name()).required(),
         statistics: Joi.array()
-          .items(Joi.string().valid(...STAT_KEYS))
+          // The realm stat placeholder of Spellcasting and Power Manipulation (spec 029)
+          .items(Joi.string().valid(...STAT_KEYS, REALM_STAT_TOKEN))
           .max(10)
           .required(),
         development: Joi.array().items(num()).max(10).required(),

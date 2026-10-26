@@ -6,12 +6,13 @@ export const envSchema = Joi.object({
   RMU_MONGO_STRATEGIC_URI: Joi.string().required(),
   RMU_API_CORE_URI: Joi.string().required(),
   RMU_API_ITEMS_URI: Joi.string().required(),
+  RMU_API_SPELLS_URI: Joi.string().required(),
   RMU_IAM_URI: Joi.string().uri().default('http://localhost/sso'),
   RMU_IAM_REALM: Joi.string().default('rmu'),
   RMU_IAM_JWK_URI: Joi.string().uri().required(),
   RMU_IAM_ISSUER_URI: Joi.string().uri().required(),
   RMU_IAM_AUDIENCE: Joi.string().required(),
-  // The service token used to call core and items (TokenService, client credentials).
+  // The service token used to call core, items and spells (TokenService, client credentials).
   RMU_IAM_TOKEN_URI: Joi.string().uri().required(),
   RMU_IAM_CLIENT_ID: Joi.string().required(),
   RMU_IAM_CLIENT_SECRET: Joi.string().required(),

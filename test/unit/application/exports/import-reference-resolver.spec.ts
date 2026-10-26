@@ -7,7 +7,7 @@ import { BadGatewayError, NotFoundError } from '../../../../src/modules/shared/d
 import { UpstreamBadGatewayError } from '../../../../src/modules/shared/infrastructure/http/http-client.js';
 
 const file = () =>
-  JSON.parse(readFileSync(join(import.meta.dirname, '../../../fixtures/exports/v1/character.rmu.json'), 'utf8')) as CharacterFile;
+  JSON.parse(readFileSync(join(import.meta.dirname, '../../../fixtures/exports/v2/character.rmu.json'), 'utf8')) as CharacterFile;
 
 describe('import reference resolver (spec 024, decision 8)', () => {
   const clients = (overrides: Record<string, unknown> = {}) => {

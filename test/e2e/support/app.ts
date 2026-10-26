@@ -14,6 +14,7 @@ import { PROFESSION_CLIENT } from '../../../src/modules/characters/application/p
 import { TRAIT_CLIENT } from '../../../src/modules/characters/application/ports/trait-client.port.js';
 import { CULTURE_CLIENT } from '../../../src/modules/characters/application/ports/culture-client.port.js';
 import { HEALING_TABLES_CLIENT } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
+import { SPELL_LIST_CLIENT } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import { MANEUVER_CLIENT } from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
@@ -61,6 +62,7 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     RMU_MONGO_STRATEGIC_URI: mongo.getUri('rmu-strategic-e2e'),
     RMU_API_CORE_URI: 'http://127.0.0.1:1/v1',
     RMU_API_ITEMS_URI: 'http://127.0.0.1:1/v1',
+    RMU_API_SPELLS_URI: 'http://127.0.0.1:1/v1',
     RMU_IAM_JWK_URI: jwks.uri,
     RMU_IAM_ISSUER_URI: ISSUER,
     RMU_IAM_AUDIENCE: AUDIENCE,
@@ -103,6 +105,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.healingTablesClient)
     .overrideProvider(MANEUVER_CLIENT)
     .useValue(fakes.maneuverClient)
+    .overrideProvider(SPELL_LIST_CLIENT)
+    .useValue(fakes.spellListClient)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);

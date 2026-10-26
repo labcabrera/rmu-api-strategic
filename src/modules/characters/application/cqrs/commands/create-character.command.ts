@@ -47,7 +47,8 @@ export class CreateCharacterInfo {
     public readonly raceId: string,
     public readonly professionId: string,
     public readonly sizeId: string,
-    public readonly realmType: CharacterRealm,
+    // One realm, or the two of a hybrid profession (spec 029)
+    public readonly realmTypes: CharacterRealm[],
     public readonly height: number,
     public readonly weight: number,
   ) {}
