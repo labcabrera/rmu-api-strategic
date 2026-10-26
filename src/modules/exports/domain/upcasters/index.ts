@@ -19,8 +19,37 @@ export interface Upcaster {
   up: (doc: ExportDocument) => ExportDocument;
 }
 
-/** Version 1 is the first one: nothing to upcast yet. */
-export const UPCASTERS: Upcaster[] = [];
+type CharacterInfoDocument = { realmType?: string; realmTypes?: string[] } & Record<string, unknown>;
+type CharacterDocument = { info?: CharacterInfoDocument } & Record<string, unknown>;
+
+const withRealmTypes = (character: CharacterDocument): CharacterDocument =>
+  character.info
+    ? { ...character, info: { ...character.info, realmTypes: character.info.realmTypes ?? [character.info.realmType!] } }
+    : character;
+
+/** Version 1 is the first one. */
+export const UPCASTERS: Upcaster[] = [
+  {
+    // Spec 029: the two realms of a hybrid; the skills may also have the realm stat placeholder in their statistics
+    from: 1,
+    description: 'Adds info.realmTypes from info.realmType',
+    up: (doc: ExportDocument): ExportDocument => {
+      // A character file has data.character; a faction file, data.characters[].character
+      type FactionEntry = { character: CharacterDocument } & Record<string, unknown>;
+      const data = doc.data as { character?: CharacterDocument; characters?: FactionEntry[] } & Record<string, unknown>;
+      return {
+        ...doc,
+        data: {
+          ...data,
+          ...(data.character ? { character: withRealmTypes(data.character) } : {}),
+          ...(data.characters
+            ? { characters: data.characters.map(entry => ({ ...entry, character: withRealmTypes(entry.character) })) }
+            : {}),
+        },
+      };
+    },
+  },
+];
 
 export interface UpcastStep {
   from: number;

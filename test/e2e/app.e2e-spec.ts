@@ -18,6 +18,7 @@ describe('rmu-api-strategic (e2e)', () => {
       RMU_MONGO_STRATEGIC_URI: mongo.getUri('rmu-strategic-e2e'),
       RMU_API_CORE_URI: 'http://localhost:1/v1',
       RMU_API_ITEMS_URI: 'http://localhost:1/v1',
+      RMU_API_SPELLS_URI: 'http://localhost:1/v1',
       RMU_IAM_JWK_URI: 'http://localhost:1/certs',
       RMU_IAM_ISSUER_URI: 'http://localhost/sso/realms/rmu',
       RMU_IAM_AUDIENCE: 'rmu-api',

@@ -161,7 +161,7 @@ export class CharacterHealthController {
   @Post(':id/rest')
   @HttpCode(200)
   @ApiBody({ type: RestDto })
-  @ApiOperation({ operationId: 'restCharacter', summary: 'Pass time resting: hits and injury recovery' })
+  @ApiOperation({ operationId: 'restCharacter', summary: 'Pass time resting: hits, power points and injury recovery' })
   @ApiOkResponse({ type: CharacterDto })
   async rest(@Param('id') id: string, @Body() dto: RestDto, @CurrentUser() user: AuthenticatedUser): Promise<CharacterDto> {
     const command = RestDto.toCommand(id, dto, user.id, user.roles);

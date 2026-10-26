@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { Character } from '../../../aggregates/character.js';
+import { characterRealms } from '../../../value-objects/character-realm.vo.js';
 import { CharacterResistance, RESISTANCE_BONUS_PER_LEVEL } from '../../../value-objects/character-resistances.vo.js';
 import { type AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 import { matchesKey } from '../traits/trait-specialization-matcher.js';
@@ -86,7 +87,7 @@ export class ResistancesProcessor {
       case 'channeling':
       case 'essence':
       case 'mentalism':
-        return character.info?.realmType === resistance ? 10 : 0;
+        return characterRealms(character.info).includes(resistance) ? 10 : 0;
       default:
         return 0;
     }

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 import type { CharacterInfo } from '../../../domain/value-objects/character-info.vo.js';
-import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
+import { characterRealms, type CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
 import { Type } from 'class-transformer';
 import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto.js';
 
@@ -22,9 +22,10 @@ export class CharacterInfoDto {
   @IsNotEmpty()
   sizeId: string;
 
-  @ApiProperty({ type: String, description: 'Character realm type', example: 'channeling' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ type: [String], description: 'Realms of the character: two for a hybrid', example: ['channeling'] })
+  realmTypes: CharacterRealm[];
+
+  @ApiProperty({ type: String, description: 'Deprecated: the first realm, use realmTypes', example: 'channeling', deprecated: true })
   realmType: CharacterRealm;
 
   @ApiProperty({ description: 'Character size', example: 'Medium' })
@@ -48,7 +49,8 @@ export class CharacterInfoDto {
     dto.race = { id: entity.race.id, name: entity.race.name };
     dto.professionId = entity.professionId;
     dto.sizeId = entity.sizeId;
-    dto.realmType = entity.realmType;
+    dto.realmTypes = characterRealms(entity);
+    dto.realmType = dto.realmTypes[0];
     dto.height = entity.height;
     dto.weight = entity.weight;
     dto.cultureId = entity.cultureId ?? null;

@@ -5,7 +5,10 @@ export interface CharacterInfo {
   race: NamedEntity;
   professionId: string;
   sizeId: string;
+  /** Deprecated: the first realm, kept for older readers. Use characterRealms() */
   realmType: CharacterRealm;
+  /** Realms of the character: two for a hybrid (spec 029). Missing in older documents */
+  realmTypes?: CharacterRealm[];
   height: number;
   weight: number;
   cultureId?: string | null;

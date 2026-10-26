@@ -9,7 +9,10 @@ import { type SkillCategoryClientPort, SKILL_CATEGORY_CLIENT } from '../../ports
 import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port.js';
 import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port.js';
 import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port.js';
-import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import { characterRealms } from '../../../domain/value-objects/character-realm.vo.js';
+import { developmentCostKey, skillStatistics } from '../../../domain/services/skills/skill-development.js';
+import { isSpellListSkill } from '../../../domain/services/spells/spell-list-rules.js';
+import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver.js';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
@@ -26,11 +29,11 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterAccess: CharacterAccess,
+    private readonly spellListSkillResolver: SpellListSkillResolver,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
     const characterId = command.characterId;
-    const skillId = command.skillId;
     const specialization = command.specialization;
 
     const character = await this.characterRepository.findById(command.characterId);
@@ -38,12 +41,17 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     // Its owner, the owner of its game or an admin (F-strategic-15).
     await this.characterAccess.checkChange(character, command.userId, command.roles);
 
-    if (character.findSkill(skillId, specialization)) {
-      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
-    }
-
     if (command.ranks > 0 && !command.roles.includes('admin')) {
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
+    }
+
+    // A spell list: the skill follows from the list and the profession (spec 029)
+    const skillId = await this.spellListSkillResolver.resolve(command.skillId, specialization, {
+      professionId: character.info.professionId,
+      realms: characterRealms(character.info),
+    });
+    if (this.alreadyHasSkill(character, skillId, specialization)) {
+      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
     }
 
     const [readedSkill, readedProfession, readedRace] = await Promise.all([
@@ -61,9 +69,9 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
     if (!readedCategory) throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
 
-    const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
-    const devPoints = readedProfession.skillCosts[categoryId] || [];
-    const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
+    const costKey = developmentCostKey(skillId, readedSkill.categoryId, character.experience.weaponDevelopment);
+    const devPoints = readedProfession.skillCosts[costKey] || [];
+    const statistics = skillStatistics(readedSkill.bonus, readedCategory);
 
     //TODO add to core model
     let racialBonus = 0;
@@ -75,7 +83,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
         racialBonus = skillBonus.bonus;
       }
     }
-    character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
+    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
@@ -84,13 +92,10 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     return updated;
   }
 
-  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
-    const combatType = this.mapCombatSkill(skillId);
-    if (combatType) {
-      const index = character.experience.weaponDevelopment.indexOf(combatType);
-      return `combat${index + 1}`;
-    }
-    return categoryId;
+  // A list is learned once, whatever list skill it was taken with
+  private alreadyHasSkill(character: Character, skillId: string, specialization: string | null): boolean {
+    if (character.findSkill(skillId, specialization)) return true;
+    return isSpellListSkill(skillId) && character.skills.some(s => isSpellListSkill(s.skillId) && s.specialization === specialization);
   }
 
   private validateSpecialization(skill: SkillResponse, specialization: string | null): void {
@@ -101,13 +106,5 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     } else if (specialization) {
       throw new ValidationError(`Skill ${skill.id} does not allow specialization`);
     }
-  }
-
-  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
-    if (skillId.startsWith('melee-weapon')) return 'melee';
-    if (skillId.startsWith('ranged-weapon')) return 'ranged';
-    if (skillId === 'shield') return 'shield';
-    if (skillId === 'unarmed-st' || skillId === 'unarmed-ag') return 'unarmed';
-    return undefined;
   }
 }

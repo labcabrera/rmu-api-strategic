@@ -6,6 +6,7 @@ import { HealingCalculator } from '../../../domain/services/healing/healing-calc
 import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
 import { CharacterHealthStore } from '../../services/character-health.store.js';
 import { RestCharacterCommand } from '../commands/rest-character.command.js';
+import { restPowerPeriods } from '../../../domain/services/power/power-rules.js';
 
 const HOURS_PER_DAY = 24;
 
@@ -29,7 +30,8 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
     const elapsedDays = days + Math.floor(hours / HOURS_PER_DAY);
     const counterDays = calculator.restDays(elapsedDays, command.fullRest);
     const hpAfter = calculator.restHp(character.hp.max, character.hp.current, hours + days * HOURS_PER_DAY);
-    character.rest(hpAfter, counterDays, new Date().toISOString(), { hours, restDays: days, fullRest: command.fullRest });
+    const summary = { hours, restDays: days, fullRest: command.fullRest };
+    character.rest(hpAfter, counterDays, new Date().toISOString(), summary, restPowerPeriods(hours, days));
     return this.store.save(character);
   }
 }

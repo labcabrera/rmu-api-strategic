@@ -13,7 +13,10 @@ import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../po
 import { type SkillCategoryClientPort, type SkillCategoryResponse, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port.js';
 import { CharacterStat, STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 import type { CharacterInfo } from '../../../domain/value-objects/character-info.vo.js';
-import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import { characterRealms, type CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
+import { validateRealms } from '../../../domain/services/realms-rules.js';
+import { developmentCostKey, skillStatistics } from '../../../domain/services/skills/skill-development.js';
+import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver.js';
 import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { NamedEntity } from '../../../../shared/domain/entities/named-entity.js';
 import { CharacterCreatedEvent } from '../../../domain/events/character.events.js';
@@ -45,6 +48,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterProcessorService: CharacterProcessorService,
     private readonly characterAccess: CharacterAccess,
+    private readonly spellListSkillResolver: SpellListSkillResolver,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -69,7 +73,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const cultureRanks = culture ? resolveCultureRanks(culture, command.culture!.assignments || [], catalogSkills) : [];
 
     const processedStatistics = this.processStatistics(race, command.statistics);
-    const info = this.getCharacterInfo(command, race);
+    const realms = validateRealms(command.info.realmTypes, profession);
+    const info = this.getCharacterInfo(command, race, realms);
     const character = Character.partialCreate(
       game,
       new NamedEntity(faction.id, faction.name),
@@ -163,49 +168,36 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     });
     const readedSkills = catalogSkills ?? (await this.fetchSkills());
     const readedSkillCategories = await this.fetchSkillCategories();
+    const context = { professionId: profession.id, realms: characterRealms(character.info) };
     for (const skill of skills) {
-      const readedSkill = readedSkills.find(s => s.id == skill.skillId);
+      // A spell list: the skill follows from the list and the profession (spec 029)
+      const skillId = await this.spellListSkillResolver.resolve(skill.skillId, skill.specialization, context);
+      const readedSkill = readedSkills.find(s => s.id == skillId);
       if (!readedSkill) {
-        throw new ValidationError(`Invalid skill identifier '${skill.skillId}'`);
+        throw new ValidationError(`Invalid skill identifier '${skillId}'`);
       }
       const readedCategory = readedSkillCategories.find(c => c.id == readedSkill.categoryId);
       if (!readedCategory) {
         throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
       }
-      const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
-      const categoryId = this.getSkillDevelopmentCategory(character, skill.skillId, readedCategory.id);
-      const devPoints = profession.skillCosts[categoryId] || [];
-      character.addSkill(skill.skillId, skill.specialization, statistics, devPoints, 0);
+      const statistics = skillStatistics(readedSkill.bonus, readedCategory);
+      const costKey = developmentCostKey(skillId, readedCategory.id, character.experience.weaponDevelopment);
+      const devPoints = profession.skillCosts[costKey] || [];
+      character.addSkill(skillId, skill.specialization, statistics, devPoints, 0);
     }
   }
 
-  private getCharacterInfo(command: CreateCharacterCommand, race: Race): CharacterInfo {
+  private getCharacterInfo(command: CreateCharacterCommand, race: Race, realms: CharacterRealm[]): CharacterInfo {
     return {
       race: new NamedEntity(race.id, race.name),
       professionId: command.info.professionId,
       sizeId: command.info.sizeId,
-      realmType: command.info.realmType,
+      realmType: realms[0],
+      realmTypes: realms,
       height: command.info.height,
       weight: command.info.weight,
       cultureId: null,
     };
-  }
-
-  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
-    const combatType = this.mapCombatSkill(skillId);
-    if (combatType) {
-      const index = character.experience.weaponDevelopment.indexOf(combatType);
-      return `combat${index + 1}`;
-    }
-    return categoryId;
-  }
-
-  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
-    if (skillId.startsWith('melee-weapon')) return 'melee';
-    if (skillId.startsWith('ranged-weapon')) return 'ranged';
-    if (skillId === 'shield') return 'shield';
-    if (skillId === 'unarmed-st' || skillId === 'unarmed-ag') return 'unarmed';
-    return undefined;
   }
 
   private async fetchRace(raceId: string): Promise<Race> {

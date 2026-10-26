@@ -16,6 +16,9 @@ export class CharacterInfo {
   @Prop({ type: String, required: true })
   realmType: CharacterRealm;
 
+  @Prop({ type: [String], required: false })
+  realmTypes?: CharacterRealm[];
+
   @Prop({ required: true })
   height: number;
 

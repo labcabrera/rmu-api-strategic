@@ -9,12 +9,12 @@ const fixture = (path: string) =>
 
 describe('import consistency (spec 024, decision 11)', () => {
   it('accepts the example files', () => {
-    expect(validateConsistency(fixture('v1/character.rmu.json'))).toEqual([]);
-    expect(validateConsistency(fixture('v1/faction.rmu.json'))).toEqual([]);
+    expect(validateConsistency(fixture('v2/character.rmu.json'))).toEqual([]);
+    expect(validateConsistency(fixture('v2/faction.rmu.json'))).toEqual([]);
   });
 
   it('rejects repeated refs, slots to unknown or unsuitable items and unknown crafters', () => {
-    const file = fixture('v1/faction.rmu.json') as any;
+    const file = fixture('v2/faction.rmu.json') as any;
     file.data.characters[1].ref = file.data.characters[0].ref;
     const soldier = file.data.characters.find((c: any) => c.items.length > 0);
     soldier.character.equipment.slots.body = soldier.items[0].ref;
