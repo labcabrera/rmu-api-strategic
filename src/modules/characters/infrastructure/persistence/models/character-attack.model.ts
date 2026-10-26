@@ -65,4 +65,7 @@ export class CharacterAttack {
 
   @Prop({ type: String, required: false })
   itemId?: string;
+
+  @Prop({ type: [String], required: false })
+  weaponTags?: string[];
 }

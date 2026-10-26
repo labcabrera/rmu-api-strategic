@@ -36,6 +36,10 @@ import { XPProcessor } from './domain/services/character/processors/xp-processor
 import { MongoCharacterRepository } from './infrastructure/db/mongo.character.repository.js';
 import { CharacterModel, CharacterSchema } from './infrastructure/persistence/models/character.model.js';
 import { LevelDownSkillHandler } from './application/cqrs/handlers/level-down-skill.handler.js';
+import { AddStyleAbilityHandler } from './application/cqrs/handlers/add-style-ability.handler.js';
+import { RemoveStyleAbilityHandler } from './application/cqrs/handlers/remove-style-ability.handler.js';
+import { FIGHTING_STYLES_CLIENT } from './application/ports/fighting-styles-client.port.js';
+import { ApiFightingStylesClientAdapter } from './infrastructure/api-clients/api.fighting-styles-client.adapter.js';
 import { LevelUpSkillHandler } from './application/cqrs/handlers/level-up-skill.handler.js';
 import { UnequipItemHandler } from './application/cqrs/handlers/unequip-item.handler.js';
 import { UpdateCharacterRaceHandler } from './application/cqrs/handlers/update-character-race.handler.js';
@@ -143,6 +147,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     LevelUpHandler,
     LevelUpSkillHandler,
     LevelDownSkillHandler,
+    AddStyleAbilityHandler,
+    RemoveStyleAbilityHandler,
     SetupProfessionSkillHandler,
     AddTraitHandler,
     DeleteTraitHandler,
@@ -170,6 +176,10 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     {
       provide: HEALING_LOG_REPOSITORY,
       useClass: MongoHealingLogRepository,
+    },
+    {
+      provide: FIGHTING_STYLES_CLIENT,
+      useClass: ApiFightingStylesClientAdapter,
     },
     {
       provide: HEALING_TABLES_CLIENT,

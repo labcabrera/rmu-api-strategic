@@ -123,6 +123,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
         { normal: spent?.normal ?? 0, bonus: spent?.bonus ?? 0 },
         s.knackBonus ?? undefined,
         s.missingReference || undefined,
+        s.styleAbilities?.length ? s.styleAbilities.map(a => ({ abilityId: a.abilityId, times: a.times, cost: a.cost })) : undefined,
       );
     });
   }

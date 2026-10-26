@@ -10,6 +10,8 @@ import type { Profession, ProfessionClientPort } from '../../../src/modules/char
 import type { TraitClientPort, TraitResponse } from '../../../src/modules/characters/application/ports/trait-client.port.js';
 import type { Culture, CultureClientPort } from '../../../src/modules/characters/application/ports/culture-client.port.js';
 import type { HealingTables } from '../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
+import type { FightingStylesClientPort } from '../../../src/modules/characters/application/ports/fighting-styles-client.port.js';
+import type { FightingStyleCatalog } from '../../../src/modules/characters/domain/value-objects/fighting-styles.vo.js';
 import type { HealingTablesClientPort } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
 import type {
   AbsoluteManeuverResponse,
@@ -33,6 +35,8 @@ export const SKILLS: SkillResponse[] = [
   { id: 'jumping', categoryId: 'athletic', bonus: ['ag'], specialization: undefined },
   { id: 'melee-weapon', categoryId: 'combat', bonus: ['st'], specialization: 'weapon' },
   { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
+  // Workspace spec 032: a fighting style skill, without stat bonus
+  { id: 'combat-styles', categoryId: 'combat-expertise', bonus: [], specialization: 'combat-style' },
   ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
     id: `${type}-spell-list`,
     categoryId: 'spellcasting',
@@ -42,7 +46,7 @@ export const SKILLS: SkillResponse[] = [
 ];
 
 export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
-  ...['physical', 'awareness', 'athletic', 'combat'].map(id => ({ id, bonus: [] })),
+  ...['physical', 'awareness', 'athletic', 'combat', 'combat-expertise'].map(id => ({ id, bonus: [] })),
   // Spec 029: the realm stat counts twice (R*+R*)
   ...['spellcasting', 'power-manipulation'].map(id => ({ id, bonus: [], realmBonus: 2 })),
 ];
@@ -50,7 +54,29 @@ export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
 export const PROFESSION: Profession = {
   id: 'fighter',
   professionalSkills: [],
-  skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8] },
+  skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8], 'combat-expertise': [1, 1] },
+};
+
+/** Made-up fighting styles with the shape of rmu-api-core (spec 032), not the rulebook ones. */
+export const FIGHTING_STYLES: FightingStyleCatalog = {
+  styles: [
+    {
+      id: 'e2e-style',
+      skillId: 'combat-styles',
+      abilities: [
+        { abilityId: 'e2e-basic', cost: 2 },
+        { abilityId: 'e2e-advanced', cost: 1 },
+        { abilityId: 'e2e-repeatable', cost: 1 },
+      ],
+      requiresSkills: [],
+      requiresTraits: [],
+    },
+  ],
+  abilities: [
+    { id: 'e2e-basic', repeatable: false, maxTimes: null, requiresAbilities: [], requiresSkills: [], requiresTraits: [] },
+    { id: 'e2e-advanced', repeatable: false, maxTimes: null, requiresAbilities: ['e2e-basic'], requiresSkills: [], requiresTraits: [] },
+    { id: 'e2e-repeatable', repeatable: true, maxTimes: 2, requiresAbilities: [], requiresSkills: [], requiresTraits: [] },
+  ],
 };
 
 /** A pure spellcaster of essence, with invented costs. */
@@ -236,6 +262,7 @@ export function apiFakes() {
     getCultureById: id => (id === CULTURE.id ? Promise.resolve(CULTURE) : Promise.reject(new NotFoundError('Culture', id))),
   };
   const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
+  const fightingStylesClient: FightingStylesClientPort = { getFightingStyles: () => Promise.resolve(FIGHTING_STYLES) };
   const maneuverClient: ManeuverClientPort = {
     absolute: (total: number, table: string) => {
       maneuverCalls.totals.push(total);
@@ -269,6 +296,7 @@ export function apiFakes() {
     traitClient,
     cultureClient,
     healingTablesClient,
+    fightingStylesClient,
     maneuverClient,
     spellListClient,
   };

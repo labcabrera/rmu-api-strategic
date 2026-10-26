@@ -129,8 +129,8 @@ export class ItemFactory {
       if (wielderSize) throw new ValidationError('wielderSize can only be set on weapons', 'err-item-invalid');
       return null;
     }
-    const { skillId, fumble, modes } = itemType.weapon;
-    return new ItemWeapon(skillId, fumble, modes, wielderSize || itemType.weapon.wielderSize);
+    const { skillId, fumble, modes, tags } = itemType.weapon;
+    return new ItemWeapon(skillId, fumble, modes, wielderSize || itemType.weapon.wielderSize, tags?.length ? [...tags] : undefined);
   }
 
   /** Spec 023, decision 4: a catalog `bonus` is a bonus of the use of the item (attack, defense or maneuver). */

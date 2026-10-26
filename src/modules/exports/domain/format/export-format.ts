@@ -21,7 +21,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 2;
+export const CURRENT_FORMAT_VERSION = 3;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -107,6 +107,8 @@ export interface CharacterExportSkill {
   cultureRanks: number;
   devPointsSpent: { normal: number; bonus: number };
   knackBonus: number | null;
+  /** Fighting style skills (workspace spec 032); missing in files of older versions. */
+  styleAbilities?: { abilityId: string; times: number; cost: number }[];
 }
 
 /** A trait chosen for the character. The race traits are not exported: they come from the destination race. */

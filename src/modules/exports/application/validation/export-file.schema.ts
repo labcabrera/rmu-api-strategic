@@ -199,6 +199,11 @@ const character = Joi.object({
         cultureRanks: int().min(0).max(1000).required(),
         devPointsSpent: Joi.object({ normal: num().required(), bonus: num().required() }).required(),
         knackBonus: nullable(num()).required(),
+        styleAbilities: Joi.array()
+          .items(
+            Joi.object({ abilityId: id().required(), times: int().min(1).max(100).required(), cost: int().min(0).max(100).required() }),
+          )
+          .max(200),
       }),
     )
     .max(1000)
@@ -300,6 +305,7 @@ const item = Joi.object({
         .max(10)
         .required(),
       wielderSize: Joi.string().valid('small', 'medium', 'big'),
+      tags: Joi.array().items(id()).max(20),
     }),
   ).required(),
   armor: nullable(

@@ -25,8 +25,8 @@ export class UpdateItemHandler implements ICommandHandler<UpdateItemCommand, Ite
     let weapon: ItemWeapon | undefined = undefined;
     if (command.wielderSize) {
       if (!current.weapon) throw new ValidationError(`wielderSize can only be set on weapons`);
-      const { skillId, fumble, modes } = current.weapon;
-      weapon = new ItemWeapon(skillId, fumble, modes, command.wielderSize);
+      const { skillId, fumble, modes, tags } = current.weapon;
+      weapon = new ItemWeapon(skillId, fumble, modes, command.wielderSize, tags);
     }
     current.checkVersion(command.expectedVersion);
     current.update({ name: command.name, weapon });

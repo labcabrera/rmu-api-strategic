@@ -22,6 +22,8 @@ export class CharacterAttack {
     public skillId: string,
     /** Spec 019: the strategic item of the attack; missing in attacks stored before it. */
     public itemId?: string,
+    /** Workspace spec 032: tags of the weapon type (fencing, quarterstaff...) for the fighting style requirements. */
+    public weaponTags?: string[],
   ) {}
 
   static fromProps(props: Omit<CharacterAttack, 'bo'>): CharacterAttack {
@@ -44,6 +46,7 @@ export class CharacterAttack {
       props.wrongSize,
       props.skillId,
       props.itemId,
+      props.weaponTags,
     );
   }
 }

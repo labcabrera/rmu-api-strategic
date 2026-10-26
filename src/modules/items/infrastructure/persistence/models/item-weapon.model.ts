@@ -14,4 +14,7 @@ export class ItemWeapon {
 
   @Prop({ type: String, required: false })
   wielderSize?: string;
+
+  @Prop({ type: [String], required: false })
+  tags?: string[];
 }

@@ -9,6 +9,8 @@ export class ItemWeapon {
     public readonly modes: ItemWeaponMode[],
     // Size id the weapon is made for ('small' | 'medium' | 'big'). When missing, the wielder's size is assumed.
     public readonly wielderSize?: string,
+    // Tags of the weapon type in the items catalog (workspace spec 032): fencing, quarterstaff, axe...
+    public readonly tags?: string[],
   ) {}
 
   static isTwoHanded(weapon: ItemWeapon): boolean {

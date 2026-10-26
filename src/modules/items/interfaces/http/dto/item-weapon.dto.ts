@@ -20,12 +20,16 @@ export class ItemWeaponDto {
   })
   wielderSize?: string;
 
+  @ApiProperty({ description: 'Tags of the weapon type (spec 032)', type: [String], required: false, example: ['fencing'] })
+  tags?: string[];
+
   static fromEntity(entity: ItemWeapon): ItemWeaponDto {
     const dto = new ItemWeaponDto();
     dto.skillId = entity.skillId;
     dto.fumble = entity.fumble;
     dto.modes = entity.modes.map(mode => ItemWeaponModeDto.fromEntity(mode));
     dto.wielderSize = entity.wielderSize;
+    if (entity.tags?.length) dto.tags = [...entity.tags];
     return dto;
   }
 }

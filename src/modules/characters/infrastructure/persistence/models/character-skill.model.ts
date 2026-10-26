@@ -1,3 +1,4 @@
+import type { StyleAbilitySelection } from '../../../domain/value-objects/fighting-styles.vo.js';
 import { Prop, Schema } from '@nestjs/mongoose';
 import type { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo.js';
 import type { SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo.js';
@@ -57,4 +58,7 @@ export class CharacterSkill {
 
   @Prop({ type: Boolean, required: false })
   missingReference?: boolean;
+
+  @Prop({ type: [Object], required: false })
+  styleAbilities?: StyleAbilitySelection[];
 }

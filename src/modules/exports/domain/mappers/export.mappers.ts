@@ -59,7 +59,11 @@ function weaponToExport(weapon: ItemWeapon): ItemWeapon {
       ranges: mode.ranges ? mode.ranges.map(range => ({ from: range.from, to: range.to, bonus: range.bonus })) : null,
     })),
   };
-  return weapon.wielderSize ? { ...result, wielderSize: weapon.wielderSize } : result;
+  return {
+    ...result,
+    ...(weapon.wielderSize ? { wielderSize: weapon.wielderSize } : {}),
+    ...(weapon.tags?.length ? { tags: [...weapon.tags] } : {}),
+  };
 }
 
 const armorToExport = (armor: ItemArmor): ItemArmor => ({
@@ -147,6 +151,7 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
       cultureRanks: skill.cultureRanks ?? 0,
       devPointsSpent: { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 },
       knackBonus: orNull(skill.knackBonus),
+      ...(skill.styleAbilities?.length ? { styleAbilities: skill.styleAbilities.map(a => ({ ...a })) } : {}),
     })),
     traits: character.traits
       .filter(trait => trait.source !== 'race')

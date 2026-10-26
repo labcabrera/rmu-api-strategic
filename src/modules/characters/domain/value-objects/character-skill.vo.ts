@@ -1,3 +1,4 @@
+import type { StyleAbilitySelection } from './fighting-styles.vo.js';
 import type { ProfessionalBonusType } from './professional-bonus-type.vo.js';
 
 // Development points spent on the ranks developed in the current level, by pool
@@ -30,6 +31,8 @@ export class CharacterSkill {
     public knackBonus?: number,
     // Spec 024: imported from a file whose skill the core catalog of this installation does not have
     public missingReference?: boolean,
+    // Workspace spec 032: ranks of a fighting style allocated to its abilities
+    public styleAbilities?: StyleAbilitySelection[],
   ) {}
 
   static empty(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number) {
