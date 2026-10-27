@@ -67,8 +67,8 @@ describe('Trait effects on the character sheet', () => {
   const baseline = process([]);
 
   it('has a registry entry for every talent of spec 008', () => {
-    expect(Object.keys(TRAIT_EFFECTS).sort()).toEqual(
-      [
+    expect(Object.keys(TRAIT_EFFECTS)).toEqual(
+      expect.arrayContaining([
         'fast-attack',
         'superior-stat',
         'inferior-stat',
@@ -95,7 +95,7 @@ describe('Trait effects on the character sheet', () => {
         'deadeye',
         'enhanced-attack',
         'lesser-attack',
-      ].sort(),
+      ]),
     );
   });
 

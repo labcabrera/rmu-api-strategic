@@ -50,6 +50,9 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Racial bonus', example: 1 })
   racialBonus: number;
 
+  @ApiProperty({ description: 'Skill category of the core catalog (workspace spec 039)', required: false, example: 'gymnastic' })
+  categoryId?: string;
+
   @ApiProperty({ description: 'Development bonus', example: 2 })
   developmentBonus: number;
 
@@ -98,6 +101,7 @@ export class CharacterSkillDto {
     dto.devPointsSpent = { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 };
     dto.statBonus = skill.statBonus;
     dto.racialBonus = skill.racialBonus;
+    if (skill.categoryId) dto.categoryId = skill.categoryId;
     dto.professionalBonus = skill.professionalBonus;
     dto.developmentBonus = skill.developmentBonus;
     dto.customBonus = skill.customBonus;

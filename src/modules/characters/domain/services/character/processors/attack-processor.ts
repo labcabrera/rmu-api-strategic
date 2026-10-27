@@ -9,7 +9,7 @@ import type { EquipmentSlot } from '../../../value-objects/character-equipment.v
 import { CharacterSkill } from '../../../value-objects/character-skill.vo.js';
 import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo.js';
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
-import { matchesAttack } from '../traits/trait-specialization-matcher.js';
+import { matchesAttack, matchesWeaponType } from '../traits/trait-specialization-matcher.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 const SHIELD_FUMBLE = 4;
@@ -55,7 +55,7 @@ export class AttackProcessor {
         const skill = this.getWeaponSkillBonus(character, item.weapon);
         const boModifiers = this.getBoModifiers(skill, character, slot, attackType);
         this.applyItemModifiers(boModifiers, item);
-        const fumble = this.getFumble(item.weapon.fumble, skill);
+        const fumble = this.getFumble(character, item.weapon.fumble, skill, skillId);
         // A weapon made for another size uses its own size for the attack and gets a BO penalty
         const wielderSize = item.weapon.wielderSize;
         const wrongSize = !!wielderSize && wielderSize !== character.info.sizeId;
@@ -68,8 +68,16 @@ export class AttackProcessor {
         this.getAvailableModes(character, item.weapon).forEach(mode => {
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
+          const rangeFactor = this.getTraitRangeFactor(character, mode);
           const ranges = mode.ranges
-            ? mode.ranges.map(r => new CharacterAttackRange(r.from, r.to, this.getRangeBonus(r.bonus, rangeTraitBonus)))
+            ? mode.ranges.map(
+                r =>
+                  new CharacterAttackRange(
+                    this.scaleRange(r.from, rangeFactor),
+                    this.scaleRange(r.to, rangeFactor),
+                    this.getRangeBonus(r.bonus, rangeTraitBonus),
+                  ),
+              )
             : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
@@ -96,7 +104,7 @@ export class AttackProcessor {
         const skill = character.findSkill(SHIELD_SKILL_ID, null);
         const boModifiers = this.getBoModifiers(skill, character, slot, 'melee');
         this.applyItemModifiers(boModifiers, item);
-        const fumble = this.getFumble(SHIELD_FUMBLE, skill);
+        const fumble = this.getFumble(character, SHIELD_FUMBLE, skill, SHIELD_SKILL_ID);
         const attack = CharacterAttack.fromProps({
           attackName: slot,
           attackTable: 'shield',
@@ -183,9 +191,38 @@ export class AttackProcessor {
     return Math.min(0, bonus + traitBonus);
   }
 
-  private getFumble(baseFumble: number, skill: CharacterSkill | null): number {
+  // Great Arm (thrown) and Nearsighted (all ranged) scale every range by a percentage per tier (workspace spec 039)
+  private getTraitRangeFactor(character: Character, mode: ItemWeaponMode): number {
+    const percent = sumTraitEffects(
+      getTraitEffects(character.traits, 'attack-range-percent').filter(e => !e.effect.thrown || !!mode.attackTypes?.includes('thrown')),
+    );
+    return Math.max(0, 1 + percent / 100);
+  }
+
+  private scaleRange(value: number | null | undefined, factor: number): number {
+    if (value === null || value === undefined || factor === 1) {
+      return value as number;
+    }
+    return Math.round(value * factor);
+  }
+
+  // Ranks and Weapon Control first (min 1), then Fumbler (workspace spec 039, decision 10)
+  private getFumble(character: Character, baseFumble: number, skill: CharacterSkill | null, skillId: string): number {
     const ranks = skill ? skill.ranks : 0;
-    return Math.max(1, baseFumble - Math.floor(ranks / 5));
+    let reduction = 0;
+    let increase = 0;
+    getTraitEffects(character.traits, 'fumble').forEach(e => {
+      if (e.value > 0) {
+        increase += e.value;
+      } else if (!e.effect.specialization) {
+        reduction += e.value;
+      } else if (matchesWeaponType(e.effect.specialization as 'melee-weapon-type', e.specialization, skillId)) {
+        reduction += e.value;
+      } else {
+        reduction += e.effect.otherwise ?? 0;
+      }
+    });
+    return Math.max(1, baseFumble - Math.floor(ranks / 5) + reduction) + increase;
   }
 
   private getMeleeRange(character: Character, mode: ItemWeaponMode, item: Item): number | null {

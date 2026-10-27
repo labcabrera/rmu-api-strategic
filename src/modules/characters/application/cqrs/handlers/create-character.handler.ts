@@ -183,7 +183,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       const statistics = skillStatistics(readedSkill.bonus, readedCategory);
       const costKey = developmentCostKey(skillId, readedCategory.id, character.experience.weaponDevelopment);
       const devPoints = profession.skillCosts[costKey] || [];
-      character.addSkill(skillId, skill.specialization, statistics, devPoints, 0);
+      character.addSkill(skillId, skill.specialization, statistics, devPoints, 0, readedCategory.id);
     }
   }
 

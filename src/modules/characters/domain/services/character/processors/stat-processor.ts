@@ -11,7 +11,9 @@ export class StatProcessor {
     const statEffects = getTraitEffects(character.traits, 'stat');
     for (const key of STAT_KEYS) {
       const prev = character.statistics[key];
-      const traitBonus = sumTraitEffects(statEffects.filter(e => matchesKey(e.specialization, key)));
+      const traitBonus = sumTraitEffects(
+        statEffects.filter(e => (e.effect.ids ? e.effect.ids.includes(key) : matchesKey(e.specialization, key))),
+      );
       const processed = this.processStat(prev, traitBonus);
       character.statistics[key] = processed;
     }

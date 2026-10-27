@@ -83,7 +83,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
         racialBonus = skillBonus.bonus;
       }
     }
-    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus);
+    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus, readedSkill.categoryId);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);

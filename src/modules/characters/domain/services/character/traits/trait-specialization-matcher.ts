@@ -1,6 +1,6 @@
 // Matches the specialization value stored in a character trait against a sheet element (spec 008 §1)
 
-export type TraitSpecializationKind = 'stat' | 'realm' | 'skill' | 'melee-weapon-type' | 'ranged-weapon-type';
+export type TraitSpecializationKind = 'stat' | 'realm' | 'skill' | 'skill-category' | 'melee-weapon-type' | 'ranged-weapon-type';
 
 const SKILL_SEPARATOR = '@';
 
