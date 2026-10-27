@@ -5,7 +5,7 @@ import { planImport } from '../../../../src/modules/exports/domain/import/import
 import { NamedEntity } from '../../../../src/modules/shared/domain/entities/named-entity.js';
 
 const faction = () =>
-  JSON.parse(readFileSync(join(import.meta.dirname, '../../../fixtures/exports/v3/faction.rmu.json'), 'utf8')) as FactionFile;
+  JSON.parse(readFileSync(join(import.meta.dirname, '../../../fixtures/exports/v4/faction.rmu.json'), 'utf8')) as FactionFile;
 
 describe('import planner (spec 024, decision 5)', () => {
   const target = (overrides: Partial<Parameters<typeof planImport>[2]> = {}) => ({

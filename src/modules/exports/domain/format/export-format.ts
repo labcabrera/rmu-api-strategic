@@ -21,7 +21,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 3;
+export const CURRENT_FORMAT_VERSION = 4;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */

@@ -24,6 +24,9 @@ export class ItemLedgerEntryModel {
   @Prop({ type: String, required: false, index: true })
   itemId: string | null;
 
+  @Prop({ type: [String], required: false, index: true, default: undefined })
+  itemIds?: string[];
+
   @Prop({ type: String, required: false })
   itemTypeId: string | null;
 

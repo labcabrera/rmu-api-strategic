@@ -14,4 +14,16 @@ export interface ItemCatalogInfo {
   rarity: string | null;
   productionHours: number | null;
   imageUrl: string | null;
+  /** Workspace spec 041: units of the lot the book sells (cost and weight are per unit). */
+  lotSize?: number | null;
+  /** Workspace spec 041: container, light, transport or ammunition data of the type, as information. */
+  features?: ItemFeatures | null;
+}
+
+/** The general equipment blocks of the catalog (workspace spec 041, decision 4). */
+export interface ItemFeatures {
+  container?: { weight: number | null; volume: number | null; liquid: number | null; units: number | null } | null;
+  light?: { radius: number | null; durationHours: number | null } | null;
+  transport?: { capacity: number | null; speed: number | null } | null;
+  ammunition?: { launchers: string[]; sizeAdjustment: number } | null;
 }

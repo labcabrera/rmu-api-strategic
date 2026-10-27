@@ -55,6 +55,13 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the fighting style abilities of the skills',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 041: optional obModifier of the weapon modes, coverage and class of the armor, lotSize and
+    // features of the catalog copy; older files have none to change
+    from: 3,
+    description: 'Allows the improvised weapons, full suits and general equipment data of the items',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {

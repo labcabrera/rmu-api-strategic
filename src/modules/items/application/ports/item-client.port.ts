@@ -1,4 +1,6 @@
 import type { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo.js';
+import type { ArmorClass } from '../../domain/value-objects/item-armor.vo.js';
+import type { ItemFeatures } from '../../domain/value-objects/item-catalog-info.vo.js';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 
 export interface ItemClientPort {
@@ -16,6 +18,8 @@ export interface ItemResponse {
   weapon: ItemWeapon | null;
   armor: ItemArmorResponse | null;
   shield: ItemShieldResponse | null;
+  /** Workspace spec 041: container, light, transport or ammunition data. */
+  features?: ItemFeatures | null;
   info: ItemInfoResponse;
   modifiers?: ItemCatalogModifierResponse[] | null;
   description?: string | null;
@@ -39,6 +43,8 @@ export interface ItemInfoResponse {
   stackable: boolean | undefined;
   rarity?: string | null;
   unique?: boolean;
+  /** Workspace spec 041: units of the lot the book sells. */
+  lotSize?: number | null;
 }
 
 export interface ItemCost {
@@ -55,6 +61,9 @@ export interface ItemArmorResponse {
   rangedPenalty: number;
   perceptionPenalty: number;
   baseDifficulty: Difficulty;
+  /** Workspace spec 041. */
+  coverage?: string[] | null;
+  class?: ArmorClass | null;
 }
 
 export interface ItemShieldResponse {

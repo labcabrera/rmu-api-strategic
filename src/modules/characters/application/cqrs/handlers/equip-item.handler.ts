@@ -10,6 +10,7 @@ import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/char
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
 import { Item } from '../../../../items/domain/aggregates/item.js';
+import { ItemArmor } from '../../../../items/domain/value-objects/item-armor.vo.js';
 import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo.js';
 
 @CommandHandler(EquipItemCommand)
@@ -76,7 +77,19 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         character.equipment.slots['mainHand'] = null;
       }
     }
-    character.equipment.slots[command.slot] = command.itemId;
+    // Workspace spec 041, decision 6: a piece that covers several slots fills them all, and an item is all or nothing,
+    // so whatever was in any of those slots leaves every slot it had.
+    const slots = item.armor ? this.armorSlots(item, command.slot) : [command.slot];
+    const displaced = new Set(slots.map(slot => character.equipment.slots[slot]).filter((id): id is string => !!id));
+    for (const [slot, equippedItemId] of Object.entries(character.equipment.slots)) {
+      if (equippedItemId && displaced.has(equippedItemId)) character.equipment.slots[slot as EquipmentSlot] = null;
+    }
+    slots.forEach(slot => (character.equipment.slots[slot] = command.itemId));
+  }
+
+  private armorSlots(item: Item, slot: EquipmentSlot): EquipmentSlot[] {
+    const covered = ItemArmor.slotsOf(item.armor!) as EquipmentSlot[];
+    return covered.length > 1 && covered.includes(slot) ? covered : [slot];
   }
 
   private isTwoHanded(item: Item): boolean {
@@ -110,7 +123,9 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
         throw new ValidationError('Invalid item slot');
     }
     if (command.slot === 'offHand' && item.category !== 'shield') {
-      const check1h = item.weapon!.modes.filter(m => m.type !== 'one-hand').length > 0;
+      // An item without weapon data was a server error here (spec 041)
+      if (!item.weapon) throw new ValidationError('Item is not suitable for off-hand slot');
+      const check1h = item.weapon.modes.filter(m => m.type !== 'one-hand').length > 0;
       if (check1h) {
         throw new ValidationError('Item is not suitable for off-hand slot');
       }

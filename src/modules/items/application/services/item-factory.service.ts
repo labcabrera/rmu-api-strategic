@@ -75,6 +75,8 @@ export class ItemFactory {
         rarity: itemType.info.rarity ?? null,
         productionHours: itemType.info.productionHours ?? null,
         imageUrl: itemType.imageUrl ?? null,
+        ...(itemType.info.lotSize ? { lotSize: itemType.info.lotSize } : {}),
+        ...(itemType.features ? { features: itemType.features } : {}),
       },
       value: options.value ?? itemType.info.cost?.average ?? null,
       acquiredPrice: options.acquiredPrice ?? null,

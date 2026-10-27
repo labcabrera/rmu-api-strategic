@@ -573,14 +573,14 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return isCreationLevel(this.experience.level);
   }
 
+  /** Empties every slot the item is in: a full suit fills four (workspace spec 041). */
   unequipItem(itemId: any) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const equippedSlot = Object.entries(this.equipment.slots).find(([_, item]) => item === itemId);
-    if (!equippedSlot) {
+    const equippedSlots = Object.entries(this.equipment.slots).filter(([_, item]) => item === itemId);
+    if (equippedSlots.length === 0) {
       throw new ValidationError('Item not equipped');
     }
-    const slotName = equippedSlot[0] as EquipmentSlot;
-    this.equipment.slots[slotName] = null;
+    equippedSlots.forEach(([slot]) => (this.equipment.slots[slot as EquipmentSlot] = null));
   }
 
   // Applies a stat gain roll. Without free stat gains left, the extra roll costs development points

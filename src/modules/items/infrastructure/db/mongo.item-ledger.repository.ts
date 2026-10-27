@@ -29,6 +29,7 @@ export class MongoItemLedgerRepository
       gameId: doc.gameId,
       kind: doc.kind,
       itemId: doc.itemId ?? null,
+      itemIds: doc.itemIds ?? (doc.itemId ? [doc.itemId] : []),
       itemTypeId: doc.itemTypeId ?? null,
       itemName: doc.itemName ?? null,
       amount: doc.amount ?? null,

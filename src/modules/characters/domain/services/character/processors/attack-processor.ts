@@ -66,6 +66,8 @@ export class AttackProcessor {
           this.getSizeAdjustment(wrongSize ? wielderSize : character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId);
         const rangeTraitBonus = this.getTraitRangeBonus(character, skillId);
         this.getAvailableModes(character, item.weapon).forEach(mode => {
+          // Workspace spec 041, decision 5: the OB modifier of the mode, such as an improvised weapon penalty
+          const modeModifiers = mode.obModifier ? { ...boModifiers, improvised: mode.obModifier } : boModifiers;
           const meleeRange = this.getMeleeRange(character, mode, item);
           const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
           const rangeFactor = this.getTraitRangeFactor(character, mode);
@@ -90,7 +92,7 @@ export class AttackProcessor {
             defaultAttack: true,
             meleeRange: meleeRange,
             ranges: ranges,
-            boModifiers: boModifiers,
+            boModifiers: modeModifiers,
             twoHanded: mode.type === 'two-hands',
             weaponCategory: this.getWeaponCategory(item, mode),
             wrongSize: wrongSize,
