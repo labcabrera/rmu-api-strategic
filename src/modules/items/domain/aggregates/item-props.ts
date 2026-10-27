@@ -5,6 +5,7 @@ import { ItemWeapon } from '../value-objects/item-weapon.vo.js';
 import { ItemShield } from '../value-objects/item-shield.vo.js';
 import type { ItemModifier } from '../value-objects/item-modifier.vo.js';
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
+import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 
 export interface ItemProps {
   id: string;
@@ -37,4 +38,6 @@ export interface ItemProps {
   owner: string;
   /** Spec 024: the import that created it, to undo a failed import. */
   importId?: string;
+  /** Workspace spec 042: poison on the weapon. */
+  coating?: ItemCoating | null;
 }

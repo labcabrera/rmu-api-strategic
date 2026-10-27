@@ -15,6 +15,7 @@ import { TRAIT_CLIENT } from '../../../src/modules/characters/application/ports/
 import { CULTURE_CLIENT } from '../../../src/modules/characters/application/ports/culture-client.port.js';
 import { FIGHTING_STYLES_CLIENT } from '../../../src/modules/characters/application/ports/fighting-styles-client.port.js';
 import { HEALING_TABLES_CLIENT } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
+import { POISON_RULES_CLIENT } from '../../../src/modules/characters/application/ports/poison-rules-client.port.js';
 import { SPELL_LIST_CLIENT } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import { MANEUVER_CLIENT } from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
@@ -104,6 +105,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.cultureClient)
     .overrideProvider(HEALING_TABLES_CLIENT)
     .useValue(fakes.healingTablesClient)
+    .overrideProvider(POISON_RULES_CLIENT)
+    .useValue(fakes.poisonRulesClient)
     .overrideProvider(FIGHTING_STYLES_CLIENT)
     .useValue(fakes.fightingStylesClient)
     .overrideProvider(MANEUVER_CLIENT)

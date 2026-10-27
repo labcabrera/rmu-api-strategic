@@ -11,12 +11,15 @@ import { type ItemCondition, type ItemModifier, ItemModifiers } from '../value-o
 import { NotFoundError, ValidationError } from '../../../shared/domain/errors/errors.js';
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
+import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 
 /** Item type of the coins of a character (spec 023, decision 7: they weigh). */
 export const GOLD_COIN = 'gold-coin';
 
 export class Item extends BaseAggregateRoot<ItemProps> {
   public importId: string | undefined = undefined;
+  /** Workspace spec 042: poison on the weapon. */
+  public coating: ItemCoating | null = null;
 
   private constructor(
     public id: string,
@@ -73,6 +76,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.unrepairable ?? false,
     );
     item.importId = props.importId;
+    item.coating = props.coating ?? null;
     item.apply(new ItemCreatedEvent(item));
     return item;
   }
@@ -104,6 +108,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       props.unrepairable ?? false,
     );
     item.importId = props.importId;
+    item.coating = props.coating ?? null;
     return item;
   }
 
@@ -205,6 +210,22 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     this.apply(new ItemUpdatedEvent(this));
   }
 
+  /** Workspace spec 042, decision 11: poison on a weapon, replacing the one it had. */
+  coat(coating: ItemCoating): void {
+    if (!this.weapon) throw new ValidationError('Only a weapon can be coated with poison', 'err-item-not-weapon');
+    this.coating = coating;
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
+  /** The coating dries, is wiped off or was spent in a tactical game. */
+  removeCoating(): void {
+    if (!this.coating) return;
+    this.coating = null;
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
   getProps(): ItemProps {
     return {
       id: this.id,
@@ -231,6 +252,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       acquiredPrice: this.acquiredPrice,
       unrepairable: this.unrepairable,
       ...(this.importId ? { importId: this.importId } : {}),
+      coating: this.coating,
     };
   }
 }

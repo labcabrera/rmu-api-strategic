@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command.js';
 import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
@@ -34,6 +34,11 @@ export class TacticalItemOutcomeDto {
   @ApiProperty({ type: [ItemModifierDto] })
   @IsArray()
   modifiers: ItemModifier[];
+
+  @ApiPropertyOptional({ description: 'The poison on the weapon was spent (workspace spec 042)' })
+  @IsBoolean()
+  @IsOptional()
+  coatingSpent?: boolean;
 }
 
 export class TacticalOutcomeHpDto {
@@ -179,7 +184,7 @@ export class TacticalOutcomeDto {
         ItemModifiers.validate(result);
         return result;
       });
-    return { itemId: dto.itemId, ...(dto.name ? { name: dto.name } : {}), modifiers };
+    return { itemId: dto.itemId, ...(dto.name ? { name: dto.name } : {}), modifiers, ...(dto.coatingSpent ? { coatingSpent: true } : {}) };
   }
 
   // The hits log is informative: entries and totals of an unknown shape are dropped, not rejected
@@ -258,6 +263,8 @@ export class TacticalOutcomeDto {
       treatments: Array.isArray(raw.treatments) ? raw.treatments : [],
       recovery: raw.recovery,
       permanent: raw.permanent,
+      // Workspace spec 042: the poisoning travels with its injury.
+      ...(raw.poison && typeof raw.poison === 'object' ? { poison: structuredClone(raw.poison) } : {}),
       status,
       createdAt: raw.createdAt || new Date().toISOString(),
       updatedAt: raw.updatedAt,

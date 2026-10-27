@@ -13,6 +13,7 @@ import type { HealingTables } from '../../../src/modules/characters/domain/value
 import type { FightingStylesClientPort } from '../../../src/modules/characters/application/ports/fighting-styles-client.port.js';
 import type { FightingStyleCatalog } from '../../../src/modules/characters/domain/value-objects/fighting-styles.vo.js';
 import type { HealingTablesClientPort } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
+import type { PoisonRulesClientPort } from '../../../src/modules/characters/application/ports/poison-rules-client.port.js';
 import type {
   AbsoluteManeuverResponse,
   ManeuverClientPort,
@@ -247,6 +248,27 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
       lotSize: 2,
     },
   },
+  // Workspace spec 042: a paste poison and an antidote (invented data)
+  'e2e-venom': {
+    id: 'e2e-venom',
+    name: 'E2E venom',
+    category: 'poison',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { poison: { category: 'muscle', level: 4, form: 'paste', maxSeverity: null, immediateHits: null, onsetRounds: null } },
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  },
+  'e2e-cure': {
+    id: 'e2e-cure',
+    name: 'E2E cure',
+    category: 'herb',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { antidote: { categories: ['muscle'], level: 5, withinHours: null } },
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  },
   'gold-coin': {
     id: 'gold-coin',
     category: 'currency',
@@ -319,6 +341,36 @@ export function apiFakes() {
   };
   const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
   const fightingStylesClient: FightingStylesClientPort = { getFightingStyles: () => Promise.resolve(FIGHTING_STYLES) };
+  // Workspace spec 042: invented RR rules (required 50, -2 per level) and a muscle row per severity, each a round later
+  const poisonRulesClient: PoisonRulesClientPort = {
+    getRrRules: () =>
+      Promise.resolve({
+        requiredTotal: 50,
+        attackLevelMultiplier: -2,
+        bands: [
+          { min: 1, max: 20, severity: 'mild' },
+          { min: 21, max: 40, severity: 'moderate' },
+          { min: 41, max: 80, severity: 'severe' },
+          { min: 81, max: null, severity: 'extreme' },
+        ],
+      }),
+    getPoisonTables: () =>
+      Promise.resolve({
+        rows: (['mild', 'moderate', 'severe', 'extreme'] as const).map((severity, i) => ({
+          category: 'muscle' as const,
+          severity,
+          start: { min: i, max: i, unit: 'round' as const },
+          duration: { min: 2, max: 2, unit: 'hour' as const },
+          penalty: { min: -5 * (i + 1), max: -5 * (i + 1) },
+          hitsPerRound: null,
+          hitsRounds: null,
+          condition: severity === 'extreme' ? ('dead' as const) : null,
+          conditionDelay: null,
+          conditionDuration: null,
+          permanent: false,
+        })),
+      }),
+  };
   const maneuverClient: ManeuverClientPort = {
     absolute: (total: number, table: string) => {
       maneuverCalls.totals.push(total);
@@ -353,6 +405,7 @@ export function apiFakes() {
     cultureClient,
     healingTablesClient,
     fightingStylesClient,
+    poisonRulesClient,
     maneuverClient,
     spellListClient,
   };

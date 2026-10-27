@@ -13,6 +13,7 @@ import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-c
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
 import type { ItemModifierSourceKind, ItemModifierTarget, ItemModifierType } from '../../../items/domain/value-objects/item-modifier.vo.js';
 import type { ItemShield } from '../../../items/domain/value-objects/item-shield.vo.js';
+import type { ItemCoating } from '../../../items/domain/value-objects/item-coating.vo.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
 
 /**
@@ -21,7 +22,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 4;
+export const CURRENT_FORMAT_VERSION = 5;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -197,6 +198,8 @@ export interface ItemExport {
   value: number | null;
   acquiredPrice: number | null;
   unrepairable: boolean;
+  /** Workspace spec 042: poison on the weapon. */
+  coating?: ItemCoating | null;
   modifiers: ItemExportModifier[];
 }
 

@@ -5,8 +5,17 @@ import type { ItemModifier } from '../../../items/domain/value-objects/item-modi
 export type TacticalFate = 'dead' | 'permanent-unconscious';
 
 /** Where a change of hits of a tactical game comes from (spec 013, §1.1). */
-export type TacticalHpLogKind = 'attack' | 'critical' | 'fumble' | 'bleeding' | 'endurance' | 'treatment' | 'manual';
-export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = ['attack', 'critical', 'fumble', 'bleeding', 'endurance', 'treatment', 'manual'];
+export type TacticalHpLogKind = 'attack' | 'critical' | 'fumble' | 'bleeding' | 'endurance' | 'treatment' | 'manual' | 'poison';
+export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = [
+  'attack',
+  'critical',
+  'fumble',
+  'bleeding',
+  'endurance',
+  'treatment',
+  'manual',
+  'poison',
+];
 
 /** A change of the hits of an actor in a tactical game (spec 013, §1.1): negative is damage, positive healing. */
 export interface TacticalHpLogEntry {
@@ -34,6 +43,8 @@ export interface TacticalItemOutcome {
   itemId: string;
   name?: string;
   modifiers: ItemModifier[];
+  /** The poison on the weapon was spent in the game (workspace spec 042). */
+  coatingSpent?: boolean;
 }
 
 /** One element of TacticalGameOutcome.characters (rmu-api-tactical), applied to a strategic character. */

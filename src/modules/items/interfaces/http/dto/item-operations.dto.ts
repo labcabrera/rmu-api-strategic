@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { DIFFICULTIES, type Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo.js';
 import { CraftItemCommand } from '../../../application/cqrs/commands/craft-item.command.js';
+import { CoatItemCommand } from '../../../application/cqrs/commands/coat-item.command.js';
 import { DiscardItemCommand } from '../../../application/cqrs/commands/discard-item.command.js';
 import { PurchaseItemCommand } from '../../../application/cqrs/commands/purchase-item.command.js';
 import { RepairItemCommand } from '../../../application/cqrs/commands/repair-item.command.js';
@@ -224,6 +225,18 @@ export class DiscardItemDto {
 
   static toCommand(itemId: string, dto: DiscardItemDto, userId: string, roles: string[]): DiscardItemCommand {
     return new DiscardItemCommand(itemId, dto.amount, dto.note, userId, roles);
+  }
+}
+
+/** `POST /v1/items/:id/coating` (workspace spec 042). */
+export class CoatItemDto {
+  @ApiProperty({ description: 'Liquid or paste poison of the same holder: one dose is spent' })
+  @IsString()
+  @MaxLength(100)
+  poisonItemId: string;
+
+  static toCommand(itemId: string, dto: CoatItemDto, userId: string, roles: string[]): CoatItemCommand {
+    return new CoatItemCommand(itemId, dto.poisonItemId, userId, roles);
   }
 }
 

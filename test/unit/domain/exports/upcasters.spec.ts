@@ -19,7 +19,7 @@ const failure = (fn: () => unknown): DomainError => {
 
 describe('upcasters (spec 024, decision 2)', () => {
   it('leaves a file of the current version as it is', () => {
-    const file = fixture('v4/character.rmu.json');
+    const file = fixture('v5/character.rmu.json');
     expect(upcast(file)).toEqual({ doc: file, steps: [] });
   });
 
@@ -31,33 +31,41 @@ describe('upcasters (spec 024, decision 2)', () => {
       [1, 2],
       [2, 3],
       [3, 4],
+      [4, 5],
     ]);
-    expect(result.doc).toEqual(fixture('v4/character.rmu.json'));
+    expect(result.doc).toEqual(fixture('v5/character.rmu.json'));
   });
 
   it.each(['character', 'faction'])('adds the realms to the %s files of version 1 (spec 029)', name => {
     const result = upcast(fixture(`v1/${name}.rmu.json`));
     expect(result.steps[0]).toEqual({ from: 1, to: 2, description: 'Adds info.realmTypes from info.realmType' });
-    expect(result.doc).toEqual(fixture(`v4/${name}.rmu.json`));
+    expect(result.doc).toEqual(fixture(`v5/${name}.rmu.json`));
   });
 
   it.each(['character', 'faction'])('keeps the %s files of version 2 as they are (spec 032)', name => {
     const result = upcast(fixture(`v2/${name}.rmu.json`));
     expect(result.steps[0]).toEqual({ from: 2, to: 3, description: 'Allows the fighting style abilities of the skills' });
-    expect(result.doc).toEqual(fixture(`v4/${name}.rmu.json`));
+    expect(result.doc).toEqual(fixture(`v5/${name}.rmu.json`));
   });
 
   it.each(['character', 'faction'])('keeps the %s files of version 3 as they are (spec 041)', name => {
     const result = upcast(fixture(`v3/${name}.rmu.json`));
     expect(result.steps).toEqual([
       { from: 3, to: 4, description: 'Allows the improvised weapons, full suits and general equipment data of the items' },
+      { from: 4, to: 5, description: 'Allows the poisonings of the injuries and the poison on the weapons' },
     ]);
-    expect(result.doc).toEqual(fixture(`v4/${name}.rmu.json`));
+    expect(result.doc).toEqual(fixture(`v5/${name}.rmu.json`));
+  });
+
+  it.each(['character', 'faction'])('keeps the %s files of version 4 as they are (spec 042)', name => {
+    const result = upcast(fixture(`v4/${name}.rmu.json`));
+    expect(result.steps).toEqual([{ from: 4, to: 5, description: 'Allows the poisonings of the injuries and the poison on the weapons' }]);
+    expect(result.doc).toEqual(fixture(`v5/${name}.rmu.json`));
   });
 
   it('rejects a newer version with both versions, and a file that is not an export', () => {
-    const newer = failure(() => upcast({ ...fixture('v4/character.rmu.json'), formatVersion: CURRENT_FORMAT_VERSION + 1 }));
-    expect(newer).toMatchObject({ statusCode: 422, code: 'export-format-too-new', details: { fileVersion: 5, supportedVersion: 4 } });
+    const newer = failure(() => upcast({ ...fixture('v5/character.rmu.json'), formatVersion: CURRENT_FORMAT_VERSION + 1 }));
+    expect(newer).toMatchObject({ statusCode: 422, code: 'export-format-too-new', details: { fileVersion: 6, supportedVersion: 5 } });
     expect(failure(() => upcast({ format: 'other' }))).toMatchObject({ code: 'export-unknown-format' });
     expect(failure(() => upcast([]))).toMatchObject({ code: 'export-unknown-format' });
     expect(failure(() => upcast({ format: 'rmu-strategic-export', formatVersion: 1.5 }))).toMatchObject({ code: 'export-unknown-format' });

@@ -8,6 +8,8 @@ export interface TacticalItemsSummary {
   itemsDamaged: string[];
   itemsBroken: string[];
   itemsIgnored: string[];
+  /** Workspace spec 042: weapons whose poison was spent. */
+  coatingsSpent?: string[];
 }
 
 /**
@@ -25,20 +27,26 @@ export class TacticalOutcomeItemsMerger {
 
   async merge(characterId: string, outcomes: TacticalItemOutcome[]): Promise<{ items: Item[]; summary: TacticalItemsSummary | undefined }> {
     const items = await this.itemRepository.findByCharacterId(characterId);
-    const withModifiers = outcomes.filter(outcome => (outcome.modifiers || []).length > 0);
-    if (withModifiers.length === 0) {
+    const changed = outcomes.filter(outcome => (outcome.modifiers || []).length > 0 || outcome.coatingSpent);
+    if (changed.length === 0) {
       return { items, summary: undefined };
     }
     const summary: TacticalItemsSummary = { itemsDamaged: [], itemsBroken: [], itemsIgnored: [] };
-    for (const outcome of withModifiers) {
+    for (const outcome of changed) {
       const item = items.find(each => each.id === outcome.itemId);
       if (!item) {
         this.logger.warn(`Item ${outcome.itemId} of a tactical outcome is not of character ${characterId}`);
         summary.itemsIgnored.push(outcome.itemId);
         continue;
       }
-      const added = item.addModifiers(outcome.modifiers);
-      if (added.length > 0) {
+      const added = item.addModifiers(outcome.modifiers || []);
+      // Workspace spec 042: the hit that spent the poison was in the game; a retry finds it already gone.
+      const spent = !!outcome.coatingSpent && !!item.coating;
+      if (spent) {
+        item.removeCoating();
+        summary.coatingsSpent = [...(summary.coatingsSpent ?? []), item.id];
+      }
+      if (added.length > 0 || spent) {
         await this.itemRepository.update(item);
         await this.events.publishChanges('item', item);
       }

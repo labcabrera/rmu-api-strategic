@@ -238,6 +238,7 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
     value: orNull(item.value),
     acquiredPrice: orNull(item.acquiredPrice),
     unrepairable: !!item.unrepairable,
+    ...(item.coating ? { coating: plain(item.coating) } : {}),
     // Temporary modifiers live only in tactical games
     modifiers: (item.modifiers || []).filter(modifier => !modifier.temporary).map(modifier => modifierToExport(modifier, refs, crafterOf)),
   };

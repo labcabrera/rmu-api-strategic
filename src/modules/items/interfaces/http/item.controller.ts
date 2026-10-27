@@ -6,6 +6,7 @@ import { Page } from '../../../shared/application/pagination/page.js';
 import { CatalogPagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
 import { CreateItemCommand } from '../../application/cqrs/commands/create-item.command.js';
 import { DeleteItemCommand } from '../../application/cqrs/commands/delete-item.command.js';
+import { RemoveCoatingCommand } from '../../application/cqrs/commands/coat-item.command.js';
 import { UpdateItemCommand } from '../../application/cqrs/commands/update-item.command.js';
 import { GetItemQuery } from '../../application/cqrs/queries/get-item.query.js';
 import { GetItemsQuery } from '../../application/cqrs/queries/get-items.query.js';
@@ -24,6 +25,7 @@ import type { PriceQuote } from '../../application/cqrs/handlers/quote-price.han
 import { ItemOperationResultDto, PriceQuoteDto } from './dto/item-ledger.dto.js';
 import {
   CraftItemDto,
+  CoatItemDto,
   DiscardItemDto,
   PurchaseItemDto,
   QuotePriceDto,
@@ -99,6 +101,23 @@ export class ItemController {
   @ApiErrors({ 404: 'Item not found', 400: 'Invalid data' })
   async discard(@Param('id') id: string, @Body() dto: DiscardItemDto, @CurrentUser() user: AuthenticatedUser) {
     return this.operation(DiscardItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  @Post(':id/coating')
+  @ApiOperation({ operationId: 'coatItem', summary: 'Coat a weapon with a dose of a poison of its holder (spec 042)' })
+  @ApiCreatedResponse({ type: ItemOperationResultDto })
+  @ApiErrors({ 404: 'Item not found', 400: 'Not a weapon, not a coating poison or another holder' })
+  async coat(@Param('id') id: string, @Body() dto: CoatItemDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.operation(CoatItemDto.toCommand(id, dto, user.id, user.roles));
+  }
+
+  @Delete(':id/coating')
+  @ApiOperation({ operationId: 'removeCoating', summary: 'Remove the poison of a weapon (spec 042)' })
+  @ApiOkResponse({ type: ItemDto })
+  @ApiErrors({ 404: 'Item not found' })
+  async removeCoating(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const item = await this.commandBus.execute<RemoveCoatingCommand, Item>(new RemoveCoatingCommand(id, user.id, user.roles));
+    return ItemDto.fromEntity(item);
   }
 
   private async operation(command: object): Promise<ItemOperationResultDto> {

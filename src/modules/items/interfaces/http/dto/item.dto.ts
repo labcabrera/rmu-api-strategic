@@ -8,6 +8,7 @@ import { ItemShieldDto } from './item-shield.dto.js';
 import { ItemConditionDto, ItemModifierDto } from './item-modifier.dto.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
+import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 
 export class ItemDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -81,6 +82,9 @@ export class ItemDto {
   @ApiProperty({ description: 'Game owner', type: String })
   owner: string;
 
+  @ApiProperty({ description: 'Poison on the weapon (workspace spec 042)', type: Object, nullable: true, required: false })
+  coating?: ItemCoating | null;
+
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
     dto.version = entity.version;
@@ -104,6 +108,7 @@ export class ItemDto {
     dto.value = entity.unitValue;
     dto.acquiredPrice = entity.acquiredPrice ?? null;
     dto.owner = entity.owner;
+    dto.coating = entity.coating ?? null;
     return dto;
   }
 }
