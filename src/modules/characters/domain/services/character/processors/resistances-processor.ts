@@ -67,7 +67,10 @@ export class ResistancesProcessor {
 
   private getStatusBonus(character: Partial<Character>, resistance: string): number {
     switch (resistance) {
+      // Poison and disease RRs are physical (Table 5-6): Constitution too (workspace spec 042, decision 8).
       case 'physical':
+      case 'poison':
+      case 'disease':
         return character.statistics?.co.totalBonus || 0;
       case 'fear':
         return character.statistics?.sd.totalBonus || 0;

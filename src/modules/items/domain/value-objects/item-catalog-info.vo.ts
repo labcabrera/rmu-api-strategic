@@ -1,3 +1,5 @@
+import type { PoisonData } from '../../../characters/domain/value-objects/poison.vo.js';
+
 /** Cost of an item type in the catalog, in gold pieces. */
 export interface ItemCost {
   min: number | null;
@@ -26,4 +28,8 @@ export interface ItemFeatures {
   light?: { radius: number | null; durationHours: number | null } | null;
   transport?: { capacity: number | null; speed: number | null } | null;
   ammunition?: { launchers: string[]; sizeAdjustment: number } | null;
+  /** Workspace spec 042: a poison (category, level, form, maximum severity, immediate hits and onset). */
+  poison?: Omit<PoisonData, 'name' | 'itemTypeId'> | null;
+  /** Workspace spec 042: an antidote (categories, level and the hours after the exposure it still works). */
+  antidote?: { categories: string[]; level: number; withinHours: number | null } | null;
 }

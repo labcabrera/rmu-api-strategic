@@ -228,6 +228,7 @@ function buildItem(
     value: data.value,
     acquiredPrice: data.acquiredPrice,
     unrepairable: data.unrepairable,
+    coating: data.coating ?? null,
     accessType: 'public',
     owner: target.owner,
     createdAt: new Date(),

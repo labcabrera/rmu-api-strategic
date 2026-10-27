@@ -1,5 +1,7 @@
 // Health model shared with rmu-api-tactical (workspace spec 013, section 1)
 
+import type { InjuryPoison } from './poison.vo.js';
+
 export type InjuryType = 'bone' | 'cut-burn' | 'muscle-tendon' | 'organ' | 'poison-disease' | 'skin-tissue' | 'unknown';
 export type InjurySeverity = 'light' | 'medium' | 'severe';
 export type BodyLocation = 'head' | 'chest' | 'abdomen' | 'arm' | 'leg';
@@ -7,7 +9,8 @@ export type BodySide = 'left' | 'right';
 export type BleedingControl = 'pressure' | 'stitches' | 'tourniquet' | 'cauterized' | 'magic';
 export type InjuryFlag = 'permanent-risk' | 'limb-loss' | 'blinding' | 'paralysis';
 export type InjuryStatus = 'active' | 'recovering' | 'permanent' | 'healed';
-export type InjurySourceKind = 'critical' | 'fumble' | 'fatigue' | 'manual';
+/** `poison`: the conditions a poisoning puts on the character (workspace spec 042). */
+export type InjurySourceKind = 'critical' | 'fumble' | 'fatigue' | 'manual' | 'poison';
 export type TreatmentProcedure =
   'pressure' | 'stitches' | 'tourniquet' | 'cauterize' | 'dress' | 'splint' | 'cast' | 'salve' | 'surgery' | 'magic' | 'herbs';
 export type TreatmentResult = 'absolute-failure' | 'failure' | 'partial-success' | 'success' | 'absolute-success';
@@ -21,7 +24,7 @@ export const BODY_SIDES: BodySide[] = ['left', 'right'];
 export const BLEEDING_CONTROLS: BleedingControl[] = ['pressure', 'stitches', 'tourniquet', 'cauterized', 'magic'];
 export const INJURY_FLAGS: InjuryFlag[] = ['permanent-risk', 'limb-loss', 'blinding', 'paralysis'];
 export const INJURY_STATUSES: InjuryStatus[] = ['active', 'recovering', 'permanent', 'healed'];
-export const INJURY_SOURCE_KINDS: InjurySourceKind[] = ['critical', 'fumble', 'fatigue', 'manual'];
+export const INJURY_SOURCE_KINDS: InjurySourceKind[] = ['critical', 'fumble', 'fatigue', 'manual', 'poison'];
 export const TREATMENT_PROCEDURES: TreatmentProcedure[] = [
   'pressure',
   'stitches',
@@ -51,6 +54,8 @@ export interface InjurySource {
   attackerName?: string;
   /** `${table}-${severity}-${roll}`, e.g. "S-C-91" */
   criticalKey?: string;
+  /** The poisoning a condition of kind `poison` comes from (workspace spec 042). */
+  injuryId?: string;
 }
 
 export interface InjuryHealer {
@@ -132,6 +137,8 @@ export interface Injury {
   treatments: InjuryTreatment[];
   recovery?: InjuryRecovery;
   permanent?: InjuryPermanent;
+  /** A poisoning (workspace spec 042): only in `poison-disease` injuries. */
+  poison?: InjuryPoison;
   status: InjuryStatus;
   createdAt: string;
   updatedAt?: string;

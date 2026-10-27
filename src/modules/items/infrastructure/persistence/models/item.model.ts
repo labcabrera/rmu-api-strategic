@@ -6,6 +6,7 @@ import { ItemArmor } from './item-armor.model.js';
 import { ItemInfo } from './item-info.model.js';
 import { ItemShield } from './item-shield.model.js';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
+import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export type ItemDocument = ItemModel & Document;
@@ -74,6 +75,10 @@ export class ItemModel {
 
   @Prop({ type: Boolean, required: false })
   unrepairable?: boolean;
+
+  /** Workspace spec 042: poison on the weapon. */
+  @Prop({ type: Object, required: false })
+  coating?: ItemCoating | null;
 
   @Prop({ type: Date, required: true })
   createdAt: Date;

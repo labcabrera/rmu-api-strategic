@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { InjuryPoison } from '../../../domain/value-objects/poison.vo.js';
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 import {
   BLEEDING_CONTROLS,
@@ -160,6 +161,8 @@ export class InjuryDto {
   recovery?: InjuryRecoveryDto;
   @ApiPropertyOptional({ type: InjuryPermanentDto })
   permanent?: InjuryPermanentDto;
+  @ApiPropertyOptional({ type: Object, description: 'A poisoning (workspace spec 042): stages, RR and antidotes' })
+  poison?: InjuryPoison;
   @ApiProperty({ type: String, enum: INJURY_STATUSES })
   status: InjuryStatus;
   @ApiProperty()

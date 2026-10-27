@@ -38,6 +38,7 @@ import type { HealingLogEntry, HealingLogKind } from '../value-objects/healing-l
 import type { HealthSummary } from '../value-objects/health-summary.vo.js';
 import {
   type Injury,
+  type InjurySource,
   type InjuryPermanent,
   type InjuryRecovery,
   type InjuryTreatment,
@@ -50,6 +51,9 @@ import type { HealingTables } from '../value-objects/healing-tables.vo.js';
 import { type OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger.js';
 import { UNRANKED_RANK_BONUS } from '../services/skills/rank-bonus.js';
 import { restPowerRecovery } from '../services/power/power-rules.js';
+import { PoisonStages, type Random } from '../services/healing/poison-stages.js';
+import type { PoisonRrResult } from '../services/healing/poison-rr.js';
+import type { AntidoteData, InjuryPoison, PoisonData, PoisonSeverityRow } from '../value-objects/poison.vo.js';
 
 // A character without the skill: no ranks (Core Law table 3-0b)
 export const UNRANKED_SKILL_BONUS = UNRANKED_RANK_BONUS;
@@ -109,6 +113,8 @@ export interface RestResult {
   /** Power points before and after the rest: null without power */
   powerBefore: number | null;
   powerAfter: number | null;
+  /** Workspace spec 042: the poisonings that advanced. */
+  poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -736,6 +742,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (injury.status === 'permanent') {
       throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
     }
+    if (injury.poison && !injury.poison.finished) {
+      throw new ValidationError(`Injury ${injuryId} is a poisoning in progress`, 'err-injury-poison-active');
+    }
     if (HealingCalculator.isRecoveryRolled(injury)) {
       throw new ConflictError(`Injury ${injuryId} already has a recovery roll for its latest treatment`, 'err-injury-recovery-rolled');
     }
@@ -771,7 +780,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   }
 
   /** Passes time resting: hits per rest period and days off the injury counters. */
-  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>, powerPeriods = 0): RestResult {
+  /** `poisonRounds`: the time of the rest in rounds, for the poisonings (workspace spec 042, decision 13). */
+  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>, powerPeriods = 0, poisonRounds = 0): RestResult {
+    const poisonings = this.advancePoisonings(poisonRounds, now);
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
     if (this.power) {
@@ -779,7 +790,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       this.power = { ...this.power, current: Math.max(this.power.current, Math.min(this.power.max, this.power.current + recovered)) };
     }
     this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
-    const progress: InjuryProgress[] = this.injuries.map(injury => HealingCalculator.advance(injury, days, now));
+    // A poisoning in progress follows its stages, not a recovery.
+    const progress: InjuryProgress[] = this.injuries.map(injury =>
+      injury.poison && !injury.poison.finished ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
+    );
     this.injuries = progress.map(p => p.injury);
     const resolvedConditions = this.resolveUnconsciousIfConscious(now);
     const result: RestResult = {
@@ -799,6 +813,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       powerBefore,
       powerAfter: this.power ? this.power.current : null,
     };
+    if (poisonings.length > 0) result.poisonings = poisonings;
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
@@ -829,11 +844,194 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (this.hp.current <= 0) return [];
     const resolved: string[] = [];
     this.conditions = this.conditions.map(c => {
-      if (c.status !== 'unconscious' || c.resolvedAt) return c;
+      // The unconsciousness of a poisoning lasts its stage (workspace spec 042), whatever the hits.
+      if (c.status !== 'unconscious' || c.resolvedAt || c.source.kind === 'poison') return c;
       resolved.push(c.id);
       return { ...c, resolvedAt: now };
     });
     return resolved;
+  }
+
+  // Poisons (workspace spec 042)
+
+  /**
+   * The poison RR of an exposure (decisions 4-8): resisted, nothing happens. Failed, a `poison-disease` injury with its
+   * stages up to the severity reached and the poison's immediate hits; the stages that start at once start now.
+   * Irritants have no general effects: the game master applies theirs by hand.
+   */
+  poison(
+    poison: PoisonData,
+    source: InjurySource,
+    rr: PoisonRrResult,
+    rows: PoisonSeverityRow[],
+    random: Random = Math.random,
+  ): Injury | undefined {
+    const now = new Date().toISOString();
+    const outcome = {
+      poison: poison.name,
+      level: poison.level,
+      roll: rr.roll,
+      total: rr.total,
+      failure: rr.failure,
+      severity: rr.severity,
+    };
+    if (rr.resisted || !rr.severity || poison.category === 'irritant') {
+      this.recordHealing('manual', { action: 'poison-resisted', ...outcome, resisted: rr.resisted });
+      this.touch();
+      return undefined;
+    }
+    const severity = PoisonStages.severityOf(rr.severity, poison);
+    const injury: Injury = {
+      id: randomUUID(),
+      type: 'poison-disease',
+      severity: PoisonStages.injurySeverity(severity),
+      penalty: 0,
+      initialPenalty: 0,
+      description: poison.name,
+      source,
+      treatments: [],
+      status: 'active',
+      createdAt: now,
+      poison: PoisonStages.poisoning(
+        poison,
+        { roll: rr.roll, bonus: rr.bonus, total: rr.total, failure: rr.failure },
+        severity,
+        rows,
+        now,
+        random,
+      ),
+    };
+    this.injuries.push(injury);
+    const hits = poison.immediateHits ? PoisonStages.rollHits(poison.immediateHits, random) : 0;
+    if (hits > 0) {
+      this.hp.current -= hits;
+      this.checkPoisonHits(injury, now);
+    }
+    this.stepPoisoning(injury, 0, now);
+    this.recordHealing('manual', { action: 'poisoned', ...outcome, hits, penalty: injury.penalty }, { injuryId: injury.id });
+    this.touch();
+    return this.findInjury(injury.id);
+  }
+
+  /** An antidote for a poisoning (decision 10): kept in the poison block whether it worked or not. */
+  giveAntidote(injuryId: string, antidote: AntidoteData): { injury: Injury; neutralized: boolean } {
+    const injury = this.findInjury(injuryId);
+    if (!injury.poison) throw new ValidationError('The injury is not a poisoning', 'err-injury-not-poisoned');
+    const now = new Date().toISOString();
+    const poison: InjuryPoison = structuredClone(injury.poison);
+    const neutralized = PoisonStages.neutralizes(antidote, poison);
+    poison.antidotes = [
+      ...(poison.antidotes ?? []),
+      {
+        at: now,
+        source: antidote.source,
+        name: antidote.name,
+        ...(antidote.itemTypeId ? { itemTypeId: antidote.itemTypeId } : {}),
+        ...(antidote.level !== undefined && antidote.level !== null ? { level: antidote.level } : {}),
+        neutralized,
+      },
+    ];
+    if (neutralized) PoisonStages.neutralize(poison);
+    const updated = this.replaceInjury({ ...injury, poison, updatedAt: now });
+    if (neutralized) {
+      this.syncPoisonInjury(updated, now);
+      this.resolvePoisonConditions(updated, now);
+    }
+    this.recordHealing('manual', { action: 'antidote', antidote: antidote.name, source: antidote.source, neutralized }, { injuryId });
+    this.touch();
+    return { injury: this.findInjury(injuryId), neutralized };
+  }
+
+  /** The poisonings in progress advance `rounds` (decision 13): the stages that fall in that time apply in order. */
+  private advancePoisonings(rounds: number, now: string): NonNullable<RestResult['poisonings']> {
+    if (!(rounds > 0)) return [];
+    return this.injuries
+      .filter(injury => injury.poison && !injury.poison.finished)
+      .map(injury => {
+        const copy = this.replaceInjury({ ...injury, poison: structuredClone(injury.poison) });
+        this.stepPoisoning(copy, copy.poison!.elapsedRounds + Math.floor(rounds), now);
+        const after = this.findInjury(copy.id);
+        return { injuryId: after.id, elapsedRounds: after.poison!.elapsedRounds, penalty: after.penalty, status: after.status };
+      });
+  }
+
+  /**
+   * Strategic leaves out the hits per round (they belong to the tactical rounds) and the paralysis and incapacity
+   * (no such conditions here): it applies the stages, their penalties, the unconsciousness and the death.
+   */
+  private stepPoisoning(injury: Injury, elapsed: number, now: string): void {
+    const step = PoisonStages.step(injury.poison!, elapsed, true);
+    step.conditions.forEach(({ condition }) => {
+      if (condition === 'dead') {
+        this.addPoisonCondition('dead', injury, now);
+      } else if (condition === 'unconscious' || condition === 'coma') {
+        this.addPoisonCondition('unconscious', injury, now);
+      }
+    });
+    this.syncPoisonInjury(injury, now);
+    this.resolvePoisonConditions(injury, now);
+  }
+
+  /** Same rule as tactical: the stages in progress penalize; once over, a permanent stage stays, or it is healed. */
+  private syncPoisonInjury(injury: Injury, now: string): void {
+    const current = this.findInjury(injury.id);
+    const poison = current.poison!;
+    const next: Injury = { ...current, updatedAt: now };
+    if (poison.finished) {
+      const permanent = PoisonStages.permanentPenalty(poison);
+      next.penalty = permanent;
+      if (permanent < 0) {
+        next.status = 'permanent';
+        next.permanent = { penalty: permanent };
+      } else if (current.status !== 'healed') {
+        next.status = 'healed';
+        next.healedAt = now;
+      }
+    } else {
+      next.penalty = PoisonStages.penalty(poison);
+    }
+    next.initialPenalty = Math.min(current.initialPenalty, next.penalty);
+    this.replaceInjury(next);
+  }
+
+  /** The unconsciousness of a poisoning ends with its stage, or when the poisoning ends. */
+  private resolvePoisonConditions(injury: Injury, now: string): void {
+    const poison = this.findInjury(injury.id).poison!;
+    const ongoing = poison.stages.some(
+      stage =>
+        stage.started &&
+        !stage.ended &&
+        stage.conditionApplied &&
+        (stage.condition === 'unconscious' || stage.condition === 'coma') &&
+        (stage.conditionUntil === null || stage.conditionUntil > poison.elapsedRounds),
+    );
+    if (ongoing) return;
+    this.conditions = this.conditions.map(c =>
+      c.status === 'unconscious' && !c.resolvedAt && c.source.kind === 'poison' && c.source.injuryId === injury.id
+        ? { ...c, resolvedAt: now }
+        : c,
+    );
+  }
+
+  private addPoisonCondition(status: 'unconscious' | 'dead', injury: Injury, now: string): void {
+    if (this.conditions.some(c => !c.resolvedAt && c.status === status && c.source.injuryId === injury.id)) return;
+    this.conditions.push({
+      id: randomUUID(),
+      status,
+      source: { kind: 'poison', injuryId: injury.id },
+      description: injury.poison?.name,
+      createdAt: now,
+    });
+    if (status === 'dead') this.status = 'dead';
+  }
+
+  /** The immediate hits of a poison: unconscious at 0 or fewer hits, dead beyond the death threshold. */
+  private checkPoisonHits(injury: Injury, now: string): void {
+    if (this.hp.current < -Math.abs(this.deathThreshold)) {
+      this.addPoisonCondition('dead', injury, now);
+    } else if (this.hp.current <= 0 && !this.conditions.some(c => !c.resolvedAt && c.status === 'unconscious')) {
+      this.conditions.push({ id: randomUUID(), status: 'unconscious', source: { kind: 'manual' }, createdAt: now });
+    }
   }
 
   resolveCondition(conditionId: string): CharacterCondition {

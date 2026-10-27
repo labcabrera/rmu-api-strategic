@@ -7,6 +7,7 @@ import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports
 import { CharacterHealthStore } from '../../services/character-health.store.js';
 import { RestCharacterCommand } from '../commands/rest-character.command.js';
 import { restPowerPeriods } from '../../../domain/services/power/power-rules.js';
+import { ROUNDS_PER_HOUR } from '../../../domain/value-objects/poison.vo.js';
 
 const HOURS_PER_DAY = 24;
 
@@ -31,7 +32,9 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
     const counterDays = calculator.restDays(elapsedDays, command.fullRest);
     const hpAfter = calculator.restHp(character.hp.max, character.hp.current, hours + days * HOURS_PER_DAY);
     const summary = { hours, restDays: days, fullRest: command.fullRest };
-    character.rest(hpAfter, counterDays, new Date().toISOString(), summary, restPowerPeriods(hours, days));
+    // Workspace spec 042: every hour of the rest advances the poisonings.
+    const poisonRounds = (hours + days * HOURS_PER_DAY) * ROUNDS_PER_HOUR;
+    character.rest(hpAfter, counterDays, new Date().toISOString(), summary, restPowerPeriods(hours, days), poisonRounds);
     return this.store.save(character);
   }
 }

@@ -62,6 +62,13 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the improvised weapons, full suits and general equipment data of the items',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 042: optional poison block of the injuries, injuryId of their sources, the poison source kind and
+    // the coating of the weapons; older files have none to change
+    from: 4,
+    description: 'Allows the poisonings of the injuries and the poison on the weapons',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {

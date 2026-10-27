@@ -21,6 +21,8 @@ import { GetTreatmentDifficultyQuery } from '../../application/cqrs/queries/get-
 import type { TreatmentDifficulty } from '../../domain/services/healing/injury-treatment-rules.js';
 import { InjuryRollDto } from './dto/injury-roll.dto.js';
 import { RestDto } from './dto/rest.dto.js';
+import { AntidoteResultDto, GiveAntidoteDto, PoisonCharacterDto, PoisonCharacterResultDto } from './dto/poisoning.dto.js';
+import type { GiveAntidoteResult, PoisonCharacterResult } from '../../application/cqrs/handlers/poisoning.handlers.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
 import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
@@ -166,6 +168,31 @@ export class CharacterHealthController {
   async rest(@Param('id') id: string, @Body() dto: RestDto, @CurrentUser() user: AuthenticatedUser): Promise<CharacterDto> {
     const command = RestDto.toCommand(id, dto, user.id, user.roles);
     return CharacterDto.fromEntity(await this.commandBus.execute<typeof command, Character>(command));
+  }
+
+  @Post(':id/poisonings')
+  @HttpCode(200)
+  @ApiBody({ type: PoisonCharacterDto })
+  @ApiOperation({ operationId: 'poisonCharacter', summary: 'Poison RR of an exposure; a failure poisons the character (spec 042)' })
+  @ApiOkResponse({ type: PoisonCharacterResultDto })
+  async poison(@Param('id') id: string, @Body() dto: PoisonCharacterDto, @CurrentUser() user: AuthenticatedUser) {
+    const command = PoisonCharacterDto.toCommand(id, dto, user.id, user.roles);
+    return PoisonCharacterResultDto.from(await this.commandBus.execute<typeof command, PoisonCharacterResult>(command));
+  }
+
+  @Post(':id/injuries/:injuryId/antidote')
+  @HttpCode(200)
+  @ApiBody({ type: GiveAntidoteDto })
+  @ApiOperation({ operationId: 'giveAntidote', summary: 'Give an antidote for a poisoning (spec 042)' })
+  @ApiOkResponse({ type: AntidoteResultDto })
+  async antidote(
+    @Param('id') id: string,
+    @Param('injuryId') injuryId: string,
+    @Body() dto: GiveAntidoteDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const command = GiveAntidoteDto.toCommand(id, injuryId, dto, user.id, user.roles);
+    return AntidoteResultDto.from(await this.commandBus.execute<typeof command, GiveAntidoteResult>(command));
   }
 
   @Post(':id/conditions/:conditionId/resolve')

@@ -89,6 +89,9 @@ import { CHARACTER_REPOSITORY } from './application/ports/character-repository.p
 import { CULTURE_CLIENT } from './application/ports/culture-client.port.js';
 import { HEALING_LOG_REPOSITORY } from './application/ports/healing-log-repository.port.js';
 import { HEALING_TABLES_CLIENT } from './application/ports/healing-tables-client.port.js';
+import { POISON_RULES_CLIENT } from './application/ports/poison-rules-client.port.js';
+import { ApiPoisonRulesClientAdapter } from './infrastructure/api-clients/api.poison-rules-client.adapter.js';
+import { GiveAntidoteHandler, PoisonCharacterHandler } from './application/cqrs/handlers/poisoning.handlers.js';
 import { MANEUVER_CLIENT } from './application/ports/maneuver-client.port.js';
 import { PROFESSION_CLIENT } from './application/ports/profession-client.port.js';
 import { RACE_CLIENT } from './application/ports/race-client.port.js';
@@ -185,6 +188,12 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
       provide: HEALING_TABLES_CLIENT,
       useClass: ApiHealingTablesClientAdapter,
     },
+    {
+      provide: POISON_RULES_CLIENT,
+      useClass: ApiPoisonRulesClientAdapter,
+    },
+    PoisonCharacterHandler,
+    GiveAntidoteHandler,
     {
       provide: MANEUVER_CLIENT,
       useClass: ApiManeuverClientAdapter,

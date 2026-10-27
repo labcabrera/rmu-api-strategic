@@ -40,6 +40,7 @@ import { PurchaseItemHandler } from './application/cqrs/handlers/purchase-item.h
 import { SellItemHandler } from './application/cqrs/handlers/sell-item.handler.js';
 import { TransferItemHandler } from './application/cqrs/handlers/transfer-item.handler.js';
 import { DiscardItemHandler } from './application/cqrs/handlers/discard-item.handler.js';
+import { CoatItemHandler, RemoveCoatingHandler } from './application/cqrs/handlers/coat-item.handler.js';
 import { CraftItemHandler } from './application/cqrs/handlers/craft-item.handler.js';
 import { RepairItemHandler } from './application/cqrs/handlers/repair-item.handler.js';
 import { TransferFactionGoldHandler } from './application/cqrs/handlers/transfer-faction-gold.handler.js';
@@ -85,6 +86,8 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     SellItemHandler,
     TransferItemHandler,
     DiscardItemHandler,
+    CoatItemHandler,
+    RemoveCoatingHandler,
     CraftItemHandler,
     RepairItemHandler,
     TransferFactionGoldHandler,
@@ -107,6 +110,6 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
       useClass: ApiItemClientAdapter,
     },
   ],
-  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger],
+  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger, ItemStock, InventorySync],
 })
 export class ItemsModule {}

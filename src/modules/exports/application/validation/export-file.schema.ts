@@ -54,6 +54,7 @@ const injurySource = Joi.object({
   attackerId: id(),
   attackerName: name(),
   criticalKey: Joi.string().max(NAME),
+  injuryId: id(),
 });
 
 const treatment = Joi.object({
@@ -117,6 +118,7 @@ const injury = Joi.object({
     untreated: Joi.boolean(),
   }),
   permanent: Joi.object({ penalty: num().max(0).required(), roll: num() }),
+  poison: Joi.object().max(20).unknown(true),
   status: Joi.string()
     .valid(...INJURY_STATUSES)
     .required(),
@@ -350,6 +352,7 @@ const item = Joi.object({
   value: nullable(num().min(0)).required(),
   acquiredPrice: nullable(num().min(0)).required(),
   unrepairable: Joi.boolean().required(),
+  coating: nullable(Joi.object().max(10).unknown(true)),
   modifiers: Joi.array().items(modifier).max(200).required(),
 });
 
