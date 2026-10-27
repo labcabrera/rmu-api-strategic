@@ -25,8 +25,8 @@ export const trait = (
   cost = 10,
 ): CharacterTrait => new CharacterTrait(traitId, traitId, true, tier, source === 'race' ? 0 : cost, specialization, source);
 
-export const skill = (skillId: string, specialization: string | null = null, ranks = 0): CharacterSkill => {
-  const result = CharacterSkill.empty(skillId, specialization, [], [2, 4], 0);
+export const skill = (skillId: string, specialization: string | null = null, ranks = 0, categoryId?: string): CharacterSkill => {
+  const result = CharacterSkill.empty(skillId, specialization, [], [2, 4], 0, categoryId);
   result.ranks = ranks;
   return result;
 };

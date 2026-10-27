@@ -24,24 +24,46 @@ export function getEffectiveTraits(traits: CharacterTrait[] | undefined | null):
   return Array.from(result.values());
 }
 
+function appliesToTier(effect: TraitEffect, tier: number): boolean {
+  return (effect.minTier === undefined || tier >= effect.minTier) && (effect.maxTier === undefined || tier <= effect.maxTier);
+}
+
 export function getTraitEffects(traits: CharacterTrait[] | undefined | null, target: TraitEffectTarget): AppliedTraitEffect[] {
   const result: AppliedTraitEffect[] = [];
   getEffectiveTraits(traits).forEach(trait => {
+    const tier = trait.tier ?? 1;
     const effects = TRAIT_EFFECTS[trait.traitId] || [];
     effects
-      .filter(effect => effect.target === target)
+      .filter(effect => effect.target === target && appliesToTier(effect, tier))
       .forEach(effect => {
         result.push({
           traitId: trait.traitId,
           specialization: trait.specialization,
           effect,
-          value: effect.value * (trait.tier ?? 1),
+          value: effect.fixed ? effect.value : effect.value * tier,
         });
       });
   });
   return result;
 }
 
+// Effects that share a group do not stack: the highest of each group counts (workspace spec 039, decision 8)
 export function sumTraitEffects(effects: AppliedTraitEffect[]): number {
-  return effects.reduce((sum, e) => sum + e.value, 0);
+  const groups = new Map<string, number>();
+  let sum = 0;
+  effects.forEach(e => {
+    if (!e.effect.group) {
+      sum += e.value;
+      return;
+    }
+    const current = groups.get(e.effect.group);
+    groups.set(e.effect.group, current === undefined ? e.value : Math.max(current, e.value));
+  });
+  groups.forEach(value => (sum += value));
+  return sum;
+}
+
+// Product of multiplier effects (movement)
+export function multiplyTraitEffects(effects: AppliedTraitEffect[]): number {
+  return effects.reduce((product, e) => product * e.value, 1);
 }

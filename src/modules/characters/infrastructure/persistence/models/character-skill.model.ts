@@ -9,6 +9,9 @@ export class CharacterSkill {
   skillId: string;
 
   @Prop({ type: String, required: false })
+  categoryId?: string;
+
+  @Prop({ type: String, required: false })
   specialization: string | null;
 
   @Prop({ type: [String], required: true })

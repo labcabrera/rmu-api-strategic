@@ -332,11 +332,18 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return skill ? skill.totalBonus : UNRANKED_SKILL_BONUS;
   }
 
-  addSkill(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number): void {
+  addSkill(
+    skillId: string,
+    specialization: string | null,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+    categoryId?: string,
+  ): void {
     if (this.skills.find(s => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }
-    const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus);
+    const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus, categoryId);
     this.skills.push(skill);
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }

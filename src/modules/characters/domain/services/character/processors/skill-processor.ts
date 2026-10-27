@@ -16,16 +16,23 @@ import { trimStyleAbilities } from '../../fighting-styles/style-allocation.js';
 export class SkillProcessor {
   process(character: Character, items: Item[]): void {
     const skillEffects = getTraitEffects(character.traits, 'skill');
-    character.skills.forEach((skill: CharacterSkill) => this.updateSkill(character, skill, items, skillEffects));
+    const focusEffects = getTraitEffects(character.traits, 'professional-focus');
+    character.skills.forEach((skill: CharacterSkill) => this.updateSkill(character, skill, items, skillEffects, focusEffects));
     character.skills.sort((a: CharacterSkill, b: CharacterSkill) => a.skillId.localeCompare(b.skillId));
   }
 
-  private updateSkill(character: Character, skill: CharacterSkill, items: Item[], skillEffects: AppliedTraitEffect[]): void {
+  private updateSkill(
+    character: Character,
+    skill: CharacterSkill,
+    items: Item[],
+    skillEffects: AppliedTraitEffect[],
+    focusEffects: AppliedTraitEffect[],
+  ): void {
     const ranks = skill.ranks;
     const statBonus = this.getStatBonus(character, skill.statistics);
     const racialBonus = skill.racialBonus || 0;
     const developmentBonus = this.getRankBonus(ranks);
-    const professionalBonus = this.getProfessionalBonus(skill);
+    const professionalBonus = this.getProfessionalBonus(skill, focusEffects);
 
     const traitBonus = this.getTraitBonus(skill, skillEffects);
     const customBonus = this.getArmorPenaltyBonus(character, skill, items);
@@ -61,10 +68,12 @@ export class SkillProcessor {
     return realmStatBonus(character.info, character.statistics);
   }
 
-  private getProfessionalBonus(skill: CharacterSkill): number {
+  // Professional Skill Focus doubles the professional bonus of one skill: +2 per rank, max +60 (workspace spec 039)
+  private getProfessionalBonus(skill: CharacterSkill, focusEffects: AppliedTraitEffect[]): number {
     let bonus = 0;
     if (skill.professional && skill.professional.includes('professional')) {
-      bonus = Math.min(30, skill.ranks);
+      const focused = focusEffects.some(e => matchesSkill(e.specialization, skill.skillId, skill.specialization));
+      bonus = focused ? Math.min(60, 2 * skill.ranks) : Math.min(30, skill.ranks);
     }
     if (skill.professional && skill.professional.includes('knack')) {
       bonus += skill.knackBonus ?? DEFAULT_KNACK_BONUS;
@@ -73,10 +82,20 @@ export class SkillProcessor {
   }
 
   private getTraitBonus(skill: CharacterSkill, skillEffects: AppliedTraitEffect[]): number {
-    const matching = skillEffects.filter(e =>
-      e.effect.ids ? e.effect.ids.includes(skill.skillId) : matchesSkill(e.specialization, skill.skillId, skill.specialization),
-    );
+    const knack = !!skill.professional?.includes('knack');
+    const matching = skillEffects.filter(e => (!e.effect.requiresKnack || knack) && this.matchesSkillEffect(e, skill));
     return sumTraitEffects(matching);
+  }
+
+  // Fixed skills or skill categories, otherwise the trait specialization (a skill, or a skill category)
+  private matchesSkillEffect(e: AppliedTraitEffect, skill: CharacterSkill): boolean {
+    if (e.effect.ids || e.effect.categories) {
+      return !!e.effect.ids?.includes(skill.skillId) || (!!skill.categoryId && !!e.effect.categories?.includes(skill.categoryId));
+    }
+    if (e.effect.specialization === 'skill-category') {
+      return !!skill.categoryId && e.specialization === skill.categoryId;
+    }
+    return matchesSkill(e.specialization, skill.skillId, skill.specialization);
   }
 
   private getArmorPenaltyBonus(character: Character, skill: CharacterSkill, items: Item[]): number {

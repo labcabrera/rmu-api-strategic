@@ -33,12 +33,39 @@ export class CharacterSkill {
     public missingReference?: boolean,
     // Workspace spec 032: ranks of a fighting style allocated to its abilities
     public styleAbilities?: StyleAbilitySelection[],
+    // Workspace spec 039: skill category, for the talents that affect a whole category
+    public categoryId?: string,
   ) {}
 
-  static empty(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number) {
-    return new CharacterSkill(skillId, specialization, statistics, development, null, 0, 0, 0, racialBonus, 0, 0, 0, 0, 0, 0, {
-      normal: 0,
-      bonus: 0,
-    });
+  static empty(
+    skillId: string,
+    specialization: string | null,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+    categoryId?: string,
+  ) {
+    return new CharacterSkill(
+      skillId,
+      specialization,
+      statistics,
+      development,
+      null,
+      0,
+      0,
+      0,
+      racialBonus,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      { normal: 0, bonus: 0 },
+      undefined,
+      undefined,
+      undefined,
+      categoryId,
+    );
   }
 }
