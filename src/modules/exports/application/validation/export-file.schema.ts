@@ -300,6 +300,7 @@ const item = Joi.object({
                 .items(Joi.object({ from: num().required(), to: num().required(), bonus: num().required() }))
                 .max(20),
             ).required(),
+            obModifier: num(),
           }),
         )
         .max(10)
@@ -317,6 +318,8 @@ const item = Joi.object({
       rangedPenalty: num().required(),
       perceptionPenalty: num().required(),
       baseDifficulty: id().required(),
+      coverage: Joi.array().items(id()).max(4),
+      class: Joi.string().valid('light', 'medium', 'heavy'),
     }),
   ).required(),
   shield: nullable(Joi.object({ db: num().required(), blockCount: num().required() })).required(),
@@ -340,6 +343,8 @@ const item = Joi.object({
       rarity: nullable(id()).required(),
       productionHours: nullable(num().min(0)).required(),
       imageUrl: nullable(Joi.string().max(2000)).required(),
+      lotSize: nullable(num().integer().min(1)),
+      features: nullable(Joi.object().max(10).unknown(true)),
     }),
   ).required(),
   value: nullable(num().min(0)).required(),

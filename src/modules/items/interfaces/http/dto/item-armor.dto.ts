@@ -17,6 +17,12 @@ export class ItemArmorDto {
 
   baseDifficulty: string;
 
+  @ApiProperty({ description: 'Slots it covers (a full suit covers the four, spec 041)', type: [String], required: false })
+  coverage?: string[];
+
+  @ApiProperty({ description: 'Light, medium or heavy piece (spec 041)', type: String, required: false })
+  class?: string;
+
   static fromEntity(entity: ItemArmor): ItemArmorDto {
     const dto = new ItemArmorDto();
     dto.slot = entity.slot;
@@ -26,6 +32,8 @@ export class ItemArmorDto {
     dto.rangedPenalty = entity.rangedPenalty;
     dto.perceptionPenalty = entity.perceptionPenalty;
     dto.baseDifficulty = entity.baseDifficulty;
+    if (entity.coverage?.length) dto.coverage = [...entity.coverage];
+    if (entity.class) dto.class = entity.class;
     return dto;
   }
 }

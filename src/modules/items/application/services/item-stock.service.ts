@@ -9,6 +9,8 @@ import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.p
 /** What an operation returns: the item as it is now (null when it is gone) and its ledger entry. */
 export interface ItemOperationResult {
   item: Item | null;
+  /** Workspace spec 041: the items of a purchase of N items that do not stack. */
+  items?: Item[];
   entry: ItemLedgerEntry;
 }
 

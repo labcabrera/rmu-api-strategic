@@ -26,6 +26,9 @@ export class ItemLedgerEntryDto {
   @ApiProperty({ nullable: true })
   itemId: string | null;
 
+  @ApiProperty({ type: [String], description: 'Every item of the operation: filter the history of an item with itemIds==<id> (spec 041)' })
+  itemIds: string[];
+
   @ApiProperty({ nullable: true })
   itemTypeId: string | null;
 
@@ -92,12 +95,16 @@ export class ItemOperationResultDto {
   })
   item: ItemDto | null;
 
+  @ApiProperty({ type: [ItemDto], required: false, description: 'A purchase of N items that do not stack: the N items (spec 041)' })
+  items?: ItemDto[];
+
   @ApiProperty({ type: ItemLedgerEntryDto })
   entry: ItemLedgerEntryDto;
 
   static fromResult(result: ItemOperationResult): ItemOperationResultDto {
     const dto = new ItemOperationResultDto();
     dto.item = result.item ? ItemDto.fromEntity(result.item) : null;
+    if (result.items) dto.items = result.items.map(item => ItemDto.fromEntity(item));
     dto.entry = ItemLedgerEntryDto.fromEntity(result.entry);
     return dto;
   }

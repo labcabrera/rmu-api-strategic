@@ -57,6 +57,7 @@ function weaponToExport(weapon: ItemWeapon): ItemWeapon {
       fumbleTable: mode.fumbleTable,
       sizeAdjustment: mode.sizeAdjustment ?? 0,
       ranges: mode.ranges ? mode.ranges.map(range => ({ from: range.from, to: range.to, bonus: range.bonus })) : null,
+      ...(mode.obModifier ? { obModifier: mode.obModifier } : {}),
     })),
   };
   return {
@@ -74,6 +75,8 @@ const armorToExport = (armor: ItemArmor): ItemArmor => ({
   rangedPenalty: armor.rangedPenalty,
   perceptionPenalty: armor.perceptionPenalty,
   baseDifficulty: armor.baseDifficulty,
+  ...(armor.coverage?.length ? { coverage: [...armor.coverage] } : {}),
+  ...(armor.class ? { class: armor.class } : {}),
 });
 
 const infoToExport = (info: ItemInfo): ItemInfo => ({
@@ -92,6 +95,8 @@ function catalogToExport(catalog: ItemCatalogInfo): ItemCatalogInfo {
     rarity: orNull(catalog.rarity),
     productionHours: orNull(catalog.productionHours),
     imageUrl: orNull(catalog.imageUrl),
+    ...(catalog.lotSize ? { lotSize: catalog.lotSize } : {}),
+    ...(catalog.features ? { features: plain(catalog.features) } : {}),
   };
 }
 

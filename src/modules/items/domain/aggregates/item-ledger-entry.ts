@@ -41,6 +41,8 @@ export interface ItemLedgerEntryProps {
   gameId: string;
   kind: ItemLedgerKind;
   itemId: string | null;
+  /** Workspace spec 041: every item of the operation (a purchase of N items that do not stack has N), for the history of each item. */
+  itemIds: string[];
   itemTypeId: string | null;
   itemName: string | null;
   amount: number | null;
@@ -64,9 +66,9 @@ export interface ItemLedgerEntryProps {
 
 export type NewItemLedgerEntry = Omit<
   ItemLedgerEntryProps,
-  'id' | 'holderIds' | 'createdAt' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'
+  'id' | 'itemIds' | 'holderIds' | 'createdAt' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'
 > &
-  Partial<Pick<ItemLedgerEntryProps, 'id' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'>>;
+  Partial<Pick<ItemLedgerEntryProps, 'id' | 'itemIds' | 'payments' | 'price' | 'maneuver' | 'actorId' | 'outcome' | 'note' | 'details'>>;
 
 /** One operation on items or gold: append only, never changed after it is stored. */
 export class ItemLedgerEntry extends BaseAggregateRoot<ItemLedgerEntryProps> {
@@ -82,6 +84,7 @@ export class ItemLedgerEntry extends BaseAggregateRoot<ItemLedgerEntryProps> {
     return new ItemLedgerEntry({
       ...props,
       id: props.id ?? randomUUID(),
+      itemIds: props.itemIds?.length ? [...new Set(props.itemIds)] : props.itemId ? [props.itemId] : [],
       payments,
       price: props.price ?? null,
       maneuver: props.maneuver ?? null,

@@ -128,6 +128,17 @@ export const RACE = {
 
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
 
+function armorType(id: string, armor: Partial<NonNullable<ItemResponse['armor']>>): ItemResponse {
+  return {
+    id,
+    category: 'armor',
+    weapon: null,
+    armor: { rangedPenalty: 0, perceptionPenalty: 0, baseDifficulty: 'm', ...armor } as ItemResponse['armor'],
+    shield: null,
+    info: { cost: { min: 5, average: 5, max: 5 }, length: null, strength: 50, weight: 10, productionHours: 40, stackable: false },
+  };
+}
+
 export const ITEM_TYPES: Record<string, ItemResponse> = {
   stone: {
     id: 'stone',
@@ -190,6 +201,51 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
     armor: null,
     shield: null,
     info: { cost: { min: 0.1, average: 0.1, max: 0.1 }, length: null, strength: 5, weight: 0.1, productionHours: 1, stackable: true },
+  },
+  // Workspace spec 041: a full suit, light/heavy pieces, two torsos and a tool used as an improvised weapon (invented data)
+  'e2e-suit': armorType('e2e-suit', { slot: 'body', at: 8, enc: 20, maneuverPenalty: -60, coverage: ['body', 'head', 'arms', 'legs'] }),
+  'e2e-heavy-helmet': armorType('e2e-heavy-helmet', { slot: 'head', at: 9, enc: 3, maneuverPenalty: -5, class: 'heavy' }),
+  'e2e-light-greaves': armorType('e2e-light-greaves', { slot: 'legs', at: 3, enc: 2, maneuverPenalty: -5, class: 'light' }),
+  'e2e-plate-torso': armorType('e2e-plate-torso', { slot: 'body', at: 10, enc: 10, maneuverPenalty: -40 }),
+  'e2e-leather-torso': armorType('e2e-leather-torso', { slot: 'body', at: 3, enc: 3, maneuverPenalty: -5 }),
+  'e2e-chisel': {
+    id: 'e2e-chisel',
+    category: 'tools',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      tags: ['improvised'],
+      modes: [
+        {
+          type: 'one-hand',
+          attackTypes: ['melee'],
+          attackTable: 'e2e-table',
+          fumbleTable: 'e2e-fumble',
+          sizeAdjustment: -1,
+          obModifier: -40,
+        },
+      ],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: 50, weight: 1, productionHours: 8, stackable: false },
+  },
+  'e2e-lantern': {
+    id: 'e2e-lantern',
+    category: 'light',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { light: { radius: 20, durationHours: 5 } },
+    info: {
+      cost: { min: 1, average: 1, max: 1 },
+      length: null,
+      strength: null,
+      weight: 1,
+      productionHours: 8,
+      stackable: false,
+      lotSize: 2,
+    },
   },
   'gold-coin': {
     id: 'gold-coin',

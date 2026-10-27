@@ -6,6 +6,12 @@ import { CharacterShield } from '../../../value-objects/character-defense.vo.js'
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
+/** The torso ATs each class of helmet, vambraces or greaves suits, and its AT otherwise (Core Law, piecemeal armor). */
+const ARMOR_CLASS_BANDS: Record<string, { from: number; to: number; at: number }> = {
+  light: { from: 2, to: 3, at: 3 },
+  medium: { from: 4, to: 6, at: 5 },
+  heavy: { from: 7, to: 10, at: 9 },
+};
 @Injectable()
 export class DefenseProcessor {
   process(character: Character, items: Item[]): void {
@@ -20,10 +26,11 @@ export class DefenseProcessor {
     const defaultAt = this.getNaturalAt(character, naturalArmorTier);
     const armor = character.defense.armor;
     const slots = character.equipment.slots || {};
-    armor.bodyAt = this.getLocationAt(slots['body'], items, defaultAt, naturalArmorTier > 0);
-    armor.headAt = this.getLocationAt(slots['head'], items, defaultAt, naturalArmorTier > 0);
-    armor.armsAt = this.getLocationAt(slots['arms'], items, defaultAt, naturalArmorTier > 0);
-    armor.legsAt = this.getLocationAt(slots['legs'], items, defaultAt, naturalArmorTier > 0);
+    armor.bodyAt = this.getLocationAt(slots['body'], items, defaultAt, naturalArmorTier > 0, null);
+    const torsoAt = armor.bodyAt;
+    armor.headAt = this.getLocationAt(slots['head'], items, defaultAt, naturalArmorTier > 0, torsoAt);
+    armor.armsAt = this.getLocationAt(slots['arms'], items, defaultAt, naturalArmorTier > 0, torsoAt);
+    armor.legsAt = this.getLocationAt(slots['legs'], items, defaultAt, naturalArmorTier > 0, torsoAt);
     if (armor.bodyAt === armor.headAt && armor.bodyAt === armor.armsAt && armor.bodyAt === armor.legsAt) {
       armor.at = armor.bodyAt;
       armor.bodyAt = null;
@@ -41,15 +48,21 @@ export class DefenseProcessor {
     return naturalArmorTier > 0 ? Math.max(racialAt, 1 + naturalArmorTier) : racialAt;
   }
 
-  private getLocationAt(itemId: string | null | undefined, items: Item[], defaultAt: number, naturalArmor: boolean): number {
-    const wornAt = this.getItemArmorType(itemId, items);
+  private getLocationAt(
+    itemId: string | null | undefined,
+    items: Item[],
+    defaultAt: number,
+    naturalArmor: boolean,
+    torsoAt: number | null,
+  ): number {
+    const wornAt = this.getItemArmorType(itemId, items, torsoAt);
     if (wornAt === null) {
       return defaultAt;
     }
     return naturalArmor ? Math.max(wornAt, defaultAt) : wornAt;
   }
 
-  private getItemArmorType(itemId: string | null | undefined, items: Item[]): number | null {
+  private getItemArmorType(itemId: string | null | undefined, items: Item[], torsoAt: number | null = null): number | null {
     if (!itemId) return null;
 
     const item = items.find(e => e.id == itemId);
@@ -59,6 +72,12 @@ export class DefenseProcessor {
     // Spec 019, decision 10: a broken piece, or one damaged beyond -50, no longer protects its area.
     if (ItemModifiers.isUnprotected(ItemModifiers.condition(item.modifiers))) {
       return null;
+    }
+    // Workspace spec 041, decision 7 (Core Law, piecemeal armor): a light, medium or heavy piece is worth the torso AT
+    // when it suits it, and otherwise the AT of its class.
+    if (item.armor.class && torsoAt !== null) {
+      const band = ARMOR_CLASS_BANDS[item.armor.class];
+      return torsoAt >= band.from && torsoAt <= band.to ? torsoAt : band.at;
     }
     return item.armor.at;
   }

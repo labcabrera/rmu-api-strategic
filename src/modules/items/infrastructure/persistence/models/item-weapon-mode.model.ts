@@ -20,4 +20,7 @@ export class ItemWeaponMode {
 
   @Prop({ type: [ItemWeaponRange], required: false })
   ranges: ItemWeaponRange[] | null;
+
+  @Prop({ type: Number, required: false })
+  obModifier?: number;
 }

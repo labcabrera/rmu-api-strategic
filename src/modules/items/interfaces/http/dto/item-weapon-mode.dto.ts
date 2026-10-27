@@ -12,6 +12,9 @@ export class ItemWeaponModeDto {
   sizeAdjustment: number;
   ranges: ItemWeaponRangeDto[] | null;
 
+  @ApiProperty({ description: 'OB modifier of the mode, such as an improvised weapon penalty (spec 041)', required: false })
+  obModifier?: number;
+
   static fromEntity(entity: ItemWeaponMode): ItemWeaponModeDto {
     const dto = new ItemWeaponModeDto();
     dto.type = entity.type;
@@ -20,6 +23,7 @@ export class ItemWeaponModeDto {
     dto.fumbleTable = entity.fumbleTable;
     dto.sizeAdjustment = entity.sizeAdjustment;
     dto.ranges = entity.ranges;
+    if (entity.obModifier) dto.obModifier = entity.obModifier;
     return dto;
   }
 }

@@ -8,5 +8,7 @@ export class ItemWeaponMode {
     public readonly fumbleTable: string,
     public readonly sizeAdjustment: number,
     public readonly ranges: ItemWeaponRange[] | null,
+    /** Workspace spec 041: OB modifier of the mode, such as the penalty of an improvised weapon. */
+    public readonly obModifier?: number,
   ) {}
 }
