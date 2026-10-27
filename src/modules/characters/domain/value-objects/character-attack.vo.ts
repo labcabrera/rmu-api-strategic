@@ -24,6 +24,8 @@ export class CharacterAttack {
     public itemId?: string,
     /** Workspace spec 032: tags of the weapon type (fencing, quarterstaff...) for the fighting style requirements. */
     public weaponTags?: string[],
+    /** Workspace spec 040: times St enters the skill bonus of the attack, for the Strength bonus of Frenzy. */
+    public strengthWeight?: number,
   ) {}
 
   static fromProps(props: Omit<CharacterAttack, 'bo'>): CharacterAttack {
@@ -47,6 +49,7 @@ export class CharacterAttack {
       props.skillId,
       props.itemId,
       props.weaponTags,
+      props.strengthWeight,
     );
   }
 }
