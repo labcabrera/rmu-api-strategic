@@ -58,6 +58,9 @@ export class CharacterAttackDto {
   @ApiProperty({ description: 'Tags of the weapon type (spec 032)', type: [String], example: ['fencing'] })
   weaponTags: string[];
 
+  @ApiProperty({ description: 'Times St enters the skill bonus of the attack (spec 040)', type: Number, example: 2 })
+  strengthWeight: number;
+
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
     dto.attackName = entity.attackName;
@@ -78,6 +81,7 @@ export class CharacterAttackDto {
     dto.skillId = entity.skillId ?? null;
     dto.itemId = entity.itemId ?? null;
     dto.weaponTags = [...(entity.weaponTags ?? [])];
+    dto.strengthWeight = entity.strengthWeight ?? 0;
     return dto;
   }
 }

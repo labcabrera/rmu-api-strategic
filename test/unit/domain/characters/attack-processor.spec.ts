@@ -6,14 +6,14 @@ import { ItemWeaponMode } from '../../../../src/modules/items/domain/value-objec
 
 const SKILL_BONUS = 30;
 
-const buildCharacter = (sizeId: string, slots: Record<string, string | null>): Character =>
+const buildCharacter = (sizeId: string, slots: Record<string, string | null>, statistics: string[] = ['st', 'ag', 'st']): Character =>
   ({
     id: 'character-001',
     info: { sizeId, height: 1.8 },
     equipment: { slots },
     skills: [],
     traits: [],
-    findSkill: () => ({ totalBonus: SKILL_BONUS, ranks: 0 }),
+    findSkill: () => ({ totalBonus: SKILL_BONUS, ranks: 0, statistics }),
   }) as unknown as Character;
 
 const mode = (type: string, sizeAdjustment: number): ItemWeaponMode =>
@@ -97,5 +97,23 @@ describe('AttackProcessor', () => {
     expect(attack.boModifiers.wrongSize).toBeUndefined();
     expect(attack.bo).toBe(SKILL_BONUS);
     expect(attack.sizeAdjustment).toBe(-2);
+  });
+
+  it('counts the times St enters the skill bonus of each attack (spec 040)', () => {
+    const melee = buildWeapon('item-001', 'broadsword', [mode('one-hand', 0)]);
+    const [meleeAttack] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }), [melee]);
+    expect(meleeAttack.strengthWeight).toBe(2);
+    const [ranged] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }, ['ag', 'st', 'ag']), [melee]);
+    expect(ranged.strengthWeight).toBe(1);
+    const [noStrength] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }, ['ag', 'qu']), [melee]);
+    expect(noStrength.strengthWeight).toBe(0);
+  });
+
+  it('gives no Strength weight to an unranked skill (spec 040)', () => {
+    const melee = buildWeapon('item-001', 'broadsword', [mode('one-hand', 0)]);
+    const character = buildCharacter('medium', { mainHand: 'item-001', offHand: null });
+    (character as unknown as { findSkill: () => null }).findSkill = () => null;
+    const [attack] = generateAttacks(character, [melee]);
+    expect(attack.strengthWeight).toBe(0);
   });
 });

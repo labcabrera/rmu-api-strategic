@@ -68,4 +68,7 @@ export class CharacterAttack {
 
   @Prop({ type: [String], required: false })
   weaponTags?: string[];
+
+  @Prop({ type: Number, required: false })
+  strengthWeight?: number;
 }

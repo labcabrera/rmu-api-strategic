@@ -99,6 +99,7 @@ export class AttackProcessor {
             skillId: skillId,
             itemId: item.id,
             ...(item.weapon!.tags?.length ? { weaponTags: [...item.weapon!.tags] } : {}),
+            strengthWeight: this.getStrengthWeight(skill),
           });
           attacks.push(attack);
         });
@@ -124,10 +125,16 @@ export class AttackProcessor {
           wrongSize: false,
           skillId: SHIELD_SKILL_ID,
           itemId: item.id,
+          strengthWeight: this.getStrengthWeight(skill),
         });
         attacks.push(attack);
       }
     }
+  }
+
+  // Workspace spec 040, decision 10: an unranked skill adds no stat bonus, so it has no weight
+  private getStrengthWeight(skill: CharacterSkill | null): number {
+    return (skill?.statistics ?? []).filter(stat => stat === 'st').length;
   }
 
   /** Spec 019: the breakage damage of the item and its other attack modifiers (quality, magic...). */
