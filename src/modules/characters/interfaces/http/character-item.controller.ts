@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Logger, Param, Patch, Post, Put, UseGuards } 
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
+import { CarriedStatusParamsDto } from './dto/carried-status-params.dto.js';
 import { CharacterDto } from './dto/character.dto.js';
 import { EquipItemDto } from './dto/equip-item.dto.js';
 import { TransferGoldDto } from './dto/transfer-faction-gold.dto.js';
@@ -27,12 +28,7 @@ export class CharacterItemController {
   @ApiOperation({ operationId: 'updateCarriedStatus', summary: 'Update the carried status of an item' })
   @ApiOkResponse({ type: CharacterDto, description: 'Success' })
   @ApiErrors({ 400: 'Bad request, invalid data' })
-  async updateCarriedStatus(
-    @Param('id') id: string,
-    @Param('itemId') itemId: string,
-    @Param('carried') carried: boolean,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async updateCarriedStatus(@Param() { id, itemId, carried }: CarriedStatusParamsDto, @CurrentUser() user: AuthenticatedUser) {
     this.logger.debug(`Updating carried status for character ${id} item ${itemId} to ${carried} for user ${user.id}`);
     const userId = user.id;
     const roles = user.roles;

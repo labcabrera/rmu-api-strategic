@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
+import { toStrictBoolean } from '../../../../shared/interfaces/http/dto/strict-boolean.js';
 
 export class LevelUpQueryDto {
   @ApiPropertyOptional({
@@ -11,6 +12,6 @@ export class LevelUpQueryDto {
   })
   @IsBoolean()
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(toStrictBoolean)
   force: boolean | undefined;
 }

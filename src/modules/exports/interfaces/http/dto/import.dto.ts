@@ -2,12 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
 import type { ImportPreview, ImportResult } from '../../../application/services/import.service.js';
+import { toStrictBoolean } from '../../../../shared/interfaces/http/dto/strict-boolean.js';
 
 export class ImportQueryDto {
   @ApiPropertyOptional({ description: 'Returns the preview without writing anything', type: Boolean, example: true })
   @IsBoolean()
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(toStrictBoolean)
   dryRun: boolean | undefined;
 }
 
