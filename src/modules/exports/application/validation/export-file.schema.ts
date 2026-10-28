@@ -276,6 +276,7 @@ const modifier = Joi.object({
     crafterName: name(),
   }),
   description: text(),
+  condition: text(),
   createdAt: date().required(),
 });
 
@@ -353,6 +354,14 @@ const item = Joi.object({
   acquiredPrice: nullable(num().min(0)).required(),
   unrepairable: Joi.boolean().required(),
   coating: nullable(Joi.object().max(10).unknown(true)),
+  material: nullable(
+    Joi.object({
+      id: id().required(),
+      bonus: num().required(),
+      durability: num().required(),
+      magical: Joi.boolean().required(),
+    }),
+  ),
   modifiers: Joi.array().items(modifier).max(200).required(),
 });
 

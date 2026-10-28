@@ -4,10 +4,10 @@ import { type ItemGuardPort, ITEM_GUARD } from '../../ports/item-guard.port.js';
 import { randomUUID } from 'crypto';
 import { ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { CraftingOutcomes } from '../../../domain/services/crafting-outcome.js';
-import { PriceCalculator, roundGold } from '../../../domain/services/price-calculator.js';
+import { roundGold } from '../../../domain/services/price-calculator.js';
 import { ITEM_MODIFIER_TARGETS } from '../../../domain/value-objects/item-modifier.vo.js';
 import { CraftItemCommand } from '../commands/craft-item.command.js';
-import { EconomyRulesProvider } from '../../services/economy-rules.provider.js';
+import { CraftingPlanning } from '../../services/crafting-planning.service.js';
 import { type HolderContext, HolderAccess } from '../../services/holder-access.service.js';
 import { InventorySync } from '../../services/inventory-sync.service.js';
 import { ItemFactory } from '../../services/item-factory.service.js';
@@ -21,7 +21,8 @@ export const CRAFTING_TABLE = 'crafting';
 /**
  * A craftsman of the game makes an item (workspace spec 023, decision 10): the materials are paid first and are lost
  * on a failure (table 3-9); a success makes the item with the enhancements of the game master and the Strength change
- * of the result. The production hours of the type are information only (there is no game time).
+ * of the result. Workspace spec 043: the crafting plan (material, masterwork, armor weight, workshop) gives the cost,
+ * the maneuver modifiers and the quality of the item. The production hours are information only (there is no game time).
  */
 @CommandHandler(CraftItemCommand)
 export class CraftItemHandler implements ICommandHandler<CraftItemCommand, ItemOperationResult> {
@@ -31,7 +32,7 @@ export class CraftItemHandler implements ICommandHandler<CraftItemCommand, ItemO
     private readonly itemFactory: ItemFactory,
     private readonly wallet: Wallet,
     private readonly maneuvers: ItemManeuverService,
-    private readonly rules: EconomyRulesProvider,
+    private readonly planning: CraftingPlanning,
     private readonly ledger: ItemLedger,
     private readonly inventorySync: InventorySync,
   ) {}
@@ -59,20 +60,21 @@ export class CraftItemHandler implements ICommandHandler<CraftItemCommand, ItemO
         throw new ValidationError('Invalid enhancement', 'err-item-modifier-invalid');
       }
     });
-    const enhancementsCost = options.enhancementsCost ?? 0;
-    if (enhancementsCost < 0) throw new ValidationError('The cost cannot be negative', 'err-item-invalid-price');
-
     const itemType = await this.itemFactory.itemType(command.itemTypeId);
     const amount = options.amount ?? 1;
-    PriceCalculator.checkAmount(amount);
-    const average = itemType.info.cost?.average ?? 0;
-    const cost = roundGold(PriceCalculator.materials(average * amount, this.rules.rules(), options.materialsCost) + enhancementsCost);
+    const plan = await this.planning.plan(itemType, {
+      amount,
+      quality: options.quality,
+      materialsCost: options.materialsCost,
+      enhancementsCost: options.enhancementsCost,
+    });
+    const cost = plan.cost.total;
 
-    const { response, maneuver } = await this.maneuvers.resolve(CRAFTING_TABLE, command.maneuver, crafter);
+    const { response, maneuver } = await this.maneuvers.resolve(CRAFTING_TABLE, command.maneuver, crafter, plan.modifiers);
     const payments = payer && cost > 0 ? await this.wallet.charge([{ context: payer, gold: cost }]) : [];
 
     const entryId = randomUUID();
-    const outcome = CraftingOutcomes.resolve(response.result, response.effects, enhancements, entryId);
+    const outcome = CraftingOutcomes.resolve(response.result, response.effects, enhancements, entryId, plan);
     let item = null;
     if (outcome.crafted) {
       try {
@@ -85,7 +87,9 @@ export class CraftItemHandler implements ICommandHandler<CraftItemCommand, ItemO
           description: options.description,
           wielderSize: options.wielderSize,
           modifiers: outcome.modifiers,
-          value: roundGold(average + enhancementsCost / amount),
+          material: outcome.material,
+          weightMultiplier: plan.weightMultiplier,
+          value: roundGold(plan.cost.unitPrice + plan.cost.enhancements / amount),
           acquiredPrice: roundGold(cost / amount),
           owner: userId,
         });
@@ -111,6 +115,7 @@ export class CraftItemHandler implements ICommandHandler<CraftItemCommand, ItemO
       actorId: crafter.holder.id,
       outcome: outcome.crafted ? 'crafted' : 'wasted',
       note: response.unusualEvent ?? null,
+      details: { crafting: CraftingOutcomes.summary(plan, outcome) },
       userId,
     });
     await this.inventorySync.refresh(to.holder, payer?.holder);

@@ -1,6 +1,7 @@
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { CraftingEnhancement } from '../../../domain/services/crafting-outcome.js';
+import type { CraftingQuality } from '../../../domain/services/crafting-plan.js';
 import type { ItemManeuverRequest } from './item-maneuver.js';
 
 /** A craftsman makes an item of a catalog type (workspace spec 023, decision 10). */
@@ -22,6 +23,8 @@ export class CraftItemCommand extends AuthenticatedCommand {
       name?: string | null;
       description?: string | null;
       wielderSize?: string | null;
+      /** Workspace spec 043: material, masterwork, armor weight and workshop. */
+      quality?: CraftingQuality | null;
     },
     userId: string,
     roles: string[],

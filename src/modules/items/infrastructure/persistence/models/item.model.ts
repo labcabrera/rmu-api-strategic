@@ -7,6 +7,7 @@ import { ItemInfo } from './item-info.model.js';
 import { ItemShield } from './item-shield.model.js';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
+import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export type ItemDocument = ItemModel & Document;
@@ -79,6 +80,10 @@ export class ItemModel {
   /** Workspace spec 042: poison on the weapon. */
   @Prop({ type: Object, required: false })
   coating?: ItemCoating | null;
+
+  /** Workspace spec 043: superior material it was crafted of. */
+  @Prop({ type: Object, required: false })
+  material?: ItemMaterial | null;
 
   @Prop({ type: Date, required: true })
   createdAt: Date;

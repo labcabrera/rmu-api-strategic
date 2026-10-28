@@ -16,6 +16,8 @@ import { ItemGuardAdapter } from './infrastructure/security/item-guard.adapter.j
 import { KafkaItemCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer.js';
 import { KafkaItemEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer.js';
 import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter.js';
+import { ApiMaterialClientAdapter } from './infrastructure/api-clients/api.material-client.adapter.js';
+import { MATERIAL_CLIENT } from './application/ports/material-client.port.js';
 import { FactionsModule } from '../factions/factions.module.js';
 import { CharactersModule } from '../characters/characters.module.js';
 import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler.js';
@@ -46,6 +48,8 @@ import { RepairItemHandler } from './application/cqrs/handlers/repair-item.handl
 import { TransferFactionGoldHandler } from './application/cqrs/handlers/transfer-faction-gold.handler.js';
 import { GetItemLedgerHandler } from './application/cqrs/handlers/get-item-ledger.handler.js';
 import { QuotePriceHandler } from './application/cqrs/handlers/quote-price.handler.js';
+import { QuoteCraftHandler } from './application/cqrs/handlers/quote-craft.handler.js';
+import { CraftingPlanning } from './application/services/crafting-planning.service.js';
 import { ITEM_CLIENT } from './application/ports/item-client.port.js';
 import { ITEM_GUARD } from './application/ports/item-guard.port.js';
 import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
@@ -93,6 +97,8 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     TransferFactionGoldHandler,
     GetItemLedgerHandler,
     QuotePriceHandler,
+    QuoteCraftHandler,
+    CraftingPlanning,
     {
       provide: ITEM_LEDGER_REPOSITORY,
       useClass: MongoItemLedgerRepository,
@@ -108,6 +114,10 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     {
       provide: ITEM_CLIENT,
       useClass: ApiItemClientAdapter,
+    },
+    {
+      provide: MATERIAL_CLIENT,
+      useClass: ApiMaterialClientAdapter,
     },
   ],
   exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger, ItemStock, InventorySync],

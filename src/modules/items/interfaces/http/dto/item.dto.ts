@@ -9,6 +9,7 @@ import { ItemConditionDto, ItemModifierDto } from './item-modifier.dto.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
+import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
 
 export class ItemDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -85,6 +86,9 @@ export class ItemDto {
   @ApiProperty({ description: 'Poison on the weapon (workspace spec 042)', type: Object, nullable: true, required: false })
   coating?: ItemCoating | null;
 
+  @ApiProperty({ description: 'Superior material it was crafted of (workspace spec 043)', type: Object, nullable: true, required: false })
+  material?: ItemMaterial | null;
+
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
     dto.version = entity.version;
@@ -109,6 +113,7 @@ export class ItemDto {
     dto.acquiredPrice = entity.acquiredPrice ?? null;
     dto.owner = entity.owner;
     dto.coating = entity.coating ?? null;
+    dto.material = entity.material ?? null;
     return dto;
   }
 }

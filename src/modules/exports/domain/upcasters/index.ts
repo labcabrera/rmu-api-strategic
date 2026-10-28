@@ -69,6 +69,12 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the poisonings of the injuries and the poison on the weapons',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 043: optional material of the items and condition of their modifiers; older files have none
+    from: 5,
+    description: 'Allows the superior materials and the conditional modifiers of the items',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {

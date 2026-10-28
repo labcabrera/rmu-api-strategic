@@ -98,6 +98,13 @@ export class DefenseProcessor {
         modifiers['natural-armor'] = naturalArmorTier;
       }
     }
+    // Workspace spec 043, decision 10: the DB bonus of the worn torso armor (material, weight, masterwork, catalog),
+    // unless it no longer protects
+    const bodyId = character.equipment.slots?.['body'];
+    const body = bodyId ? items.find(item => item.id === bodyId) : undefined;
+    if (body?.armor && !ItemModifiers.isUnprotected(ItemModifiers.condition(body.modifiers))) {
+      modifiers['armor-quality'] = ItemModifiers.bonus(body.modifiers, 'defense');
+    }
     const filtered = Object.fromEntries(Object.entries(modifiers).filter(([, value]) => value !== 0));
     character.defense.modifiers = filtered;
     character.defense.defensiveBonus = Object.values(filtered).reduce((sum, value) => sum + value, 0);
