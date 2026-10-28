@@ -88,6 +88,8 @@ import { CharacterHealingLogModel, CharacterHealingLogSchema } from './infrastru
 import { CHARACTER_REPOSITORY } from './application/ports/character-repository.port.js';
 import { CULTURE_CLIENT } from './application/ports/culture-client.port.js';
 import { HEALING_LOG_REPOSITORY } from './application/ports/healing-log-repository.port.js';
+import { DeleteCharactersByGameHandler } from './application/cqrs/handlers/delete-characters-by-game.handler.js';
+import { KafkaCharacterGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
 import { HEALING_TABLES_CLIENT } from './application/ports/healing-tables-client.port.js';
 import { POISON_RULES_CLIENT } from './application/ports/poison-rules-client.port.js';
 import { ApiPoisonRulesClientAdapter } from './infrastructure/api-clients/api.poison-rules-client.adapter.js';
@@ -121,8 +123,10 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     CharacterMagicController,
     KafkaRaceEventConsumer,
     KafkaCharacterEventConsumer,
+    KafkaCharacterGameEventConsumer,
   ],
   providers: [
+    DeleteCharactersByGameHandler,
     StatProcessor,
     MovementProcessor,
     InitiativeProcessor,
