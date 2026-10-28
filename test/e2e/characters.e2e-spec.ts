@@ -228,8 +228,39 @@ describe('characters (e2e)', () => {
       expect((await carry(true)).status).toBe(200);
       expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
       expect((await as('owner').delete(`/v1/characters/${character.id}/equipment/${item.id}`)).status).toBe(200);
-      expect(e2e.events.topics().every(topic => topic === 'internal.rmu-strategic.character.updated.v1')).toBe(true);
-      expect(e2e.events.topics().length).toBeGreaterThanOrEqual(2);
+      const characterTopics = e2e.events.topics().filter(topic => topic !== 'internal.rmu-strategic.item.updated.v1');
+      expect(characterTopics.every(topic => topic === 'internal.rmu-strategic.character.updated.v1')).toBe(true);
+      expect(characterTopics.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('publishes item.updated when the carried status of an item changes, and nothing for the item when it does not [F-strategic-28]', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const item = await createItem(e2e, { gameId, characterId: character.id });
+      const carry = (carried: boolean) =>
+        request(e2e.server)
+          .put(`/v1/characters/${character.id}/items/${item.id}/carried/${carried}`)
+          .set('Authorization', e2e.auth('owner'));
+      const itemEvents = () =>
+        e2e.events.published
+          .filter(p => p.topic === 'internal.rmu-strategic.item.updated.v1')
+          .map(p => p.event.data as { id: string; carried: boolean });
+      e2e.events.clear();
+
+      expect((await carry(true)).status).toBe(200);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: true })]);
+      e2e.events.clear();
+      expect((await carry(true)).status).toBe(200);
+      expect(itemEvents()).toEqual([]);
+      expect((await carry(false)).status).toBe(200);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: false })]);
+      e2e.events.clear();
+
+      // Equipping carries it
+      expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: true })]);
+      e2e.events.clear();
+      expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
+      expect(itemEvents()).toEqual([]);
     });
 
     it('neither writes nor publishes a mutation that changes nothing', async () => {
