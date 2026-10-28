@@ -14,6 +14,7 @@ describe('import planner (spec 024, decision 5)', () => {
     owner: 'importer',
     importId: 'import-1',
     missingSkills: new Set<string>(),
+    skillCategories: new Map<string, string>(),
     missingTraits: new Set<string>(),
     characterNames: new Map<string, string>(),
     ...overrides,
@@ -73,5 +74,20 @@ describe('import planner (spec 024, decision 5)', () => {
     expect(character.skills.find(s => s.skillId === 'perception')!.missingReference).toBe(true);
     expect(character.skills.find(s => s.skillId === 'body-development')!.missingReference).toBeUndefined();
     expect(character.traits.find(t => t.traitId === 'lost')!.missingReference).toBe(true);
+  });
+
+  // Spec 044, decision 4: the export format has no category; the destination catalog gives it
+  it('sets the category of each skill from the catalog map, and none for a skill the catalog lacks', () => {
+    const file = faction();
+    const soldier = file.data.characters.find(entry => entry.character.name === 'Soldier')!;
+    const skillIds = soldier.character.skills.map(s => s.skillId);
+    expect(skillIds).toEqual(expect.arrayContaining(['perception', 'body-development']));
+    const skillCategories = new Map(skillIds.filter(id => id !== 'perception').map(id => [id, `category-of-${id}`]));
+    const plan = planImport([soldier], [], target({ skillCategories, missingSkills: new Set(['perception']) }));
+    const [{ character }] = plan.characters;
+    for (const skill of character.skills) {
+      if (skill.skillId === 'perception') expect(skill.categoryId).toBeUndefined();
+      else expect(skill.categoryId).toBe(`category-of-${skill.skillId}`);
+    }
   });
 });
