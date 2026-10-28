@@ -137,7 +137,7 @@ describe('export and import (e2e)', () => {
       const file = exported.body as Body;
       expect(file).toMatchObject({
         format: 'rmu-strategic-export',
-        formatVersion: 5,
+        formatVersion: 6,
         kind: 'character',
         source: { app: 'rmu-api-strategic', gameId: source.id, factionId: sourceFaction.id, owner: 'e2e-owner' },
         data: { ref: 'c1', character: { name: 'Veteran', equipment: { slots: { mainHand: 'i1' } } } },
@@ -147,7 +147,7 @@ describe('export and import (e2e)', () => {
       expect(file.data.character).not.toHaveProperty('owner');
       expect(file.data.character).not.toHaveProperty('appliedTacticalGames');
       expect(file.references.races).toEqual([{ id: 'race-001', name: 'E2E race' }]);
-      storeFixture('v5/character.rmu.json', file);
+      storeFixture('v6/character.rmu.json', file);
 
       const target = await createGame(e2e, 'other');
       const targetFaction = await createFaction(e2e, target.id, 'other');
@@ -156,8 +156,8 @@ describe('export and import (e2e)', () => {
         kind: 'character',
         target: 'character',
         name: 'Veteran',
-        formatVersion: 5,
-        currentFormatVersion: 5,
+        formatVersion: 6,
+        currentFormatVersion: 6,
         steps: [],
         summary: { characters: 1, items: 2, gold: 25 },
         errors: [],
@@ -200,7 +200,7 @@ describe('export and import (e2e)', () => {
         expect.objectContaining({
           kind: 'import',
           to: { kind: 'character', id: newId },
-          details: { formatVersion: 5, appVersion: file.source.appVersion, sourceGameName: 'E2E game', fileName: 'veteran.rmu.json' },
+          details: { formatVersion: 6, appVersion: file.source.appVersion, sourceGameName: 'E2E game', fileName: 'veteran.rmu.json' },
         }),
       ]);
     });
@@ -248,7 +248,7 @@ describe('export and import (e2e)', () => {
       expect(blade.modifiers).toEqual(
         expect.arrayContaining([expect.objectContaining({ source: expect.objectContaining({ kind: 'crafting', crafterRef: 'c1' }) })]),
       );
-      storeFixture('v5/faction.rmu.json', file);
+      storeFixture('v6/faction.rmu.json', file);
 
       const target = await createGame(e2e);
       const preview = ok(await as('owner').importFile(`/v1/strategic-games/${target.id}/faction-imports?dryRun=true`, file));
@@ -288,6 +288,31 @@ describe('export and import (e2e)', () => {
           }),
         ]),
       );
+    });
+
+    it('keeps the material and the conditional modifiers of a crafted item (workspace spec 043)', async () => {
+      const { faction, smith } = await realm();
+      maneuverCalls.results = ['absolute-success'];
+      done(
+        await as('owner').post('/v1/items/crafts', {
+          itemTypeId: 'sword',
+          maneuver: { actorId: smith.id, bonus: 40, roll: 90 },
+          to: { kind: 'faction', id: faction.id },
+          name: 'Troll bane',
+          quality: { materialId: 'e2e-steel', masterwork: 'circumstantial', circumstance: 'vs. trolls' },
+        }),
+      );
+      const file = ok(await as('owner').get(`/v1/factions/${faction.id}/export`));
+      const bane = file.data.armory.find((item: Body) => item.name === 'Troll bane');
+      expect(bane.material).toEqual({ id: 'e2e-steel', bonus: 4, durability: 3, magical: false });
+      expect(bane.modifiers).toEqual(expect.arrayContaining([expect.objectContaining({ value: 5, condition: 'vs. trolls' })]));
+
+      const target = await createGame(e2e);
+      const result = ok(await as('owner').importFile(`/v1/strategic-games/${target.id}/faction-imports`, file));
+      const armory = ok(await as('owner').get(`/v1/items?q=factionId==${result.factionId}`)).content as Body[];
+      const copy = armory.find(item => item.name === 'Troll bane')!;
+      expect(copy.material).toEqual(bane.material);
+      expect(copy.modifiers).toEqual(expect.arrayContaining([expect.objectContaining({ value: 5, condition: 'vs. trolls' })]));
     });
 
     it('takes one character of a faction file, with its items only', async () => {
@@ -332,12 +357,12 @@ describe('export and import (e2e)', () => {
     beforeEach(async () => {
       const game = await createGame(e2e);
       factionId = (await createFaction(e2e, game.id)).id;
-      character = readFixture('v5/character.rmu.json');
+      character = readFixture('v6/character.rmu.json');
     });
 
     const importPath = () => `/v1/factions/${factionId}/character-imports`;
 
-    it('imports a v5 example file as it is', async () => {
+    it('imports a v6 example file as it is', async () => {
       ok(await as('owner').importFile(importPath(), character));
     });
 
@@ -351,6 +376,7 @@ describe('export and import (e2e)', () => {
           { from: 2, to: 3 },
           { from: 3, to: 4 },
           { from: 4, to: 5 },
+          { from: 5, to: 6 },
         ],
         errors: [],
       });
@@ -370,6 +396,7 @@ describe('export and import (e2e)', () => {
             { from: 2, to: 3 },
             { from: 3, to: 4 },
             { from: 4, to: 5 },
+            { from: 5, to: 6 },
           ],
           errors: [],
         });
@@ -382,7 +409,7 @@ describe('export and import (e2e)', () => {
     it('rejects a file of a newer format, an unknown file and an invalid one', async () => {
       const newer = await as('owner').importFile(`${importPath()}?dryRun=true`, { ...character, formatVersion: 99 });
       expect(newer.status).toBe(422);
-      expect(newer.body).toMatchObject({ code: 'export-format-too-new', details: { fileVersion: 99, supportedVersion: 5 } });
+      expect(newer.body).toMatchObject({ code: 'export-format-too-new', details: { fileVersion: 99, supportedVersion: 6 } });
       expect((await as('owner').importFile(importPath(), { hello: 'world' })).body).toMatchObject({
         statusCode: 422,
         code: 'export-unknown-format',

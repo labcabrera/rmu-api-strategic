@@ -217,6 +217,7 @@ function modifierToExport(modifier: ItemModifier, refs: ExportRefs, crafterOf: C
   if (modifier.broken) result.broken = true;
   if (modifier.source) result.source = modifierSourceToExport(modifier.source, refs, crafterOf);
   if (modifier.description) result.description = modifier.description;
+  if (modifier.condition) result.condition = modifier.condition;
   return result;
 }
 
@@ -239,6 +240,7 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
     acquiredPrice: orNull(item.acquiredPrice),
     unrepairable: !!item.unrepairable,
     ...(item.coating ? { coating: plain(item.coating) } : {}),
+    ...(item.material ? { material: plain(item.material) } : {}),
     // Temporary modifiers live only in tactical games
     modifiers: (item.modifiers || []).filter(modifier => !modifier.temporary).map(modifier => modifierToExport(modifier, refs, crafterOf)),
   };

@@ -23,11 +23,13 @@ import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenti
 import type { ItemOperationResult } from '../../application/services/item-stock.service.js';
 import type { PriceQuote } from '../../application/cqrs/handlers/quote-price.handler.js';
 import { ItemOperationResultDto, PriceQuoteDto } from './dto/item-ledger.dto.js';
+import type { CraftingPlan } from '../../domain/services/crafting-plan.js';
 import {
   CraftItemDto,
   CoatItemDto,
   DiscardItemDto,
   PurchaseItemDto,
+  QuoteCraftDto,
   QuotePriceDto,
   RepairItemDto,
   SellItemDto,
@@ -57,6 +59,18 @@ export class ItemController {
   @ApiErrors({ 400: 'Invalid data or not enough gold', 403: 'Not allowed' })
   async craft(@Body() dto: CraftItemDto, @CurrentUser() user: AuthenticatedUser) {
     return this.operation(CraftItemDto.toCommand(dto, user.id, user.roles));
+  }
+
+  @Post('crafts/quote')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'quoteCraft',
+    summary: 'Cost, maneuver modifiers, hours and quality of a craft, without making it (workspace spec 043)',
+  })
+  @ApiOkResponse({ description: 'The crafting plan', type: Object })
+  @ApiErrors({ 400: 'Invalid data, material or quality' })
+  async quoteCraft(@Body() dto: QuoteCraftDto, @CurrentUser() user: AuthenticatedUser): Promise<CraftingPlan> {
+    return this.queryBus.execute<ReturnType<typeof QuoteCraftDto.toQuery>, CraftingPlan>(QuoteCraftDto.toQuery(dto, user.id, user.roles));
   }
 
   @Post('price-quotes')

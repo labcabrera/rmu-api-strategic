@@ -10,6 +10,15 @@ import { RepairItemCommand } from '../../../application/cqrs/commands/repair-ite
 import { SellItemCommand } from '../../../application/cqrs/commands/sell-item.command.js';
 import { TransferItemCommand } from '../../../application/cqrs/commands/transfer-item.command.js';
 import { QuotePriceQuery } from '../../../application/cqrs/queries/quote-price.query.js';
+import { QuoteCraftQuery } from '../../../application/cqrs/queries/quote-craft.query.js';
+import {
+  ARMOR_WEIGHT_PERCENTS,
+  type CraftingQuality,
+  MASTERWORK_KINDS,
+  type MasterworkKind,
+  WORKSHOP_QUALITIES,
+  type WorkshopQuality,
+} from '../../../domain/services/crafting-plan.js';
 import type { TradingRequest } from '../../../application/services/trading.service.js';
 import { PAYER_MODES, type PayerMode } from '../../../application/services/wallet.service.js';
 import type { PriceKind } from '../../../domain/services/price-calculator.js';
@@ -299,6 +308,95 @@ export class CraftingEnhancementDto {
   description?: string;
 }
 
+/** Workspace spec 043, decision 2: the quality the craftsman aims at. */
+export class CraftingQualityDto {
+  @ApiProperty({ required: false, description: 'Superior material of rmu-api-core', example: 'high-steel' })
+  @IsString()
+  @IsOptional()
+  materialId?: string;
+
+  @ApiProperty({ required: false, description: 'A blunt weapon: some metals give it another bonus' })
+  @IsBoolean()
+  @IsOptional()
+  blunt?: boolean;
+
+  @ApiProperty({ required: false, description: 'Wood or stone in place of the metal the item is normally made of' })
+  @IsBoolean()
+  @IsOptional()
+  replacesMetal?: boolean;
+
+  @ApiProperty({ required: false, enum: MASTERWORK_KINDS, description: 'Superior craftsmanship: +5 on an absolute success' })
+  @IsIn(MASTERWORK_KINDS)
+  @IsOptional()
+  masterwork?: MasterworkKind;
+
+  @ApiProperty({ required: false, description: 'Circumstance of a circumstantial masterwork', example: 'vs. rigid leather' })
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  circumstance?: string;
+
+  @ApiProperty({ required: false, enum: ARMOR_WEIGHT_PERCENTS, description: 'Torso armor weight change, in percent' })
+  @IsIn(ARMOR_WEIGHT_PERCENTS)
+  @IsOptional()
+  weightPercent?: number;
+
+  @ApiProperty({ required: false, enum: WORKSHOP_QUALITIES, description: 'Quality of the workshop; basic by default' })
+  @IsIn(WORKSHOP_QUALITIES)
+  @IsOptional()
+  workshop?: WorkshopQuality;
+
+  static of(dto: CraftingQualityDto | undefined): CraftingQuality | undefined {
+    return dto ? { ...dto } : undefined;
+  }
+}
+
+/** Workspace spec 043, decision 3: the plan of a craft without rolling or paying. */
+export class QuoteCraftDto {
+  @ApiProperty({ example: 'broadsword' })
+  @IsString()
+  @IsNotEmpty()
+  itemTypeId: string;
+
+  @ApiProperty({ required: false, example: 1 })
+  @IsNumber()
+  @Min(0.001)
+  @IsOptional()
+  amount?: number;
+
+  @ApiProperty({ type: CraftingQualityDto, required: false })
+  @ValidateNested()
+  @Type(() => CraftingQualityDto)
+  @IsOptional()
+  quality?: CraftingQualityDto;
+
+  @ApiProperty({ required: false, description: 'Gold of the materials typed by the game master' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  materialsCost?: number;
+
+  @ApiProperty({ required: false, description: 'Extra gold of the enhancements' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  enhancementsCost?: number;
+
+  static toQuery(dto: QuoteCraftDto, userId: string, roles: string[]): QuoteCraftQuery {
+    return new QuoteCraftQuery(
+      dto.itemTypeId,
+      {
+        amount: dto.amount,
+        quality: CraftingQualityDto.of(dto.quality),
+        materialsCost: dto.materialsCost,
+        enhancementsCost: dto.enhancementsCost,
+      },
+      userId,
+      roles,
+    );
+  }
+}
+
 export class CraftItemDto {
   @ApiProperty({ example: 'longsword' })
   @IsString()
@@ -369,6 +467,12 @@ export class CraftItemDto {
   @IsOptional()
   wielderSize?: string;
 
+  @ApiProperty({ type: CraftingQualityDto, required: false, description: 'Material, masterwork, armor weight and workshop (spec 043)' })
+  @ValidateNested()
+  @Type(() => CraftingQualityDto)
+  @IsOptional()
+  quality?: CraftingQualityDto;
+
   static toCommand(dto: CraftItemDto, userId: string, roles: string[]): CraftItemCommand {
     return new CraftItemCommand(
       dto.itemTypeId,
@@ -387,6 +491,7 @@ export class CraftItemDto {
         name: dto.name,
         description: dto.description,
         wielderSize: dto.wielderSize,
+        quality: CraftingQualityDto.of(dto.quality),
       },
       userId,
       roles,

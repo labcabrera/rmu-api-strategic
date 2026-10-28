@@ -206,6 +206,7 @@ function buildItem(
       ...(modifier.broken ? { broken: true } : {}),
       ...(source ? { source } : {}),
       ...(modifier.description ? { description: modifier.description } : {}),
+      ...(modifier.condition ? { condition: modifier.condition } : {}),
       createdAt: modifier.createdAt,
     };
   });
@@ -229,6 +230,7 @@ function buildItem(
     acquiredPrice: data.acquiredPrice,
     unrepairable: data.unrepairable,
     coating: data.coating ?? null,
+    material: data.material ?? null,
     accessType: 'public',
     owner: target.owner,
     createdAt: new Date(),

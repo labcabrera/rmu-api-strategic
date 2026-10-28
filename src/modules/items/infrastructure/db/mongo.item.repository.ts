@@ -71,6 +71,7 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       unrepairable: doc.unrepairable ?? false,
       importId: doc.importId,
       coating: doc.coating ?? null,
+      material: doc.material ?? null,
     });
   }
 }

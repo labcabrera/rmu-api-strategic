@@ -1,4 +1,5 @@
 import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
 import type { ItemClientPort, ItemResponse } from '../../../src/modules/items/application/ports/item-client.port.js';
 import type { Race, RaceClientPort } from '../../../src/modules/characters/application/ports/race-client.port.js';
 import type { SkillClientPort, SkillResponse } from '../../../src/modules/characters/application/ports/skill-client.port.js';
@@ -371,6 +372,8 @@ export function apiFakes() {
         })),
       }),
   };
+  // Workspace spec 043: invented materials, not the rulebook ones
+  const materialClient: MaterialClientPort = { getMaterial: id => Promise.resolve(MATERIALS.find(material => material.id === id)) };
   const maneuverClient: ManeuverClientPort = {
     absolute: (total: number, table: string) => {
       maneuverCalls.totals.push(total);
@@ -407,9 +410,37 @@ export function apiFakes() {
     fightingStylesClient,
     poisonRulesClient,
     maneuverClient,
+    materialClient,
     spellListClient,
   };
 }
+
+const material = (id: string, values: Partial<MaterialResponse>): MaterialResponse => ({
+  id,
+  group: 'metal',
+  durability: 0,
+  workability: 0,
+  bonus: 0,
+  bluntBonus: null,
+  metalBonus: null,
+  cost: { add: 0, multiplier: null },
+  magical: false,
+  armorWeightMultiplier: null,
+  uses: ['weapon', 'ammunition', 'armor', 'shield'],
+  ...values,
+});
+
+export const MATERIALS: MaterialResponse[] = [
+  material('e2e-steel', { durability: 3, workability: -7, bonus: 4, cost: { add: 1.5, multiplier: null } }),
+  material('e2e-feather-steel', {
+    durability: 2,
+    workability: -12,
+    bonus: 6,
+    cost: { add: 4, multiplier: null },
+    armorWeightMultiplier: 0.5,
+  }),
+  material('e2e-yew', { group: 'bow-wood', bonus: 3, cost: { add: 2, multiplier: null }, uses: ['launcher'] }),
+];
 
 /** The DomainEventPublisher of the suite: keeps the topics and messages Kafka would get. */
 export class InMemoryEventPublisher implements DomainEventPublisher {

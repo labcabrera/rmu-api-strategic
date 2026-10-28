@@ -96,7 +96,12 @@ describe('ItemRepair (spec 023, decision 11)', () => {
 
 describe('CraftingOutcomes (spec 023, decision 10)', () => {
   it('makes nothing on a failure', () => {
-    expect(CraftingOutcomes.resolve('failure', [], [{ appliesTo: 'attack', value: 5 }], 'e1')).toEqual({ crafted: false, modifiers: [] });
+    expect(CraftingOutcomes.resolve('failure', [], [{ appliesTo: 'attack', value: 5 }], 'e1')).toEqual({
+      crafted: false,
+      modifiers: [],
+      material: null,
+      masterwork: false,
+    });
   });
 
   it('adds the enhancements and the Strength change of the result', () => {

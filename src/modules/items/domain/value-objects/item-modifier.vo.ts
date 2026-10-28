@@ -38,6 +38,11 @@ export interface ItemModifier {
   temporary?: boolean;
   source?: ItemModifierSource;
   description?: string;
+  /**
+   * Workspace spec 043, decision 9: the circumstance it only applies in ("vs. rigid leather"). It is never added to
+   * the bonuses of the sheet: the game master applies it.
+   */
+  condition?: string;
   createdAt: string;
 }
 
@@ -79,7 +84,9 @@ export const ItemModifiers = {
   /** Sum of the modifiers that are not breakage and apply to the given use (or to every use). */
   bonus(modifiers: ItemModifier[] | undefined, target: Exclude<ItemModifierTarget, 'all'>): number {
     return (modifiers || [])
-      .filter(modifier => modifier.type !== 'breakage' && (modifier.appliesTo === 'all' || modifier.appliesTo === target))
+      .filter(
+        modifier => modifier.type !== 'breakage' && !modifier.condition && (modifier.appliesTo === 'all' || modifier.appliesTo === target),
+      )
       .reduce((total, modifier) => total + (modifier.value || 0), 0);
   },
 

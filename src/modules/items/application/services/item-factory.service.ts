@@ -6,6 +6,7 @@ import { ValidationError } from '../../../shared/domain/errors/errors.js';
 import { Item } from '../../domain/aggregates/item.js';
 import type { ItemProps } from '../../domain/aggregates/item-props.js';
 import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-holder.vo.js';
+import type { ItemMaterial } from '../../domain/value-objects/item-material.vo.js';
 import type { ItemModifier, ItemModifierTarget } from '../../domain/value-objects/item-modifier.vo.js';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../ports/item-client.port.js';
@@ -24,6 +25,10 @@ export interface NewItemOptions {
   value?: number | null;
   acquiredPrice?: number | null;
   modifiers?: ItemModifier[];
+  /** Workspace spec 043: superior material of a crafted item. */
+  material?: ItemMaterial | null;
+  /** Workspace spec 043: factor of the weight (an Elven steel or lightened armor). */
+  weightMultiplier?: number;
   owner: string;
 }
 
@@ -65,7 +70,7 @@ export class ItemFactory {
       amount: stackable ? (options.amount ?? 1) : null,
       info: {
         length: itemType.info.length,
-        weight: this.weight(itemType, options.character),
+        weight: Math.round(this.weight(itemType, options.character) * (options.weightMultiplier ?? 1) * 100) / 100,
         strength: itemType.info.strength,
         stackable,
       },
@@ -82,6 +87,7 @@ export class ItemFactory {
       acquiredPrice: options.acquiredPrice ?? null,
       accessType: 'public', //TODO
       owner: options.owner,
+      ...(options.material ? { material: options.material } : {}),
     };
     return Item.create(props);
   }

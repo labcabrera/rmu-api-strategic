@@ -12,6 +12,7 @@ import { NotFoundError, ValidationError } from '../../../shared/domain/errors/er
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
+import type { ItemMaterial } from '../value-objects/item-material.vo.js';
 
 /** Item type of the coins of a character (spec 023, decision 7: they weigh). */
 export const GOLD_COIN = 'gold-coin';
@@ -20,6 +21,8 @@ export class Item extends BaseAggregateRoot<ItemProps> {
   public importId: string | undefined = undefined;
   /** Workspace spec 042: poison on the weapon. */
   public coating: ItemCoating | null = null;
+  /** Workspace spec 043: superior material it was crafted of. */
+  public material: ItemMaterial | null = null;
 
   private constructor(
     public id: string,
@@ -77,6 +80,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     );
     item.importId = props.importId;
     item.coating = props.coating ?? null;
+    item.material = props.material ?? null;
     item.apply(new ItemCreatedEvent(item));
     return item;
   }
@@ -109,6 +113,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     );
     item.importId = props.importId;
     item.coating = props.coating ?? null;
+    item.material = props.material ?? null;
     return item;
   }
 
@@ -253,6 +258,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       unrepairable: this.unrepairable,
       ...(this.importId ? { importId: this.importId } : {}),
       coating: this.coating,
+      material: this.material,
     };
   }
 }

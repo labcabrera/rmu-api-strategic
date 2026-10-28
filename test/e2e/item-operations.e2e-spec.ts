@@ -205,6 +205,127 @@ describe('item operations (e2e)', () => {
     expect(await gold()).toBe(95);
   });
 
+  // Workspace spec 043: material, masterwork, armor weight and workshop (invented materials of the fakes)
+  it('quotes a craft with a material, a masterwork and a superior workshop without changing anything', async () => {
+    const quote = await as('owner').post('/v1/items/crafts/quote', {
+      itemTypeId: 'sword',
+      quality: { materialId: 'e2e-steel', masterwork: 'general', workshop: 'superior-10' },
+    });
+    expect(quote.status, JSON.stringify(quote.body)).toBe(200);
+    expect(quote.body).toMatchObject({
+      kind: 'weapon',
+      material: { id: 'e2e-steel', bonus: 4, durability: 3, workability: -7 },
+      bonusTarget: 'attack',
+      masterwork: 'general',
+      workshop: 'superior-10',
+      modifiers: [
+        { key: 'material-workability', value: -7 },
+        { key: 'masterwork', value: -50 },
+        { key: 'workshop', value: 10 },
+      ],
+      // 40 hours, 7% longer
+      productionHours: 42.8,
+      // 50% of 10 plus the whole material
+      cost: { unitBase: 10, unitMaterial: 1.5, unitPrice: 11.5, materials: 6.5, enhancements: 0, total: 6.5, asked: false },
+    });
+    // Arrows pay the material for 20 of them
+    const arrows = await as('owner').post('/v1/items/crafts/quote', {
+      itemTypeId: 'arrow',
+      amount: 20,
+      quality: { materialId: 'e2e-steel' },
+    });
+    expect((arrows.body as Body).cost).toMatchObject({ unitMaterial: 0.075, materials: 2.5 });
+    // A launcher material on a sword, an unknown material and a weight change of a weapon are refused
+    expect(
+      (await as('owner').post('/v1/items/crafts/quote', { itemTypeId: 'sword', quality: { materialId: 'e2e-yew' } })).body,
+    ).toMatchObject({
+      code: 'err-crafting-material-not-allowed',
+    });
+    expect(
+      (await as('owner').post('/v1/items/crafts/quote', { itemTypeId: 'sword', quality: { materialId: 'mithril' } })).body,
+    ).toMatchObject({
+      code: 'err-crafting-material-not-found',
+    });
+    expect((await as('owner').post('/v1/items/crafts/quote', { itemTypeId: 'sword', quality: { weightPercent: 20 } })).body).toMatchObject({
+      code: 'err-crafting-invalid-weight',
+    });
+    expect(await gold()).toBe(100);
+  });
+
+  it('crafts a masterwork sword of a superior material: modifiers, material, cost and ledger', async () => {
+    maneuverCalls.results = ['absolute-success'];
+    const crafted = await as('owner').post('/v1/items/crafts', {
+      itemTypeId: 'sword',
+      maneuver: { actorId: smithId, skillId: 'metalcraft', bonus: 40, difficulty: 'h', roll: 90 },
+      to: holder('faction', factionId),
+      quality: { materialId: 'e2e-steel', masterwork: 'general', workshop: 'superior-10' },
+    });
+    expect(crafted.status, JSON.stringify(crafted.body)).toBe(201);
+    const { item, entry } = crafted.body as Body;
+    // 90 + 40 - 10 (hard) - 7 (workability) - 50 (masterwork) + 10 (workshop)
+    expect(maneuverCalls.totals).toEqual([73]);
+    expect(entry.maneuver.modifiers).toEqual([
+      { key: 'difficulty', value: -10 },
+      { key: 'material-workability', value: -7 },
+      { key: 'masterwork', value: -50 },
+      { key: 'workshop', value: 10 },
+    ]);
+    expect(entry).toMatchObject({
+      payments: [{ gold: -6.5 }],
+      details: { crafting: { materialId: 'e2e-steel', masterwork: 'general', masterworkAchieved: true, workshop: 'superior-10' } },
+    });
+    expect(item).toMatchObject({ value: 11.5, acquiredPrice: 6.5, material: { id: 'e2e-steel', bonus: 4, durability: 3, magical: false } });
+    const own = (item.modifiers as Body[]).filter(modifier => modifier.source.kind === 'crafting');
+    expect(own.map(modifier => [modifier.appliesTo, modifier.value, modifier.description])).toEqual([
+      ['attack', 4, 'material'],
+      ['breakage', 3, 'material-durability'],
+      ['attack', 5, 'masterwork'],
+      ['breakage', 10, 'crafting-absolute-success'],
+    ]);
+    expect(await gold()).toBe(93.5);
+  });
+
+  it('gives no masterwork bonus on a plain success', async () => {
+    maneuverCalls.results = ['success'];
+    const crafted = await as('owner').post('/v1/items/crafts', {
+      itemTypeId: 'sword',
+      maneuver: { actorId: smithId, bonus: 40, roll: 90 },
+      to: holder('faction', factionId),
+      quality: { masterwork: 'circumstantial', circumstance: 'vs. trolls' },
+    });
+    expect(crafted.status, JSON.stringify(crafted.body)).toBe(201);
+    const { item, entry } = crafted.body as Body;
+    expect(maneuverCalls.totals).toEqual([105]);
+    expect(entry.details.crafting).toMatchObject({ masterwork: 'circumstantial', masterworkAchieved: false, circumstance: 'vs. trolls' });
+    expect((item.modifiers as Body[]).filter(modifier => modifier.source.kind === 'crafting')).toEqual([]);
+  });
+
+  it('crafts a heavier torso armor of a light material and the wearer gets its DB', async () => {
+    const crafted = await as('owner').post('/v1/items/crafts', {
+      itemTypeId: 'e2e-plate-torso',
+      maneuver: { actorId: smithId, bonus: 40, roll: 90 },
+      to: holder('character', smithId),
+      free: true,
+      quality: { materialId: 'e2e-feather-steel', weightPercent: 20 },
+    });
+    expect(crafted.status, JSON.stringify(crafted.body)).toBe(201);
+    const { item, entry } = crafted.body as Body;
+    // -12 (workability) -10 (20% heavier)
+    expect(entry.maneuver.modifiers).toEqual([
+      { key: 'material-workability', value: -12 },
+      { key: 'armor-weight', value: -10 },
+    ]);
+    expect((item.modifiers as Body[]).filter(modifier => modifier.appliesTo === 'defense').map(modifier => modifier.value)).toEqual([
+      6, 10,
+    ]);
+    const before = ((await as('owner').get(`/v1/characters/${smithId}`)).body as Body).defense.defensiveBonus as number;
+    const equipped = await as('owner').post(`/v1/characters/${smithId}/equipment`, { itemId: item.id, slot: 'body' });
+    expect(equipped.status, JSON.stringify(equipped.body)).toBe(201);
+    const defense = (equipped.body as Body).defense;
+    expect(defense.modifiers['armor-quality']).toBe(16);
+    expect(defense.defensiveBonus).toBe(before + 16);
+  });
+
   it('splits a stack between holders and merges it into the stack the new holder has', async () => {
     const arrows = (await as('owner').post('/v1/items/purchases', { buyer: holder('faction', factionId), itemTypeId: 'arrow', amount: 20 }))
       .body as Body;
