@@ -24,6 +24,11 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
     return items.map(doc => this.toEntity(doc));
   }
 
+  async findByGameId(gameId: string): Promise<Item[]> {
+    const items = await this.model.find({ gameId });
+    return items.map(doc => this.toEntity(doc));
+  }
+
   async findStack(holder: ItemHolder, itemTypeId: string): Promise<Item | null> {
     const doc = await this.model.findOne({ ...ItemHolders.ids(holder), itemTypeId });
     return doc ? this.toEntity(doc) : null;

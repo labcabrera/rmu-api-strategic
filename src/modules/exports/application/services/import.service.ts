@@ -157,6 +157,7 @@ export class ImportService {
           owner: userId,
           importId,
           missingSkills: references.missingSkills,
+          skillCategories: references.skillCategories,
           missingTraits: references.missingTraits,
           characterNames: new Map(all.map(({ entry }) => [entry.ref, entry.character.name])),
         },

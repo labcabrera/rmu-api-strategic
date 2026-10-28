@@ -16,7 +16,7 @@ describe('import reference resolver (spec 024, decision 8)', () => {
       race: { getRaceById: (id: string) => (calls.push(`race:${id}`), Promise.resolve({ id, name: 'Race' })) },
       profession: { getProfessionById: (id: string) => Promise.resolve({ id, skillCosts: {}, professionalSkills: [] }) },
       culture: { getCultureById: (id: string) => Promise.resolve({ id, name: 'Culture', skillRanks: [] }) },
-      skill: { getAllSkills: () => Promise.resolve({ content: [{ id: 'body-development' }] }) },
+      skill: { getAllSkills: () => Promise.resolve({ content: [{ id: 'body-development', categoryId: 'physical' }] }) },
       trait: { getTraitById: (id: string) => Promise.reject(new NotFoundError('Trait', id)) },
       item: { getItemById: (id: string) => Promise.resolve(id === 'gold-coin' ? { id } : undefined) },
       ...overrides,
@@ -47,6 +47,8 @@ describe('import reference resolver (spec 024, decision 8)', () => {
     ]);
     expect(result.missingTraits).toEqual(new Set(['lost']));
     expect([...result.missingSkills]).not.toContain('body-development');
+    // Spec 044, decision 4: the category of each skill core has, from the same catalog request
+    expect(result.skillCategories).toEqual(new Map([['body-development', 'physical']]));
     expect(result.warnings.map(w => w.code)).toEqual(
       expect.arrayContaining(['import-warning-missing-skill', 'import-warning-missing-trait', 'import-warning-missing-item-type']),
     );

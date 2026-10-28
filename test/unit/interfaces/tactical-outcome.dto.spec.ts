@@ -1,4 +1,6 @@
-import { TacticalOutcomeDto } from '../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto.js';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import { TacticalItemOutcomeDto, TacticalOutcomeDto } from '../../../src/modules/characters/interfaces/http/dto/tactical-outcome.dto.js';
 import { ValidationError } from '../../../src/modules/shared/domain/errors/errors.js';
 
 const dto = (items: unknown): TacticalOutcomeDto =>
@@ -49,5 +51,34 @@ describe('TacticalOutcomeDto items', () => {
 
   it('keeps outcomes without items as they were', () => {
     expect(TacticalOutcomeDto.toCommand('patient', dto(undefined), 'sa', []).outcome.items).toBeUndefined();
+  });
+});
+
+/** Spec 044, decision 3: the spent coating is named by its appliedAt; `true` still comes from an older tactical. */
+describe('TacticalOutcomeDto coatingSpent', () => {
+  const coatingSpent = (value: unknown) =>
+    TacticalOutcomeDto.toCommand('patient', dto([{ itemId: 'sword', modifiers: [], coatingSpent: value }]), 'sa', []).outcome.items?.[0];
+  const errors = (value: unknown) =>
+    validateSync(plainToInstance(TacticalItemOutcomeDto, { itemId: 'sword', modifiers: [], coatingSpent: value })).map(e => e.property);
+
+  it('keeps the appliedAt of the spent coating, and the legacy true', () => {
+    expect(coatingSpent({ appliedAt: '2026-10-27T10:00:00.000Z', extra: 1 })).toEqual({
+      itemId: 'sword',
+      modifiers: [],
+      coatingSpent: { appliedAt: '2026-10-27T10:00:00.000Z' },
+    });
+    expect(coatingSpent(true)).toMatchObject({ coatingSpent: true });
+    expect(coatingSpent(false)).not.toHaveProperty('coatingSpent');
+  });
+
+  it('accepts a boolean or an object with appliedAt, and rejects anything else', () => {
+    expect(errors(true)).toEqual([]);
+    expect(errors(false)).toEqual([]);
+    expect(errors(undefined)).toEqual([]);
+    expect(errors({ appliedAt: '2026-10-27T10:00:00.000Z' })).toEqual([]);
+    expect(errors({})).toEqual(['coatingSpent']);
+    expect(errors({ appliedAt: '' })).toEqual(['coatingSpent']);
+    expect(errors('yes')).toEqual(['coatingSpent']);
+    expect(errors([{ appliedAt: 'x' }])).toEqual(['coatingSpent']);
   });
 });

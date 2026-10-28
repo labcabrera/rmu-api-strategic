@@ -9,6 +9,8 @@ export interface ItemRepository extends BaseRepository<Item> {
 
   findByFactionId(factionId: string): Promise<Item[]>;
 
+  findByGameId(gameId: string): Promise<Item[]>;
+
   /** The item of a type a holder has (its stack of a stackable type). */
   findStack(holder: ItemHolder, itemTypeId: string): Promise<Item | null>;
 

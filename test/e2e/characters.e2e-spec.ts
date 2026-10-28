@@ -1,4 +1,7 @@
 import request from 'supertest';
+import { RACE_CLIENT, type RaceClientPort } from '../../src/modules/characters/application/ports/race-client.port.js';
+import { CULTURE_CLIENT, type CultureClientPort } from '../../src/modules/characters/application/ports/culture-client.port.js';
+import { BadGatewayError, GatewayTimeoutError } from '../../src/modules/shared/domain/errors/errors.js';
 import { ids, startApp, type E2eApp, type UserName } from './support/app.js';
 import { characterBody, createCharacter, createItem, gameWithFaction } from './support/builders.js';
 
@@ -65,6 +68,35 @@ describe('characters (e2e)', () => {
       expect(skill.status).toBe(400);
       expect((skill.body as { message: string }).message).toBe("Invalid skill identifier 'unknown-skill'");
       expect((await as('owner').post('/v1/characters', { name: 'x' })).status).toBe(400);
+    });
+
+    // F-strategic-26, spec 044 decision 5: only a 404 of core is the user's mistake
+    it('answers 400 for a race or culture core does not have, and the error of core for any other failure', async () => {
+      const race = await as('owner').post(
+        '/v1/characters',
+        characterBody(gameId, factionId, { info: { ...characterBody(gameId, factionId).info, raceId: 'race-missing' } }),
+      );
+      expect(race.status).toBe(400);
+      expect((race.body as { message: string }).message).toBe('Race with id race-missing not found.');
+      const culture = await as('owner').post(
+        '/v1/characters',
+        characterBody(gameId, factionId, { culture: { cultureId: 'culture-missing' } }),
+      );
+      expect(culture.status).toBe(400);
+      expect(culture.body).toMatchObject({ code: 'err-culture-not-found' });
+
+      const raceClient = e2e.app.get<RaceClientPort>(RACE_CLIENT);
+      const down = vi
+        .spyOn(raceClient, 'getRaceById')
+        .mockRejectedValueOnce(new BadGatewayError('core/races/race-001 is not available (ECONNREFUSED)'));
+      expect((await as('owner').post('/v1/characters', characterBody(gameId, factionId))).status).toBe(502);
+      down.mockRestore();
+      const cultureClient = e2e.app.get<CultureClientPort>(CULTURE_CLIENT);
+      const slow = vi.spyOn(cultureClient, 'getCultureById').mockRejectedValueOnce(new GatewayTimeoutError('core/cultures did not answer'));
+      const timeout = await as('owner').post('/v1/characters', characterBody(gameId, factionId, { culture: { cultureId: 'culture-001' } }));
+      expect(timeout.status).toBe(504);
+      slow.mockRestore();
+      expect(e2e.events.topics()).toEqual([]);
     });
 
     it('rejects a token without groups, and lets a player create their character in the game of another user [F-strategic-15]', async () => {
@@ -196,8 +228,39 @@ describe('characters (e2e)', () => {
       expect((await carry(true)).status).toBe(200);
       expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
       expect((await as('owner').delete(`/v1/characters/${character.id}/equipment/${item.id}`)).status).toBe(200);
-      expect(e2e.events.topics().every(topic => topic === 'internal.rmu-strategic.character.updated.v1')).toBe(true);
-      expect(e2e.events.topics().length).toBeGreaterThanOrEqual(2);
+      const characterTopics = e2e.events.topics().filter(topic => topic !== 'internal.rmu-strategic.item.updated.v1');
+      expect(characterTopics.every(topic => topic === 'internal.rmu-strategic.character.updated.v1')).toBe(true);
+      expect(characterTopics.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('publishes item.updated when the carried status of an item changes, and nothing for the item when it does not [F-strategic-28]', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const item = await createItem(e2e, { gameId, characterId: character.id });
+      const carry = (carried: boolean) =>
+        request(e2e.server)
+          .put(`/v1/characters/${character.id}/items/${item.id}/carried/${carried}`)
+          .set('Authorization', e2e.auth('owner'));
+      const itemEvents = () =>
+        e2e.events.published
+          .filter(p => p.topic === 'internal.rmu-strategic.item.updated.v1')
+          .map(p => p.event.data as { id: string; carried: boolean });
+      e2e.events.clear();
+
+      expect((await carry(true)).status).toBe(200);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: true })]);
+      e2e.events.clear();
+      expect((await carry(true)).status).toBe(200);
+      expect(itemEvents()).toEqual([]);
+      expect((await carry(false)).status).toBe(200);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: false })]);
+      e2e.events.clear();
+
+      // Equipping carries it
+      expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
+      expect(itemEvents()).toEqual([expect.objectContaining({ id: item.id, carried: true })]);
+      e2e.events.clear();
+      expect((await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: item.id, slot: 'mainHand' })).status).toBe(201);
+      expect(itemEvents()).toEqual([]);
     });
 
     it('neither writes nor publishes a mutation that changes nothing', async () => {
@@ -232,6 +295,41 @@ describe('characters (e2e)', () => {
       const missing = await as('owner').post(`/v1/characters/${character.id}/equipment`, { itemId: 'item-missing', slot: 'mainHand' });
       expect(missing.status).toBeGreaterThanOrEqual(400);
       expect(missing.status).toBeLessThan(500);
+    });
+  });
+
+  describe('add skill [F-strategic-25]', () => {
+    type Skill = { skillId: string; ranks: number };
+    const skillOf = (body: unknown, skillId: string) => (body as { skills: Skill[] }).skills.find(s => s.skillId === skillId);
+
+    it('lets an rmu-admin add a skill with initial ranks, which the sheet counts', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const response = await as('admin').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'jumping',
+        specialization: null,
+        ranks: 3,
+      });
+      expect(response.status).toBe(201);
+      const jumping = skillOf(response.body, 'jumping')!;
+      // Initial ranks, not ranks developed this level
+      expect(jumping).toMatchObject({ ranks: 3, ranksDeveloped: 0 });
+      // The processor counts them: 3 ranks are worth 15 points
+      expect(jumping).toMatchObject({ developmentBonus: 15, totalBonus: 15 });
+    });
+
+    it('rejects initial ranks from an rmu-user, and negative ranks from anyone', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const user = await as('owner').post(`/v1/characters/${character.id}/skills`, { skillId: 'jumping', specialization: null, ranks: 1 });
+      expect(user.status).toBe(400);
+      const negative = await as('admin').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'jumping',
+        specialization: null,
+        ranks: -1,
+      });
+      expect(negative.status).toBe(400);
+      const zero = await as('owner').post(`/v1/characters/${character.id}/skills`, { skillId: 'jumping', specialization: null, ranks: 0 });
+      expect(zero.status).toBe(201);
+      expect(skillOf(zero.body, 'jumping')).toMatchObject({ ranks: 0 });
     });
   });
 

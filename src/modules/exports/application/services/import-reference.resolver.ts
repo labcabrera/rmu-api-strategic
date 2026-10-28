@@ -14,6 +14,8 @@ export interface ResolvedReferences {
   races: Map<string, Race>;
   cultures: Map<string, Culture>;
   missingSkills: Set<string>;
+  /** Spec 044, decision 4: the category of each skill of the file that core has, for the category talents. */
+  skillCategories: Map<string, string>;
   missingTraits: Set<string>;
   errors: ImportError[];
   warnings: ImportWarning[];
@@ -41,6 +43,7 @@ export class ImportReferenceResolver {
       races: new Map(),
       cultures: new Map(),
       missingSkills: new Set(),
+      skillCategories: new Map(),
       missingTraits: new Set(),
       errors: [],
       warnings: [],
@@ -72,10 +75,15 @@ export class ImportReferenceResolver {
       }
     }
 
-    const catalogSkills = new Set((await this.skillClient.getAllSkills()).content.map(skill => skill.id));
+    // One request for the whole catalog, which also gives the category of each skill (spec 044, decision 4)
+    const catalogSkills = new Map((await this.skillClient.getAllSkills()).content.map(skill => [skill.id, skill.categoryId] as const));
     const skillIds = new Set(entries.flatMap(({ entry }) => entry.character.skills.map(skill => skill.skillId)));
     for (const skillId of skillIds) {
-      if (catalogSkills.has(skillId)) continue;
+      const categoryId = catalogSkills.get(skillId);
+      if (catalogSkills.has(skillId)) {
+        if (categoryId) result.skillCategories.set(skillId, categoryId);
+        continue;
+      }
       result.missingSkills.add(skillId);
       result.warnings.push({
         code: 'import-warning-missing-skill',

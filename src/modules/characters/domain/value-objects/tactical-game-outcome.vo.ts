@@ -43,9 +43,15 @@ export interface TacticalItemOutcome {
   itemId: string;
   name?: string;
   modifiers: ItemModifier[];
-  /** The poison on the weapon was spent in the game (workspace spec 042). */
-  coatingSpent?: boolean;
+  /**
+   * The poison on the weapon was spent in the game (workspace spec 042): the `appliedAt` of the coating it was spent
+   * from (spec 044, decision 3), or `true` from a tactical that predates it.
+   */
+  coatingSpent?: TacticalCoatingSpent;
 }
+
+/** The coating spent in a tactical game, by its `appliedAt`; `true` is the legacy form, without identity. */
+export type TacticalCoatingSpent = true | { appliedAt: string };
 
 /** One element of TacticalGameOutcome.characters (rmu-api-tactical), applied to a strategic character. */
 export interface TacticalCharacterOutcome {

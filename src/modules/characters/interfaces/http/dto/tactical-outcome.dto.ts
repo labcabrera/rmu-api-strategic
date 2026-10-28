@@ -1,12 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateBy, ValidateNested } from 'class-validator';
 import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command.js';
 import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
 import type { Injury, InjurySource } from '../../../domain/value-objects/injury.vo.js';
 import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo.js';
 import type {
+  TacticalCoatingSpent,
   TacticalItemOutcome,
   TacticalFate,
   TacticalHpBySource,
@@ -18,6 +19,15 @@ import { ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { CharacterConditionDto, InjuryDto } from './character-health.dto.js';
 import { ItemModifierDto } from '../../../../items/interfaces/http/dto/item-modifier.dto.js';
 import { type ItemModifier, ItemModifiers } from '../../../../items/domain/value-objects/item-modifier.vo.js';
+
+/** `true`/`false` (before spec 044) or `{ appliedAt }`, the identity of the spent coating. */
+const isCoatingSpent = (value: unknown): boolean =>
+  typeof value === 'boolean' ||
+  (!!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof (value as { appliedAt?: unknown }).appliedAt === 'string' &&
+    (value as { appliedAt: string }).appliedAt.length > 0);
 
 /** Modifiers an item of the character got in the game (spec 019). */
 export class TacticalItemOutcomeDto {
@@ -35,10 +45,20 @@ export class TacticalItemOutcomeDto {
   @IsArray()
   modifiers: ItemModifier[];
 
-  @ApiPropertyOptional({ description: 'The poison on the weapon was spent (workspace spec 042)' })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    description:
+      'The poison on the weapon was spent (workspace spec 042): the appliedAt of the spent coating (spec 044), or true from an older tactical',
+    oneOf: [{ type: 'boolean' }, { type: 'object', properties: { appliedAt: { type: 'string' } }, required: ['appliedAt'] }],
+  })
   @IsOptional()
-  coatingSpent?: boolean;
+  @ValidateBy({
+    name: 'isCoatingSpent',
+    validator: {
+      validate: (value: unknown) => isCoatingSpent(value),
+      defaultMessage: () => 'coatingSpent must be a boolean or an object with an appliedAt string',
+    },
+  })
+  coatingSpent?: boolean | { appliedAt: string };
 }
 
 export class TacticalOutcomeHpDto {
@@ -184,7 +204,18 @@ export class TacticalOutcomeDto {
         ItemModifiers.validate(result);
         return result;
       });
-    return { itemId: dto.itemId, ...(dto.name ? { name: dto.name } : {}), modifiers, ...(dto.coatingSpent ? { coatingSpent: true } : {}) };
+    return {
+      itemId: dto.itemId,
+      ...(dto.name ? { name: dto.name } : {}),
+      modifiers,
+      ...TacticalOutcomeDto.toCoatingSpent(dto.coatingSpent),
+    };
+  }
+
+  private static toCoatingSpent(value: TacticalItemOutcomeDto['coatingSpent']): { coatingSpent?: TacticalCoatingSpent } {
+    if (!value) return {};
+    if (value === true) return { coatingSpent: true };
+    return { coatingSpent: { appliedAt: String(value.appliedAt) } };
   }
 
   // The hits log is informative: entries and totals of an unknown shape are dropped, not rejected

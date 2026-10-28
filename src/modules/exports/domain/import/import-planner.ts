@@ -25,6 +25,11 @@ export interface ImportTarget {
   owner: string;
   importId: string;
   missingSkills: Set<string>;
+  /**
+   * Spec 044, decision 4: skillId -> categoryId from the destination catalog. The export format has no category, and
+   * the category talents need it. A skill without one (missing here) is imported without category.
+   */
+  skillCategories: Map<string, string>;
   missingTraits: Set<string>;
   /** Names of the characters of the file, for crafters that are not imported (a character taken from a faction file). */
   characterNames: Map<ExportRef, string>;
@@ -140,6 +145,7 @@ function buildCharacter(data: CharacterExport, id: string, itemIds: Map<ExportRe
           skill.knackBonus ?? undefined,
           target.missingSkills.has(skill.skillId) || undefined,
           skill.styleAbilities?.map(a => ({ ...a })),
+          target.skillCategories.get(skill.skillId),
         ),
     ),
     equipment: new CharacterEquipment(slots, 0, 0, 0, 0, 0, 0, 0, 0, 'e'),

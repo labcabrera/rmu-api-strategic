@@ -12,6 +12,8 @@ import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/applicat
 import { Item } from '../../../../items/domain/aggregates/item.js';
 import { ItemArmor } from '../../../../items/domain/value-objects/item-armor.vo.js';
 import { CharacterEquipment } from '../../../domain/value-objects/character-equipment.vo.js';
+import { ItemUpdatedEvent } from '../../../../items/domain/events/item.events.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(EquipItemCommand)
 export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Character> {
@@ -23,6 +25,7 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     private readonly characterProcessorService: CharacterProcessorService,
     private readonly characterAccess: CharacterAccess,
     private readonly characterWriter: CharacterWriter,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
   async execute(command: EquipItemCommand): Promise<Character> {
@@ -42,7 +45,11 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
     this.equip(character, items, command);
     this.characterProcessorService.process(character, items);
 
-    await this.itemRepository.updateCarriedStatus(item.id, true);
+    // An equipped item is carried; item.updated tells the consumers of the item (F-strategic-28)
+    if (!item.carried) {
+      const updated = await this.itemRepository.updateCarriedStatus(item.id, true);
+      await this.events.publish('item', new ItemUpdatedEvent(updated.getProps()));
+    }
 
     return await this.characterWriter.save(character);
   }

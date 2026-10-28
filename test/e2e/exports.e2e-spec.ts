@@ -170,6 +170,9 @@ describe('export and import (e2e)', () => {
       expect(newId).not.toBe(character.id);
 
       const imported = ok(await as('other').get(`/v1/characters/${newId}`));
+      // Spec 044, decision 4: the file has no category, the catalog of core gives it to every skill
+      expect(imported.skills.length).toBeGreaterThan(0);
+      for (const skill of imported.skills as Body[]) expect(skill.categoryId, skill.skillId as string).toEqual(expect.any(String));
       expect(imported).toMatchObject({
         gameId: target.id,
         faction: { id: targetFaction.id },
@@ -463,6 +466,7 @@ describe('export and import (e2e)', () => {
       expect(imported.skills).toEqual(
         expect.arrayContaining([expect.objectContaining({ skillId: 'skill-404', ranks: 3, missingReference: true })]),
       );
+      expect(imported.skills.find((skill: Body) => skill.skillId === 'skill-404').categoryId).toBeUndefined();
     });
 
     it('leaves nothing behind when the import fails halfway', async () => {

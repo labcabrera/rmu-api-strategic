@@ -23,6 +23,7 @@ import type { DomainEventPublisher } from '../../../src/modules/shared/applicati
 import type { BaseAggregateRoot } from '../../../src/modules/shared/domain/aggregates/base-aggregate.js';
 import type { DomainEvent } from '../../../src/modules/shared/domain/events/domain-event.js';
 import { NotFoundError } from '../../../src/modules/shared/domain/errors/errors.js';
+import { UpstreamBadGatewayError } from '../../../src/modules/shared/infrastructure/http/http-client.js';
 import type { SpellListClientPort, SpellResponse } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
 import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
@@ -317,7 +318,9 @@ export function apiFakes() {
     getItemById: id => Promise.resolve(ITEM_TYPES[id]),
   };
   const raceClient: RaceClientPort = {
-    getRaceById: id => (id === RACE.id ? Promise.resolve(RACE) : Promise.reject(new Error(`race ${id}`))),
+    // Core answers 404 for an unknown id, which the HttpClient maps to an UpstreamBadGatewayError with that status
+    getRaceById: id =>
+      id === RACE.id ? Promise.resolve(RACE) : Promise.reject(new UpstreamBadGatewayError(`core/races/${id} answered 404`, 404)),
   };
   const skillClient: SkillClientPort = {
     getAllSkills: () => Promise.resolve({ content: SKILLS, pagination: { page: 0, size: 1000, totalElements: SKILLS.length } } as never),
@@ -338,7 +341,8 @@ export function apiFakes() {
     getTraitById: (id: string) => Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
   };
   const cultureClient: CultureClientPort = {
-    getCultureById: id => (id === CULTURE.id ? Promise.resolve(CULTURE) : Promise.reject(new NotFoundError('Culture', id))),
+    getCultureById: id =>
+      id === CULTURE.id ? Promise.resolve(CULTURE) : Promise.reject(new UpstreamBadGatewayError(`core/cultures/${id} answered 404`, 404)),
   };
   const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
   const fightingStylesClient: FightingStylesClientPort = { getFightingStyles: () => Promise.resolve(FIGHTING_STYLES) };

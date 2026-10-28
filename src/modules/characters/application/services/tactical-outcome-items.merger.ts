@@ -41,7 +41,7 @@ export class TacticalOutcomeItemsMerger {
       }
       const added = item.addModifiers(outcome.modifiers || []);
       // Workspace spec 042: the hit that spent the poison was in the game; a retry finds it already gone.
-      const spent = !!outcome.coatingSpent && !!item.coating;
+      const spent = this.isSpentCoating(item, outcome);
       if (spent) {
         item.removeCoating();
         summary.coatingsSpent = [...(summary.coatingsSpent ?? []), item.id];
@@ -55,5 +55,19 @@ export class TacticalOutcomeItemsMerger {
       else if (condition.breakagePenalty < 0) summary.itemsDamaged.push(item.id);
     }
     return { items, summary };
+  }
+
+  /**
+   * Spec 044, decision 3: only the coating the game spent is removed, found by its appliedAt. A coating applied after
+   * the game started is another one, and stays. A legacy `true` has no identity and removes whatever coating there is.
+   */
+  private isSpentCoating(item: Item, outcome: TacticalItemOutcome): boolean {
+    const spent = outcome.coatingSpent;
+    if (!spent || !item.coating) return false;
+    if (spent === true || spent.appliedAt === item.coating.appliedAt) return true;
+    this.logger.log(
+      `Item ${item.id} keeps its coating applied at ${item.coating.appliedAt}: the tactical game spent the one applied at ${spent.appliedAt}`,
+    );
+    return false;
   }
 }
