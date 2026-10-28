@@ -1,6 +1,5 @@
 import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
-import { Logger } from '@nestjs/common';
 import { CreateCharacterHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/create-character.handler.js';
 import {
   CharacterStatCreation,
@@ -18,6 +17,7 @@ import { CharacterProcessorService } from '../../../../../src/modules/characters
 import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
 import { STAT_KEYS, type StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo.js';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { UpstreamBadGatewayError } from '../../../../../src/modules/shared/infrastructure/http/http-client.js';
 
 // Invented catalog and culture: not book data
 const catalog: SkillResponse[] = [
@@ -278,11 +278,18 @@ describe('CreateCharacterHandler', () => {
     });
   });
 
-  it('reports a missing culture with err-culture-not-found', async () => {
+  it('reports a culture core answers 404 for with err-culture-not-found', async () => {
     const { create, cultureClient } = setup();
-    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    cultureClient.getCultureById.mockRejectedValue(new Error('404'));
+    cultureClient.getCultureById.mockRejectedValue(new UpstreamBadGatewayError('core/cultures/missing answered 404', 404));
     await expect(create({ cultureId: 'missing', assignments: [] })).rejects.toMatchObject({ code: 'err-culture-not-found' });
+  });
+
+  // F-strategic-26, spec 044 decision 5: a failure of core is not the user's mistake
+  it('propagates any other failure of core', async () => {
+    const { create, cultureClient } = setup();
+    const down = new UpstreamBadGatewayError('core/cultures/culture-test answered 500', 500);
+    cultureClient.getCultureById.mockRejectedValue(down);
+    await expect(create({ cultureId: 'culture-test', assignments: [] })).rejects.toBe(down);
   });
 
   it('acceptance 4: without culture the character is created as before but without the level 0 points', async () => {

@@ -30,6 +30,7 @@ import { resolveOptions } from '../../../../games/domain/value-objects/game-opti
 import { resolvePowerLevel } from '../../../../games/domain/value-objects/game-power-level.vo.js';
 import { Game } from '../../../../games/domain/aggregates/game.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import { isUpstreamHttpError } from '../../../../shared/infrastructure/http/http-client.js';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -201,21 +202,15 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
   }
 
   private async fetchRace(raceId: string): Promise<Race> {
-    try {
-      return await this.raceClient.getRaceById(raceId);
-    } catch (e) {
-      this.logger.error(e);
-      throw new ValidationError(`Race with id ${raceId} not found.`);
-    }
+    const race = await notFoundAsUndefined(() => this.raceClient.getRaceById(raceId));
+    if (!race) throw new ValidationError(`Race with id ${raceId} not found.`);
+    return race;
   }
 
   private async fetchCulture(cultureId: string): Promise<Culture> {
-    try {
-      return await this.cultureClient.getCultureById(cultureId);
-    } catch (e) {
-      this.logger.error(e);
-      throw new ValidationError(`Culture with id ${cultureId} not found.`, 'err-culture-not-found');
-    }
+    const culture = await notFoundAsUndefined(() => this.cultureClient.getCultureById(cultureId));
+    if (!culture) throw new ValidationError(`Culture with id ${cultureId} not found.`, 'err-culture-not-found');
+    return culture;
   }
 
   private async fetchSkills(): Promise<SkillResponse[]> {
@@ -241,5 +236,19 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const profession = await this.professionClient.getProfessionById(professionId);
     if (!profession) throw new ValidationError(`Profession with id ${professionId} not found.`);
     return profession;
+  }
+}
+
+/**
+ * The entity, or undefined when core answers 404 (the id the user sent does not exist: a 400 for the caller). Any other
+ * failure (5xx, no answer, timeout) propagates as the HttpClient maps it, 502 or 504 (F-strategic-26, spec 044
+ * decision 5).
+ */
+async function notFoundAsUndefined<T>(call: () => Promise<T | undefined | null>): Promise<T | undefined> {
+  try {
+    return (await call()) ?? undefined;
+  } catch (error) {
+    if (isUpstreamHttpError(error) && error.status === 404) return undefined;
+    throw error;
   }
 }
