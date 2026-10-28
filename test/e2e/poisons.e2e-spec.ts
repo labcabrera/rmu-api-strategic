@@ -111,4 +111,39 @@ describe('poisons (e2e)', () => {
     expect(removed.status).toBe(200);
     expect(removed.body.coating).toBeNull();
   });
+
+  // Spec 044, decision 3: the outcome names the spent coating by its appliedAt
+  it('keeps a coating applied during the tactical game when the game spent the previous one', async () => {
+    const sword = await buy('sword');
+    const venom = await buy('e2e-venom', 2);
+    const first = await as('owner').post(`/v1/items/${sword.id}/coating`, { poisonItemId: venom.id });
+    const spentAt = first.body.item.coating.appliedAt as string;
+    await new Promise(resolve => setTimeout(resolve, 5));
+    const second = await as('owner').post(`/v1/items/${sword.id}/coating`, { poisonItemId: venom.id });
+    const newAt = second.body.item.coating.appliedAt as string;
+    expect(newAt).not.toBe(spentAt);
+    const character = (await as('owner').get(base())).body as Body;
+    const hp = character.hp.current as number;
+    const outcome = (tacticalGameId: string, coatingSpent: unknown) =>
+      request(e2e.server)
+        .post(`${base()}/tactical-outcomes`)
+        .set('Authorization', e2e.auth('service'))
+        .send({
+          tacticalGameId,
+          actorId: 'actor-001',
+          characterId,
+          name: 'Taster',
+          hp: { start: hp, end: hp, delta: 0 },
+          injuries: [],
+          items: [{ itemId: sword.id, modifiers: [], coatingSpent }],
+        });
+
+    expect((await outcome('tactical-001', { appliedAt: spentAt })).status).toBe(200);
+    expect(((await as('owner').get(`/v1/items/${sword.id}`)).body as Body).coating).toMatchObject({ appliedAt: newAt });
+
+    expect((await outcome('tactical-002', { appliedAt: newAt })).status).toBe(200);
+    expect(((await as('owner').get(`/v1/items/${sword.id}`)).body as Body).coating).toBeNull();
+
+    expect((await outcome('tactical-003', { spent: true })).status).toBe(400);
+  });
 });
