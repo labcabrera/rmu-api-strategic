@@ -235,6 +235,41 @@ describe('characters (e2e)', () => {
     });
   });
 
+  describe('add skill [F-strategic-25]', () => {
+    type Skill = { skillId: string; ranks: number };
+    const skillOf = (body: unknown, skillId: string) => (body as { skills: Skill[] }).skills.find(s => s.skillId === skillId);
+
+    it('lets an rmu-admin add a skill with initial ranks, which the sheet counts', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const response = await as('admin').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'jumping',
+        specialization: null,
+        ranks: 3,
+      });
+      expect(response.status).toBe(201);
+      const jumping = skillOf(response.body, 'jumping')!;
+      // Initial ranks, not ranks developed this level
+      expect(jumping).toMatchObject({ ranks: 3, ranksDeveloped: 0 });
+      // The processor counts them: 3 ranks are worth 15 points
+      expect(jumping).toMatchObject({ developmentBonus: 15, totalBonus: 15 });
+    });
+
+    it('rejects initial ranks from an rmu-user, and negative ranks from anyone', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const user = await as('owner').post(`/v1/characters/${character.id}/skills`, { skillId: 'jumping', specialization: null, ranks: 1 });
+      expect(user.status).toBe(400);
+      const negative = await as('admin').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'jumping',
+        specialization: null,
+        ranks: -1,
+      });
+      expect(negative.status).toBe(400);
+      const zero = await as('owner').post(`/v1/characters/${character.id}/skills`, { skillId: 'jumping', specialization: null, ranks: 0 });
+      expect(zero.status).toBe(201);
+      expect(skillOf(zero.body, 'jumping')).toMatchObject({ ranks: 0 });
+    });
+  });
+
   describe('delete', () => {
     it('deletes the character and publishes character.deleted', async () => {
       const character = await createCharacter(e2e, gameId, factionId);

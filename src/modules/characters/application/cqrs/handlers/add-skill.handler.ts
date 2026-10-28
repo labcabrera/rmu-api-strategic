@@ -1,4 +1,5 @@
 import { CharacterAccess } from '../../services/character-access.service.js';
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Character } from '../../../domain/aggregates/character.js';
@@ -41,7 +42,8 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     // Its owner, the owner of its game or an admin (F-strategic-15).
     await this.characterAccess.checkChange(character, command.userId, command.roles);
 
-    if (command.ranks > 0 && !command.roles.includes('admin')) {
+    // Initial ranks are a correction of the sheet: only an admin (F-strategic-25, spec 044 decision 2)
+    if (command.ranks > 0 && !GameAccess.isAdmin(command.roles)) {
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
     }
 
@@ -83,7 +85,7 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
         racialBonus = skillBonus.bonus;
       }
     }
-    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus, readedSkill.categoryId);
+    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus, readedSkill.categoryId, command.ranks);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);

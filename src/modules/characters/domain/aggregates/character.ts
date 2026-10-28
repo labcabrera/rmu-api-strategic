@@ -345,11 +345,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     development: number[],
     racialBonus: number,
     categoryId?: string,
+    ranks = 0,
   ): void {
     if (this.skills.find(s => s.skillId === skillId && s.specialization === specialization)) {
       throw new ValidationError('Skill with the same specialization already exists');
     }
+    if (!Number.isInteger(ranks) || ranks < 0) throw new ValidationError(`Invalid skill ranks ${ranks}`);
     const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus, categoryId);
+    // Initial ranks (an admin correcting the sheet): ranks, not ranksDeveloped, which are the ranks bought this level
+    skill.ranks = ranks;
     this.skills.push(skill);
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }

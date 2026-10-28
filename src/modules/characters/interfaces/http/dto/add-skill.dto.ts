@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 import { AddSkillCommand } from '../../../application/cqrs/commands/add-skill.command.js';
 
 export class AddSkillDto {
@@ -13,8 +13,9 @@ export class AddSkillDto {
   @IsOptional()
   specialization: string | null;
 
-  @ApiProperty({ description: 'Skill ranks', example: 1 })
-  @IsNumber()
+  @ApiProperty({ description: 'Initial skill ranks: only an admin can send more than 0', example: 0, minimum: 0 })
+  @IsInt()
+  @Min(0)
   ranks: number;
 
   static toCommand(characterId: string, dto: AddSkillDto, userId: string, roles: string[]) {
