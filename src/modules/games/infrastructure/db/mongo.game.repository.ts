@@ -18,7 +18,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
   }
 
   async findByRealm(realmId: string): Promise<Game[]> {
-    const docs = await this.model.find({ realm: realmId }).sort({ name: 1 });
+    const docs = await this.model.find({ realmId }).sort({ name: 1 });
     return docs.map(doc => this.toEntity(doc));
   }
 

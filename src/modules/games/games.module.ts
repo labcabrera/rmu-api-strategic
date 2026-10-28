@@ -13,6 +13,7 @@ import { GameModel, GameSchema } from './infrastructure/persistence/models/game.
 import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter.js';
 import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler.js';
 import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler.js';
+import { DeleteGamesByRealmHandler } from './application/cqrs/handlers/delete-games-by-realm.handler.js';
 import { GetGameHandler } from './application/cqrs/handlers/get-game.handler.js';
 import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler.js';
 import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler.js';
@@ -40,6 +41,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     CreateGameHandler,
     UpdateGameHandler,
     DeleteGameHandler,
+    DeleteGamesByRealmHandler,
     GameAccess,
     {
       provide: GAME_REPOSITORY,
