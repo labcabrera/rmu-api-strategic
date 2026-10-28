@@ -20,6 +20,11 @@ export class MongoFactionRepository extends MongoBaseRepository<Faction, Faction
     return super.findByRsql(rsql, page, size, filter, { name: 'asc' });
   }
 
+  async findByGameId(gameId: string): Promise<Faction[]> {
+    const docs = await this.model.find({ gameId });
+    return docs.map(doc => this.toEntity(doc));
+  }
+
   protected mapToEntity(doc: FactionDocument): Faction {
     return Faction.fromProps({
       id: doc._id,

@@ -14,6 +14,8 @@ import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-
 import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.handler.js';
 import { GetFactionsQueryHandler } from './application/cqrs/handlers/get-factions.handler.js';
 import { UpdateFactionHandler } from './application/cqrs/handlers/update-faction.handler.js';
+import { DeleteFactionsByGameHandler } from './application/cqrs/handlers/delete-factions-by-game.handler.js';
+import { KafkaFactionGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
 
 import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.js';
 @Module({
@@ -24,13 +26,14 @@ import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.
     SharedModule,
     GamesModule,
   ],
-  controllers: [FactionController],
+  controllers: [FactionController, KafkaFactionGameEventConsumer],
   providers: [
     GetFactionQueryHandler,
     GetFactionsQueryHandler,
     CreateFactionCommandHandler,
     UpdateFactionHandler,
     DeleteFactionCommandHandler,
+    DeleteFactionsByGameHandler,
     AddFactionGoldCommandHandler,
     AddFactionXPCommandHandler,
     {
