@@ -14,13 +14,14 @@ import { UpdateItemHandler } from './application/cqrs/handlers/update-item.handl
 import { MongoItemRepository } from './infrastructure/db/mongo.item.repository.js';
 import { ItemGuardAdapter } from './infrastructure/security/item-guard.adapter.js';
 import { KafkaItemCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer.js';
-import { KafkaItemEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer.js';
+import { KafkaItemGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
 import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter.js';
 import { ApiMaterialClientAdapter } from './infrastructure/api-clients/api.material-client.adapter.js';
 import { MATERIAL_CLIENT } from './application/ports/material-client.port.js';
 import { FactionsModule } from '../factions/factions.module.js';
 import { CharactersModule } from '../characters/characters.module.js';
 import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler.js';
+import { DeleteItemsByGameHandler } from './application/cqrs/handlers/delete-items-by-game.handler.js';
 import { AddItemModifierHandler } from './application/cqrs/handlers/add-item-modifier.handler.js';
 import { DeleteItemModifierHandler } from './application/cqrs/handlers/delete-item-modifier.handler.js';
 import { ItemModifierStore } from './application/services/item-modifier.store.js';
@@ -66,7 +67,7 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     GamesModule,
     forwardRef(() => CharactersModule),
   ],
-  controllers: [ItemController, ItemLedgerController, KafkaItemEventConsumer, KafkaItemCharacterEventConsumer],
+  controllers: [ItemController, ItemLedgerController, KafkaItemGameEventConsumer, KafkaItemCharacterEventConsumer],
   providers: [
     GetItemHandler,
     ItemAccess,
@@ -74,6 +75,7 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     CreateItemHandler,
     UpdateItemHandler,
     DeleteItemHandler,
+    DeleteItemsByGameHandler,
     AddItemModifierHandler,
     DeleteItemModifierHandler,
     ItemModifierStore,
