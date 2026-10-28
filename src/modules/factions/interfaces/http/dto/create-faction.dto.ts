@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CreateFactionCommand } from '../../../application/cqrs/commands/create-faction.command.js';
 import { FactionManagementDto } from './faction.dto.js';
 
@@ -19,6 +19,7 @@ export class CreateFactionDto {
   @Type(() => FactionManagementDto)
   @IsOptional()
   @IsObject()
+  @ValidateNested()
   management: FactionManagementDto;
 
   @ApiProperty({ description: 'Available XP for the faction', type: Number, example: 200000 })

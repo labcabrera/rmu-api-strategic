@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsObject, IsOptional, IsString, IsInt, Min } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString, IsInt, Min, ValidateNested } from 'class-validator';
 import { UpdateCharacterCommand } from '../../../application/cqrs/commands/update-character.command.js';
 import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
 
@@ -25,11 +25,15 @@ export class UpdateCharacterDto {
   @ApiProperty({ description: 'New character info', example: { height: 2.5, weight: 500 } })
   @IsOptional()
   @IsObject()
+  @ValidateNested()
+  @Type(() => UpdateCharacterInfoDto)
   info: UpdateCharacterInfoDto | undefined;
 
   @ApiProperty({ description: 'New character info', example: 'An all-seeing dark lord' })
   @IsOptional()
   @IsObject()
+  @ValidateNested()
+  @Type(() => CharacterRoleplayInfoDto)
   roleplay: CharacterRoleplayInfoDto | undefined;
 
   @ApiProperty({ type: String, description: 'New character description', example: 'The Dark Lord of Mordor' })

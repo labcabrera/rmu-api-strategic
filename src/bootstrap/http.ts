@@ -89,6 +89,6 @@ export function configureHttp(app: NestExpressApplication) {
   // import routes first, and the global one then leaves the parsed body alone.
   app.use(IMPORT_ROUTES, importBodyParser(config.get<number>('RMU_STRATEGIC_IMPORT_MAX_BYTES') ?? 5 * 1024 * 1024));
   // Unknown body fields are dropped, not rejected (whitelist without forbidNonWhitelisted).
-  app.useGlobalPipes(new ValidationPipe({ transform: true, transformOptions: { enableImplicitConversion: true }, whitelist: true }));
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
 }
