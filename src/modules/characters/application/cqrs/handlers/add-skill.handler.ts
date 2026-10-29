@@ -17,6 +17,9 @@ import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { SpecializationCatalogService } from '../../services/specialization-catalog.service.js';
+import { specializationKey } from '../../../domain/services/skills/specialization-keys.js';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
@@ -31,11 +34,13 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     private readonly characterAccess: CharacterAccess,
     private readonly spellListSkillResolver: SpellListSkillResolver,
+    private readonly specializationCatalog: SpecializationCatalogService,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
     const characterId = command.characterId;
-    const specialization = command.specialization;
+    let specialization = command.specialization;
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
@@ -52,10 +57,6 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
       professionId: character.info.professionId,
       realms: characterRealms(character.info),
     });
-    if (this.alreadyHasSkill(character, skillId, specialization)) {
-      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
-    }
-
     const [readedSkill, readedProfession, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
       this.professionClient.getProfessionById(character.info.professionId),
@@ -67,6 +68,13 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
     if (!readedRace) throw new NotFoundError('Race', character.info.race.id);
 
     validateSkillSpecialization(readedSkill, specialization);
+    // Spec 050: a catalog specialization is stored as its key and must exist in the realm of the game
+    specialization = specializationKey(readedSkill.specialization, specialization);
+    if (this.alreadyHasSkill(character, skillId, specialization)) {
+      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
+    }
+    const game = await this.gameRepository.findById(character.gameId);
+    await this.specializationCatalog.check([{ skillId, category: readedSkill.specialization, specialization }], game?.realmId || null);
 
     const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
     if (!readedCategory) throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);

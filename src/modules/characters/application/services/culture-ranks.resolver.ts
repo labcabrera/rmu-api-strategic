@@ -2,6 +2,8 @@ import { ValidationError } from '../../../shared/domain/errors/errors.js';
 import type { CultureRanks } from '../../domain/aggregates/character.js';
 import type { Culture, CultureSkillRank } from '../ports/culture-client.port.js';
 import type { SkillResponse } from '../ports/skill-client.port.js';
+import { toKey } from '../../../shared/domain/services/key.js';
+import { specializationKey } from '../../domain/services/skills/specialization-keys.js';
 
 export const LANGUAGE_SKILL_IDS = ['language-spoken', 'language-written'];
 export const DEFAULT_CULTURE_MAX_RANKS_PER_SKILL = 2;
@@ -64,14 +66,16 @@ const resolveAssignment = (
     throw new ValidationError(`Culture entry ${index} (${entry.type}) does not accept the skill '${skill.id}'`, 'err-culture-wrong-skill');
   }
   const needsSpecialization = requiresSpecialization(entry, skill);
-  const specialization = needsSpecialization ? assignment.specialization?.trim() || null : null;
+  // Languages and regions are catalog keys (spec 050), whatever the skill says
+  const category = entry.type === 'languages' ? 'language' : entry.type === 'region' ? 'region' : skill.specialization;
+  const specialization = needsSpecialization ? specializationKey(category, assignment.specialization) : null;
   if (needsSpecialization && !specialization) {
     throw new ValidationError(
       `Culture entry ${index}: skill '${skill.id}' requires a specialization`,
       'err-culture-missing-specialization',
     );
   }
-  if (entry.type === 'languages' && culture.languages?.length && !culture.languages.includes(specialization!)) {
+  if (entry.type === 'languages' && culture.languages?.length && !culture.languages.map(toKey).includes(specialization!)) {
     throw new ValidationError(
       `Culture entry ${index}: language '${specialization}' is not offered by the culture`,
       'err-culture-language-not-offered',
@@ -105,7 +109,11 @@ export const resolveCultureRanks = (culture: Culture, assignments: CultureAssign
   entries.forEach((entry, index) => {
     if (entry.type === 'skill') {
       const skill = findCatalogSkill(skills, entry.skillId, index);
-      resolved.push({ skillId: skill.id, specialization: entry.specialization || null, ranks: entry.ranks });
+      resolved.push({
+        skillId: skill.id,
+        specialization: specializationKey(skill.specialization, entry.specialization),
+        ranks: entry.ranks,
+      });
       return;
     }
     const entryAssignments = byEntry.get(index) || [];

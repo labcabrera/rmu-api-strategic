@@ -9,6 +9,7 @@ import { REALM_CLIENT } from '../../../src/modules/games/application/ports/realm
 import { ITEM_CLIENT } from '../../../src/modules/items/application/ports/item-client.port.js';
 import { RACE_CLIENT } from '../../../src/modules/characters/application/ports/race-client.port.js';
 import { SKILL_CLIENT } from '../../../src/modules/characters/application/ports/skill-client.port.js';
+import { ENUMERATION_CLIENT } from '../../../src/modules/characters/application/ports/enumeration-client.port.js';
 import { SKILL_CATEGORY_CLIENT } from '../../../src/modules/characters/application/ports/skill-category-client.port.js';
 import { PROFESSION_CLIENT } from '../../../src/modules/characters/application/ports/profession-client.port.js';
 import { TRAIT_CLIENT } from '../../../src/modules/characters/application/ports/trait-client.port.js';
@@ -119,6 +120,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.tradingTablesClient)
     .overrideProvider(SPELL_LIST_CLIENT)
     .useValue(fakes.spellListClient)
+    .overrideProvider(ENUMERATION_CLIENT)
+    .useValue(fakes.enumerationClient)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);
