@@ -2,7 +2,7 @@
 import request from 'supertest';
 import { startApp, type E2eApp, type UserName } from './support/app.js';
 import { createCharacter, createFaction, createGame } from './support/builders.js';
-import { maneuverCalls } from './support/fakes.js';
+import { maneuverCalls, tradingTables } from './support/fakes.js';
 
 type Body = Record<string, any>;
 
@@ -362,5 +362,130 @@ describe('item operations (e2e)', () => {
     expect(discarded.body).toMatchObject({ item: null, entry: { kind: 'discard', note: 'Lost in the river' } });
     expect((await as('owner').get(`/v1/items/${bought.item.id}`)).status).toBe(404);
     expect((await as('owner').get('/v1/economy-rules')).body).toMatchObject({ salePercent: 50, materialsPercent: 50 });
+  });
+
+  describe('purchase orders (spec 048)', () => {
+    // Invented trading tables with the shape of the import, not the rulebook ones
+    const TABLES = {
+      negotiation: [
+        { min: null, max: -10, purchase: null, sale: null, outcome: 'absolute-failure' as const },
+        { min: -9, max: 0, purchase: null, sale: null, outcome: 'no-agreement' as const },
+        { min: 1, max: 100, purchase: 150, sale: 50 },
+        { min: 101, max: null, purchase: 50, sale: 150 },
+      ],
+      priceFactors: [
+        { key: 'demand', type: 'choice' as const, mode: 'multiplier' as const, options: [{ key: 'high', value: 2 }] },
+        { key: 'days', type: 'number' as const, mode: 'percent' as const, perUnit: 10, min: 0, max: 10 },
+      ],
+    };
+
+    afterEach(() => {
+      tradingTables.value = null;
+    });
+
+    const order = (body: object) => as('owner').post('/v1/items/purchase-orders', { buyer: holder('faction', faction.id()), ...body });
+
+    it('buys several types at once with one payment per line and one ledger entry per line', async () => {
+      const response = await order({
+        lines: [
+          { itemTypeId: 'sword', amount: 2 },
+          { itemTypeId: 'arrow', amount: 20 },
+        ],
+      });
+      expect(response.status, JSON.stringify(response.body)).toBe(201);
+      const { items, entries } = response.body as Body;
+      // Two swords and one stack of arrows
+      expect(items).toHaveLength(3);
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toMatchObject({ itemTypeId: 'sword', amount: 2, price: { total: 20 }, details: { line: 1, lines: 2 } });
+      expect(entries[1]).toMatchObject({ itemTypeId: 'arrow', amount: 20, price: { total: 2 }, details: { line: 2, lines: 2 } });
+      expect(entries[0].details.orderId).toBe(entries[1].details.orderId);
+      expect(await gold()).toBe(78);
+    });
+
+    it('applies the market conditions and one negotiation of the trading tables to every line', async () => {
+      tradingTables.value = TABLES;
+      const body = {
+        lines: [
+          { itemTypeId: 'sword', amount: 1 },
+          { itemTypeId: 'arrow', amount: 10 },
+        ],
+        factors: [
+          { key: 'demand', option: 'high' },
+          { key: 'days', units: 1 },
+        ],
+        trading: { roll: 90, bonus: 20 },
+      };
+      // 2 + 10% = 2.1; total 110 -> 50% of the expected price
+      const quote = await as('owner').post('/v1/items/purchase-orders/quote', body);
+      expect(quote.status, JSON.stringify(quote.body)).toBe(200);
+      expect(quote.body).toMatchObject({
+        factor: { value: 2.1 },
+        trading: { total: 110, pricePercent: 50, table: 'treasure-law' },
+        lines: [{ price: { expectedUnitPrice: 21, unitPrice: 10.5 } }, { price: { expectedUnitPrice: 0.21, unitPrice: 0.105 } }],
+        total: 11.55,
+      });
+      const response = await order(body);
+      expect(response.status, JSON.stringify(response.body)).toBe(201);
+      expect((response.body as Body).entries[0].maneuver).toMatchObject({ skillId: 'trading', total: 110, percent: 50 });
+      expect(await gold()).toBe(88.45);
+    });
+
+    it('quotes a negotiation without a deal, and the purchase fails with 422 without charging anything', async () => {
+      tradingTables.value = TABLES;
+      const body = { lines: [{ itemTypeId: 'sword', amount: 1 }], trading: { roll: -5, bonus: 0 } };
+      const quote = await as('owner').post('/v1/items/purchase-orders/quote', body);
+      expect(quote.body).toMatchObject({ trading: { pricePercent: null, outcome: 'no-agreement' } });
+      const response = await order(body);
+      expect(response.status).toBe(422);
+      expect(response.body).toMatchObject({ code: 'err-trading-no-agreement' });
+      const failure = await order({ ...body, trading: { roll: -30, bonus: 0 } });
+      expect(failure.body).toMatchObject({ code: 'err-trading-absolute-failure' });
+      expect(await gold()).toBe(100);
+    });
+
+    it('uses the Core Law rule without trading tables, and rejects market conditions then', async () => {
+      const body = { lines: [{ itemTypeId: 'sword', amount: 1 }], trading: { roll: 70, bonus: 50 } };
+      const quote = await as('owner').post('/v1/items/purchase-orders/quote', body);
+      // Invented percent table: 120 -> 200 - 120 = 80%
+      expect(quote.body).toMatchObject({ trading: { pricePercent: 80, table: 'core-law' }, total: 8 });
+      const factors = await order({ ...body, factors: [{ key: 'demand', option: 'high' }] });
+      expect(factors.body).toMatchObject({ code: 'err-trading-tables-missing' });
+    });
+
+    it('pays a split order with the coins of the character first and the faction for the rest, undoing it all when short', async () => {
+      expect((await as('owner').patch(`/v1/characters/${soldierId}/transfer-faction-gold`, { amount: 15 })).status).toBe(200);
+      const buyer = holder('character', soldierId);
+      const response = await as('owner').post('/v1/items/purchase-orders', {
+        buyer,
+        payer: 'split',
+        lines: [
+          { itemTypeId: 'sword', amount: 1 },
+          { itemTypeId: 'sword', amount: 1 },
+        ],
+      });
+      expect(response.status, JSON.stringify(response.body)).toBe(201);
+      const { entries } = response.body as Body;
+      expect(entries[0].payments).toEqual([{ holder: buyer, gold: -10 }]);
+      expect(entries[1].payments).toEqual([
+        { holder: buyer, gold: -5 },
+        { holder: { kind: 'faction', id: factionId }, gold: -5 },
+      ]);
+      expect(await gold()).toBe(80);
+
+      // 80 of the faction: the third sword is not affordable, so the first two lines are undone
+      const short = await as('owner').post('/v1/items/purchase-orders', {
+        buyer: holder('faction', faction.id()),
+        lines: [
+          { itemTypeId: 'sword', amount: 5 },
+          { itemTypeId: 'sword', amount: 2 },
+          { itemTypeId: 'sword', amount: 2 },
+        ],
+      });
+      expect(short.body).toMatchObject({ code: 'err-insufficient-gold' });
+      expect(await gold()).toBe(80);
+      const swords = await as('owner').get(`/v1/items?q=factionId==${factionId};itemTypeId==sword`);
+      expect((swords.body as Body).content).toHaveLength(0);
+    });
   });
 });

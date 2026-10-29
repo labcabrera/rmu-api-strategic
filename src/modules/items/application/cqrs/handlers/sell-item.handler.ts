@@ -8,12 +8,14 @@ import { HolderAccess } from '../../services/holder-access.service.js';
 import { InventorySync } from '../../services/inventory-sync.service.js';
 import { ItemLedger } from '../../services/item-ledger.service.js';
 import { type ItemOperationResult, ItemStock } from '../../services/item-stock.service.js';
+import { PurchasePricing } from '../../services/purchase-pricing.service.js';
 import { TradingService } from '../../services/trading.service.js';
 import { Wallet } from '../../services/wallet.service.js';
 
 /**
  * A sale (workspace spec 023, decisions 8 and 12): the value of the item times the sale percent and the percent of its
- * condition, then the Trading percent, unless a price is asked. The units leave the holder before it gets the gold,
+ * condition and the factor of the market conditions (workspace spec 048), then the Trading percent, unless a price is
+ * asked. The units leave the holder before it gets the gold,
  * and come back if the gold cannot be given.
  */
 @CommandHandler(SellItemCommand)
@@ -23,6 +25,7 @@ export class SellItemHandler implements ICommandHandler<SellItemCommand, ItemOpe
     private readonly stock: ItemStock,
     private readonly wallet: Wallet,
     private readonly trading: TradingService,
+    private readonly pricing: PurchasePricing,
     private readonly rules: EconomyRulesProvider,
     private readonly ledger: ItemLedger,
     private readonly inventorySync: InventorySync,
@@ -36,9 +39,11 @@ export class SellItemHandler implements ICommandHandler<SellItemCommand, ItemOpe
     await this.holderAccess.checkManage(seller, userId, roles);
 
     const units = this.stock.units(item, options.amount);
+    const factor = options.factors?.length ? await this.pricing.factor('sale', options.factors) : undefined;
     const trading = options.trading ? await this.trading.resolve('sale', options.trading, seller.character) : undefined;
     const price = PriceCalculator.sale(item.unitValue, units, item.getCondition(), this.rules.rules({ salePercent: options.salePercent }), {
       unitPrice: options.unitPrice,
+      factor,
       trading: trading?.result,
     });
 

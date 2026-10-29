@@ -1,4 +1,4 @@
-import type { PriceKind } from '../../../domain/services/price-calculator.js';
+import type { PriceFactorSelection, PriceKind } from '../../../domain/services/price-calculator.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { TradingRequest } from '../../services/trading.service.js';
 
@@ -14,6 +14,8 @@ export class QuotePriceQuery {
       amount?: number;
       unitPrice?: number;
       salePercent?: number;
+      /** Market conditions of the expected price (workspace spec 048) */
+      factors?: PriceFactorSelection[];
       trading?: TradingRequest;
     },
     public readonly userId: string,

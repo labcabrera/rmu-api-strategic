@@ -5,6 +5,7 @@ import { ValidationError } from '../../../../shared/domain/errors/errors.js';
 import type { Item } from '../../../domain/aggregates/item.js';
 import { PriceCalculator } from '../../../domain/services/price-calculator.js';
 import { PurchaseItemCommand } from '../commands/purchase-item.command.js';
+import { PurchasePricing } from '../../services/purchase-pricing.service.js';
 import { HolderAccess } from '../../services/holder-access.service.js';
 import { InventorySync } from '../../services/inventory-sync.service.js';
 import { ItemFactory } from '../../services/item-factory.service.js';
@@ -13,8 +14,7 @@ import type { ItemOperationResult } from '../../services/item-stock.service.js';
 import { TradingService } from '../../services/trading.service.js';
 import { Wallet } from '../../services/wallet.service.js';
 
-/** Items of a type that does not stack created by one purchase (spec 041, decision 12). */
-export const MAX_ITEMS_PER_PURCHASE = 100;
+export { MAX_ITEMS_PER_PURCHASE } from '../../services/purchase-pricing.service.js';
 
 /**
  * A purchase (workspace spec 023, decisions 8, 9 and 12): the price is the asked one or the average cost of the type,
@@ -48,13 +48,11 @@ export class PurchaseItemHandler implements ICommandHandler<PurchaseItemCommand,
     const itemType = await this.itemFactory.itemType(command.itemTypeId);
     const amount = options.amount ?? 1;
     const stackable = !!itemType.info.stackable;
-    if (!stackable && (!Number.isInteger(amount) || amount > MAX_ITEMS_PER_PURCHASE)) {
-      throw new ValidationError(`Up to ${MAX_ITEMS_PER_PURCHASE} whole units of a type that does not stack`, 'err-item-invalid-amount');
-    }
+    PurchasePricing.checkAmount(itemType, amount);
     const base = options.unitPrice ?? itemType.info.cost?.average ?? 0;
     if (base < 0) throw new ValidationError('The price cannot be negative', 'err-item-invalid-price');
     const trading = options.trading ? await this.trading.resolve('purchase', options.trading, buyer.character) : undefined;
-    const price = PriceCalculator.purchase(base, amount, trading?.result);
+    const price = PriceCalculator.purchase(base, amount, { trading: trading?.result });
 
     const charges = await this.wallet.plan(buyer, options.payer ?? 'split', price.total, faction);
     if (buyer.character && charges.some(charge => charge.context.holder.kind === 'faction')) {

@@ -9,7 +9,9 @@ import {
   type LedgerManeuver,
   type LedgerPayment,
 } from '../../../domain/aggregates/item-ledger-entry.js';
-import type { EconomyRules, PriceBreakdown } from '../../../domain/services/price-calculator.js';
+import type { EconomyRules, PriceBreakdown, PriceFactors, TradingResult } from '../../../domain/services/price-calculator.js';
+import type { PurchaseOrderResult } from '../../../application/cqrs/handlers/purchase-order.handler.js';
+import type { PurchaseOrderQuote } from '../../../application/cqrs/handlers/quote-purchase-order.handler.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import { ItemDto } from './item.dto.js';
 
@@ -134,5 +136,49 @@ export class PriceQuoteDto {
 
   static of(quote: PriceQuote): PriceQuoteDto {
     return Object.assign(new PriceQuoteDto(), { price: quote.price, rules: EconomyRulesDto.of(quote.rules) });
+  }
+}
+
+export class PurchaseOrderLineQuoteDto {
+  @ApiProperty({ example: 'longsword' })
+  itemTypeId: string;
+
+  @ApiProperty({ example: 1 })
+  amount: number;
+
+  @ApiProperty()
+  price: PriceBreakdown;
+}
+
+export class PurchaseOrderQuoteDto {
+  @ApiProperty({ type: [PurchaseOrderLineQuoteDto] })
+  lines: PurchaseOrderLineQuoteDto[];
+
+  @ApiProperty({ required: false, description: 'Factor of the market conditions and each condition' })
+  factor?: PriceFactors;
+
+  @ApiProperty({ required: false, description: 'The negotiation; a null pricePercent means no deal (buying fails with 422)' })
+  trading?: TradingResult;
+
+  @ApiProperty({ example: 120.5 })
+  total: number;
+
+  static of(quote: PurchaseOrderQuote): PurchaseOrderQuoteDto {
+    return Object.assign(new PurchaseOrderQuoteDto(), quote);
+  }
+}
+
+export class PurchaseOrderResultDto {
+  @ApiProperty({ type: [ItemDto], description: 'The items bought, line by line' })
+  items: ItemDto[];
+
+  @ApiProperty({ type: [ItemLedgerEntryDto], description: 'One ledger entry per line' })
+  entries: ItemLedgerEntryDto[];
+
+  static fromResult(result: PurchaseOrderResult): PurchaseOrderResultDto {
+    const dto = new PurchaseOrderResultDto();
+    dto.items = result.items.map(item => ItemDto.fromEntity(item));
+    dto.entries = result.entries.map(entry => ItemLedgerEntryDto.fromEntity(entry));
+    return dto;
   }
 }

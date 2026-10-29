@@ -1,3 +1,5 @@
+import { TRADING_TABLES_CLIENT } from './application/ports/trading-tables-client.port.js';
+import { ApiTradingTablesClientAdapter } from './infrastructure/api-clients/api.trading-tables-client.adapter.js';
 import { GamesModule } from '../games/games.module.js';
 import { ItemAccess } from './application/services/item-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
@@ -40,6 +42,9 @@ import { TradingService } from './application/services/trading.service.js';
 import { ItemStock } from './application/services/item-stock.service.js';
 import { ItemManeuverService } from './application/services/item-maneuver.service.js';
 import { PurchaseItemHandler } from './application/cqrs/handlers/purchase-item.handler.js';
+import { PurchaseOrderHandler } from './application/cqrs/handlers/purchase-order.handler.js';
+import { QuotePurchaseOrderHandler } from './application/cqrs/handlers/quote-purchase-order.handler.js';
+import { PurchasePricing } from './application/services/purchase-pricing.service.js';
 import { SellItemHandler } from './application/cqrs/handlers/sell-item.handler.js';
 import { TransferItemHandler } from './application/cqrs/handlers/transfer-item.handler.js';
 import { DiscardItemHandler } from './application/cqrs/handlers/discard-item.handler.js';
@@ -89,6 +94,9 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     ItemStock,
     ItemManeuverService,
     PurchaseItemHandler,
+    PurchaseOrderHandler,
+    QuotePurchaseOrderHandler,
+    PurchasePricing,
     SellItemHandler,
     TransferItemHandler,
     DiscardItemHandler,
@@ -116,6 +124,10 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     {
       provide: ITEM_CLIENT,
       useClass: ApiItemClientAdapter,
+    },
+    {
+      provide: TRADING_TABLES_CLIENT,
+      useClass: ApiTradingTablesClientAdapter,
     },
     {
       provide: MATERIAL_CLIENT,

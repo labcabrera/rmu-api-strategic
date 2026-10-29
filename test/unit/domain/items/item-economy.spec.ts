@@ -1,6 +1,7 @@
 import { CraftingOutcomes } from '../../../../src/modules/items/domain/services/crafting-outcome.js';
 import { ItemRepair } from '../../../../src/modules/items/domain/services/item-repair.js';
 import { DEFAULT_ECONOMY_RULES, PriceCalculator } from '../../../../src/modules/items/domain/services/price-calculator.js';
+import type { TradingTables } from '../../../../src/modules/items/domain/value-objects/trading-tables.vo.js';
 import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo.js';
 
 const breakage = (value: number, broken = false): ItemModifier => ({
@@ -24,7 +25,7 @@ describe('PriceCalculator (spec 023, decision 12)', () => {
 
   it('prices a purchase by unit and amount, with three decimals', () => {
     expect(PriceCalculator.purchase(0.1, 3)).toMatchObject({ unitPrice: 0.1, total: 0.3 });
-    expect(PriceCalculator.purchase(10, 2, { total: 120, maneuverPercent: 120, pricePercent: 80 })).toMatchObject({
+    expect(PriceCalculator.purchase(10, 2, { trading: { total: 120, maneuverPercent: 120, pricePercent: 80 } })).toMatchObject({
       unitPrice: 8,
       total: 16,
     });
@@ -48,6 +49,84 @@ describe('PriceCalculator (spec 023, decision 12)', () => {
   it('prices the materials at a percent of the average cost', () => {
     expect(PriceCalculator.materials(10, DEFAULT_ECONOMY_RULES)).toBe(5);
     expect(PriceCalculator.materials(10, DEFAULT_ECONOMY_RULES, 3)).toBe(3);
+  });
+});
+
+// Invented trading tables with the shape of the import, not the rulebook ones
+const TRADING: TradingTables = {
+  negotiation: [
+    { min: null, max: -10, purchase: null, sale: null, outcome: 'absolute-failure' },
+    { min: -9, max: 0, purchase: null, sale: null, outcome: 'no-agreement' },
+    { min: 1, max: 100, purchase: 120, sale: 40 },
+    { min: 101, max: 200, purchase: 80, sale: 120 },
+    { min: 201, max: null, purchase: 50, sale: 150, outcome: 'special-offer' },
+  ],
+  priceFactors: [
+    {
+      key: 'demand',
+      type: 'choice',
+      mode: 'multiplier',
+      options: [
+        { key: 'high', value: 2 },
+        { key: 'low', value: 0.5 },
+      ],
+    },
+    { key: 'illegal', type: 'flag', mode: 'multiplier', value: 4 },
+    { key: 'days', type: 'number', mode: 'percent', perUnit: 2, min: 0, max: 30 },
+    { key: 'used', type: 'flag', mode: 'multiplier', value: 0.8, contexts: ['purchase'] },
+  ],
+};
+
+describe('PriceCalculator with trading tables (spec 048)', () => {
+  it('multiplies the multipliers and adds the percents to the factor', () => {
+    const factor = PriceCalculator.factor(TRADING, 'purchase', [
+      { key: 'demand', option: 'low' },
+      { key: 'illegal' },
+      { key: 'days', units: 10 },
+    ]);
+    // 0.5 x 4 + 20% = 2.2
+    expect(factor).toEqual({
+      value: 2.2,
+      items: [
+        { key: 'demand', option: 'low', mode: 'multiplier', value: 0.5 },
+        { key: 'illegal', mode: 'multiplier', value: 4 },
+        { key: 'days', units: 10, mode: 'percent', value: 20 },
+      ],
+    });
+    expect(PriceCalculator.factor(TRADING, 'purchase', [])).toBeUndefined();
+  });
+
+  it('rejects unknown conditions, options, units out of range, repeated ones and the ones of the other side', () => {
+    const reject = (selections: Parameters<typeof PriceCalculator.factor>[2]) =>
+      expect(() => PriceCalculator.factor(TRADING, 'sale', selections)).toThrow(
+        expect.objectContaining({ code: 'err-trading-unknown-factor' }),
+      );
+    reject([{ key: 'weather' }]);
+    reject([{ key: 'demand', option: 'none' }]);
+    reject([{ key: 'days', units: 31 }]);
+    reject([{ key: 'illegal' }, { key: 'illegal' }]);
+    reject([{ key: 'used' }]);
+  });
+
+  it('applies the factor to the expected price and the negotiation percent to it', () => {
+    const factor = PriceCalculator.factor(TRADING, 'purchase', [{ key: 'demand', option: 'high' }]);
+    const trading = { total: 150, pricePercent: 80, table: 'treasure-law' as const };
+    expect(PriceCalculator.purchase(10, 3, { factor, trading })).toMatchObject({ expectedUnitPrice: 20, unitPrice: 16, total: 48 });
+    const intact = { breakagePenalty: 0, broken: false };
+    // 30 x 50% x 100% x 2 = 30 expected, x 120% = 36
+    expect(
+      PriceCalculator.sale(30, 1, intact, DEFAULT_ECONOMY_RULES, { factor, trading: { ...trading, pricePercent: 120 } }),
+    ).toMatchObject({
+      expectedUnitPrice: 30,
+      unitPrice: 36,
+    });
+  });
+
+  it('finds the negotiation row of a total, with open limits', () => {
+    expect(PriceCalculator.negotiationRow(TRADING.negotiation, -50)?.outcome).toBe('absolute-failure');
+    expect(PriceCalculator.negotiationRow(TRADING.negotiation, 0)?.outcome).toBe('no-agreement');
+    expect(PriceCalculator.negotiationRow(TRADING.negotiation, 101)).toMatchObject({ purchase: 80, sale: 120 });
+    expect(PriceCalculator.negotiationRow(TRADING.negotiation, 999)?.outcome).toBe('special-offer');
   });
 });
 

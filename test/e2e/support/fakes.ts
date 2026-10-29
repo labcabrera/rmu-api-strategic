@@ -1,5 +1,7 @@
 import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
 import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
+import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
+import type { TradingTables } from '../../../src/modules/items/domain/value-objects/trading-tables.vo.js';
 import type { ItemClientPort, ItemResponse } from '../../../src/modules/items/application/ports/item-client.port.js';
 import type { Race, RaceClientPort } from '../../../src/modules/characters/application/ports/race-client.port.js';
 import type { SkillClientPort, SkillResponse } from '../../../src/modules/characters/application/ports/skill-client.port.js';
@@ -311,6 +313,12 @@ export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; tot
   tables: [],
 };
 
+/**
+ * Trading tables of core (workspace spec 048): null by default (the Core Law rule); a test sets invented tables and
+ * puts null back when it ends.
+ */
+export const tradingTables: { value: TradingTables | null } = { value: null };
+
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
   const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(id === REALM.id ? REALM : undefined) };
@@ -401,7 +409,9 @@ export function apiFakes() {
       return Promise.resolve({ percent: Math.max(0, Math.min(150, total)), message: 'percent' });
     },
   };
+  const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   return {
+    tradingTablesClient,
     realmClient,
     itemClient,
     raceClient,
