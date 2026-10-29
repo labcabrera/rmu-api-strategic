@@ -7,6 +7,7 @@ import { HolderAccess } from '../../services/holder-access.service.js';
 import { ItemAccess } from '../../services/item-access.service.js';
 import { ItemFactory } from '../../services/item-factory.service.js';
 import { ItemStock } from '../../services/item-stock.service.js';
+import { PurchasePricing } from '../../services/purchase-pricing.service.js';
 import { TradingService } from '../../services/trading.service.js';
 
 export interface PriceQuote {
@@ -26,6 +27,7 @@ export class QuotePriceHandler implements IQueryHandler<QuotePriceQuery, PriceQu
     private readonly itemAccess: ItemAccess,
     private readonly holderAccess: HolderAccess,
     private readonly trading: TradingService,
+    private readonly pricing: PurchasePricing,
     private readonly rulesProvider: EconomyRulesProvider,
   ) {}
 
@@ -33,13 +35,15 @@ export class QuotePriceHandler implements IQueryHandler<QuotePriceQuery, PriceQu
     const { options } = query;
     const rules = this.rulesProvider.rules({ salePercent: options.salePercent });
     const holder = options.holder ? await this.holderAccess.load(options.holder) : null;
-    const trading = options.trading ? await this.trading.resolve(query.kind, options.trading, holder?.character ?? null) : undefined;
+    const factor = options.factors?.length ? await this.pricing.factor(query.kind, options.factors) : undefined;
+    // A quote shows a negotiation without a deal instead of failing: the operation fails with 422
+    const trading = options.trading ? await this.trading.evaluate(query.kind, options.trading, holder?.character ?? null) : undefined;
 
     if (query.kind === 'purchase') {
       if (!options.itemTypeId) throw new ValidationError('itemTypeId is required', 'err-item-type-required');
       const itemType = await this.itemFactory.itemType(options.itemTypeId);
       const base = options.unitPrice ?? itemType.info.cost?.average ?? 0;
-      return { price: PriceCalculator.purchase(base, options.amount ?? 1, trading?.result), rules };
+      return { price: PriceCalculator.purchase(base, options.amount ?? 1, { factor, trading: trading?.result }), rules };
     }
 
     if (!options.itemId) throw new ValidationError('itemId is required', 'err-item-required');
@@ -48,6 +52,7 @@ export class QuotePriceHandler implements IQueryHandler<QuotePriceQuery, PriceQu
     const units = this.stock.units(item, options.amount);
     const price = PriceCalculator.sale(item.unitValue, units, item.getCondition(), rules, {
       unitPrice: options.unitPrice,
+      factor,
       trading: trading?.result,
     });
     return { price, rules };

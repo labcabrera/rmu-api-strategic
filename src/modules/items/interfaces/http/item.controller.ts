@@ -22,14 +22,20 @@ import { CurrentUser } from '../../../shared/interfaces/http/current-user.decora
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
 import type { ItemOperationResult } from '../../application/services/item-stock.service.js';
 import type { PriceQuote } from '../../application/cqrs/handlers/quote-price.handler.js';
-import { ItemOperationResultDto, PriceQuoteDto } from './dto/item-ledger.dto.js';
+import { ItemOperationResultDto, PriceQuoteDto, PurchaseOrderQuoteDto, PurchaseOrderResultDto } from './dto/item-ledger.dto.js';
+import type { PurchaseOrderCommand } from '../../application/cqrs/commands/purchase-order.command.js';
+import type { PurchaseOrderResult } from '../../application/cqrs/handlers/purchase-order.handler.js';
+import type { QuotePurchaseOrderQuery } from '../../application/cqrs/queries/quote-purchase-order.query.js';
+import type { PurchaseOrderQuote } from '../../application/cqrs/handlers/quote-purchase-order.handler.js';
 import type { CraftingPlan } from '../../domain/services/crafting-plan.js';
 import {
   CraftItemDto,
   CoatItemDto,
   DiscardItemDto,
   PurchaseItemDto,
+  PurchaseOrderDto,
   QuoteCraftDto,
+  QuotePurchaseOrderDto,
   QuotePriceDto,
   RepairItemDto,
   SellItemDto,
@@ -51,6 +57,36 @@ export class ItemController {
   @ApiErrors({ 400: 'Invalid data or not enough gold', 403: 'Not allowed to spend that gold' })
   async purchase(@Body() dto: PurchaseItemDto, @CurrentUser() user: AuthenticatedUser) {
     return this.operation(PurchaseItemDto.toCommand(dto, user.id, user.roles));
+  }
+
+  @Post('purchase-orders')
+  @ApiOperation({
+    operationId: 'purchaseOrder',
+    summary: 'Buy several item types at once, with the same market conditions and Trading (spec 048)',
+  })
+  @ApiCreatedResponse({ type: PurchaseOrderResultDto })
+  @ApiErrors({
+    400: 'Invalid data or not enough gold',
+    403: 'Not allowed to spend that gold',
+    422: 'The negotiation reached no deal (err-trading-no-agreement, err-trading-absolute-failure)',
+  })
+  async purchaseOrder(@Body() dto: PurchaseOrderDto, @CurrentUser() user: AuthenticatedUser): Promise<PurchaseOrderResultDto> {
+    const result = await this.commandBus.execute<PurchaseOrderCommand, PurchaseOrderResult>(
+      PurchaseOrderDto.toCommand(dto, user.id, user.roles),
+    );
+    return PurchaseOrderResultDto.fromResult(result);
+  }
+
+  @Post('purchase-orders/quote')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'quotePurchaseOrder', summary: 'Prices of a purchase order, without making it (spec 048)' })
+  @ApiOkResponse({ type: PurchaseOrderQuoteDto })
+  @ApiErrors({ 400: 'Invalid data' })
+  async quotePurchaseOrder(@Body() dto: QuotePurchaseOrderDto, @CurrentUser() user: AuthenticatedUser): Promise<PurchaseOrderQuoteDto> {
+    const quote = await this.queryBus.execute<QuotePurchaseOrderQuery, PurchaseOrderQuote>(
+      QuotePurchaseOrderDto.toQuery(dto, user.id, user.roles),
+    );
+    return PurchaseOrderQuoteDto.of(quote);
   }
 
   @Post('crafts')

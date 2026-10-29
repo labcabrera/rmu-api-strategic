@@ -19,6 +19,7 @@ import { POISON_RULES_CLIENT } from '../../../src/modules/characters/application
 import { SPELL_LIST_CLIENT } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import { MANEUVER_CLIENT } from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
 import { MATERIAL_CLIENT } from '../../../src/modules/items/application/ports/material-client.port.js';
+import { TRADING_TABLES_CLIENT } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
 import { apiFakes, InMemoryEventPublisher } from './fakes.js';
@@ -114,6 +115,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.maneuverClient)
     .overrideProvider(MATERIAL_CLIENT)
     .useValue(fakes.materialClient)
+    .overrideProvider(TRADING_TABLES_CLIENT)
+    .useValue(fakes.tradingTablesClient)
     .overrideProvider(SPELL_LIST_CLIENT)
     .useValue(fakes.spellListClient)
     .compile();

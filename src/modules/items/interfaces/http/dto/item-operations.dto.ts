@@ -1,6 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { DIFFICULTIES, type Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo.js';
 import { CraftItemCommand } from '../../../application/cqrs/commands/craft-item.command.js';
 import { CoatItemCommand } from '../../../application/cqrs/commands/coat-item.command.js';
@@ -21,7 +34,10 @@ import {
 } from '../../../domain/services/crafting-plan.js';
 import type { TradingRequest } from '../../../application/services/trading.service.js';
 import { PAYER_MODES, type PayerMode } from '../../../application/services/wallet.service.js';
-import type { PriceKind } from '../../../domain/services/price-calculator.js';
+import type { PriceFactorSelection, PriceKind } from '../../../domain/services/price-calculator.js';
+import { PurchaseOrderCommand } from '../../../application/cqrs/commands/purchase-order.command.js';
+import { QuotePurchaseOrderQuery } from '../../../application/cqrs/queries/quote-purchase-order.query.js';
+import { MAX_ORDER_LINES } from '../../../application/services/purchase-pricing.service.js';
 import { ITEM_HOLDER_KINDS, type ItemHolder, type ItemHolderKind } from '../../../domain/value-objects/item-holder.vo.js';
 import { ITEM_MODIFIER_TARGETS, type ItemModifierTarget } from '../../../domain/value-objects/item-modifier.vo.js';
 import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
@@ -82,6 +98,118 @@ export class TradingRequestDto {
       ...(dto.bonus !== undefined ? { bonus: dto.bonus } : {}),
       ...(dto.modifiers ? { modifiers: dto.modifiers.map(modifier => ({ key: modifier.key, value: modifier.value })) } : {}),
     };
+  }
+}
+
+export class PriceFactorSelectionDto {
+  @ApiProperty({ description: 'Key of a market condition of the trading tables of core', example: 'supply-demand' })
+  @IsString()
+  @IsNotEmpty()
+  key: string;
+
+  @ApiProperty({ required: false, description: 'Option of a choice condition', example: 'demand-exceeds-supply' })
+  @IsString()
+  @IsOptional()
+  option?: string;
+
+  @ApiProperty({ required: false, description: 'Units of a number condition (days of travel...)', example: 3 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  units?: number;
+
+  static of(dtos: PriceFactorSelectionDto[] | undefined): PriceFactorSelection[] | undefined {
+    return dtos?.map(dto => ({
+      key: dto.key,
+      ...(dto.option !== undefined ? { option: dto.option } : {}),
+      ...(dto.units !== undefined ? { units: dto.units } : {}),
+    }));
+  }
+}
+
+export class PurchaseOrderLineDto {
+  @ApiProperty({ example: 'longsword' })
+  @IsString()
+  @IsNotEmpty()
+  itemTypeId: string;
+
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  @Min(0.001)
+  amount: number;
+}
+
+/** Market conditions and Trading of a purchase order, shared by the operation and its quote (workspace spec 048). */
+class PurchaseOrderTermsDto {
+  @ApiProperty({ type: [PurchaseOrderLineDto], description: `From 1 to ${MAX_ORDER_LINES} lines` })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(MAX_ORDER_LINES)
+  @ValidateNested({ each: true })
+  @Type(() => PurchaseOrderLineDto)
+  lines: PurchaseOrderLineDto[];
+
+  @ApiProperty({ type: [PriceFactorSelectionDto], required: false, description: 'Market conditions of every line' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PriceFactorSelectionDto)
+  @IsOptional()
+  factors?: PriceFactorSelectionDto[];
+
+  @ApiProperty({ type: TradingRequestDto, required: false, description: 'One negotiation for every line' })
+  @ValidateNested()
+  @Type(() => TradingRequestDto)
+  @IsOptional()
+  trading?: TradingRequestDto;
+}
+
+export class PurchaseOrderDto extends PurchaseOrderTermsDto {
+  @ApiProperty({ type: ItemHolderDto, description: 'The character or faction that buys' })
+  @ValidateNested()
+  @Type(() => ItemHolderDto)
+  buyer: ItemHolderDto;
+
+  @ApiProperty({ required: false, description: 'Checked against the game of the buyer' })
+  @IsString()
+  @IsOptional()
+  gameId?: string;
+
+  @ApiProperty({ enum: PAYER_MODES, required: false, description: 'A character pays with its coins, its faction, or both' })
+  @IsIn(PAYER_MODES)
+  @IsOptional()
+  payer?: PayerMode;
+
+  static toCommand(dto: PurchaseOrderDto, userId: string, roles: string[]): PurchaseOrderCommand {
+    return new PurchaseOrderCommand(
+      ItemHolderDto.of(dto.buyer)!,
+      dto.lines.map(line => ({ itemTypeId: line.itemTypeId, amount: line.amount })),
+      {
+        gameId: dto.gameId,
+        payer: dto.payer,
+        factors: PriceFactorSelectionDto.of(dto.factors),
+        trading: TradingRequestDto.of(dto.trading),
+      },
+      userId,
+      roles,
+    );
+  }
+}
+
+export class QuotePurchaseOrderDto extends PurchaseOrderTermsDto {
+  @ApiProperty({ type: ItemHolderDto, required: false, description: 'The buyer, for the Trading bonus of its sheet' })
+  @ValidateNested()
+  @Type(() => ItemHolderDto)
+  @IsOptional()
+  buyer?: ItemHolderDto;
+
+  static toQuery(dto: QuotePurchaseOrderDto, userId: string, roles: string[]): QuotePurchaseOrderQuery {
+    return new QuotePurchaseOrderQuery(
+      ItemHolderDto.of(dto.buyer),
+      dto.lines.map(line => ({ itemTypeId: line.itemTypeId, amount: line.amount })),
+      { factors: PriceFactorSelectionDto.of(dto.factors), trading: TradingRequestDto.of(dto.trading) },
+      userId,
+      roles,
+    );
   }
 }
 
@@ -186,6 +314,13 @@ export class SellItemDto {
   @IsOptional()
   salePercent?: number;
 
+  @ApiProperty({ type: [PriceFactorSelectionDto], required: false, description: 'Market conditions of the expected price (spec 048)' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PriceFactorSelectionDto)
+  @IsOptional()
+  factors?: PriceFactorSelectionDto[];
+
   @ApiProperty({ type: TradingRequestDto, required: false })
   @ValidateNested()
   @Type(() => TradingRequestDto)
@@ -195,7 +330,13 @@ export class SellItemDto {
   static toCommand(itemId: string, dto: SellItemDto, userId: string, roles: string[]): SellItemCommand {
     return new SellItemCommand(
       itemId,
-      { amount: dto.amount, unitPrice: dto.unitPrice, salePercent: dto.salePercent, trading: TradingRequestDto.of(dto.trading) },
+      {
+        amount: dto.amount,
+        unitPrice: dto.unitPrice,
+        salePercent: dto.salePercent,
+        factors: PriceFactorSelectionDto.of(dto.factors),
+        trading: TradingRequestDto.of(dto.trading),
+      },
       userId,
       roles,
     );
@@ -563,6 +704,13 @@ export class QuotePriceDto {
   @IsOptional()
   salePercent?: number;
 
+  @ApiProperty({ type: [PriceFactorSelectionDto], required: false, description: 'Market conditions of the expected price (spec 048)' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PriceFactorSelectionDto)
+  @IsOptional()
+  factors?: PriceFactorSelectionDto[];
+
   @ApiProperty({ type: TradingRequestDto, required: false })
   @ValidateNested()
   @Type(() => TradingRequestDto)
@@ -579,6 +727,7 @@ export class QuotePriceDto {
         amount: dto.amount,
         unitPrice: dto.unitPrice,
         salePercent: dto.salePercent,
+        factors: PriceFactorSelectionDto.of(dto.factors),
         trading: TradingRequestDto.of(dto.trading),
       },
       userId,
