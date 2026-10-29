@@ -98,6 +98,9 @@ import { MANEUVER_CLIENT } from './application/ports/maneuver-client.port.js';
 import { PROFESSION_CLIENT } from './application/ports/profession-client.port.js';
 import { RACE_CLIENT } from './application/ports/race-client.port.js';
 import { SKILL_CATEGORY_CLIENT } from './application/ports/skill-category-client.port.js';
+import { ENUMERATION_CLIENT } from './application/ports/enumeration-client.port.js';
+import { ApiEnumerationClientAdapter } from './infrastructure/api-clients/api.enumeration-client.adapter.js';
+import { SpecializationCatalogService } from './application/services/specialization-catalog.service.js';
 import { SKILL_CLIENT } from './application/ports/skill-client.port.js';
 import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
 @Module({
@@ -177,6 +180,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     GetCharacterSpellcastingHandler,
     KnownSpellsReader,
     SpellListSkillResolver,
+    SpecializationCatalogService,
     ResolveConditionHandler,
     GetHealingLogHandler,
     GetTreatmentDifficultyHandler,
@@ -219,6 +223,10 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
       useClass: ApiSkillCategoryClientAdapter,
     },
     {
+      provide: ENUMERATION_CLIENT,
+      useClass: ApiEnumerationClientAdapter,
+    },
+    {
       provide: PROFESSION_CLIENT,
       useClass: ApiProfessionClientAdapter,
     },
@@ -246,6 +254,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     CULTURE_CLIENT,
     SKILL_CLIENT,
     TRAIT_CLIENT,
+    SpecializationCatalogService,
   ],
 })
 export class CharactersModule {}

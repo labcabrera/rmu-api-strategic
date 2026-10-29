@@ -31,6 +31,9 @@ import { resolvePowerLevel } from '../../../../games/domain/value-objects/game-p
 import { Game } from '../../../../games/domain/aggregates/game.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 import { isUpstreamHttpError } from '../../../../shared/infrastructure/http/http-client.js';
+import { SpecializationCatalogService } from '../../services/specialization-catalog.service.js';
+import { specializationKey } from '../../../domain/services/skills/specialization-keys.js';
+import type { CreateCharacterSkill } from '../commands/create-character.command.js';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -50,6 +53,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     private readonly characterProcessorService: CharacterProcessorService,
     private readonly characterAccess: CharacterAccess,
     private readonly spellListSkillResolver: SpellListSkillResolver,
+    private readonly specializationCatalog: SpecializationCatalogService,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -72,6 +76,16 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     const culture = command.culture ? await this.fetchCulture(command.culture.cultureId) : undefined;
     const catalogSkills = await this.fetchSkills();
     const cultureRanks = culture ? resolveCultureRanks(culture, command.culture!.assignments || [], catalogSkills) : [];
+    // Spec 050: the chosen specializations are keys of the catalog of the realm of the game
+    const skills = normalizeSkills(command.skills || [], catalogSkills);
+    await this.specializationCatalog.check(
+      [...skills, ...cultureRanks].map(ref => ({
+        skillId: ref.skillId,
+        category: catalogSkills.find(skill => skill.id === ref.skillId)?.specialization,
+        specialization: ref.specialization,
+      })),
+      game.realmId || null,
+    );
 
     const processedStatistics = this.processStatistics(race, command.statistics);
     const realms = validateRealms(command.info.realmTypes, profession);
@@ -89,7 +103,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
       command.userId,
       race.baseDevPoints || 0,
     );
-    await this.processSkills(character, profession, command, race, cultureRanks, catalogSkills);
+    await this.processSkills(character, profession, skills, race, cultureRanks, catalogSkills);
     if (culture) {
       character.applyCulture(culture.id, cultureRanks);
     }
@@ -136,12 +150,12 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
   async processSkills(
     character: Character,
     profession: Profession,
-    command: CreateCharacterCommand,
+    commandSkills: CreateCharacterSkill[],
     raceInfo: Race,
     cultureRanks: CultureRanks[] = [],
     catalogSkills?: SkillResponse[],
   ): Promise<void> {
-    const skills = command.skills || [];
+    const skills = [...commandSkills];
     // Always include the 'body-development' skill
     if (!skills.some(e => e.skillId === 'body-development')) {
       skills.push({
@@ -251,4 +265,12 @@ async function notFoundAsUndefined<T>(call: () => Promise<T | undefined | null>)
     if (isUpstreamHttpError(error) && error.status === 404) return undefined;
     throw error;
   }
+}
+
+/** The skills of the command with their specializations as the character stores them (spec 050). */
+function normalizeSkills(skills: CreateCharacterSkill[], catalogSkills: SkillResponse[]): CreateCharacterSkill[] {
+  return skills.map(skill => ({
+    ...skill,
+    specialization: specializationKey(catalogSkills.find(s => s.id === skill.skillId)?.specialization, skill.specialization),
+  }));
 }

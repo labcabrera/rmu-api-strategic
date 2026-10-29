@@ -51,9 +51,9 @@ const validAssignments: CultureAssignment[] = [
   { entry: 1, skillId: 'unarmed-st', specialization: 'strikes', ranks: 1 },
   { entry: 2, skillId: 'carving', ranks: 2 },
   { entry: 2, skillId: 'trading', ranks: 1 },
-  { entry: 3, skillId: 'language-spoken', specialization: 'north-tongue', ranks: 4 },
+  { entry: 3, skillId: 'language-spoken', specialization: 'North Tongue', ranks: 4 },
   { entry: 3, skillId: 'language-written', specialization: 'north-tongue', ranks: 1 },
-  { entry: 4, skillId: 'region-lore', specialization: 'home valley', ranks: 1 },
+  { entry: 4, skillId: 'region-lore', specialization: 'Home Valley', ranks: 1 },
 ];
 
 const replace = (index: number, assignment: Partial<CultureAssignment>): CultureAssignment[] =>
@@ -79,7 +79,7 @@ describe('resolveCultureRanks', () => {
       { skillId: 'trading', specialization: null, ranks: 1 },
       { skillId: 'language-spoken', specialization: 'north-tongue', ranks: 4 },
       { skillId: 'language-written', specialization: 'north-tongue', ranks: 1 },
-      { skillId: 'region-lore', specialization: 'home valley', ranks: 1 },
+      { skillId: 'region-lore', specialization: 'home-valley', ranks: 1 },
     ]);
   });
 
@@ -171,14 +171,20 @@ describe('CreateCharacterHandler', () => {
   const statistics = (temporary = 50, potential = 70) =>
     Object.fromEntries(STAT_KEYS.map(k => [k, new CharacterStatCreation(potential, temporary)])) as Record<StatKey, CharacterStatCreation>;
 
-  const setup = (game: { powerLevel?: Record<string, number>; options?: Record<string, unknown> } = {}, baseDevPoints = 50) => {
+  const setup = (
+    game: { powerLevel?: Record<string, number>; options?: Record<string, unknown> } = {},
+    baseDevPoints = 50,
+    skillBonuses: { skillId: string; specialization: string | null; bonus: number }[] = [],
+  ) => {
     const save = vi.fn((c: Character) => Promise.resolve(c));
+    const specializationCatalog = { check: vi.fn().mockResolvedValue(undefined) };
     const cultureClient = { getCultureById: vi.fn().mockResolvedValue(culture) };
     const handler = new CreateCharacterHandler(
       { save } as never,
       {
         findById: vi.fn().mockResolvedValue({
           id: 'game-001',
+          realmId: 'realm-001',
           powerLevel: { baseDevPoints: 60, ...(game.powerLevel || {}) },
           options: game.options || {},
         }),
@@ -192,7 +198,7 @@ describe('CreateCharacterHandler', () => {
           baseHits: 20,
           baseDevPoints,
           traits: [],
-          skillBonuses: [],
+          skillBonuses,
         }),
       },
       { getAllSkills: vi.fn().mockResolvedValue({ content: catalog }), getSkillById: vi.fn() },
@@ -224,6 +230,7 @@ describe('CreateCharacterHandler', () => {
       { process: vi.fn() } as unknown as CharacterProcessorService,
       allowAllCharacterAccess,
       { resolve: (skillId: string) => Promise.resolve(skillId) } as never,
+      specializationCatalog as never,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>
       handler.execute(
@@ -243,7 +250,7 @@ describe('CreateCharacterHandler', () => {
           cultureChoice,
         ),
       );
-    return { create, cultureClient };
+    return { create, cultureClient, specializationCatalog };
   };
 
   it('acceptance 3: applies the culture ranks before level 1 without spending points', async () => {
@@ -259,12 +266,36 @@ describe('CreateCharacterHandler', () => {
     expect(ranks('perception')).toEqual([2, 2, 0]);
     expect(ranks('melee-weapon', 'sword')).toEqual([2, 2, 0]);
     expect(ranks('language-spoken', 'north-tongue')).toEqual([4, 4, 0]);
-    expect(ranks('region-lore', 'home valley')).toEqual([1, 1, 0]);
+    expect(ranks('region-lore', 'home-valley')).toEqual([1, 1, 0]);
     expect(ranks('jumping')).toEqual([0, 0, 0]);
     // Skills created for the culture take the profession cost
     expect(character.findSkill('melee-weapon', 'sword')!.development).toEqual([2, 5]);
     expect(character.findSkill('unarmed-st', 'strikes')!.development).toEqual([4, 8]);
     expect(character.findSkill('carving', null)!.development).toEqual([3, 6]);
+  });
+
+  it('spec 050: the culture ranks and the racial bonus of a language meet in one skill with its key', async () => {
+    const { create, specializationCatalog } = setup({}, 50, [{ skillId: 'language-spoken', specialization: 'north-tongue', bonus: 20 }]);
+    const character = await create({ cultureId: 'culture-test', assignments: validAssignments });
+
+    const languages = character.skills.filter(s => s.skillId === 'language-spoken');
+    expect(languages).toHaveLength(1);
+    expect(languages[0]).toMatchObject({ specialization: 'north-tongue', ranks: 4, racialBonus: 20 });
+    expect(specializationCatalog.check).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        { skillId: 'language-spoken', category: 'language', specialization: 'north-tongue' },
+        { skillId: 'region-lore', category: 'region', specialization: 'home-valley' },
+      ]),
+      'realm-001',
+    );
+  });
+
+  it('spec 050: rejects a specialization the catalog of the realm does not have', async () => {
+    const { create, specializationCatalog } = setup();
+    specializationCatalog.check.mockRejectedValue(new ValidationError('unknown', 'err-unknown-specialization'));
+    await expect(create({ cultureId: 'culture-test', assignments: validAssignments })).rejects.toMatchObject({
+      code: 'err-unknown-specialization',
+    });
   });
 
   it('acceptance 3: rejects an incomplete assignment or one above the maximum per skill', async () => {

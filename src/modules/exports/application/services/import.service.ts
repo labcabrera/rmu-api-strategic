@@ -28,6 +28,8 @@ import {
   MAX_IMPORT_ITEMS,
 } from '../../domain/format/export-format.js';
 import { characterEntries, validateConsistency } from '../../domain/import/import-consistency.validator.js';
+import { SpecializationCatalogService } from '../../../characters/application/services/specialization-catalog.service.js';
+import { normalizeSkillSpecializations } from '../../domain/import/specialization-keys.js';
 import type { ImportError, ImportWarning } from '../../domain/import/import-issues.js';
 import { type ImportPlan, planImport } from '../../domain/import/import-planner.js';
 import { upcast, type UpcastStep } from '../../domain/upcasters/index.js';
@@ -101,6 +103,7 @@ export class ImportService {
     private readonly resolver: ImportReferenceResolver,
     private readonly processor: CharacterProcessorService,
     private readonly ledger: ItemLedger,
+    private readonly specializationCatalog: SpecializationCatalogService,
   ) {}
 
   async prepare(raw: unknown, destination: ImportDestination, userId: string): Promise<PreparedImport> {
@@ -142,6 +145,7 @@ export class ImportService {
 
     const references = await this.resolver.resolve(selected, armory);
     errors.push(...references.errors);
+    warnings.push(...(await this.normalizeSpecializations(selected, references.skillSpecializations, destination.game)));
     warnings.push(...references.warnings, ...this.sourceWarnings(file, destination.game, selected, armory));
 
     const importId = randomUUID();
@@ -281,6 +285,36 @@ export class ImportService {
       owner: userId,
       importId,
     });
+  }
+
+  /**
+   * Spec 050: the specializations become catalog keys (merging the skills that end with the same one), and those the
+   * catalog of the realm of the game does not have are reported; the character keeps them.
+   */
+  private async normalizeSpecializations(
+    selected: ReturnType<typeof characterEntries>,
+    skillSpecializations: Map<string, string>,
+    game: Game,
+  ): Promise<ImportWarning[]> {
+    selected.forEach(({ entry }) => {
+      entry.character.skills = normalizeSkillSpecializations(entry.character.skills, id => skillSpecializations.get(id));
+    });
+    const refs = selected.flatMap(({ entry }) =>
+      entry.character.skills.map(skill => ({
+        skillId: skill.skillId,
+        category: skillSpecializations.get(skill.skillId),
+        specialization: skill.specialization,
+        name: entry.character.name,
+      })),
+    );
+    const unknown = await this.specializationCatalog.unknown(refs, game.realmId || null);
+    return unknown.map(ref => ({
+      code: 'import-warning-unknown-specialization' as const,
+      message: `Specialization ${ref.specialization} of ${ref.skillId} is not in the catalog of the realm`,
+      kind: 'skill' as const,
+      id: `${ref.skillId}@${ref.specialization}`,
+      name: (ref as (typeof refs)[number]).name,
+    }));
   }
 
   /**

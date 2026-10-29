@@ -16,6 +16,8 @@ export interface ResolvedReferences {
   missingSkills: Set<string>;
   /** Spec 044, decision 4: the category of each skill of the file that core has, for the category talents. */
   skillCategories: Map<string, string>;
+  /** Specialization category of each catalog skill (`language`, `region`...), spec 050 */
+  skillSpecializations: Map<string, string>;
   missingTraits: Set<string>;
   errors: ImportError[];
   warnings: ImportWarning[];
@@ -44,6 +46,7 @@ export class ImportReferenceResolver {
       cultures: new Map(),
       missingSkills: new Set(),
       skillCategories: new Map(),
+      skillSpecializations: new Map(),
       missingTraits: new Set(),
       errors: [],
       warnings: [],
@@ -76,7 +79,9 @@ export class ImportReferenceResolver {
     }
 
     // One request for the whole catalog, which also gives the category of each skill (spec 044, decision 4)
-    const catalogSkills = new Map((await this.skillClient.getAllSkills()).content.map(skill => [skill.id, skill.categoryId] as const));
+    const catalog = (await this.skillClient.getAllSkills()).content;
+    const catalogSkills = new Map(catalog.map(skill => [skill.id, skill.categoryId] as const));
+    catalog.forEach(skill => skill.specialization && result.skillSpecializations.set(skill.id, skill.specialization));
     const skillIds = new Set(entries.flatMap(({ entry }) => entry.character.skills.map(skill => skill.skillId)));
     for (const skillId of skillIds) {
       const categoryId = catalogSkills.get(skillId);

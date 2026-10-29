@@ -13,7 +13,8 @@ export type ImportWarningCode =
   | 'import-warning-app-version'
   | 'import-warning-hp-clipped'
   | 'import-warning-power-clipped'
-  | 'import-warning-race-skill-bonus';
+  | 'import-warning-race-skill-bonus'
+  | 'import-warning-unknown-specialization';
 
 export interface ImportIssue<C extends string = string> {
   code: C;

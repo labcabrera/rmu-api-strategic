@@ -300,7 +300,7 @@ describe('characters (e2e)', () => {
   });
 
   describe('add skill [F-strategic-25]', () => {
-    type Skill = { skillId: string; ranks: number };
+    type Skill = { skillId: string; ranks: number; specialization: string | null };
     const skillOf = (body: unknown, skillId: string) => (body as { skills: Skill[] }).skills.find(s => s.skillId === skillId);
 
     it('lets an rmu-admin add a skill with initial ranks, which the sheet counts', async () => {
@@ -316,6 +316,31 @@ describe('characters (e2e)', () => {
       expect(jumping).toMatchObject({ ranks: 3, ranksDeveloped: 0 });
       // The processor counts them: 3 ranks are worth 15 points
       expect(jumping).toMatchObject({ developmentBonus: 15, totalBonus: 15 });
+    });
+
+    it('stores a language as its catalog key and rejects one the realm does not have (spec 050)', async () => {
+      const character = await createCharacter(e2e, gameId, factionId);
+      const added = await as('owner').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'language-spoken',
+        specialization: 'North Tongue',
+        ranks: 0,
+      });
+      expect(added.status).toBe(201);
+      expect(skillOf(added.body, 'language-spoken')).toMatchObject({ specialization: 'north-tongue' });
+      // Another spelling is the same skill
+      const again = await as('owner').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'language-spoken',
+        specialization: 'north-tongue',
+        ranks: 0,
+      });
+      expect(again.status).toBe(400);
+      const unknown = await as('owner').post(`/v1/characters/${character.id}/skills`, {
+        skillId: 'language-spoken',
+        specialization: 'Black Speech',
+        ranks: 0,
+      });
+      expect(unknown.status).toBe(400);
+      expect(unknown.body).toMatchObject({ code: 'err-unknown-specialization' });
     });
 
     it('rejects initial ranks from an rmu-user, and negative ranks from anyone', async () => {

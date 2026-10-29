@@ -27,6 +27,7 @@ import type { DomainEvent } from '../../../src/modules/shared/domain/events/doma
 import { NotFoundError } from '../../../src/modules/shared/domain/errors/errors.js';
 import { UpstreamBadGatewayError } from '../../../src/modules/shared/infrastructure/http/http-client.js';
 import type { SpellListClientPort, SpellResponse } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
+import type { EnumerationClientPort } from '../../../src/modules/characters/application/ports/enumeration-client.port.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
 import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
@@ -40,6 +41,8 @@ export const SKILLS: SkillResponse[] = [
   { id: 'jumping', categoryId: 'athletic', bonus: ['ag'], specialization: undefined },
   { id: 'melee-weapon', categoryId: 'combat', bonus: ['st'], specialization: 'weapon' },
   { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
+  // Spec 050: a skill whose specializations are enumerations of core
+  { id: 'language-spoken', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
   // Workspace spec 032: a fighting style skill, without stat bonus
   { id: 'combat-styles', categoryId: 'combat-expertise', bonus: [], specialization: 'combat-style' },
   ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
@@ -51,7 +54,7 @@ export const SKILLS: SkillResponse[] = [
 ];
 
 export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
-  ...['physical', 'awareness', 'athletic', 'combat', 'combat-expertise'].map(id => ({ id, bonus: [] })),
+  ...['physical', 'awareness', 'athletic', 'combat', 'combat-expertise', 'lore'].map(id => ({ id, bonus: [] })),
   // Spec 029: the realm stat counts twice (R*+R*)
   ...['spellcasting', 'power-manipulation'].map(id => ({ id, bonus: [], realmBonus: 2 })),
 ];
@@ -130,6 +133,12 @@ export const RACE = {
   traits: [],
   skillBonuses: [],
 } as unknown as Race;
+
+// Invented enumeration keys by category and realm (null: global), spec 050
+export const ENUMERATIONS: { category: string; realmId: string | null; key: string }[] = [
+  { category: 'language', realmId: null, key: 'common-tongue' },
+  { category: 'language', realmId: REALM.id, key: 'north-tongue' },
+];
 
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
 
@@ -409,8 +418,13 @@ export function apiFakes() {
       return Promise.resolve({ percent: Math.max(0, Math.min(150, total)), message: 'percent' });
     },
   };
+  const enumerationClient: EnumerationClientPort = {
+    getKeys: (category, realmId) =>
+      Promise.resolve(ENUMERATIONS.filter(e => e.category === category && (e.realmId === null || e.realmId === realmId)).map(e => e.key)),
+  };
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   return {
+    enumerationClient,
     tradingTablesClient,
     realmClient,
     itemClient,
