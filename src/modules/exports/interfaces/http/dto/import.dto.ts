@@ -60,9 +60,6 @@ class ImportSummaryDto {
 
   @ApiProperty({ description: 'Gold of the faction plus the gold coins of the items', example: 120.5 })
   gold: number;
-
-  @ApiProperty({ example: 2000 })
-  xp: number;
 }
 
 class ImportFileCharacterDto {

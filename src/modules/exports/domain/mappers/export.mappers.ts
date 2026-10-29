@@ -260,7 +260,7 @@ export function factionToExport(faction: Faction): FactionExport {
     shortDescription: orNull(faction.shortDescription),
     description: orNull(faction.description),
     imageUrl: orNull(faction.imageUrl),
-    management: { availableXP: faction.management?.availableXP ?? 0, availableGold: faction.management?.availableGold ?? 0 },
+    management: { availableGold: faction.management?.availableGold ?? 0 },
   };
 }
 

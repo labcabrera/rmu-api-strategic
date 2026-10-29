@@ -22,7 +22,7 @@ describe('core law items (e2e)', () => {
   beforeEach(async () => {
     await e2e.clear();
     const gameId = (await createGame(e2e)).id;
-    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Realm', management: { availableGold: 100, availableXP: 0 } })).id;
+    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Realm', management: { availableGold: 100 } })).id;
     characterId = (await createCharacter(e2e, gameId, factionId, 'owner', { name: 'Knight' })).id;
   });
 

@@ -376,7 +376,7 @@ const faction = Joi.object({
   shortDescription: nullable(text()).required(),
   description: nullable(text()).required(),
   imageUrl: nullable(Joi.string().max(2000)).required(),
-  management: Joi.object({ availableXP: num().min(0).required(), availableGold: num().min(0).required() }).required(),
+  management: Joi.object({ availableGold: num().min(0).required() }).required(),
 });
 
 export const exportFileSchema = Joi.object({

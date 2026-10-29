@@ -60,9 +60,9 @@ describe('explicit conversion (e2e)', () => {
       });
       expect(updated.status).toBe(200);
       expect(updated.body).toMatchObject({ info: { height: 1.9 }, roleplay: { age: 31 } });
-      const management = { availableGold: '100', availableXP: 0 };
+      const management = { availableGold: '100' };
       expect((await as('owner').post('/v1/factions', { gameId, name: 'Rich', management })).status).toBe(400);
-      const created = await as('owner').post('/v1/factions', { gameId, name: 'Rich', management: { availableGold: 100, availableXP: 0 } });
+      const created = await as('owner').post('/v1/factions', { gameId, name: 'Rich', management: { availableGold: 100 } });
       expect(created.status).toBe(201);
       expect(created.body).toMatchObject({ management: { availableGold: 100 } });
     });

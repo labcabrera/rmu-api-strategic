@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import type { FactionRepository } from '../../application/ports/faction-repository.port.js';
 import { FactionModel, type FactionDocument } from '../persistence/models/faction.model.js';
 import { Faction } from '../../domain/aggregates/faction.js';
+import { FactionManagement } from '../../domain/value-objects/faction-management.vo.js';
 import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
 import type { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
@@ -30,7 +31,8 @@ export class MongoFactionRepository extends MongoBaseRepository<Faction, Faction
       id: doc._id,
       gameId: doc.gameId,
       name: doc.name,
-      management: doc.management,
+      // Spec 049: only the gold; older documents may still hold the removed availableXP
+      management: new FactionManagement(doc.management?.availableGold ?? 0),
       shortDescription: doc.shortDescription,
       description: doc.description,
       imageUrl: doc.imageUrl,

@@ -41,7 +41,7 @@ describe('factions (e2e)', () => {
         name: 'Rangers',
         shortDescription: 'Short',
         owner: 'e2e-owner',
-        management: { availableGold: 0, availableXP: 0 },
+        management: { availableGold: 0 },
       });
       expect(e2e.events.topics()).toEqual(['internal.rmu-strategic.faction.created.v1']);
     });
@@ -124,14 +124,14 @@ describe('factions (e2e)', () => {
       expect((await as('owner').patch('/v1/factions/faction-missing', { name: 'x' })).status).toBe(404);
     });
 
-    it('ignores management in a PATCH: gold and xp change through add-gold and add-xp [F-strategic-16]', async () => {
+    it('ignores management in a PATCH: the gold changes through add-gold [F-strategic-16]', async () => {
       const faction = await createFaction(e2e, gameId);
       const response = await as('owner').patch(`/v1/factions/${faction.id}`, {
         name: 'Rich',
-        management: { availableGold: 999, availableXP: 9 },
+        management: { availableGold: 999 },
       });
       expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({ name: 'Rich', management: { availableGold: 0, availableXP: 0 } });
+      expect(response.body).toMatchObject({ name: 'Rich', management: { availableGold: 0 } });
     });
 
     it('lets the owner of the game change a faction an admin created in it', async () => {
@@ -154,38 +154,42 @@ describe('factions (e2e)', () => {
     });
   });
 
-  describe('xp and gold', () => {
+  describe('gold', () => {
     it('lets the owner of the game spend gold, but not below zero', async () => {
-      const faction = await createFaction(e2e, gameId, 'owner', { management: { availableGold: 10, availableXP: 0 } });
+      const faction = await createFaction(e2e, gameId, 'owner', { management: { availableGold: 10 } });
       const spent = await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: -4 });
       expect(spent.status).toBe(200);
       expect(spent.body).toMatchObject({ management: { availableGold: 6 } });
       expect((await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: -7 })).status).toBe(400);
     });
 
-    it('lets an admin add gold and xp, and not another user, a token without groups or the faction-management role [F-strategic-18]', async () => {
+    it('lets an admin add gold, and not another user, a token without groups or the faction-management role [F-strategic-18]', async () => {
       const faction = await createFaction(e2e, gameId);
-      expect((await as('admin').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(200);
-      const xp = await as('admin').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 });
-      expect(xp.status).toBe(200);
-      expect(xp.body).toMatchObject({ management: { availableGold: 5, availableXP: 5 } });
+      const gold = await as('admin').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 });
+      expect(gold.status).toBe(200);
+      // Spec 049: the faction has no XP any more
+      expect((gold.body as { management: unknown }).management).toEqual({ availableGold: 5 });
       for (const user of ['other', 'noRole'] as const) {
         expect((await as(user).post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(403);
         expect((await as(user).post(`/v1/factions/${faction.id}/add-gold`, { gold: -1 })).status).toBe(403);
-        expect((await as(user).post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(403);
       }
       const manager = e2e.jwks.token({ sub: 'e2e-manager', groups: ['faction-management'] });
       const legacy = await request(e2e.server)
-        .post(`/v1/factions/${faction.id}/add-xp`)
+        .post(`/v1/factions/${faction.id}/add-gold`)
         .set('Authorization', `Bearer ${manager}`)
-        .send({ xp: 5 });
+        .send({ gold: 5 });
       expect(legacy.status).toBe(403);
     });
 
-    it('lets the owner of the game add gold and xp to its factions [F-strategic-18]', async () => {
+    it('lets the owner of the game add gold to its factions [F-strategic-18]', async () => {
       const faction = await createFaction(e2e, gameId);
       expect((await as('owner').post(`/v1/factions/${faction.id}/add-gold`, { gold: 5 })).status).toBe(200);
-      expect((await as('owner').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(200);
+    });
+
+    it('has no add-xp endpoint and drops an availableXP sent on create (spec 049)', async () => {
+      const faction = await createFaction(e2e, gameId, 'owner', { management: { availableGold: 3, availableXP: 100 } });
+      expect(faction.management).toEqual({ availableGold: 3 });
+      expect((await as('owner').post(`/v1/factions/${faction.id}/add-xp`, { xp: 5 })).status).toBe(404);
     });
   });
 
