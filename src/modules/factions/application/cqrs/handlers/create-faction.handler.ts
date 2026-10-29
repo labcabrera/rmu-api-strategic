@@ -30,7 +30,7 @@ export class CreateFactionCommandHandler implements ICommandHandler<CreateFactio
     const props = {
       gameId: command.gameId,
       name: command.name,
-      management: command.management || new FactionManagement(0, 0),
+      management: command.management || new FactionManagement(0),
       shortDescription: command.shortDescription,
       description: command.description,
       imageUrl: command.imageUrl,

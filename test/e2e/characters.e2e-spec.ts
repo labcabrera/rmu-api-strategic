@@ -273,8 +273,9 @@ describe('characters (e2e)', () => {
     });
 
     it('publishes the gold moved between the faction and the character [F-strategic-14]', async () => {
-      const rich = (await as('owner').post('/v1/factions', { gameId, name: 'Rich', management: { availableGold: 10, availableXP: 0 } }))
-        .body as { id: string };
+      const rich = (await as('owner').post('/v1/factions', { gameId, name: 'Rich', management: { availableGold: 10 } })).body as {
+        id: string;
+      };
       const character = await createCharacter(e2e, gameId, rich.id);
       e2e.events.clear();
       const response = await as('owner').patch(`/v1/characters/${character.id}/transfer-faction-gold`, { amount: 4 });

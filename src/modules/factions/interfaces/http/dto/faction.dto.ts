@@ -37,19 +37,14 @@ export class FactionManagementDto {
   @IsNumber()
   availableGold: number;
 
-  @ApiProperty()
-  @IsNumber()
-  availableXP: number;
-
   static fromEntity(entity: FactionManagement): FactionManagementDto {
     const dto = new FactionManagementDto();
     dto.availableGold = entity.availableGold;
-    dto.availableXP = entity.availableXP;
     return dto;
   }
 
   static toEntity(dto: FactionManagementDto): FactionManagement {
-    return new FactionManagement(dto.availableXP, dto.availableGold);
+    return new FactionManagement(dto.availableGold);
   }
 }
 

@@ -31,7 +31,7 @@ describe('item operations (e2e)', () => {
     maneuverCalls.totals = [];
     maneuverCalls.tables = [];
     gameId = (await createGame(e2e)).id;
-    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Realm', management: { availableGold: 100, availableXP: 0 } })).id;
+    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Realm', management: { availableGold: 100 } })).id;
     smithId = (
       await createCharacter(e2e, gameId, factionId, 'owner', {
         name: 'Smith',

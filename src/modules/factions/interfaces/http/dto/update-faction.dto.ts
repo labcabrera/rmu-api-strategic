@@ -4,7 +4,7 @@ import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { UpdateFactionCommand } from '../../../application/cqrs/commands/update-faction.command.js';
 
 /**
- * The gold and XP of a faction are not part of the PATCH (F-strategic-16): they change through add-gold and add-xp,
+ * The gold of a faction is not part of the PATCH (F-strategic-16): it changes through add-gold,
  * which only the owner of the game or an admin may call. A `management` field sent by a client is dropped.
  */
 export class UpdateFactionDto {

@@ -8,7 +8,6 @@ import { MongoFactionRepository } from './infrastructure/db/mongo.faction.reposi
 import { FactionModel, FactionSchema } from './infrastructure/persistence/models/faction.model.js';
 import { GamesModule } from '../games/games.module.js';
 import { AddFactionGoldCommandHandler } from './application/cqrs/handlers/add-faction-gold.handler.js';
-import { AddFactionXPCommandHandler } from './application/cqrs/handlers/add-faction-xp.handler.js';
 import { CreateFactionCommandHandler } from './application/cqrs/handlers/create-faction.handler.js';
 import { DeleteFactionCommandHandler } from './application/cqrs/handlers/delete-faction.handler.js';
 import { GetFactionQueryHandler } from './application/cqrs/handlers/get-faction.handler.js';
@@ -35,7 +34,6 @@ import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.
     DeleteFactionCommandHandler,
     DeleteFactionsByGameHandler,
     AddFactionGoldCommandHandler,
-    AddFactionXPCommandHandler,
     {
       provide: FACTION_REPOSITORY,
       useClass: MongoFactionRepository,

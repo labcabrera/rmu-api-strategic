@@ -11,7 +11,7 @@ import { type GameRepository, GAME_REPOSITORY } from '../ports/game-repository.p
  * - read: a public game, its owner, its players (users who own a character in it), an admin or another API
  *   (rmu-service). Factions, characters and items are read as their game. rmu-api-tactical reads the game and the
  *   characters of the other players (attack targets) with the token of the player;
- * - manage (the game, its factions and their gold and XP): the owner of the game or an admin;
+ * - manage (the game, its factions and their gold): the owner of the game or an admin;
  * - create: rmu-user or rmu-admin.
  * The service account token carries rmu-admin, so the calls of other APIs pass.
  */

@@ -1,6 +1,3 @@
 export class FactionManagement {
-  constructor(
-    public availableXP: number,
-    public availableGold: number,
-  ) {}
+  constructor(public availableGold: number) {}
 }

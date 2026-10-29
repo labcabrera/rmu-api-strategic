@@ -22,7 +22,7 @@ describe('items (e2e)', () => {
     await e2e.clear();
     const { game } = await gameWithFaction(e2e);
     gameId = game.id;
-    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Rich', management: { availableGold: 10, availableXP: 0 } })).id;
+    factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Rich', management: { availableGold: 10 } })).id;
     e2e.events.clear();
   });
 

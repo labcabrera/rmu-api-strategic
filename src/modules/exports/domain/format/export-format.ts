@@ -23,7 +23,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 6;
+export const CURRENT_FORMAT_VERSION = 7;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -220,7 +220,7 @@ export interface FactionExport {
   shortDescription: string | null;
   description: string | null;
   imageUrl: string | null;
-  management: { availableXP: number; availableGold: number };
+  management: { availableGold: number };
 }
 
 export interface FactionFileData {

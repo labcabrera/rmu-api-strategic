@@ -75,6 +75,19 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the superior materials and the conditional modifiers of the items',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 049: the factions have no XP pool any more; a character file has no faction to change
+    from: 6,
+    description: 'Removes the available XP of the faction',
+    up: (doc: ExportDocument): ExportDocument => {
+      type FactionDocument = { management?: Record<string, unknown> } & Record<string, unknown>;
+      const data = doc.data as { faction?: FactionDocument } & Record<string, unknown>;
+      if (!data?.faction?.management) return doc;
+      const management = { ...data.faction.management };
+      delete management.availableXP;
+      return { ...doc, data: { ...data, faction: { ...data.faction, management } } };
+    },
+  },
 ];
 
 export interface UpcastStep {

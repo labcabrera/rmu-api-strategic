@@ -71,15 +71,6 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
     this.apply(new FactionUpdatedEvent(this));
   }
 
-  addXp(amount: number) {
-    if (amount <= 0 && -amount > this.management.availableXP) {
-      throw new ValidationError('Can not remove more XP than available');
-    }
-    this.management.availableXP += amount;
-    this.updatedAt = new Date();
-    this.apply(new FactionUpdatedEvent(this));
-  }
-
   addGold(amount: number) {
     const newGold = Math.round((this.management.availableGold + amount) * 1e3) / 1e3;
     if (newGold < 0) {

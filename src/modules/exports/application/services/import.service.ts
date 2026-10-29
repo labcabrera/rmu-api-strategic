@@ -49,7 +49,7 @@ export interface ImportPreview {
   upgradedFrom?: number;
   steps: UpcastStep[];
   source: { gameName: string; factionName: string; realmName: string | null; exportedAt: string };
-  summary: { characters: number; items: number; gold: number; xp: number };
+  summary: { characters: number; items: number; gold: number };
   /** Characters of the file: the choice when a character is taken from a faction file. */
   characters: { ref: string; name: string; level: number; raceName: string }[];
   characterRef?: string;
@@ -194,7 +194,6 @@ export class ImportService {
         characters: selected.length,
         items: items.length,
         gold: round(factionGold + items.filter(item => item.itemTypeId === GOLD_COIN).reduce((sum, item) => sum + (item.amount ?? 0), 0)),
-        xp: destination.target === 'faction' && file.kind === 'faction' ? file.data.faction.management.availableXP : 0,
       },
       characters: all.map(({ entry }) => ({
         ref: entry.ref,
@@ -275,7 +274,7 @@ export class ImportService {
     return Faction.create({
       gameId: game.id,
       name: data?.name ?? file.source.factionName,
-      management: new FactionManagement(data?.management.availableXP ?? 0, data?.management.availableGold ?? 0),
+      management: new FactionManagement(data?.management.availableGold ?? 0),
       shortDescription: data?.shortDescription ?? undefined,
       description: data?.description ?? undefined,
       imageUrl: data?.imageUrl ?? undefined,
