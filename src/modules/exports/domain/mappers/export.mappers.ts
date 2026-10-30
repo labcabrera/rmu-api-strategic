@@ -184,7 +184,14 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
       .map(resistance => ({ resistance: resistance.resistance, customBonus: resistance.customBonus })),
     equipment: { slots },
     status: character.status,
-    injuries: plain(character.injuries || []),
+    // The explanation of a recovery (workspace spec 052) is not part of the format: the file keeps its numbers
+    injuries: plain(character.injuries || []).map(injury => {
+      if (!injury.recovery) return injury;
+      const recovery = { ...injury.recovery };
+      delete recovery.breakdown;
+      delete recovery.days;
+      return { ...injury, recovery };
+    }),
     conditions: plain(character.conditions || []),
     description: orNull(character.description),
     imageUrl: orNull(character.imageUrl),

@@ -125,6 +125,16 @@ describe('character health (e2e)', () => {
     expect(recovery.status).toBe(200);
     expect((recovery.body as CharacterBody).permanentCheckRequired).toBe(true);
     expect(injuryOf(recovery, injury.id).recovery).toMatchObject({ untreated: true });
+    // Workspace spec 052: the result explains its total and its days
+    const explained = injuryOf(recovery, injury.id).recovery as unknown as {
+      breakdown: { key: string; rule?: string; params?: Record<string, unknown> }[];
+      days: Record<string, unknown>;
+    };
+    expect(explained.breakdown.find(each => each.key === 'healing-type')).toMatchObject({
+      rule: 'Table 13-1a',
+      params: { healingType: 'healing-type-none', procedure: 'procedure-splint' },
+    });
+    expect(explained.days).toMatchObject({ column: 'injury-type-bone', severity: 'medium' });
   });
 
   it('an untreated light injury recovers, once per treatment, and ends permanent (D3/D10)', async () => {
