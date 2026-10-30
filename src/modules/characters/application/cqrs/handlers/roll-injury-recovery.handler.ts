@@ -37,6 +37,14 @@ export class RollInjuryRecoveryHandler implements ICommandHandler<RollInjuryReco
       character.traits.map(t => t.traitId),
     );
     const recovery = calculator.recovery(injury, command.roll, modifiers.total, multiplier, new Date().toISOString());
+    // Workspace spec 052: the result explains its total and its days
+    recovery.breakdown = modifiers.breakdown;
+    recovery.days = calculator.daysExplanation(
+      injury,
+      recovery.total,
+      character.recoveryMultiplier,
+      character.traits.map(t => t.traitId),
+    );
     const permanentCheckRequired = HealingCalculator.isPermanentCheckRequired(injury.severity, command.roll, recovery.untreated);
     character.setInjuryRecovery(injury.id, recovery, permanentCheckRequired);
     return { character: await this.store.save(character), permanentCheckRequired };

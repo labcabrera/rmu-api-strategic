@@ -25,6 +25,8 @@ import type {
   InjurySourceKind,
   InjuryStatus,
   InjuryType,
+  RollModifier,
+  RuleParams,
   TreatmentContext,
   TreatmentDifficultySource,
   TreatmentProcedure,
@@ -105,6 +107,10 @@ export class InjuryRecoveryDto {
   roll: number;
   @ApiProperty()
   modifiers: number;
+  @ApiPropertyOptional({ description: 'The modifiers entry by entry, with their rules (workspace spec 052)', type: [Object] })
+  breakdown?: RollModifier[];
+  @ApiPropertyOptional({ description: 'Where the days come from: table column and multipliers', type: Object })
+  days?: RuleParams;
   @ApiProperty()
   total: number;
   @ApiProperty()

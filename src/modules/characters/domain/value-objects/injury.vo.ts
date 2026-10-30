@@ -92,9 +92,25 @@ export interface InjuryTreatment {
   heatCritical?: string;
 }
 
+/** Inputs of an explanation (workspace spec 052): numbers and keys, shown with their labels. */
+export type RuleParams = Record<string, number | string | boolean>;
+
+/** An entry of a roll breakdown with its group, rule reference and inputs (the contract of the tactical API). */
+export interface RollModifier {
+  key: string;
+  value: number;
+  group?: 'skill' | 'situation' | 'penalty' | 'target';
+  rule?: string;
+  params?: RuleParams;
+}
+
 export interface InjuryRecovery {
   roll: number;
   modifiers: number;
+  /** The modifiers entry by entry, with their rules (workspace spec 052). */
+  breakdown?: RollModifier[];
+  /** Where the days come from: the table row and column, and each multiplier (workspace spec 052). */
+  days?: RuleParams;
   total: number;
   /** Column by injury type, times severity (and head) */
   baseDays: number;

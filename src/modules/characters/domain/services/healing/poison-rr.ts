@@ -11,6 +11,10 @@ export interface PoisonRrRules {
 export interface PoisonRrModifier {
   key: string;
   value: number;
+  /** Workspace spec 052: the breakdown group, rule reference and inputs of the entry. */
+  group?: 'skill' | 'target' | 'situation';
+  rule?: string;
+  params?: Record<string, number | string | boolean>;
 }
 
 export interface PoisonRrResult {
@@ -56,9 +60,17 @@ export class PoisonRr {
     }
     const breakdown: PoisonRrModifier[] = [
       { key: 'roll', value: roll },
-      { key: 'poison-rr', value: bonus },
-      { key: 'attack-level', value: rules.attackLevelMultiplier * level },
-      ...modifiers.filter(modifier => modifier.value).map(modifier => ({ ...modifier })),
+      { key: 'poison-rr', value: bonus, group: 'skill', rule: '§15.6' },
+      {
+        key: 'attack-level',
+        value: rules.attackLevelMultiplier * level,
+        group: 'target',
+        rule: 'Table 5-6',
+        params: { level, multiplier: rules.attackLevelMultiplier },
+      },
+      ...modifiers
+        .filter(modifier => modifier.value)
+        .map(modifier => ({ key: modifier.key, value: modifier.value, group: 'situation' as const })),
     ];
     const total = breakdown.reduce((sum, modifier) => sum + modifier.value, 0);
     const failure = Math.max(0, rules.requiredTotal - total);

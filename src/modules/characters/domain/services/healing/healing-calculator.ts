@@ -7,6 +7,8 @@ import {
   type InjuryRecovery,
   type InjurySeverity,
   type InjuryTreatment,
+  type RollModifier,
+  type RuleParams,
   type TreatmentProcedure,
   type TreatmentResult,
 } from '../../value-objects/injury.vo.js';
@@ -24,7 +26,12 @@ export interface RecoveryModifiers extends RecoveryPatient {
   /** Injury penalty magnitude, subtracted from the roll */
   penalty: number;
   total: number;
+  /** The same total entry by entry, with the rules (workspace spec 052). */
+  breakdown: RollModifier[];
 }
+
+/** Rule references of the healing rolls (Core Law). */
+export const HEALING_RULES = { recovery: '§13.1', table: 'Table 13-1a', poison: '§15.6' } as const;
 
 export interface PermanentInjuryResult {
   total: number;
@@ -97,8 +104,19 @@ export class HealingCalculator {
 
   /** Recovery roll modifiers: Body Development ranks + Co bonus + type of healing - |penalty|. */
   recoveryModifiers(patient: RecoveryPatient, injury: Injury): RecoveryModifiers {
-    const { healingType, modifier } = this.healingTypeModifier(HealingCalculator.latestTreatment(injury));
+    const latest = HealingCalculator.latestTreatment(injury);
+    const { healingType, modifier } = this.healingTypeModifier(latest);
     const penalty = Math.abs(injury.penalty || 0);
+    // Workspace spec 052: the treatment, and the partial success of its medical roll, are explained apart
+    const partial = latest?.result === 'partial-success' ? latest.recoveryModifier || 0 : 0;
+    const treatmentParams: RuleParams = latest ? { healingType, procedure: latest.procedure } : { healingType };
+    const breakdown: RollModifier[] = [
+      { key: 'body-development-ranks', value: patient.bodyDevelopmentRanks, group: 'skill', rule: HEALING_RULES.recovery },
+      { key: 'constitution-bonus', value: patient.constitutionBonus, group: 'skill', rule: HEALING_RULES.recovery },
+      { key: 'healing-type', value: modifier - partial, group: 'situation', rule: HEALING_RULES.table, params: treatmentParams },
+      ...(partial ? [{ key: 'partial-success', value: partial, group: 'situation' as const, rule: HEALING_RULES.recovery }] : []),
+      { key: 'injury-penalty', value: -penalty, group: 'penalty', rule: HEALING_RULES.recovery },
+    ];
     return {
       bodyDevelopmentRanks: patient.bodyDevelopmentRanks,
       constitutionBonus: patient.constitutionBonus,
@@ -106,6 +124,7 @@ export class HealingCalculator {
       healingTypeModifier: modifier,
       penalty,
       total: patient.bodyDevelopmentRanks + patient.constitutionBonus + modifier - penalty,
+      breakdown,
     };
   }
 
@@ -120,6 +139,30 @@ export class HealingCalculator {
     const severity = this.tables.severityMultipliers[injury.severity] ?? 1;
     const head = injury.location === 'head' ? this.tables.headMultiplier : 1;
     return days * severity * head;
+  }
+
+  /**
+   * Where the days of a recovery come from (workspace spec 052): the row of the total and the column of the injury
+   * type, the severity and head multipliers, and the race and talent ones (each talent by its id).
+   */
+  daysExplanation(
+    injury: Pick<Injury, 'type' | 'severity' | 'location'>,
+    total: number,
+    raceMultiplier: number | undefined,
+    traitIds: string[],
+  ): RuleParams {
+    const row = this.tables.recoveryDays.find(r => inBand(total, r.min, r.max));
+    const talents = this.tables.talentMultipliers || {};
+    const params: RuleParams = {
+      column: injury.type,
+      ...(row && injury.type !== 'unknown' ? { days: row.days[injury.type] } : {}),
+      severity: injury.severity,
+      severityMultiplier: this.tables.severityMultipliers[injury.severity] ?? 1,
+      ...(injury.location === 'head' ? { headMultiplier: this.tables.headMultiplier } : {}),
+      raceMultiplier: raceMultiplier && raceMultiplier > 0 ? raceMultiplier : 1,
+    };
+    [...new Set(traitIds)].filter(id => talents[id] !== undefined).forEach(id => (params[id] = talents[id]));
+    return params;
   }
 
   /** Race recovery multiplier times the talent and flaw multipliers (Fast Healer, Slow Healer). */

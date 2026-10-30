@@ -56,6 +56,10 @@ describe('PoisonRr (workspace spec 042, decision 8)', () => {
     const result = PoisonRr.resolve(20, 10, 5, [{ key: 'half-dose', value: 5 }], RULES);
     expect(result).toMatchObject({ total: 25, required: 50, resisted: false, failure: 25, severity: 'moderate' });
     expect(result.breakdown.map(each => each.key)).toEqual(['roll', 'poison-rr', 'attack-level', 'half-dose']);
+    // Workspace spec 052: the entries carry their group and rule
+    expect(result.breakdown[1]).toMatchObject({ group: 'skill', rule: '§15.6' });
+    expect(result.breakdown[2]).toMatchObject({ group: 'target', rule: 'Table 5-6', params: { level: 5 } });
+    expect(result.breakdown[3]).toMatchObject({ key: 'half-dose', group: 'situation' });
     expect(PoisonRr.resolve(70, 0, 5, [], RULES)).toMatchObject({ resisted: true, failure: 0 });
     expect(PoisonRr.resolve(70, 0, 5, [], RULES).severity).toBeUndefined();
   });

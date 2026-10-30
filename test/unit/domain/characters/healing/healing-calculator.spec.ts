@@ -54,7 +54,7 @@ describe('HealingCalculator', () => {
       penalty: -20,
       treatments: [treatment({ id: 't1', healingType: 'none', result: 'failure' }), treatment({ id: 't2', healingType: 'magic-or-herbs' })],
     });
-    expect(calculator.recoveryModifiers({ bodyDevelopmentRanks: 10, constitutionBonus: 6 }, treated)).toEqual({
+    expect(calculator.recoveryModifiers({ bodyDevelopmentRanks: 10, constitutionBonus: 6 }, treated)).toMatchObject({
       bodyDevelopmentRanks: 10,
       constitutionBonus: 6,
       healingType: 'magic-or-herbs',
@@ -63,6 +63,39 @@ describe('HealingCalculator', () => {
       total: 10 + 6 + 40 - 20,
     });
     expect(calculator.recoveryModifiers({ bodyDevelopmentRanks: 0, constitutionBonus: 0 }, injury()).total).toBe(-90 - 10);
+  });
+
+  it('spec 052: breaks the total down with its rules, the partial success apart from the type of healing', () => {
+    const treated = injury({
+      penalty: -20,
+      treatments: [treatment({ healingType: 'medicine', result: 'partial-success', recoveryModifier: -25, procedure: 'splint' })],
+    });
+    const { breakdown, total } = calculator.recoveryModifiers({ bodyDevelopmentRanks: 10, constitutionBonus: 6 }, treated);
+    expect(breakdown.map(({ key, value }) => [key, value])).toEqual([
+      ['body-development-ranks', 10],
+      ['constitution-bonus', 6],
+      ['healing-type', 0],
+      ['partial-success', -25],
+      ['injury-penalty', -20],
+    ]);
+    expect(breakdown.reduce((sum, modifier) => sum + modifier.value, 0)).toBe(total);
+    expect(breakdown[2]).toMatchObject({ rule: 'Table 13-1a', params: { healingType: 'medicine', procedure: 'splint' } });
+  });
+
+  it('spec 052: explains the days with the row, the column and every multiplier', () => {
+    const days = calculator.daysExplanation(injury({ type: 'bone', severity: 'severe', location: 'head' }), 50, 0.5, [
+      'fast-healer',
+      'prodigy',
+    ]);
+    expect(days).toEqual({
+      column: 'bone',
+      days: 10,
+      severity: 'severe',
+      severityMultiplier: expect.any(Number) as number,
+      headMultiplier: expect.any(Number) as number,
+      raceMultiplier: 0.5,
+      'fast-healer': expect.any(Number) as number,
+    });
   });
 
   describe('recovery days', () => {
