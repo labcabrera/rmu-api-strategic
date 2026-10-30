@@ -109,7 +109,11 @@ export class HealingCalculator {
     const penalty = Math.abs(injury.penalty || 0);
     // Workspace spec 052: the treatment, and the partial success of its medical roll, are explained apart
     const partial = latest?.result === 'partial-success' ? latest.recoveryModifier || 0 : 0;
-    const treatmentParams: RuleParams = latest ? { healingType, procedure: latest.procedure } : { healingType };
+    // Params carry the translation keys of their values, as the MFE labels them
+    const treatmentParams: RuleParams = {
+      healingType: `healing-type-${healingType}`,
+      ...(latest ? { procedure: `procedure-${latest.procedure}` } : {}),
+    };
     const breakdown: RollModifier[] = [
       { key: 'body-development-ranks', value: patient.bodyDevelopmentRanks, group: 'skill', rule: HEALING_RULES.recovery },
       { key: 'constitution-bonus', value: patient.constitutionBonus, group: 'skill', rule: HEALING_RULES.recovery },
@@ -154,7 +158,7 @@ export class HealingCalculator {
     const row = this.tables.recoveryDays.find(r => inBand(total, r.min, r.max));
     const talents = this.tables.talentMultipliers || {};
     const params: RuleParams = {
-      column: injury.type,
+      column: `injury-type-${injury.type}`,
       ...(row && injury.type !== 'unknown' ? { days: row.days[injury.type] } : {}),
       severity: injury.severity,
       severityMultiplier: this.tables.severityMultipliers[injury.severity] ?? 1,

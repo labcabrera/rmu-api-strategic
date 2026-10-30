@@ -79,7 +79,10 @@ describe('HealingCalculator', () => {
       ['injury-penalty', -20],
     ]);
     expect(breakdown.reduce((sum, modifier) => sum + modifier.value, 0)).toBe(total);
-    expect(breakdown[2]).toMatchObject({ rule: 'Table 13-1a', params: { healingType: 'medicine', procedure: 'splint' } });
+    expect(breakdown[2]).toMatchObject({
+      rule: 'Table 13-1a',
+      params: { healingType: 'healing-type-medicine', procedure: 'procedure-splint' },
+    });
   });
 
   it('spec 052: explains the days with the row, the column and every multiplier', () => {
@@ -88,7 +91,7 @@ describe('HealingCalculator', () => {
       'prodigy',
     ]);
     expect(days).toEqual({
-      column: 'bone',
+      column: 'injury-type-bone',
       days: 10,
       severity: 'severe',
       severityMultiplier: expect.any(Number) as number,

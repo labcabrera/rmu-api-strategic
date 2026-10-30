@@ -132,9 +132,9 @@ describe('character health (e2e)', () => {
     };
     expect(explained.breakdown.find(each => each.key === 'healing-type')).toMatchObject({
       rule: 'Table 13-1a',
-      params: { healingType: 'none', procedure: 'splint' },
+      params: { healingType: 'healing-type-none', procedure: 'procedure-splint' },
     });
-    expect(explained.days).toMatchObject({ column: 'bone', severity: 'medium' });
+    expect(explained.days).toMatchObject({ column: 'injury-type-bone', severity: 'medium' });
   });
 
   it('an untreated light injury recovers, once per treatment, and ends permanent (D3/D10)', async () => {
