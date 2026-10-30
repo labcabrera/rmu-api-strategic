@@ -268,6 +268,7 @@ export function factionToExport(faction: Faction): FactionExport {
     description: orNull(faction.description),
     imageUrl: orNull(faction.imageUrl),
     management: { availableGold: faction.management?.availableGold ?? 0 },
+    npcs: faction.npcs.map(npc => ({ npcId: npc.npcId, name: npc.name, count: npc.count, notes: npc.notes })),
   };
 }
 

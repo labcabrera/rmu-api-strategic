@@ -8,6 +8,7 @@ import {
 import type { TokenService } from '../../../src/modules/shared/infrastructure/security/token.service.js';
 import { ApiItemClientAdapter } from '../../../src/modules/items/infrastructure/api-clients/api.item-client.adapter.js';
 import { ApiProfessionClientAdapter } from '../../../src/modules/characters/infrastructure/api-clients/api.profession-client.adapter.js';
+import { ApiNpcClientAdapter } from '../../../src/modules/factions/infrastructure/api-clients/api.npc-client.adapter.js';
 import { ApiSpellListClientAdapter } from '../../../src/modules/characters/infrastructure/api-clients/api.spell-list-client.adapter.js';
 
 const tokens = { getToken: () => Promise.resolve('t0k') } as unknown as TokenService;
@@ -75,5 +76,25 @@ describe('ApiSpellListClientAdapter (spec 029)', () => {
     const error = new BadGatewayError('spells is not available (ECONNREFUSED)');
     const adapter = new ApiSpellListClientAdapter(tokens, config, clientFailing(error));
     await expect(adapter.getSpellListByCode('fire-law')).rejects.toBe(error);
+  });
+});
+
+describe('ApiNpcClientAdapter (workspace spec 055)', () => {
+  it('reads an NPC with the service token, encoding the id', async () => {
+    const get = vi.fn().mockResolvedValue({ id: 'a b' });
+    const adapter = new ApiNpcClientAdapter(tokens, config, { get } as unknown as HttpClient);
+    await expect(adapter.getNpcById('a b')).resolves.toEqual({ id: 'a b' });
+    expect(get).toHaveBeenCalledWith('http://core/v1/npcs/a%20b', { token: 't0k' });
+  });
+
+  it('answers undefined for an NPC rmu-api-npcs does not have', async () => {
+    const adapter = new ApiNpcClientAdapter(tokens, config, clientFailing(new UpstreamBadGatewayError('npcs answered 404', 404)));
+    await expect(adapter.getNpcById('nobody')).resolves.toBeUndefined();
+  });
+
+  it('lets the other failures through', async () => {
+    const error = new BadGatewayError('npcs is not available (ECONNREFUSED)');
+    const adapter = new ApiNpcClientAdapter(tokens, config, clientFailing(error));
+    await expect(adapter.getNpcById('wolf')).rejects.toBe(error);
   });
 });

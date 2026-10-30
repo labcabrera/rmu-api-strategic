@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events.js';
 import { FactionManagement } from '../value-objects/faction-management.vo.js';
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
+import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, type FactionNpc, MAX_FACTION_NPCS } from '../value-objects/faction-npc.vo.js';
 import type { CreateFactionProps, FactionProps, UpdateFactionProps } from './faction-props.js';
 import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
 
@@ -17,6 +18,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
     public description: string | undefined,
     public imageUrl: string | undefined,
     public owner: string,
+    public npcs: FactionNpc[],
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
   ) {
@@ -33,6 +35,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       props.description,
       props.imageUrl,
       props.owner,
+      Faction.checkNpcs(props.npcs ?? []),
       new Date(),
       undefined,
     );
@@ -51,6 +54,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       props.description,
       props.imageUrl,
       props.owner,
+      props.npcs ?? [],
       props.createdAt,
       props.updatedAt,
     );
@@ -59,7 +63,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
   }
 
   update(props: UpdateFactionProps) {
-    const { name, shortDescription, description, imageUrl } = props;
+    const { name, shortDescription, description, imageUrl, npcs } = props;
     if (name && name.trim() === '') {
       throw new ValidationError('Name can not be empty');
     }
@@ -67,6 +71,8 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
     if (shortDescription) this.shortDescription = shortDescription;
     if (description) this.description = description;
     if (imageUrl) this.imageUrl = imageUrl;
+    // Spec 055: the whole list, already resolved (ids and names) by the handler
+    if (npcs) this.npcs = Faction.checkNpcs(npcs);
     this.updatedAt = new Date();
     this.apply(new FactionUpdatedEvent(this));
   }
@@ -81,6 +87,21 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
     this.apply(new FactionUpdatedEvent(this));
   }
 
+  /** Spec 055: between 1 and 50 specimens per entry, a name and no repeated entry id. Returns copies. */
+  static checkNpcs(npcs: FactionNpc[]): FactionNpc[] {
+    if (npcs.length > MAX_FACTION_NPCS) throw new ValidationError(`A faction has at most ${MAX_FACTION_NPCS} NPC entries`);
+    const ids = new Set<string>();
+    return npcs.map(npc => {
+      if (!Number.isInteger(npc.count) || npc.count < FACTION_NPC_MIN_COUNT || npc.count > FACTION_NPC_MAX_COUNT) {
+        throw new ValidationError(`The count of NPC ${npc.npcId} must be between ${FACTION_NPC_MIN_COUNT} and ${FACTION_NPC_MAX_COUNT}`);
+      }
+      if (!npc.name || npc.name.trim() === '') throw new ValidationError(`NPC entry ${npc.id} has no name`);
+      if (ids.has(npc.id)) throw new ValidationError(`NPC entry ${npc.id} is repeated`);
+      ids.add(npc.id);
+      return { id: npc.id, npcId: npc.npcId, name: npc.name, count: npc.count, notes: npc.notes ?? null };
+    });
+  }
+
   getProps(): FactionProps {
     return {
       id: this.id,
@@ -91,6 +112,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,
+      npcs: this.npcs.map(npc => ({ ...npc })),
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       ...(this.importId ? { importId: this.importId } : {}),

@@ -19,6 +19,7 @@ describe('rmu-api-strategic (e2e)', () => {
       RMU_API_CORE_URI: 'http://localhost:1/v1',
       RMU_API_ITEMS_URI: 'http://localhost:1/v1',
       RMU_API_SPELLS_URI: 'http://localhost:1/v1',
+      RMU_API_NPCS_URI: 'http://localhost:1/v1',
       RMU_IAM_JWK_URI: 'http://localhost:1/certs',
       RMU_IAM_ISSUER_URI: 'http://localhost/sso/realms/rmu',
       RMU_IAM_AUDIENCE: 'rmu-api',

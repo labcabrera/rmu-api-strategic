@@ -60,6 +60,6 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
       useClass: GameGuardAdapter,
     },
   ],
-  exports: [GAME_REPOSITORY, GameAccess],
+  exports: [GAME_REPOSITORY, GameAccess, REALM_CLIENT],
 })
 export class GamesModule {}

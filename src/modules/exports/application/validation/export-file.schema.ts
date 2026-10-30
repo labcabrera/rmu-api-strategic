@@ -16,6 +16,7 @@ import {
   TREATMENT_RESULTS,
 } from '../../../characters/domain/value-objects/injury.vo.js';
 import { ITEM_MODIFIER_TARGETS, ITEM_MODIFIER_TYPES } from '../../../items/domain/value-objects/item-modifier.vo.js';
+import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
 
 /**
@@ -377,6 +378,18 @@ const faction = Joi.object({
   description: nullable(text()).required(),
   imageUrl: nullable(Joi.string().max(2000)).required(),
   management: Joi.object({ availableGold: num().min(0).required() }).required(),
+  // Workspace spec 055 (format 8)
+  npcs: Joi.array()
+    .items(
+      Joi.object({
+        npcId: id().required(),
+        name: name().required(),
+        count: Joi.number().integer().min(FACTION_NPC_MIN_COUNT).max(FACTION_NPC_MAX_COUNT).required(),
+        notes: nullable(text()).required(),
+      }),
+    )
+    .max(MAX_FACTION_NPCS)
+    .required(),
 });
 
 export const exportFileSchema = Joi.object({
