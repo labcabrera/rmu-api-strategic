@@ -93,7 +93,7 @@ describe('HealingCalculator', () => {
     expect(days).toEqual({
       column: 'injury-type-bone',
       days: 10,
-      severity: 'severe',
+      severity: 'injury-severity-severe',
       severityMultiplier: expect.any(Number) as number,
       headMultiplier: expect.any(Number) as number,
       raceMultiplier: 0.5,

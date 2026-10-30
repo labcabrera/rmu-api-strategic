@@ -160,7 +160,7 @@ export class HealingCalculator {
     const params: RuleParams = {
       column: `injury-type-${injury.type}`,
       ...(row && injury.type !== 'unknown' ? { days: row.days[injury.type] } : {}),
-      severity: injury.severity,
+      severity: `injury-severity-${injury.severity}`,
       severityMultiplier: this.tables.severityMultipliers[injury.severity] ?? 1,
       ...(injury.location === 'head' ? { headMultiplier: this.tables.headMultiplier } : {}),
       raceMultiplier: raceMultiplier && raceMultiplier > 0 ? raceMultiplier : 1,
