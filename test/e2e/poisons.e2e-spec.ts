@@ -146,4 +146,47 @@ describe('poisons (e2e)', () => {
 
     expect((await outcome('tactical-003', { spent: true })).status).toBe(400);
   });
+
+  // Spec 056, B-02: the whole case, with the coating read the way tactical reads it when its game starts
+  it('keeps a coating applied after an old game started when that game ends, and removes the one a game spent', async () => {
+    const sword = await buy('sword');
+    const venom = await buy('e2e-venom', 2);
+    expect((await as('owner').post(`/v1/items/${sword.id}/coating`, { poisonItemId: venom.id })).status).toBe(201);
+    // The old game starts: tactical loads the items of the character, coating included (api.item.adapter.ts)
+    const started = await as('service').get(`/v1/items?q=characterId==${characterId}&page=0&size=1000`);
+    expect(started.status, JSON.stringify(started.body)).toBe(200);
+    const oldAt = (started.body.content as Body[]).find(item => item.id === sword.id)?.coating?.appliedAt as string;
+    expect(oldAt).toEqual(expect.any(String));
+
+    // While the old game is still open, the weapon gets a new coating
+    await new Promise(resolve => setTimeout(resolve, 5));
+    const recoated = await as('owner').post(`/v1/items/${sword.id}/coating`, { poisonItemId: venom.id });
+    expect(recoated.status, JSON.stringify(recoated.body)).toBe(201);
+    const newAt = recoated.body.item.coating.appliedAt as string;
+    expect(newAt).not.toBe(oldAt);
+
+    const hp = ((await as('owner').get(base())).body as Body).hp.current as number;
+    const outcome = (tacticalGameId: string, appliedAt: string) =>
+      request(e2e.server)
+        .post(`${base()}/tactical-outcomes`)
+        .set('Authorization', e2e.auth('service'))
+        .send({
+          tacticalGameId,
+          actorId: 'actor-001',
+          characterId,
+          name: 'Taster',
+          hp: { start: hp, end: hp, delta: 0 },
+          injuries: [],
+          items: [{ itemId: sword.id, modifiers: [], coatingSpent: { appliedAt } }],
+        });
+
+    // The old game ends, carrying the appliedAt of the coating it spent: the new coating stays
+    expect((await outcome('tactical-old', oldAt)).status).toBe(200);
+    const kept = ((await as('owner').get(`/v1/items/${sword.id}`)).body as Body).coating;
+    expect(kept).toMatchObject({ appliedAt: newAt, itemTypeId: 'e2e-venom', hoursLeft: 168 });
+
+    // A game that spent the new coating removes it
+    expect((await outcome('tactical-new', newAt)).status).toBe(200);
+    expect(((await as('owner').get(`/v1/items/${sword.id}`)).body as Body).coating).toBeNull();
+  });
 });
