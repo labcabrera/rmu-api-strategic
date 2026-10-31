@@ -5,10 +5,12 @@ import { NotFoundError, ValidationError } from '../../../../shared/domain/errors
 import { Character } from '../../../domain/aggregates/character.js';
 import { HealingCalculator } from '../../../domain/services/healing/healing-calculator.js';
 import { InjuryTreatmentRules } from '../../../domain/services/healing/injury-treatment-rules.js';
-import type { InjuryHealer, InjuryTreatment, TreatmentResult } from '../../../domain/value-objects/injury.vo.js';
+import type { InjuryHealer, InjuryTreatment, TreatmentHerb, TreatmentResult } from '../../../domain/value-objects/injury.vo.js';
 import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../../ports/healing-tables-client.port.js';
 import { type AbsoluteManeuverResponse, type ManeuverClientPort, MANEUVER_CLIENT } from '../../ports/maneuver-client.port.js';
 import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { type HeldHerb, HerbInventory } from '../../services/herb-inventory.service.js';
+import { HerbRules } from '../../../domain/services/healing/herb-rules.js';
 import { TreatInjuryCommand } from '../commands/treat-injury.command.js';
 
 export const MEDICAL_MANEUVER_TABLE = 'medical';
@@ -36,6 +38,7 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     private readonly store: CharacterHealthStore,
     @Inject(HEALING_TABLES_CLIENT) private readonly healingTablesClient: HealingTablesClientPort,
     @Inject(MANEUVER_CLIENT) private readonly maneuverClient: ManeuverClientPort,
+    private readonly herbs: HerbInventory,
   ) {}
 
   /**
@@ -60,6 +63,11 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     const difficulty = override ? command.difficulty : computed.difficulty;
     const { healer, herbalismBonus } = await this.resolveHealer(character, command);
     const herbalismSuccess = await this.rollHerbalism(character, command, herbalismBonus);
+    // Workspace spec 062: a herb of the inventory adds to the Medicine and recovery rolls
+    const held: HeldHerb | undefined = command.herbItemId
+      ? await this.herbs.load(command.herbItemId, character, { sameGame: true })
+      : undefined;
+    const herbBonus = held ? HerbRules.treatment(held.herb, injury.type, command.procedure) : undefined;
 
     let total = command.roll ?? 0;
     let result: TreatmentResult = 'success';
@@ -69,7 +77,13 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       if (command.roll === undefined || command.roll === null) {
         throw new ValidationError('The treatment requires a Medicine roll', 'err-treatment-roll-required');
       }
-      total = command.roll + healer.bonus + (healer.penalty ?? 0) + difficulty + (herbalismSuccess ? tables.herbalismBonus : 0);
+      total =
+        command.roll +
+        healer.bonus +
+        (healer.penalty ?? 0) +
+        difficulty +
+        (herbalismSuccess ? tables.herbalismBonus : 0) +
+        (herbBonus?.medicineBonus ?? 0);
       maneuver = await this.maneuverClient.absolute(total, MEDICAL_MANEUVER_TABLE);
       result = maneuver.result;
     }
@@ -86,14 +100,28 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       roll: command.roll ?? 0,
       total,
       result,
-      healingType: command.healingType ?? HealingCalculator.healingType(command.procedure, result, herbalismSuccess),
+      healingType: command.healingType ?? HealingCalculator.healingType(command.procedure, result, herbalismSuccess || !!herbBonus?.treats),
       recoveryModifier,
       at: new Date().toISOString(),
       context: 'strategic',
       ...(heatCritical ? { heatCritical } : {}),
+      ...(held && herbBonus ? { herb: TreatInjuryHandler.herbOf(held, herbBonus) } : {}),
     };
     character.addInjuryTreatment(injury.id, treatment, tables, Math.abs(worsening));
-    return this.store.save(character);
+    const saved = await this.store.save(character);
+    if (held) await this.herbs.spendDose(held, `herb-treatment:${injury.id}`, command.userId);
+    return saved;
+  }
+
+  private static herbOf(held: HeldHerb, bonus: { medicineBonus: number; recoveryBonus: number }): TreatmentHerb {
+    return {
+      itemId: held.item.id,
+      itemTypeId: held.item.itemTypeId,
+      name: held.item.name,
+      magical: held.herb.magical !== false,
+      medicineBonus: bonus.medicineBonus,
+      recoveryBonus: bonus.recoveryBonus,
+    };
   }
 
   private effectValue(maneuver: AbsoluteManeuverResponse | undefined, status: string): number | undefined {

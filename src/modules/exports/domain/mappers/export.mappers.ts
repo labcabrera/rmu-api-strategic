@@ -248,6 +248,10 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
     unrepairable: !!item.unrepairable,
     ...(item.coating ? { coating: plain(item.coating) } : {}),
     ...(item.material ? { material: plain(item.material) } : {}),
+    ...(item.size ? { size: item.size } : {}),
+    ...(item.carats !== null && item.carats !== undefined ? { carats: item.carats } : {}),
+    ...(item.jewelryClass ? { jewelryClass: item.jewelryClass } : {}),
+    ...(item.cutFactor !== null && item.cutFactor !== undefined ? { cutFactor: item.cutFactor } : {}),
     // Temporary modifiers live only in tactical games
     modifiers: (item.modifiers || []).filter(modifier => !modifier.temporary).map(modifier => modifierToExport(modifier, refs, crafterOf)),
   };

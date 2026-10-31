@@ -9,6 +9,7 @@ import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-ho
 import type { ItemMaterial } from '../../domain/value-objects/item-material.vo.js';
 import type { ItemModifier, ItemModifierTarget } from '../../domain/value-objects/item-modifier.vo.js';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
+import { type ItemInstanceSpec, type ItemSize, ItemUnitValue, type UnitValueType } from '../../domain/services/item-unit-value.js';
 import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../ports/item-client.port.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port.js';
 
@@ -30,6 +31,11 @@ export interface NewItemOptions {
   /** Workspace spec 043: factor of the weight (an Elven steel or lightened armor). */
   weightMultiplier?: number;
   owner: string;
+  /**
+   * Workspace spec 062: size, carats, cut, class and base value of a jewel. When `value` is missing the unit value is
+   * computed from them (ItemUnitValue); the size also scales the weight and the length.
+   */
+  instance?: ItemInstanceSpec;
 }
 
 /**
@@ -51,11 +57,46 @@ export class ItemFactory {
     return itemType;
   }
 
+  /** The catalog data of the unit value of a type (workspace spec 062). */
+  static valueType(itemType: ItemResponse): UnitValueType {
+    return {
+      category: itemType.category,
+      cost: itemType.info.cost ?? null,
+      features: itemType.features ?? null,
+      baseSize: itemType.weapon?.wielderSize ?? null,
+    };
+  }
+
+  /**
+   * The instance fields of a new item (workspace spec 062): a weapon takes `wielderSize` as its size and the other way
+   * round (both must agree), and a jewel without a base value rolls it in the range of its type.
+   */
+  static instanceSpec(
+    itemType: ItemResponse,
+    options: Pick<NewItemOptions, 'instance' | 'wielderSize'>,
+    random: () => number = Math.random,
+  ): ItemInstanceSpec {
+    const requested = options.instance ?? {};
+    const wielderSize = options.wielderSize || null;
+    if (wielderSize && requested.size && wielderSize !== requested.size) {
+      throw new ValidationError('The size and the wielder size of a weapon must be the same', 'err-item-invalid-size');
+    }
+    const size = requested.size ?? (itemType.weapon ? (wielderSize as ItemSize | null) : null);
+    return ItemUnitValue.resolve(ItemFactory.valueType(itemType), { ...requested, size }, random);
+  }
+
   build(itemType: ItemResponse, options: NewItemOptions): Item {
     const stackable = itemType.info.stackable || false;
     if (!stackable && options.amount && options.amount !== 1) {
       throw new ValidationError(`${itemType.id} is not stackable`, 'err-item-not-stackable');
     }
+    const instance = ItemFactory.instanceSpec(itemType, options);
+    const steps = ItemUnitValue.steps(instance.size, itemType.weapon?.wielderSize);
+    const enc = !!(options.character && itemType.armor && itemType.armor.enc);
+    // Armor weighs a percent of its wearer, which already has its size
+    const weight = enc
+      ? this.weight(itemType, options.character)
+      : ItemUnitValue.scaleWeight(this.weight(itemType, options.character), steps);
     const props: Omit<ItemProps, 'id' | 'createdAt' | 'updatedAt'> = {
       gameId: options.gameId,
       ...ItemHolders.ids(options.holder),
@@ -63,14 +104,14 @@ export class ItemFactory {
       name: options.name || itemType.name || itemType.id,
       category: itemType.category,
       carried: options.carried ?? false,
-      weapon: this.weapon(itemType, options.wielderSize),
+      weapon: this.weapon(itemType, itemType.weapon ? (instance.size ?? options.wielderSize) : options.wielderSize),
       armor: itemType.armor,
       shield: itemType.shield,
       modifiers: [...this.catalogModifiers(itemType), ...(options.modifiers ?? [])],
       amount: stackable ? (options.amount ?? 1) : null,
       info: {
-        length: itemType.info.length,
-        weight: Math.round(this.weight(itemType, options.character) * (options.weightMultiplier ?? 1) * 100) / 100,
+        length: ItemUnitValue.scaleLength(itemType.info.length, steps),
+        weight: Math.round(weight * (options.weightMultiplier ?? 1) * 100) / 100,
         strength: itemType.info.strength,
         stackable,
       },
@@ -83,11 +124,15 @@ export class ItemFactory {
         ...(itemType.info.lotSize ? { lotSize: itemType.info.lotSize } : {}),
         ...(itemType.features ? { features: itemType.features } : {}),
       },
-      value: options.value ?? itemType.info.cost?.average ?? null,
+      value: options.value ?? ItemUnitValue.unitValue(ItemFactory.valueType(itemType), instance),
       acquiredPrice: options.acquiredPrice ?? null,
       accessType: 'public', //TODO
       owner: options.owner,
       ...(options.material ? { material: options.material } : {}),
+      ...(instance.size ? { size: instance.size } : {}),
+      ...(instance.carats !== undefined && instance.carats !== null ? { carats: instance.carats } : {}),
+      ...(instance.jewelryClass ? { jewelryClass: instance.jewelryClass } : {}),
+      ...(instance.cutFactor !== undefined && instance.cutFactor !== null ? { cutFactor: instance.cutFactor } : {}),
     };
     return Item.create(props);
   }
@@ -99,7 +144,7 @@ export class ItemFactory {
   async store(item: Item): Promise<{ item: Item; merged: boolean }> {
     if (item.info.stackable && item.modifiers.length === 0) {
       const stack = await this.itemRepository.findStack(item.holder, item.itemTypeId);
-      if (stack && stack.modifiers.length === 0) {
+      if (stack && stack.modifiers.length === 0 && ItemFactory.sameInstance(stack, item)) {
         stack.addAmount(item.units);
         const updated = await this.itemRepository.update(stack);
         await this.events.publishChanges('item', stack);
@@ -109,6 +154,17 @@ export class ItemFactory {
     const saved = await this.itemRepository.save(item);
     await this.events.publishChanges('item', item);
     return { item: saved, merged: false };
+  }
+
+  /** Workspace spec 062: units of other size, carats, cut, class or value are not the same stack. */
+  static sameInstance(a: Item, b: Item): boolean {
+    return (
+      (a.size ?? null) === (b.size ?? null) &&
+      (a.carats ?? null) === (b.carats ?? null) &&
+      (a.cutFactor ?? null) === (b.cutFactor ?? null) &&
+      (a.jewelryClass ?? null) === (b.jewelryClass ?? null) &&
+      ((a.size === null && a.carats === null && a.jewelryClass === null) || a.value === b.value)
+    );
   }
 
   /** Undoes store(): the stack loses the units again, or the new item is deleted. */

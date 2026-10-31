@@ -13,6 +13,9 @@ export class SellItemCommand extends AuthenticatedCommand {
       /** Market conditions of the expected price (workspace spec 048) */
       factors?: PriceFactorSelection[];
       trading?: TradingRequest;
+      /** Workspace spec 062: a jeweler buys the gem or jewel for its value less the commission. */
+      jeweler?: boolean;
+      jewelerPercent?: number;
     },
     userId: string,
     roles: string[],

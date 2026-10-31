@@ -7,7 +7,7 @@ import { DEFAULT_ECONOMY_RULES, type EconomyRules } from '../../domain/services/
 export class EconomyRulesProvider {
   constructor(private readonly configService: ConfigService) {}
 
-  rules(overrides: Partial<Pick<EconomyRules, 'salePercent' | 'materialsPercent'>> = {}): EconomyRules {
+  rules(overrides: Partial<Pick<EconomyRules, 'salePercent' | 'materialsPercent' | 'jewelerPercent'>> = {}): EconomyRules {
     const number = (key: string, fallback: number) => {
       const value = Number(this.configService.get(key));
       return Number.isFinite(value) && this.configService.get(key) !== undefined ? value : fallback;
@@ -22,6 +22,7 @@ export class EconomyRulesProvider {
       salePercent: overrides.salePercent ?? number('RMU_STRATEGIC_SALE_PERCENT', DEFAULT_ECONOMY_RULES.salePercent),
       materialsPercent: overrides.materialsPercent ?? number('RMU_STRATEGIC_MATERIALS_PERCENT', DEFAULT_ECONOMY_RULES.materialsPercent),
       conditionPercent,
+      jewelerPercent: overrides.jewelerPercent ?? number('RMU_STRATEGIC_JEWELER_PERCENT', DEFAULT_ECONOMY_RULES.jewelerPercent),
     };
   }
 }

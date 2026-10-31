@@ -16,6 +16,7 @@ import {
   TREATMENT_RESULTS,
 } from '../../../characters/domain/value-objects/injury.vo.js';
 import { ITEM_MODIFIER_TARGETS, ITEM_MODIFIER_TYPES } from '../../../items/domain/value-objects/item-modifier.vo.js';
+import { ITEM_SIZES, JEWELRY_CLASSES } from '../../../items/domain/services/item-unit-value.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
 
@@ -86,6 +87,14 @@ const treatment = Joi.object({
   context: Joi.string().valid('tactical', 'strategic').required(),
   tacticalGameId: id(),
   heatCritical: Joi.string().max(NAME),
+  herb: Joi.object({
+    itemId: id().required(),
+    itemTypeId: id().required(),
+    name: name().required(),
+    magical: Joi.boolean().required(),
+    medicineBonus: num().required(),
+    recoveryBonus: num().required(),
+  }),
 });
 
 const injury = Joi.object({
@@ -309,7 +318,7 @@ const item = Joi.object({
         )
         .max(10)
         .required(),
-      wielderSize: Joi.string().valid('small', 'medium', 'big'),
+      wielderSize: Joi.string().valid(...ITEM_SIZES),
       tags: Joi.array().items(id()).max(20),
     }),
   ).required(),
@@ -363,6 +372,10 @@ const item = Joi.object({
       magical: Joi.boolean().required(),
     }),
   ),
+  size: Joi.string().valid(...ITEM_SIZES),
+  carats: num().greater(0),
+  jewelryClass: Joi.string().valid(...JEWELRY_CLASSES),
+  cutFactor: num().greater(0),
   modifiers: Joi.array().items(modifier).max(200).required(),
 });
 

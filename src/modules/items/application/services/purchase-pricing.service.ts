@@ -10,6 +10,7 @@ import {
   roundGold,
   type TradingResult,
 } from '../../domain/services/price-calculator.js';
+import { type ItemInstanceSpec, ItemUnitValue } from '../../domain/services/item-unit-value.js';
 import type { ItemResponse } from '../ports/item-client.port.js';
 import { ItemFactory } from './item-factory.service.js';
 import { type TradingRequest, TradingService } from './trading.service.js';
@@ -23,14 +24,21 @@ export const MAX_ORDER_LINES = 50;
 export interface PurchaseOrderLine {
   itemTypeId: string;
   amount: number;
+  /** Workspace spec 062: size, carats, cut, class and base value of a jewel. */
+  instance?: ItemInstanceSpec;
 }
 
 export interface PricedOrderLine {
   itemType: ItemResponse;
   amount: number;
   stackable: boolean;
+  /** The instance fields with their defaults: the base value of a jewel is rolled once, here. */
+  instance: ItemInstanceSpec;
   price: PriceBreakdown;
 }
+
+/** A quote shows the middle of the range of a jewel without a value; the purchase rolls it. */
+const QUOTE_RANDOM = () => 0.5;
 
 export interface PricedOrder {
   lines: PricedOrderLine[];
@@ -80,8 +88,9 @@ export class PurchasePricing {
     for (const line of lines) {
       const itemType = await this.itemFactory.itemType(line.itemTypeId);
       PurchasePricing.checkAmount(itemType, line.amount);
-      const price = PriceCalculator.purchase(itemType.info.cost?.average ?? 0, line.amount, { factor, trading });
-      priced.push({ itemType, amount: line.amount, stackable: !!itemType.info.stackable, price });
+      const { instance, unitBase } = PurchasePricing.unitBase(itemType, line.instance, options.check ? Math.random : QUOTE_RANDOM);
+      const price = PriceCalculator.purchase(unitBase, line.amount, { factor, trading });
+      priced.push({ itemType, amount: line.amount, stackable: !!itemType.info.stackable, instance, price });
     }
     return {
       lines: priced,
@@ -89,6 +98,20 @@ export class PurchasePricing {
       ...(trading ? { trading, maneuver: negotiated.maneuver } : {}),
       total: roundGold(priced.reduce((sum, line) => sum + line.price.total, 0)),
     };
+  }
+
+  /**
+   * Workspace spec 062: the instance fields with their defaults and the gold of one unit (gem carats, jewelry class,
+   * size). `random` rolls the base value of a jewel without one.
+   */
+  static unitBase(
+    itemType: ItemResponse,
+    requested: ItemInstanceSpec | undefined,
+    random: () => number = Math.random,
+    wielderSize?: string | null,
+  ): { instance: ItemInstanceSpec; unitBase: number } {
+    const spec = ItemFactory.instanceSpec(itemType, { instance: requested, wielderSize }, random);
+    return { instance: spec, unitBase: ItemUnitValue.unitValue(ItemFactory.valueType(itemType), spec) ?? 0 };
   }
 
   /** The factor of the market conditions; they need the trading tables of core. */

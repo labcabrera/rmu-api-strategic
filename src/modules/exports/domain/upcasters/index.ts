@@ -98,6 +98,12 @@ export const UPCASTERS: Upcaster[] = [
       return { ...doc, data: { ...data, faction: { npcs: [], ...data.faction } } };
     },
   },
+  {
+    // Workspace spec 062: optional size, carats, cut and jewelry class of the items and herb of the treatments
+    from: 8,
+    description: 'Allows the size, gems, jewelry and herb treatments of the items and injuries',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {

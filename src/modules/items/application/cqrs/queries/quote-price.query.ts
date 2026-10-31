@@ -1,4 +1,5 @@
 import type { PriceFactorSelection, PriceKind } from '../../../domain/services/price-calculator.js';
+import type { ItemInstanceSpec } from '../../../domain/services/item-unit-value.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { TradingRequest } from '../../services/trading.service.js';
 
@@ -17,6 +18,10 @@ export class QuotePriceQuery {
       /** Market conditions of the expected price (workspace spec 048) */
       factors?: PriceFactorSelection[];
       trading?: TradingRequest;
+      /** Workspace spec 062: instance fields of a purchase, and the sale to a jeweler. */
+      instance?: ItemInstanceSpec;
+      jeweler?: boolean;
+      jewelerPercent?: number;
     },
     public readonly userId: string,
     public readonly roles: string[],

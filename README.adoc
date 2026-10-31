@@ -92,6 +92,8 @@ percent; selling, it is the percent; both between 50% and 200%. The Trading of t
 * *House rules*: `RMU_STRATEGIC_SALE_PERCENT` (50), `RMU_STRATEGIC_MATERIALS_PERCENT` (50) and
 `RMU_STRATEGIC_CONDITION_PERCENTS` (`100,50,10`: intact, damaged, broken), shown by `GET /v1/economy-rules`; a request
 can override the sale percent and the materials cost.
+* *Jeweler* (workspace spec 062): a sale with `jeweler: true` pays a gem or a jewel its value less
+`RMU_STRATEGIC_JEWELER_PERCENT` (3), or the `jewelerPercent` of the request, with no Trading roll.
 
 == Export format
 

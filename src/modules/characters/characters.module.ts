@@ -94,6 +94,8 @@ import { HEALING_TABLES_CLIENT } from './application/ports/healing-tables-client
 import { POISON_RULES_CLIENT } from './application/ports/poison-rules-client.port.js';
 import { ApiPoisonRulesClientAdapter } from './infrastructure/api-clients/api.poison-rules-client.adapter.js';
 import { GiveAntidoteHandler, PoisonCharacterHandler } from './application/cqrs/handlers/poisoning.handlers.js';
+import { SearchHerbsHandler, UseHerbHandler } from './application/cqrs/handlers/herb.handlers.js';
+import { HerbInventory } from './application/services/herb-inventory.service.js';
 import { MANEUVER_CLIENT } from './application/ports/maneuver-client.port.js';
 import { PROFESSION_CLIENT } from './application/ports/profession-client.port.js';
 import { RACE_CLIENT } from './application/ports/race-client.port.js';
@@ -165,6 +167,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateCharacterRaceHandler,
     UpdateTemporaryStatHandler,
     CharacterHealthStore,
+    HerbInventory,
     CharacterAccess,
     CharacterWriter,
     ApplyTacticalOutcomeHandler,
@@ -202,6 +205,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     },
     PoisonCharacterHandler,
     GiveAntidoteHandler,
+    UseHerbHandler,
+    SearchHerbsHandler,
     {
       provide: MANEUVER_CLIENT,
       useClass: ApiManeuverClientAdapter,

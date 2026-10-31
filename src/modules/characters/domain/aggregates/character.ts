@@ -732,6 +732,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         bleeding: updated.bleeding,
         severity: updated.severity,
         ...(treatment.heatCritical ? { heatCritical: treatment.heatCritical } : {}),
+        ...(treatment.herb ? { herb: treatment.herb } : {}),
         resolvedConditions: resolved,
       },
       { injuryId, healerName: treatment.healer.name },
@@ -821,6 +822,22 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
+  }
+
+  /**
+   * A dose of a healing herb (workspace spec 062): `hits` healed up to the maximum. Over 0 hits, the unconsciousness
+   * of the hits ends, as when resting. Returns the hits actually healed.
+   */
+  healWithHerb(hits: number, herb: { itemId: string; itemTypeId: string; name: string; roll: number }): number {
+    if (this.status === 'dead') throw new ValidationError(`Character ${this.id} is dead`, 'err-character-dead');
+    const now = new Date().toISOString();
+    const hpBefore = this.hp.current;
+    this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpBefore + Math.max(0, hits)));
+    const healed = this.hp.current - hpBefore;
+    const resolvedConditions = this.resolveUnconsciousIfConscious(now);
+    this.recordHealing('herb', { ...herb, hpBefore, hpAfter: this.hp.current, healed, resolvedConditions });
+    this.touch();
+    return healed;
   }
 
   /** Spends power points (casting a spell). Not enough points is an error. */

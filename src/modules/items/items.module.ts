@@ -134,6 +134,6 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
       useClass: ApiMaterialClientAdapter,
     },
   ],
-  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger, ItemStock, InventorySync],
+  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger, ItemStock, InventorySync, ItemFactory],
 })
 export class ItemsModule {}

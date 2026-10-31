@@ -276,7 +276,7 @@ describe('Health handlers', () => {
     it('uses the Medicine bonus of a healer of the same game', async () => {
       const healer = character('healer', { skills: [ranked('medicine', 5, 35), ranked('herbalism', 2, 12)] });
       const { store, tables, maneuvers, rolls } = setup([withInjury(), healer], ['absolute-success']);
-      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
         treat({ healerCharacterId: 'healer', difficulty: -10 }),
       );
       expect(rolls).toEqual([70 + 35 - 10]);
@@ -292,7 +292,7 @@ describe('Health handlers', () => {
     it('rejects healers of another game or not found', async () => {
       const outsider = character('outsider', { gameId: 'game-002' });
       const { store, tables, maneuvers } = setup([withInjury(), outsider]);
-      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers, {} as never);
       await expect(handler.execute(treat({ healerCharacterId: 'outsider' }))).rejects.toMatchObject({
         code: 'err-healer-not-in-game',
       });
@@ -302,7 +302,7 @@ describe('Health handlers', () => {
 
     it('adds the herbalism bonus to the Medicine roll after a successful Herbalism roll', async () => {
       const { store, tables, maneuvers, rolls } = setup([withInjury()], ['success', 'success']);
-      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
         treat({ healer: { name: 'Village healer', bonus: 20, herbalismBonus: 15 }, herbalism: { roll: 60 } }),
       );
       expect(rolls).toEqual([60 + 15, 70 + 20 + TABLES.herbalismBonus]);
@@ -314,12 +314,14 @@ describe('Health handlers', () => {
 
     it('worsens the penalty on an absolute failure and stores the partial success modifier', async () => {
       const { store, tables, maneuvers } = setup([withInjury()], ['absolute-failure']);
-      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(treat({ healer: { name: 'Quack', bonus: 0 } }));
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
+        treat({ healer: { name: 'Quack', bonus: 0 } }),
+      );
       expect(result.injuries[0]).toMatchObject({ penalty: -20, initialPenalty: -20 });
       expect(result.injuries[0].treatments[0]).toMatchObject({ result: 'absolute-failure', healingType: 'none' });
 
       const partial = setup([withInjury()], ['partial-success']);
-      const treated = await new TreatInjuryHandler(partial.store, partial.tables, partial.maneuvers).execute(
+      const treated = await new TreatInjuryHandler(partial.store, partial.tables, partial.maneuvers, {} as never).execute(
         treat({ healer: { name: 'Quack', bonus: 0 } }),
       );
       expect(treated.injuries[0].treatments[0]).toMatchObject({ result: 'partial-success', recoveryModifier: -25 });
@@ -329,7 +331,7 @@ describe('Health handlers', () => {
       const head = character('patient');
       head.injuries = [injury({ id: 'i-1', location: 'head' })];
       const { store, tables, maneuvers, rolls } = setup([head], ['success', 'success'], DIFFICULTY_TABLES);
-      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers, {} as never);
       // splint is easy (+20), one step harder on the head: light (+10)
       const result = await handler.execute(treat({ healer: { name: 'Healer', bonus: 10 } }));
       expect(rolls).toEqual([70 + 10 + 10]);
@@ -350,7 +352,7 @@ describe('Health handlers', () => {
       const healer = character('healer', { skills: [ranked('medicine', 5, 35), ranked('herbalism', 2, 12)] });
       healer.injuries = [injury({ id: 'h-1', penalty: -15 }), injury({ id: 'h-2', penalty: -40, status: 'healed' })];
       const { store, tables, maneuvers, rolls } = setup([withInjury(), healer], ['success', 'success']);
-      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
         treat({ healerCharacterId: 'healer', difficulty: 0, herbalism: { roll: 50, healerCharacterId: 'healer' } }),
       );
       expect(rolls).toEqual([50 + 12 - 15, 70 + 35 - 15 + TABLES.herbalismBonus]);
@@ -361,7 +363,7 @@ describe('Health handlers', () => {
       const dead = withInjury();
       dead.status = 'dead';
       const { store, tables, maneuvers, absolute } = setup([dead]);
-      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers, {} as never);
       await expect(handler.execute(treat({ healer: { name: 'Healer', bonus: 10 } }))).resolves.toBeDefined();
       dead.injuries[0].severity = 'severe';
       absolute.mockClear();
@@ -375,7 +377,7 @@ describe('Health handlers', () => {
       const patient = character('patient');
       patient.injuries = [injury({ id: 'i-1', bleeding: 4 })];
       const { store, tables, maneuvers } = setup([patient], ['absolute-failure']);
-      const result = await new TreatInjuryHandler(store, tables, maneuvers).execute(
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
         treat({ procedure: 'cauterize', healer: { name: 'Healer', bonus: 10 } }),
       );
       expect(result.injuries[0]).toMatchObject({ penalty: -10, bleeding: 4 });
@@ -384,7 +386,7 @@ describe('Health handlers', () => {
 
     it('treats with magic without a Medicine roll and honours the requested type of healing', async () => {
       const { store, tables, maneuvers, absolute } = setup([withInjury()]);
-      const handler = new TreatInjuryHandler(store, tables, maneuvers);
+      const handler = new TreatInjuryHandler(store, tables, maneuvers, {} as never);
       const result = await handler.execute(
         treat({ procedure: 'magic', roll: undefined, healer: { name: 'Priest', bonus: 0 }, healingType: 'magic-and-herbs' }),
       );

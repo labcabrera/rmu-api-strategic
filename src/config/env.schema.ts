@@ -34,6 +34,8 @@ export const envSchema = Joi.object({
   RMU_STRATEGIC_CONDITION_PERCENTS: Joi.string()
     .pattern(/^\d+(\.\d+)?,\d+(\.\d+)?,\d+(\.\d+)?$/)
     .default('100,50,10'),
+  // Workspace spec 062: commission of a jeweler buying gems and jewelry (Treasure Law: 1-5 %)
+  RMU_STRATEGIC_JEWELER_PERCENT: Joi.number().min(0).max(100).default(3),
   // Body limit of the import routes (workspace spec 024): an export file of a whole faction. The other routes keep 100 KB.
   RMU_STRATEGIC_IMPORT_MAX_BYTES: Joi.number()
     .integer()

@@ -1,11 +1,13 @@
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import type { PriceBreakdown, PriceFactors, TradingResult } from '../../../domain/services/price-calculator.js';
+import type { ItemInstanceSpec } from '../../../domain/services/item-unit-value.js';
 import { QuotePurchaseOrderQuery } from '../queries/quote-purchase-order.query.js';
 import { HolderAccess } from '../../services/holder-access.service.js';
 import { PurchasePricing } from '../../services/purchase-pricing.service.js';
 
 export interface PurchaseOrderQuote {
-  lines: { itemTypeId: string; amount: number; price: PriceBreakdown }[];
+  /** `instance`: the instance fields with their defaults (workspace spec 062); a jewel is quoted at mid range. */
+  lines: { itemTypeId: string; amount: number; instance?: ItemInstanceSpec; price: PriceBreakdown }[];
   factor?: PriceFactors;
   /** The negotiation; a null price percent means there is no deal, and buying would fail with 422. */
   trading?: TradingResult;
@@ -24,7 +26,12 @@ export class QuotePurchaseOrderHandler implements IQueryHandler<QuotePurchaseOrd
     const buyer = query.buyer ? await this.holderAccess.load(query.buyer) : null;
     const order = await this.pricing.order(query.lines, { ...query.options, character: buyer?.character ?? null, check: false });
     return {
-      lines: order.lines.map(line => ({ itemTypeId: line.itemType.id, amount: line.amount, price: line.price })),
+      lines: order.lines.map(line => ({
+        itemTypeId: line.itemType.id,
+        amount: line.amount,
+        ...(Object.keys(line.instance).length ? { instance: line.instance } : {}),
+        price: line.price,
+      })),
       ...(order.factor ? { factor: order.factor } : {}),
       ...(order.trading ? { trading: order.trading } : {}),
       total: order.total,

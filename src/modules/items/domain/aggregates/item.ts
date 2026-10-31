@@ -13,6 +13,7 @@ import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../value-objects/item-material.vo.js';
+import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
 
 /** Item type of the coins of a character (spec 023, decision 7: they weigh). */
 export const GOLD_COIN = 'gold-coin';
@@ -23,6 +24,11 @@ export class Item extends BaseAggregateRoot<ItemProps> {
   public coating: ItemCoating | null = null;
   /** Workspace spec 043: superior material it was crafted of. */
   public material: ItemMaterial | null = null;
+  /** Workspace spec 062: size (null is medium), carats and cut of a gem, class of a jewel. */
+  public size: ItemSize | null = null;
+  public carats: number | null = null;
+  public jewelryClass: JewelryClass | null = null;
+  public cutFactor: number | null = null;
 
   private constructor(
     public id: string,
@@ -81,6 +87,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     item.importId = props.importId;
     item.coating = props.coating ?? null;
     item.material = props.material ?? null;
+    item.applyInstanceFields(props);
     item.apply(new ItemCreatedEvent(item));
     return item;
   }
@@ -114,7 +121,15 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     item.importId = props.importId;
     item.coating = props.coating ?? null;
     item.material = props.material ?? null;
+    item.applyInstanceFields(props);
     return item;
+  }
+
+  private applyInstanceFields(props: Pick<ItemProps, 'size' | 'carats' | 'jewelryClass' | 'cutFactor'>): void {
+    this.size = props.size ?? null;
+    this.carats = props.carats ?? null;
+    this.jewelryClass = props.jewelryClass ?? null;
+    this.cutFactor = props.cutFactor ?? null;
   }
 
   update(props: Partial<Omit<ItemProps, 'id' | 'gameId' | 'createdAt' | 'updatedAt'>>): void {
@@ -122,7 +137,11 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     if (factionId) this.factionId = factionId;
     if (characterId) this.characterId = characterId;
     if (name) this.name = name;
-    if (weapon) this.weapon = weapon;
+    if (weapon) {
+      this.weapon = weapon;
+      // Workspace spec 062: the size of a weapon mirrors the size it is made for
+      if (weapon.wielderSize) this.size = weapon.wielderSize as ItemSize;
+    }
     //TODO
     this.updatedAt = new Date();
     this.apply(new ItemUpdatedEvent(this));
@@ -259,6 +278,10 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       ...(this.importId ? { importId: this.importId } : {}),
       coating: this.coating,
       material: this.material,
+      ...(this.size ? { size: this.size } : {}),
+      ...(this.carats !== null ? { carats: this.carats } : {}),
+      ...(this.jewelryClass ? { jewelryClass: this.jewelryClass } : {}),
+      ...(this.cutFactor !== null ? { cutFactor: this.cutFactor } : {}),
     };
   }
 }

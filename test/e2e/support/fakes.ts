@@ -4,6 +4,7 @@ import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/
 import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
 import type { TradingTables } from '../../../src/modules/items/domain/value-objects/trading-tables.vo.js';
 import type { ItemClientPort, ItemResponse } from '../../../src/modules/items/application/ports/item-client.port.js';
+import type { ItemHerb } from '../../../src/modules/items/domain/value-objects/item-catalog-info.vo.js';
 import type { Race, RaceClientPort } from '../../../src/modules/characters/application/ports/race-client.port.js';
 import type { SkillClientPort, SkillResponse } from '../../../src/modules/characters/application/ports/skill-client.port.js';
 import type {
@@ -166,6 +167,39 @@ function armorType(id: string, armor: Partial<NonNullable<ItemResponse['armor']>
   };
 }
 
+/** An invented herb of workspace spec 062: the effects not given are null. */
+function herbType(
+  id: string,
+  herb: Partial<Omit<ItemHerb, 'effects'>> & { effects?: Partial<NonNullable<ItemHerb['effects']>> },
+): ItemResponse {
+  const { effects, ...rest } = herb;
+  return {
+    id,
+    name: id.replace('e2e-', 'E2E ').replace('-', ' '),
+    category: 'herb',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: {
+      herb: {
+        group: 'general',
+        biomes: ['F'],
+        highAltitude: false,
+        find: 'm',
+        form: 'leaf',
+        prep: 'ingest',
+        season: null,
+        effectDelay: 'immediate',
+        magical: true,
+        addictionFactor: null,
+        ...rest,
+        effects: effects ? { heal: null, stunRelief: null, treats: null, recoveryBonus: null, ...effects } : null,
+      },
+    },
+    info: { cost: { min: 0.1, average: 0.1, max: 0.1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  };
+}
+
 export const ITEM_TYPES: Record<string, ItemResponse> = {
   stone: {
     id: 'stone',
@@ -295,6 +329,31 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
     features: { antidote: { categories: ['muscle'], level: 5, withinHours: null } },
     info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
   },
+  // Workspace spec 062: a gem, a jewel and four herbs (invented data, not the rulebook ones)
+  'e2e-gem': {
+    id: 'e2e-gem',
+    name: 'E2E gem',
+    category: 'gem',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { gem: { grade: 'precious', mineral: 'e2e-mineral', valuePerCarat: 2 } },
+    info: { cost: null, length: null, strength: null, weight: 0.001, productionHours: undefined, stackable: false },
+  },
+  'e2e-ring': {
+    id: 'e2e-ring',
+    name: 'E2E ring',
+    category: 'jewelry',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { jewelry: { value: { min: 10, max: 20, dice: null, openEnded: false }, slot: 'finger' } },
+    info: { cost: { min: 1, average: 1.5, max: 2 }, length: null, strength: null, weight: 0.01, productionHours: 10, stackable: false },
+  },
+  'e2e-heal-leaf': herbType('e2e-heal-leaf', { group: 'minor-healing', biomes: ['F'], find: 'm', effects: { heal: { min: 3, max: 8 } } }),
+  'e2e-bone-moss': herbType('e2e-bone-moss', { group: 'injury', biomes: ['F', 'D'], find: 'h', effects: { treats: ['bone'] } }),
+  'e2e-plain-root': herbType('e2e-plain-root', { group: 'general', biomes: ['F'], find: 'e', magical: false }),
+  'e2e-stun-berry': herbType('e2e-stun-berry', { group: 'stun', biomes: ['A'], highAltitude: true, find: 'n', effects: { stunRelief: 2 } }),
   'gold-coin': {
     id: 'gold-coin',
     category: 'currency',

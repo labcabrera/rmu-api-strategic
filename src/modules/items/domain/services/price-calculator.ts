@@ -21,12 +21,15 @@ export interface EconomyRules {
   materialsPercent: number;
   /** Percent of the sale price by condition. */
   conditionPercent: { intact: number; damaged: number; broken: number };
+  /** Workspace spec 062: commission of a jeweler buying a gem or a jewel (Treasure Law: 1-5 %). */
+  jewelerPercent: number;
 }
 
 export const DEFAULT_ECONOMY_RULES: EconomyRules = {
   salePercent: 50,
   materialsPercent: 50,
   conditionPercent: { intact: 100, damaged: 50, broken: 10 },
+  jewelerPercent: 3,
 };
 
 /**
@@ -77,6 +80,8 @@ export interface PriceBreakdown {
   /** Sale: percent for the condition of the item. */
   conditionPercent?: number;
   condition?: 'intact' | 'damaged' | 'broken';
+  /** Workspace spec 062: commission of the jeweler that bought it. */
+  jewelerPercent?: number;
   /** Market conditions (workspace spec 048) */
   factor?: PriceFactors;
   /** Base times the factor, before the negotiation */
@@ -157,6 +162,19 @@ export const PriceCalculator = {
       unitPrice,
       total: roundGold(unitPrice * amount),
     };
+  },
+
+  /**
+   * Sale of gems or jewelry to a jeweler (workspace spec 062): the value less the commission, with no condition,
+   * market or negotiation.
+   */
+  jewelerSale(value: number, amount: number, jewelerPercent: number): PriceBreakdown {
+    PriceCalculator.checkAmount(amount);
+    if (!(jewelerPercent >= 0 && jewelerPercent <= 100)) {
+      throw new ValidationError(`Invalid jeweler percent ${jewelerPercent}`, 'err-item-invalid-price');
+    }
+    const unitPrice = roundGold((value * (100 - jewelerPercent)) / 100);
+    return { kind: 'sale', unitBase: value, amount, jewelerPercent, unitPrice, total: roundGold(unitPrice * amount) };
   },
 
   /**

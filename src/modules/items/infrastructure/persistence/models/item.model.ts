@@ -85,6 +85,19 @@ export class ItemModel {
   @Prop({ type: Object, required: false })
   material?: ItemMaterial | null;
 
+  /** Workspace spec 062: size, carats and cut of a gem, class of a jewel. */
+  @Prop({ type: String, required: false })
+  size?: string | null;
+
+  @Prop({ type: Number, required: false })
+  carats?: number | null;
+
+  @Prop({ type: String, required: false })
+  jewelryClass?: string | null;
+
+  @Prop({ type: Number, required: false })
+  cutFactor?: number | null;
+
   @Prop({ type: Date, required: true })
   createdAt: Date;
 
