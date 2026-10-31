@@ -17,6 +17,9 @@ import { DeleteFactionsByGameHandler } from './application/cqrs/handlers/delete-
 import { KafkaFactionGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
 
 import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.js';
+import { NPC_CLIENT } from './application/ports/npc-client.port.js';
+import { FactionNpcsResolver } from './application/services/faction-npcs.resolver.js';
+import { ApiNpcClientAdapter } from './infrastructure/api-clients/api.npc-client.adapter.js';
 @Module({
   imports: [
     TerminusModule,
@@ -34,11 +37,13 @@ import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.
     DeleteFactionCommandHandler,
     DeleteFactionsByGameHandler,
     AddFactionGoldCommandHandler,
+    FactionNpcsResolver,
+    { provide: NPC_CLIENT, useClass: ApiNpcClientAdapter },
     {
       provide: FACTION_REPOSITORY,
       useClass: MongoFactionRepository,
     },
   ],
-  exports: [FACTION_REPOSITORY],
+  exports: [FACTION_REPOSITORY, FactionNpcsResolver],
 })
 export class FactionsModule {}

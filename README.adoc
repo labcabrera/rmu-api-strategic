@@ -26,6 +26,10 @@ image::./diagrams/c4-context.png[C4 Context Diagram]
 has a series of factions that function as if they were independent gangs.
 
 * *Faction*: A faction is a group of characters who share resources such as items or gold.
+It also has NPCs (workspace spec 055): `npcs: [{id, npcId, name, count (1-50), notes}]`, replaced whole by
+`PATCH /v1/factions/{id}`. Each NPC is read from rmu-api-npcs (`RMU_API_NPCS_URI`) with the service token: it must exist,
+be public or belong to the owner of the faction, and be of the realm of the game or of a generic realm of core (400
+`validation` otherwise).
 
 * *Character*: Represents a character belonging to a gang with characteristics such as attributes, skills, items, etc.
 
@@ -99,7 +103,7 @@ Characters and factions go to a JSON file and back (workspace spec 024), to copy
 * *File*: `{format: 'rmu-strategic-export', formatVersion, kind: 'character' | 'faction', exportedAt, source, references,
 data}`. It holds only user data: the own data and the temporary state of each character (hits, endurance, power,
 temporary stats, injuries with their recovery, conditions), its items with their modifiers and gold, and for a faction its
-gold, experience and armory. Ids, owners, games and derived values are left out; characters and items carry local refs
+gold, armory and NPCs (references to rmu-api-npcs, format 8). Ids, owners, games and derived values are left out; characters and items carry local refs
 (`c1`, `i1`...) that slots and crafters point to. `references` lists the catalog ids of core and items with their names,
 never their content. Example files: `test/fixtures/exports/v<N>/`.
 * *Import*: `POST /v1/factions/{id}/character-imports` (whoever can create a character; it also takes one character of a
@@ -108,6 +112,8 @@ admin). The body is the file (up to `RMU_STRATEGIC_IMPORT_MAX_BYTES`, 5 MB; 200 
 `X-RMU-File-Name` its name. `?dryRun=true` answers the preview: versions, upgrade steps, summary, warnings and errors.
 ** Everything is created with new ids and owned by whoever imports. Derived values come from the destination race and
 catalog; current hits and power are kept up to their maximum.
+** The NPCs of a faction file that the importer cannot use in the game (not public nor theirs, or of another realm
+that is not generic) are skipped with `import-warning-npc-skipped`.
 ** A missing race, profession or culture blocks the import (`export-missing-reference`). A missing skill or trait is
 kept without effect and marked `missingReference: true`; a missing item type only warns, as the item keeps its copy.
 ** There are no transactions: every created document carries `importId`, and a failed import removes them. Each item

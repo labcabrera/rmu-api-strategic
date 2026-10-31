@@ -1,4 +1,5 @@
 import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
 import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
 import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
 import type { TradingTables } from '../../../src/modules/items/domain/value-objects/trading-tables.vo.js';
@@ -34,6 +35,18 @@ import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js'
 // Invented catalog data (not book data): the minimum the strategic API reads from core and items.
 
 export const REALM: RealmResponse = { id: 'realm-001', name: 'E2E realm' };
+/** Workspace spec 055: a generic realm, like RMU Core, and another realm that is not. */
+export const GENERIC_REALM: RealmResponse = { id: 'realm-generic', name: 'E2E generic realm', generic: true };
+export const OTHER_REALM: RealmResponse = { id: 'realm-other', name: 'E2E other realm', generic: false };
+const REALMS = [REALM, GENERIC_REALM, OTHER_REALM];
+
+/** Invented NPCs of rmu-api-npcs (workspace spec 055), by realm, access and owner. */
+export const NPCS: NpcResponse[] = [
+  { id: 'npc-wolf', name: 'E2E wolf', realmId: GENERIC_REALM.id, accessType: 'public', owner: 'e2e-admin' },
+  { id: 'npc-guard', name: 'E2E guard', realmId: REALM.id, accessType: 'private', owner: 'e2e-owner' },
+  { id: 'npc-spy', name: 'E2E spy', realmId: REALM.id, accessType: 'private', owner: 'e2e-other' },
+  { id: 'npc-elf', name: 'E2E elf', realmId: OTHER_REALM.id, accessType: 'public', owner: 'e2e-admin' },
+];
 
 export const SKILLS: SkillResponse[] = [
   { id: 'body-development', categoryId: 'physical', bonus: ['co'], specialization: undefined },
@@ -330,7 +343,8 @@ export const tradingTables: { value: TradingTables | null } = { value: null };
 
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
-  const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(id === REALM.id ? REALM : undefined) };
+  const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)) };
+  const npcClient: NpcClientPort = { getNpcById: id => Promise.resolve(NPCS.find(npc => npc.id === id)) };
   const itemClient: ItemClientPort = {
     getItemById: id => Promise.resolve(ITEM_TYPES[id]),
   };
@@ -424,6 +438,7 @@ export function apiFakes() {
   };
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   return {
+    npcClient,
     enumerationClient,
     tradingTablesClient,
     realmClient,

@@ -10,6 +10,8 @@ import { CharacterProcessorService } from '../../../characters/domain/services/c
 import { type FactionRepository, FACTION_REPOSITORY } from '../../../factions/application/ports/faction-repository.port.js';
 import { Faction } from '../../../factions/domain/aggregates/faction.js';
 import { FactionManagement } from '../../../factions/domain/value-objects/faction-management.vo.js';
+import type { FactionNpc } from '../../../factions/domain/value-objects/faction-npc.vo.js';
+import { FactionNpcsResolver } from '../../../factions/application/services/faction-npcs.resolver.js';
 import { Game } from '../../../games/domain/aggregates/game.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../items/application/ports/item-repository.port.js';
 import { ItemLedger } from '../../../items/application/services/item-ledger.service.js';
@@ -104,6 +106,7 @@ export class ImportService {
     private readonly processor: CharacterProcessorService,
     private readonly ledger: ItemLedger,
     private readonly specializationCatalog: SpecializationCatalogService,
+    private readonly npcsResolver: FactionNpcsResolver,
   ) {}
 
   async prepare(raw: unknown, destination: ImportDestination, userId: string): Promise<PreparedImport> {
@@ -149,7 +152,9 @@ export class ImportService {
     warnings.push(...references.warnings, ...this.sourceWarnings(file, destination.game, selected, armory));
 
     const importId = randomUUID();
-    const faction = destination.target === 'faction' ? this.newFaction(file, destination.game, userId, importId) : destination.faction;
+    const npcs = destination.target === 'faction' ? await this.importNpcs(file, destination.game, userId, warnings) : [];
+    const faction =
+      destination.target === 'faction' ? this.newFaction(file, destination.game, userId, importId, npcs) : destination.faction;
     let plan: ImportPlan | undefined;
     if (errors.length === 0) {
       plan = planImport(
@@ -273,7 +278,34 @@ export class ImportService {
     }
   }
 
-  private newFaction(file: ExportFile, game: Game, userId: string, importId: string): Faction {
+  /**
+   * Workspace spec 055: the NPCs of a faction file that the importer can use in this game (public or theirs, of the realm
+   * of the game or of a generic realm). The others, or all of them when rmu-api-npcs does not answer, are skipped with a
+   * warning.
+   */
+  private async importNpcs(file: ExportFile, game: Game, userId: string, warnings: ImportWarning[]): Promise<FactionNpc[]> {
+    if (file.kind !== 'faction') return [];
+    const check = this.npcsResolver.checker({ owner: userId, realmId: game.realmId });
+    const npcs: FactionNpc[] = [];
+    for (const [index, npc] of file.data.faction.npcs.entries()) {
+      const result = await check(npc.npcId).catch((error: Error) => `NPC ${npc.npcId} could not be checked: ${error.message}`);
+      if (typeof result === 'string') {
+        warnings.push({
+          code: 'import-warning-npc-skipped',
+          message: `${npc.name} is not added: ${result}`,
+          path: `data.faction.npcs[${index}]`,
+          kind: 'npc',
+          id: npc.npcId,
+          name: npc.name,
+        });
+        continue;
+      }
+      npcs.push({ id: randomUUID(), npcId: npc.npcId, name: npc.name, count: npc.count, notes: npc.notes });
+    }
+    return npcs;
+  }
+
+  private newFaction(file: ExportFile, game: Game, userId: string, importId: string, npcs: FactionNpc[]): Faction {
     const data = file.kind === 'faction' ? file.data.faction : undefined;
     return Faction.create({
       gameId: game.id,
@@ -283,6 +315,7 @@ export class ImportService {
       description: data?.description ?? undefined,
       imageUrl: data?.imageUrl ?? undefined,
       owner: userId,
+      npcs,
       importId,
     });
   }

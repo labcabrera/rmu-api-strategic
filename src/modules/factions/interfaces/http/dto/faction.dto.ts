@@ -3,6 +3,7 @@ import { IsNumber } from 'class-validator';
 import { Faction } from '../../../domain/aggregates/faction.js';
 import { FactionManagement } from '../../../domain/value-objects/faction-management.vo.js';
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
+import { FactionNpcDto } from './faction-npc.dto.js';
 
 export class FactionDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -17,6 +18,9 @@ export class FactionDto {
   imageUrl: string | undefined;
   owner: string;
 
+  @ApiProperty({ type: [FactionNpcDto], description: 'Spec 055: NPCs of the faction' })
+  npcs: FactionNpcDto[];
+
   static fromEntity(entity: Faction): FactionDto {
     const dto = new FactionDto();
     dto.version = entity.version;
@@ -28,6 +32,7 @@ export class FactionDto {
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
+    dto.npcs = entity.npcs.map(npc => FactionNpcDto.fromEntity(npc));
     return dto;
   }
 }

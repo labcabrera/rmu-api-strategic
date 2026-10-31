@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { FactionManagement } from './faction-management.model.js';
+import { FactionNpcModel } from './faction-npc.model.js';
 
 export type FactionDocument = FactionModel & Document;
 
@@ -37,6 +38,10 @@ export class FactionModel {
 
   @Prop({ required: true })
   owner: string;
+
+  /** Workspace spec 055. Missing in documents stored before, which read as []. */
+  @Prop({ type: [FactionNpcModel], default: [] })
+  npcs: FactionNpcModel[];
 
   @Prop({ required: true })
   createdAt: Date;

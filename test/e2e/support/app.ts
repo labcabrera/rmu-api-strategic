@@ -6,6 +6,7 @@ import type { Connection } from 'mongoose';
 import request from 'supertest';
 import { configureHttp } from '../../../src/bootstrap/http.js';
 import { REALM_CLIENT } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import { NPC_CLIENT } from '../../../src/modules/factions/application/ports/npc-client.port.js';
 import { ITEM_CLIENT } from '../../../src/modules/items/application/ports/item-client.port.js';
 import { RACE_CLIENT } from '../../../src/modules/characters/application/ports/race-client.port.js';
 import { SKILL_CLIENT } from '../../../src/modules/characters/application/ports/skill-client.port.js';
@@ -55,7 +56,7 @@ export type E2eApp = {
 
 /**
  * Boots the whole AppModule as main.ts does (configureHttp) against an in-memory Mongo and a local JWKS. The ports of
- * the APIs strategic calls (core and items) answer from in-memory fakes, the domain events are kept in memory and the
+ * the APIs strategic calls (core, items, spells and npcs) answer from in-memory fakes, the domain events are kept in memory and the
  * Kafka producer is replaced. AppModule is imported after setting the environment, because ConfigModule.forRoot()
  * reads it when the module is evaluated.
  */
@@ -68,6 +69,7 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     RMU_API_CORE_URI: 'http://127.0.0.1:1/v1',
     RMU_API_ITEMS_URI: 'http://127.0.0.1:1/v1',
     RMU_API_SPELLS_URI: 'http://127.0.0.1:1/v1',
+    RMU_API_NPCS_URI: 'http://127.0.0.1:1/v1',
     RMU_IAM_JWK_URI: jwks.uri,
     RMU_IAM_ISSUER_URI: ISSUER,
     RMU_IAM_AUDIENCE: AUDIENCE,
@@ -92,6 +94,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(events)
     .overrideProvider(REALM_CLIENT)
     .useValue(fakes.realmClient)
+    .overrideProvider(NPC_CLIENT)
+    .useValue(fakes.npcClient)
     .overrideProvider(ITEM_CLIENT)
     .useValue(fakes.itemClient)
     .overrideProvider(RACE_CLIENT)

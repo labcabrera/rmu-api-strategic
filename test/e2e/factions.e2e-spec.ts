@@ -154,6 +154,102 @@ describe('factions (e2e)', () => {
     });
   });
 
+  describe('npcs (workspace spec 055)', () => {
+    type Npc = { id: string; npcId: string; name: string; count: number; notes: string | null };
+    const npcsOf = (body: unknown) => (body as { npcs: Npc[] }).npcs;
+
+    it('replaces the whole list, gives new entries an id and the NPC name, and publishes it', async () => {
+      const faction = await createFaction(e2e, gameId);
+      expect(faction).toMatchObject({ npcs: [] });
+      e2e.events.clear();
+
+      const first = await as('owner').patch(`/v1/factions/${faction.id}`, {
+        npcs: [
+          { npcId: 'npc-wolf', count: 3 },
+          { npcId: 'npc-guard', name: 'Gate guards', count: 2, notes: 'At the gate' },
+        ],
+      });
+      expect(first.status).toBe(200);
+      const [wolves, guards] = npcsOf(first.body);
+      expect(npcsOf(first.body)).toEqual([
+        { id: expect.stringMatching(/^[0-9a-f-]{36}$/) as unknown, npcId: 'npc-wolf', name: 'E2E wolf', count: 3, notes: null },
+        {
+          id: expect.stringMatching(/^[0-9a-f-]{36}$/) as unknown,
+          npcId: 'npc-guard',
+          name: 'Gate guards',
+          count: 2,
+          notes: 'At the gate',
+        },
+      ]);
+      const event = e2e.events.published.at(-1)!;
+      expect(event.topic).toBe('internal.rmu-strategic.faction.updated.v1');
+      expect((event.event.data as { npcs: Npc[] }).npcs).toEqual(npcsOf(first.body));
+
+      const second = await as('owner').patch(`/v1/factions/${faction.id}`, {
+        npcs: [{ id: wolves.id, npcId: 'npc-wolf', name: 'Pack', count: 5, notes: null }],
+      });
+      expect(npcsOf(second.body)).toEqual([{ id: wolves.id, npcId: 'npc-wolf', name: 'Pack', count: 5, notes: null }]);
+      expect(npcsOf(second.body).map(npc => npc.id)).not.toContain(guards.id);
+
+      // Tactical reads the faction with the service token
+      expect(npcsOf((await as('service').get(`/v1/factions/${faction.id}`)).body)).toHaveLength(1);
+      // A PATCH without npcs keeps them
+      expect(npcsOf((await as('owner').patch(`/v1/factions/${faction.id}`, { name: 'Renamed' })).body)).toHaveLength(1);
+      expect(npcsOf((await as('owner').patch(`/v1/factions/${faction.id}`, { npcs: [] })).body)).toEqual([]);
+    });
+
+    it.each([
+      ['an unknown NPC', { npcId: 'npc-missing', count: 1 }, 'NPC npc-missing not found'],
+      [
+        'a private NPC of another user',
+        { npcId: 'npc-spy', count: 1 },
+        'NPC npc-spy is private and does not belong to the owner of the faction',
+      ],
+      [
+        'an NPC of a realm that is not generic',
+        { npcId: 'npc-elf', count: 1 },
+        'NPC npc-elf is not of the realm of the campaign nor of a generic realm',
+      ],
+    ])('rejects %s with 400 validation, without changing the faction', async (_, npc, message) => {
+      const faction = await createFaction(e2e, gameId);
+      e2e.events.clear();
+      const response = await as('owner').patch(`/v1/factions/${faction.id}`, { npcs: [{ npcId: 'npc-wolf', count: 1 }, npc] });
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({ statusCode: 400, code: 'validation', message });
+      expect(npcsOf((await as('owner').get(`/v1/factions/${faction.id}`)).body)).toEqual([]);
+      expect(e2e.events.topics()).toEqual([]);
+    });
+
+    it('checks the private NPCs against the owner of the faction, not the caller', async () => {
+      const faction = await createFaction(e2e, gameId);
+      expect((await as('admin').patch(`/v1/factions/${faction.id}`, { npcs: [{ npcId: 'npc-guard', count: 1 }] })).status).toBe(200);
+      expect((await as('admin').patch(`/v1/factions/${faction.id}`, { npcs: [{ npcId: 'npc-spy', count: 1 }] })).status).toBe(400);
+    });
+
+    it.each([
+      ['no specimen', [{ npcId: 'npc-wolf', count: 0 }]],
+      ['more than 50 specimens', [{ npcId: 'npc-wolf', count: 51 }]],
+      ['an entry id that is not a uuid', [{ id: 'x', npcId: 'npc-wolf', count: 1 }]],
+      ['an entry without npcId', [{ count: 1 }]],
+      ['a list that is not an array', { npcId: 'npc-wolf', count: 1 }],
+      ['a repeated entry id', [1, 2].map(() => ({ id: '6f1f7a52-2a34-4d1f-9a51-0f8a1c3b2e10', npcId: 'npc-wolf', count: 1 }))],
+    ])('rejects %s with 400', async (_, npcs) => {
+      const faction = await createFaction(e2e, gameId);
+      expect((await as('owner').patch(`/v1/factions/${faction.id}`, { npcs })).status).toBe(400);
+    });
+
+    it('rejects a change by another user', async () => {
+      const faction = await createFaction(e2e, gameId);
+      expect((await as('other').patch(`/v1/factions/${faction.id}`, { npcs: [{ npcId: 'npc-wolf', count: 1 }] })).status).toBe(403);
+    });
+
+    it('reads a faction stored without npcs as an empty list', async () => {
+      const faction = await createFaction(e2e, gameId);
+      await e2e.connection.collection('factions').updateOne({ _id: faction.id } as never, { $unset: { npcs: '' } });
+      expect(npcsOf((await as('owner').get(`/v1/factions/${faction.id}`)).body)).toEqual([]);
+    });
+  });
+
   describe('gold', () => {
     it('lets the owner of the game spend gold, but not below zero', async () => {
       const faction = await createFaction(e2e, gameId, 'owner', { management: { availableGold: 10 } });

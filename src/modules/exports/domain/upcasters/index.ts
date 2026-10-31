@@ -88,6 +88,16 @@ export const UPCASTERS: Upcaster[] = [
       return { ...doc, data: { ...data, faction: { ...data.faction, management } } };
     },
   },
+  {
+    // Workspace spec 055: the NPCs of the faction; a faction of an older file has none
+    from: 7,
+    description: 'Adds the NPCs of the faction',
+    up: (doc: ExportDocument): ExportDocument => {
+      const data = doc.data as { faction?: Record<string, unknown> } & Record<string, unknown>;
+      if (!data?.faction) return doc;
+      return { ...doc, data: { ...data, faction: { npcs: [], ...data.faction } } };
+    },
+  },
 ];
 
 export interface UpcastStep {

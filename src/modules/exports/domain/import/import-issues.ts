@@ -14,7 +14,8 @@ export type ImportWarningCode =
   | 'import-warning-hp-clipped'
   | 'import-warning-power-clipped'
   | 'import-warning-race-skill-bonus'
-  | 'import-warning-unknown-specialization';
+  | 'import-warning-unknown-specialization'
+  | 'import-warning-npc-skipped';
 
 export interface ImportIssue<C extends string = string> {
   code: C;
@@ -23,7 +24,20 @@ export interface ImportIssue<C extends string = string> {
   path?: string;
   /** What the issue is about: a missing race, a reference of the file... */
   kind?:
-    'race' | 'profession' | 'culture' | 'skill' | 'trait' | 'item-type' | 'ref' | 'slot' | 'realm' | 'image' | 'version' | 'hp' | 'power';
+    | 'race'
+    | 'profession'
+    | 'culture'
+    | 'skill'
+    | 'trait'
+    | 'item-type'
+    | 'ref'
+    | 'slot'
+    | 'realm'
+    | 'image'
+    | 'version'
+    | 'hp'
+    | 'power'
+    | 'npc';
   id?: string;
   name?: string | null;
 }

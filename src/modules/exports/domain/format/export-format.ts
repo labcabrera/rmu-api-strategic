@@ -23,7 +23,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 7;
+export const CURRENT_FORMAT_VERSION = 8;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -215,12 +215,24 @@ export interface CharacterEntry {
   items: ItemExport[];
 }
 
+/**
+ * An NPC of the faction (workspace spec 055, format 8): a reference to an NPC of rmu-api-npcs, not a copy. The import
+ * keeps those the destination can use and skips the others with a warning.
+ */
+export interface FactionNpcExport {
+  npcId: string;
+  name: string;
+  count: number;
+  notes: string | null;
+}
+
 export interface FactionExport {
   name: string;
   shortDescription: string | null;
   description: string | null;
   imageUrl: string | null;
   management: { availableGold: number };
+  npcs: FactionNpcExport[];
 }
 
 export interface FactionFileData {

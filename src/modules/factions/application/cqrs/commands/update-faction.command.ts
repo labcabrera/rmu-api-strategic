@@ -1,4 +1,5 @@
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
+import type { FactionNpcInput } from '../../services/faction-npcs.resolver.js';
 
 export class UpdateFactionCommand extends AuthenticatedCommand {
   constructor(
@@ -11,6 +12,8 @@ export class UpdateFactionCommand extends AuthenticatedCommand {
     roles: string[],
     /** The version the client read; undefined applies the change to the current one. */
     public readonly expectedVersion?: number,
+    /** Spec 055: the whole list of NPCs; undefined leaves it as it is. */
+    public readonly npcs?: FactionNpcInput[],
   ) {
     super(userId, roles);
   }
