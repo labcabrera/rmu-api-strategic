@@ -23,6 +23,8 @@ import { InjuryRollDto } from './dto/injury-roll.dto.js';
 import { RestDto } from './dto/rest.dto.js';
 import { AntidoteResultDto, GiveAntidoteDto, PoisonCharacterDto, PoisonCharacterResultDto } from './dto/poisoning.dto.js';
 import type { GiveAntidoteResult, PoisonCharacterResult } from '../../application/cqrs/handlers/poisoning.handlers.js';
+import { HerbSearchResultDto, SearchHerbsDto, UseHerbDto, UseHerbResultDto } from './dto/herb.dto.js';
+import type { HerbSearchOutcome, UseHerbResult } from '../../application/cqrs/handlers/herb.handlers.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
 import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
@@ -193,6 +195,42 @@ export class CharacterHealthController {
   ) {
     const command = GiveAntidoteDto.toCommand(id, injuryId, dto, user.id, user.roles);
     return AntidoteResultDto.from(await this.commandBus.execute<typeof command, GiveAntidoteResult>(command));
+  }
+
+  @Post(':id/herb-uses')
+  @HttpCode(200)
+  @ApiBody({ type: UseHerbDto })
+  @ApiOperation({
+    operationId: 'useHerb',
+    summary: 'Use a dose of a healing herb of the character (spec 062)',
+    description:
+      'Heals the roll (or a roll in the range of the herb) up to the maximum hits and spends one dose. ' +
+      'A herb without a heal effect is 400 herb-without-effect (stun relief is tactical only).',
+  })
+  @ApiOkResponse({ type: UseHerbResultDto })
+  async useHerb(@Param('id') id: string, @Body() dto: UseHerbDto, @CurrentUser() user: AuthenticatedUser): Promise<UseHerbResultDto> {
+    const command = UseHerbDto.toCommand(id, dto, user.id, user.roles);
+    return UseHerbResultDto.from(await this.commandBus.execute<typeof command, UseHerbResult>(command));
+  }
+
+  @Post(':id/herb-searches')
+  @HttpCode(200)
+  @ApiBody({ type: SearchHerbsDto })
+  @ApiOperation({
+    operationId: 'searchHerbs',
+    summary: 'Search for herbs (Treasure Law 2.3, spec 062): the doses found go to the character',
+    description:
+      'An absolute maneuver per herb with its Find difficulty, -10 per previous search and the several herbs ' +
+      'penalty. A herb that does not grow in the biome is not-here. Doses: 1d10 + 1 per full 10 over 100.',
+  })
+  @ApiOkResponse({ type: HerbSearchResultDto })
+  async searchHerbs(
+    @Param('id') id: string,
+    @Body() dto: SearchHerbsDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<HerbSearchResultDto> {
+    const command = SearchHerbsDto.toCommand(id, dto, user.id, user.roles);
+    return HerbSearchResultDto.from(await this.commandBus.execute<typeof command, HerbSearchOutcome>(command));
   }
 
   @Post(':id/conditions/:conditionId/resolve')

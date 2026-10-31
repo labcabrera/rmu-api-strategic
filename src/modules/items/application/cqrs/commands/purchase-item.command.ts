@@ -1,4 +1,5 @@
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
+import type { ItemInstanceSpec } from '../../../domain/services/item-unit-value.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
 import type { TradingRequest } from '../../services/trading.service.js';
 import type { PayerMode } from '../../services/wallet.service.js';
@@ -20,6 +21,8 @@ export class PurchaseItemCommand extends AuthenticatedCommand {
       description?: string | null;
       wielderSize?: string | null;
       carried?: boolean;
+      /** Workspace spec 062: size, carats, cut, class and base value of a jewel. */
+      instance?: ItemInstanceSpec;
     },
     userId: string,
     roles: string[],

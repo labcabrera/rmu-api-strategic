@@ -5,7 +5,8 @@ import type { PriceBreakdown } from '../services/price-calculator.js';
 
 /** Operations of the item ledger (workspace spec 023, decision 6). */
 /** Spec 024 adds `import`: an item or gold that came from an export file. */
-export type ItemLedgerKind = 'purchase' | 'sale' | 'transfer' | 'craft' | 'repair' | 'discard' | 'gold-transfer' | 'import';
+/** Workspace spec 062 adds `found`: doses of a herb search, for free. */
+export type ItemLedgerKind = 'purchase' | 'sale' | 'transfer' | 'craft' | 'repair' | 'discard' | 'gold-transfer' | 'import' | 'found';
 export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'purchase',
   'sale',
@@ -15,6 +16,7 @@ export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'discard',
   'gold-transfer',
   'import',
+  'found',
 ];
 
 /** Gold that moved in an operation: negative when the holder paid it, positive when it received it. */

@@ -5,6 +5,7 @@ import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
 import { type ItemDocument, ItemModel } from '../persistence/models/item.model.js';
 import { Item } from '../../domain/aggregates/item.js';
+import type { ItemProps } from '../../domain/aggregates/item-props.js';
 import type { ItemRepository } from '../../application/ports/item-repository.port.js';
 import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-holder.vo.js';
 
@@ -77,6 +78,10 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       importId: doc.importId,
       coating: doc.coating ?? null,
       material: doc.material ?? null,
+      size: (doc.size as ItemProps['size']) ?? null,
+      carats: doc.carats ?? null,
+      jewelryClass: (doc.jewelryClass as ItemProps['jewelryClass']) ?? null,
+      cutFactor: doc.cutFactor ?? null,
     });
   }
 }

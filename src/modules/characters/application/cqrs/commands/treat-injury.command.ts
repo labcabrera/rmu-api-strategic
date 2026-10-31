@@ -26,6 +26,8 @@ export class TreatInjuryCommand extends AuthenticatedCommand {
     public readonly healingType: HealingType | undefined,
     userId: string,
     roles: string[],
+    /** Workspace spec 062: a herb of the patient or of a character of its game; one dose is spent. */
+    public readonly herbItemId?: string,
   ) {
     super(userId, roles);
   }

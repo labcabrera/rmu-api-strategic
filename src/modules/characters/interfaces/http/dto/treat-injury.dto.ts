@@ -79,6 +79,15 @@ export class TreatInjuryDto {
   @IsOptional()
   healingType?: HealingType;
 
+  @ApiPropertyOptional({
+    description:
+      'Herb item of the patient or of a character of its game (spec 062): +25 to Medicine and, when it treats the injury, ' +
+      '+50 to the recovery roll (+75 with magic). One dose is spent',
+  })
+  @IsString()
+  @IsOptional()
+  herbItemId?: string;
+
   static toCommand(characterId: string, injuryId: string, dto: TreatInjuryDto, userId: string, roles: string[]): TreatInjuryCommand {
     return new TreatInjuryCommand(
       characterId,
@@ -94,6 +103,7 @@ export class TreatInjuryDto {
       dto.healingType,
       userId,
       roles,
+      dto.herbItemId,
     );
   }
 }

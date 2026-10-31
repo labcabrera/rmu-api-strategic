@@ -10,6 +10,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   ValidateNested,
@@ -41,6 +42,56 @@ import { MAX_ORDER_LINES } from '../../../application/services/purchase-pricing.
 import { ITEM_HOLDER_KINDS, type ItemHolder, type ItemHolderKind } from '../../../domain/value-objects/item-holder.vo.js';
 import { ITEM_MODIFIER_TARGETS, type ItemModifierTarget } from '../../../domain/value-objects/item-modifier.vo.js';
 import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
+import {
+  ITEM_SIZES,
+  type ItemInstanceSpec,
+  type ItemSize,
+  JEWELRY_CLASSES,
+  type JewelryClass,
+} from '../../../domain/services/item-unit-value.js';
+
+/** Workspace spec 062: what an instance adds to its catalog type, in a purchase or its quote. */
+export class ItemInstanceFieldsDto {
+  @ApiProperty({ required: false, enum: ITEM_SIZES, description: 'Size: cost and weight x4 per step from medium' })
+  @IsIn(ITEM_SIZES)
+  @IsOptional()
+  size?: ItemSize;
+
+  @ApiProperty({ required: false, description: 'Carats of a gem (1 by default)', example: 5 })
+  @IsNumber()
+  @Min(0.001)
+  @IsOptional()
+  carats?: number;
+
+  @ApiProperty({ required: false, description: 'Modern cut multiplier of a gem (optional rule)', example: 5 })
+  @IsNumber()
+  @Min(0.001)
+  @IsOptional()
+  cutFactor?: number;
+
+  @ApiProperty({ required: false, enum: JEWELRY_CLASSES, description: 'Class of a jewel (quality by default)' })
+  @IsIn(JEWELRY_CLASSES)
+  @IsOptional()
+  jewelryClass?: JewelryClass;
+
+  @ApiProperty({ required: false, description: 'Base value of a jewel before its class; rolled in the type range when missing' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  value?: number;
+
+  static of(dto: ItemInstanceFieldsDto | undefined): ItemInstanceSpec | undefined {
+    if (!dto) return undefined;
+    const spec: ItemInstanceSpec = {
+      ...(dto.size ? { size: dto.size } : {}),
+      ...(dto.carats !== undefined ? { carats: dto.carats } : {}),
+      ...(dto.cutFactor !== undefined ? { cutFactor: dto.cutFactor } : {}),
+      ...(dto.jewelryClass ? { jewelryClass: dto.jewelryClass } : {}),
+      ...(dto.value !== undefined ? { jewelryValue: dto.value } : {}),
+    };
+    return Object.keys(spec).length ? spec : undefined;
+  }
+}
 
 export class ItemHolderDto {
   @ApiProperty({ enum: ITEM_HOLDER_KINDS, example: 'character' })
@@ -127,7 +178,7 @@ export class PriceFactorSelectionDto {
   }
 }
 
-export class PurchaseOrderLineDto {
+export class PurchaseOrderLineDto extends ItemInstanceFieldsDto {
   @ApiProperty({ example: 'longsword' })
   @IsString()
   @IsNotEmpty()
@@ -137,6 +188,11 @@ export class PurchaseOrderLineDto {
   @IsNumber()
   @Min(0.001)
   amount: number;
+
+  static line(line: PurchaseOrderLineDto) {
+    const instance = ItemInstanceFieldsDto.of(line);
+    return { itemTypeId: line.itemTypeId, amount: line.amount, ...(instance ? { instance } : {}) };
+  }
 }
 
 /** Market conditions and Trading of a purchase order, shared by the operation and its quote (workspace spec 048). */
@@ -182,7 +238,7 @@ export class PurchaseOrderDto extends PurchaseOrderTermsDto {
   static toCommand(dto: PurchaseOrderDto, userId: string, roles: string[]): PurchaseOrderCommand {
     return new PurchaseOrderCommand(
       ItemHolderDto.of(dto.buyer)!,
-      dto.lines.map(line => ({ itemTypeId: line.itemTypeId, amount: line.amount })),
+      dto.lines.map(line => PurchaseOrderLineDto.line(line)),
       {
         gameId: dto.gameId,
         payer: dto.payer,
@@ -205,7 +261,7 @@ export class QuotePurchaseOrderDto extends PurchaseOrderTermsDto {
   static toQuery(dto: QuotePurchaseOrderDto, userId: string, roles: string[]): QuotePurchaseOrderQuery {
     return new QuotePurchaseOrderQuery(
       ItemHolderDto.of(dto.buyer),
-      dto.lines.map(line => ({ itemTypeId: line.itemTypeId, amount: line.amount })),
+      dto.lines.map(line => PurchaseOrderLineDto.line(line)),
       { factors: PriceFactorSelectionDto.of(dto.factors), trading: TradingRequestDto.of(dto.trading) },
       userId,
       roles,
@@ -213,7 +269,7 @@ export class QuotePurchaseOrderDto extends PurchaseOrderTermsDto {
   }
 }
 
-export class PurchaseItemDto {
+export class PurchaseItemDto extends ItemInstanceFieldsDto {
   @ApiProperty({ type: ItemHolderDto, description: 'The character or faction that buys' })
   @ValidateNested()
   @Type(() => ItemHolderDto)
@@ -288,6 +344,7 @@ export class PurchaseItemDto {
         description: dto.description,
         wielderSize: dto.wielderSize,
         carried: dto.carried,
+        instance: ItemInstanceFieldsDto.of(dto),
       },
       userId,
       roles,
@@ -327,6 +384,18 @@ export class SellItemDto {
   @IsOptional()
   trading?: TradingRequestDto;
 
+  @ApiProperty({ required: false, description: 'A jeweler buys a gem or jewel for its value less a commission (spec 062)' })
+  @IsBoolean()
+  @IsOptional()
+  jeweler?: boolean;
+
+  @ApiProperty({ required: false, description: 'Commission of the jeweler; RMU_STRATEGIC_JEWELER_PERCENT (3) by default' })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  jewelerPercent?: number;
+
   static toCommand(itemId: string, dto: SellItemDto, userId: string, roles: string[]): SellItemCommand {
     return new SellItemCommand(
       itemId,
@@ -336,6 +405,8 @@ export class SellItemDto {
         salePercent: dto.salePercent,
         factors: PriceFactorSelectionDto.of(dto.factors),
         trading: TradingRequestDto.of(dto.trading),
+        jeweler: dto.jeweler,
+        jewelerPercent: dto.jewelerPercent,
       },
       userId,
       roles,
@@ -665,7 +736,7 @@ export class RepairItemDto {
 
 const PRICE_KINDS: PriceKind[] = ['purchase', 'sale'];
 
-export class QuotePriceDto {
+export class QuotePriceDto extends ItemInstanceFieldsDto {
   @ApiProperty({ enum: PRICE_KINDS })
   @IsIn(PRICE_KINDS)
   kind: PriceKind;
@@ -717,6 +788,18 @@ export class QuotePriceDto {
   @IsOptional()
   trading?: TradingRequestDto;
 
+  @ApiProperty({ required: false, description: 'Sale: to a jeweler (spec 062)' })
+  @IsBoolean()
+  @IsOptional()
+  jeweler?: boolean;
+
+  @ApiProperty({ required: false, description: 'Sale to a jeweler: its commission' })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  jewelerPercent?: number;
+
   static toQuery(dto: QuotePriceDto, userId: string, roles: string[]): QuotePriceQuery {
     return new QuotePriceQuery(
       dto.kind,
@@ -729,6 +812,9 @@ export class QuotePriceDto {
         salePercent: dto.salePercent,
         factors: PriceFactorSelectionDto.of(dto.factors),
         trading: TradingRequestDto.of(dto.trading),
+        instance: ItemInstanceFieldsDto.of(dto),
+        jeweler: dto.jeweler,
+        jewelerPercent: dto.jewelerPercent,
       },
       userId,
       roles,

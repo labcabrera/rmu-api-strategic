@@ -31,7 +31,7 @@ export interface RecoveryModifiers extends RecoveryPatient {
 }
 
 /** Rule references of the healing rolls (Core Law). */
-export const HEALING_RULES = { recovery: '§13.1', table: 'Table 13-1a', poison: '§15.6' } as const;
+export const HEALING_RULES = { recovery: '§13.1', table: 'Table 13-1a', poison: '§15.6', herbs: 'Treasure Law §2.3' } as const;
 
 export interface PermanentInjuryResult {
   total: number;
@@ -109,6 +109,7 @@ export class HealingCalculator {
     const penalty = Math.abs(injury.penalty || 0);
     // Workspace spec 052: the treatment, and the partial success of its medical roll, are explained apart
     const partial = latest?.result === 'partial-success' ? latest.recoveryModifier || 0 : 0;
+    const herb = latest?.herb?.recoveryBonus || 0;
     // Params carry the translation keys of their values, as the MFE labels them
     const treatmentParams: RuleParams = {
       healingType: `healing-type-${healingType}`,
@@ -119,6 +120,8 @@ export class HealingCalculator {
       { key: 'constitution-bonus', value: patient.constitutionBonus, group: 'skill', rule: HEALING_RULES.recovery },
       { key: 'healing-type', value: modifier - partial, group: 'situation', rule: HEALING_RULES.table, params: treatmentParams },
       ...(partial ? [{ key: 'partial-success', value: partial, group: 'situation' as const, rule: HEALING_RULES.recovery }] : []),
+      // Workspace spec 062: a herb that treats the injury
+      ...(herb ? [{ key: 'herb', value: herb, group: 'situation' as const, rule: HEALING_RULES.herbs }] : []),
       { key: 'injury-penalty', value: -penalty, group: 'penalty', rule: HEALING_RULES.recovery },
     ];
     return {
@@ -127,7 +130,7 @@ export class HealingCalculator {
       healingType,
       healingTypeModifier: modifier,
       penalty,
-      total: patient.bodyDevelopmentRanks + patient.constitutionBonus + modifier - penalty,
+      total: patient.bodyDevelopmentRanks + patient.constitutionBonus + modifier + herb - penalty,
       breakdown,
     };
   }

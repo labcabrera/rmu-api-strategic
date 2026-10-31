@@ -122,6 +122,9 @@ export class EconomyRulesDto {
   @ApiProperty({ example: { intact: 100, damaged: 50, broken: 10 } })
   conditionPercent: EconomyRules['conditionPercent'];
 
+  @ApiProperty({ example: 3, description: 'Commission of a jeweler buying gems and jewelry (workspace spec 062)' })
+  jewelerPercent: number;
+
   static of(rules: EconomyRules): EconomyRulesDto {
     return Object.assign(new EconomyRulesDto(), rules);
   }

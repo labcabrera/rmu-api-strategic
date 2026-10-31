@@ -29,6 +29,7 @@ import type {
   RuleParams,
   TreatmentContext,
   TreatmentDifficultySource,
+  TreatmentHerb,
   TreatmentProcedure,
   TreatmentResult,
 } from '../../../domain/value-objects/injury.vo.js';
@@ -100,6 +101,8 @@ export class InjuryTreatmentDto {
   tacticalGameId?: string;
   @ApiPropertyOptional({ description: 'Heat critical severity of a cauterization, for the game master', example: 'A' })
   heatCritical?: string;
+  @ApiPropertyOptional({ description: 'Herb used and its Medicine and recovery bonuses (workspace spec 062)', type: Object })
+  herb?: TreatmentHerb;
 }
 
 export class InjuryRecoveryDto {
@@ -220,7 +223,7 @@ export class HealingLogEntryDto {
   id: string;
   @ApiProperty()
   at: string;
-  @ApiProperty({ type: String, enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual'] })
+  @ApiProperty({ type: String, enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual', 'herb'] })
   kind: HealingLogKind;
   @ApiPropertyOptional()
   injuryId?: string;

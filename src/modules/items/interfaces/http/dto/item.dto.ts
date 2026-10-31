@@ -10,6 +10,7 @@ import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
+import { ITEM_SIZES, type ItemSize, JEWELRY_CLASSES, type JewelryClass } from '../../../domain/services/item-unit-value.js';
 
 export class ItemDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -89,6 +90,18 @@ export class ItemDto {
   @ApiProperty({ description: 'Superior material it was crafted of (workspace spec 043)', type: Object, nullable: true, required: false })
   material?: ItemMaterial | null;
 
+  @ApiProperty({ description: 'Size of the item, null is medium (workspace spec 062)', enum: ITEM_SIZES, nullable: true })
+  size: ItemSize | null;
+
+  @ApiProperty({ description: 'Carats of a gem (workspace spec 062)', nullable: true, example: 5 })
+  carats: number | null;
+
+  @ApiProperty({ description: 'Class of a jewel (workspace spec 062)', enum: JEWELRY_CLASSES, nullable: true })
+  jewelryClass: JewelryClass | null;
+
+  @ApiProperty({ description: 'Modern cut multiplier of a gem (workspace spec 062)', nullable: true, example: 5 })
+  cutFactor: number | null;
+
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
     dto.version = entity.version;
@@ -114,6 +127,10 @@ export class ItemDto {
     dto.owner = entity.owner;
     dto.coating = entity.coating ?? null;
     dto.material = entity.material ?? null;
+    dto.size = entity.size ?? null;
+    dto.carats = entity.carats ?? null;
+    dto.jewelryClass = entity.jewelryClass ?? null;
+    dto.cutFactor = entity.cutFactor ?? null;
     return dto;
   }
 }

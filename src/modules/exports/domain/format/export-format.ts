@@ -15,6 +15,7 @@ import type { ItemModifierSourceKind, ItemModifierTarget, ItemModifierType } fro
 import type { ItemShield } from '../../../items/domain/value-objects/item-shield.vo.js';
 import type { ItemCoating } from '../../../items/domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../items/domain/value-objects/item-material.vo.js';
+import type { ItemSize, JewelryClass } from '../../../items/domain/services/item-unit-value.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
 
 /**
@@ -23,7 +24,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 8;
+export const CURRENT_FORMAT_VERSION = 9;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -205,6 +206,11 @@ export interface ItemExport {
   coating?: ItemCoating | null;
   /** Workspace spec 043: superior material it was crafted of. */
   material?: ItemMaterial | null;
+  /** Workspace spec 062: size, carats and cut of a gem, class of a jewel. */
+  size?: ItemSize;
+  carats?: number;
+  jewelryClass?: JewelryClass;
+  cutFactor?: number;
   modifiers: ItemExportModifier[];
 }
 

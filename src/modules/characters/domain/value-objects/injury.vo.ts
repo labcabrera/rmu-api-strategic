@@ -90,6 +90,18 @@ export interface InjuryTreatment {
   tacticalGameId?: string;
   /** Severity of the heat critical of a cauterization, for the game master to resolve (Table 13-1c) */
   heatCritical?: string;
+  /** Workspace spec 062: the herb used, and what it added to the Medicine and recovery rolls */
+  herb?: TreatmentHerb;
+}
+
+/** A herb of the inventory used in a treatment (workspace spec 062): one dose is spent. */
+export interface TreatmentHerb {
+  itemId: string;
+  itemTypeId: string;
+  name: string;
+  magical: boolean;
+  medicineBonus: number;
+  recoveryBonus: number;
 }
 
 /** Inputs of an explanation (workspace spec 052): numbers and keys, shown with their labels. */

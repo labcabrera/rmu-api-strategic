@@ -65,6 +65,7 @@ export class PurchaseOrderHandler implements ICommandHandler<PurchaseOrderComman
             holder: buyer.holder,
             character: buyer.character,
             amount: current.units,
+            instance: line.instance,
             acquiredPrice: line.price.unitPrice,
             owner: userId,
           });
