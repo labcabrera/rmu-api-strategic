@@ -48,18 +48,36 @@ const LIST_TYPE_MODIFIERS: Record<string, number> = {
 export const listTypeModifier = (skillId: string): number => LIST_TYPE_MODIFIERS[skillId] ?? -10;
 
 /**
- * Skill a character develops a list with (Core Law 3.22): a Base list of its own profession is Base, an Open list Open,
- * a Closed or Evil list Closed (spec 029), and the Base list of another profession Restricted.
+ * Limit of the Base lists of the own profession (workspace spec 064, decision 2): `baseListLimit` of the profession
+ * (null, no limit) and the Base lists the character already develops as `base-spell-list`.
  */
-export function spellListSkill(list: SpellListInfo, professionId: string): string {
+export interface BaseListLimit {
+  baseListLimit: number | null | undefined;
+  baseLists: number;
+}
+
+/**
+ * Skill a character develops a list with (Core Law 3.22): a Base list of its own profession is Base, an Open list Open,
+ * a Closed or Evil list Closed (spec 029), and the Base list of another profession Restricted. Workspace spec 064: once
+ * the character has as many Base lists as the limit of its profession (the alchemists choose six), the next Base list
+ * of its profession is Closed.
+ */
+export function spellListSkill(list: SpellListInfo, professionId: string, limit?: BaseListLimit): string {
   switch (list.type) {
     case 'base':
-      return list.professionId === professionId ? BASE_SPELL_LIST : RESTRICTED_SPELL_LIST;
+      if (list.professionId !== professionId) return RESTRICTED_SPELL_LIST;
+      return isBaseListLimitReached(limit) ? CLOSED_SPELL_LIST : BASE_SPELL_LIST;
     case 'open':
       return OPEN_SPELL_LIST;
     default:
       return CLOSED_SPELL_LIST;
   }
+}
+
+/** The character already has the Base lists its profession allows. */
+export function isBaseListLimitReached(limit: BaseListLimit | undefined): boolean {
+  const max = limit?.baseListLimit;
+  return typeof max === 'number' && limit!.baseLists >= max;
 }
 
 /** No ranks in lists of other realms (Core Law 3.22); a hybrid list is valid for either realm. */

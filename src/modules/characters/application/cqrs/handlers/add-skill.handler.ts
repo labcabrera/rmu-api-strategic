@@ -12,7 +12,7 @@ import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profes
 import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port.js';
 import { characterRealms } from '../../../domain/value-objects/character-realm.vo.js';
 import { developmentCostKey, skillStatistics } from '../../../domain/services/skills/skill-development.js';
-import { isSpellListSkill } from '../../../domain/services/spells/spell-list-rules.js';
+import { BASE_SPELL_LIST, isSpellListSkill } from '../../../domain/services/spells/spell-list-rules.js';
 import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver.js';
 import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
@@ -52,19 +52,22 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
     }
 
-    // A spell list: the skill follows from the list and the profession (spec 029)
+    const readedProfession = await this.professionClient.getProfessionById(character.info.professionId);
+    if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
+    // A spell list: the skill follows from the list and the profession (spec 029), and a Base list beyond the limit of
+    // the profession is Closed (workspace spec 064)
     const skillId = await this.spellListSkillResolver.resolve(command.skillId, specialization, {
       professionId: character.info.professionId,
       realms: characterRealms(character.info),
+      baseListLimit: readedProfession.baseListLimit ?? null,
+      baseLists: character.skills.filter(skill => skill.skillId === BASE_SPELL_LIST).length,
     });
-    const [readedSkill, readedProfession, readedRace] = await Promise.all([
+    const [readedSkill, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
-      this.professionClient.getProfessionById(character.info.professionId),
       this.raceClient.getRaceById(character.info.race.id),
     ]);
 
     if (!readedSkill) throw new NotFoundError('Skill', skillId);
-    if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
     if (!readedRace) throw new NotFoundError('Race', character.info.race.id);
 
     validateSkillSpecialization(readedSkill, specialization);

@@ -17,6 +17,7 @@ import { characterRealms, type CharacterRealm } from '../../../domain/value-obje
 import { validateRealms } from '../../../domain/services/realms-rules.js';
 import { developmentCostKey, skillStatistics } from '../../../domain/services/skills/skill-development.js';
 import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver.js';
+import { BASE_SPELL_LIST } from '../../../domain/services/spells/spell-list-rules.js';
 import { BadGatewayError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { NamedEntity } from '../../../../shared/domain/entities/named-entity.js';
 import { CharacterCreatedEvent } from '../../../domain/events/character.events.js';
@@ -183,10 +184,16 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     });
     const readedSkills = catalogSkills ?? (await this.fetchSkills());
     const readedSkillCategories = await this.fetchSkillCategories();
-    const context = { professionId: profession.id, realms: characterRealms(character.info) };
+    const realms = characterRealms(character.info);
     for (const skill of skills) {
-      // A spell list: the skill follows from the list and the profession (spec 029)
-      const skillId = await this.spellListSkillResolver.resolve(skill.skillId, skill.specialization, context);
+      // A spell list: the skill follows from the list and the profession (spec 029), and the Base lists already taken
+      // count against the limit of the profession (workspace spec 064)
+      const skillId = await this.spellListSkillResolver.resolve(skill.skillId, skill.specialization, {
+        professionId: profession.id,
+        realms,
+        baseListLimit: profession.baseListLimit ?? null,
+        baseLists: character.skills.filter(s => s.skillId === BASE_SPELL_LIST).length,
+      });
       const readedSkill = readedSkills.find(s => s.id == skillId);
       if (!readedSkill) {
         throw new ValidationError(`Invalid skill identifier '${skillId}'`);
