@@ -1,6 +1,7 @@
 import { DeleteGamesByRealmCommand } from '../../../../src/modules/games/application/cqrs/commands/delete-games-by-realm.command.js';
 import { DeleteGamesByRealmHandler } from '../../../../src/modules/games/application/cqrs/handlers/delete-games-by-realm.handler.js';
 import type { GameRepository } from '../../../../src/modules/games/application/ports/game-repository.port.js';
+import type { GameTimeLogRepository } from '../../../../src/modules/games/application/ports/game-time-log-repository.port.js';
 import type { Game } from '../../../../src/modules/games/domain/aggregates/game.js';
 import { fakeEventPublisher } from '../../support/fake-event-publisher.js';
 
@@ -18,16 +19,20 @@ const setup = (games: Game[]) => {
     deleteById,
   } as unknown as GameRepository;
   const events = fakeEventPublisher();
-  return { handler: new DeleteGamesByRealmHandler(repository, events.publisher), stored, deleteById, events };
+  const deleteTimeLog = vi.fn(() => Promise.resolve());
+  const timeLog = { deleteByGameId: deleteTimeLog } as unknown as GameTimeLogRepository;
+  return { handler: new DeleteGamesByRealmHandler(repository, events.publisher, timeLog), stored, deleteById, events, deleteTimeLog };
 };
 
 describe('DeleteGamesByRealmHandler', () => {
   it('deletes only the games of the realm and publishes a game.deleted per game', async () => {
-    const { handler, stored, events } = setup([game('g1', 'realm-a'), game('g2', 'realm-b'), game('g3', 'realm-a')]);
+    const { handler, stored, events, deleteTimeLog } = setup([game('g1', 'realm-a'), game('g2', 'realm-b'), game('g3', 'realm-a')]);
 
     await handler.execute(new DeleteGamesByRealmCommand('realm-a'));
 
     expect([...stored.keys()]).toEqual(['g2']);
+    // Workspace spec 065: the time log goes with its game
+    expect(deleteTimeLog.mock.calls).toEqual([['g1'], ['g3']]);
     expect(events.published.map(p => [p.aggregateType, p.event.eventType, (p.event.data as Game).id])).toEqual([
       ['game', 'deleted', 'g1'],
       ['game', 'deleted', 'g3'],

@@ -13,6 +13,7 @@ export class CreateGameCommand extends AuthenticatedCommand {
     public readonly imageUrl: string | null,
     userId: string,
     roles: string[],
+    public readonly startDate?: string,
   ) {
     super(userId, roles);
   }

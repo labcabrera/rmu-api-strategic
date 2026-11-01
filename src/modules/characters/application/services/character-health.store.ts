@@ -48,6 +48,9 @@ export class CharacterHealthStore {
   }
 
   async save(character: Character): Promise<Character> {
+    // Workspace spec 065: what happens to the health carries the day of the campaign.
+    const game = await this.gameRepository.findById(character.gameId);
+    if (game?.calendar) character.stampGameDay(game.calendar.currentDay);
     const entries = character.pullHealingLog();
     const updated = await this.characterRepository.update(character);
     await this.healingLogRepository.saveAll(character.id, character.gameId, entries);

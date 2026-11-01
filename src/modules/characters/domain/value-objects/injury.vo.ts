@@ -171,4 +171,6 @@ export interface Injury {
   createdAt: string;
   updatedAt?: string;
   healedAt?: string;
+  /** Day of the campaign when it was received (workspace spec 065); absent in older injuries */
+  gameDay?: number;
 }

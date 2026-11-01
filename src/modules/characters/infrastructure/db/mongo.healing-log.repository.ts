@@ -46,6 +46,7 @@ export class MongoHealingLogRepository implements HealingLogRepository {
       injuryId: doc.injuryId ?? undefined,
       tacticalGameId: doc.tacticalGameId ?? undefined,
       healerName: doc.healerName ?? undefined,
+      gameDay: doc.gameDay ?? undefined,
       summary: doc.summary || {},
     };
   }

@@ -180,6 +180,8 @@ export class InjuryDto {
   updatedAt?: string;
   @ApiPropertyOptional()
   healedAt?: string;
+  @ApiPropertyOptional({ description: 'Day of the campaign when it was received (spec 065)' })
+  gameDay?: number;
 
   static fromEntity(entity: Injury): InjuryDto {
     return Object.assign(new InjuryDto(), entity, { treatments: [...(entity.treatments || [])] });
@@ -231,6 +233,8 @@ export class HealingLogEntryDto {
   tacticalGameId?: string;
   @ApiPropertyOptional()
   healerName?: string;
+  @ApiPropertyOptional({ description: 'Day of the campaign when it happened (spec 065)' })
+  gameDay?: number;
   @ApiProperty({ type: Object, description: 'Data to render with i18n' })
   summary: Record<string, unknown>;
 

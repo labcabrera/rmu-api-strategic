@@ -1,3 +1,6 @@
+import { CharacterRestService } from './application/services/character-rest.service.js';
+import { PassTimeHandler } from './application/cqrs/handlers/pass-time.handler.js';
+import { GameTimeController } from './interfaces/http/game-time.controller.js';
 import { CharacterWriter } from './application/services/character-writer.service.js';
 import { CharacterAccess } from './application/services/character-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
@@ -129,6 +132,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     KafkaRaceEventConsumer,
     KafkaCharacterEventConsumer,
     KafkaCharacterGameEventConsumer,
+    GameTimeController,
   ],
   providers: [
     DeleteCharactersByGameHandler,
@@ -167,6 +171,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateCharacterRaceHandler,
     UpdateTemporaryStatHandler,
     CharacterHealthStore,
+    CharacterRestService,
+    PassTimeHandler,
     HerbInventory,
     CharacterAccess,
     CharacterWriter,

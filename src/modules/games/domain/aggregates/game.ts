@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { GameCreatedEvent, GameUpdatedEvent } from '../events/game.events.js';
+import { GameCalendar, resolveCalendar } from '../value-objects/game-calendar.vo.js';
 import { GameOptions } from '../value-objects/game-options.vo.js';
 import { GamePowerLevel } from '../value-objects/game-power-level.vo.js';
 import type { GameStatus } from '../value-objects/game-status.vo.js';
@@ -23,6 +24,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
     public accessType: AccessType,
     public readonly createdAt: Date,
     public updatedAt: Date | undefined,
+    public calendar: GameCalendar,
   ) {
     super(id);
   }
@@ -43,6 +45,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       props.accessType,
       new Date(),
       undefined,
+      GameCalendar.empty().adjust(props.calendar?.startDate, 0),
     );
     game.apply(new GameCreatedEvent(game));
     return game;
@@ -64,6 +67,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       props.accessType,
       props.createdAt,
       props.updatedAt,
+      resolveCalendar(props.calendar),
     );
   }
 
@@ -77,6 +81,29 @@ export class Game extends BaseAggregateRoot<GameProps> {
     if (imageUrl) this.imageUrl = imageUrl;
     this.updatedAt = new Date();
     this.apply(new GameUpdatedEvent(this));
+  }
+
+  /**
+   * Corrects the calendar by hand (spec 065, decision 6): it applies no effects. Returns whether the counter of days
+   * changed, which leaves an `adjust` entry in the time log.
+   */
+  adjustCalendar(startDate: string | undefined, elapsedDays: number | undefined): { changed: boolean; fromDay: number; toDay: number } {
+    const before = this.calendar;
+    const after = before.adjust(startDate, elapsedDays);
+    if (after.equals(before)) return { changed: false, fromDay: before.currentDay, toDay: before.currentDay };
+    this.calendar = after;
+    this.updatedAt = new Date();
+    this.apply(new GameUpdatedEvent(this));
+    return { changed: after.elapsedDays !== before.elapsedDays, fromDay: before.currentDay, toDay: after.currentDay };
+  }
+
+  /** Time passes (spec 065): the counter moves on; the effects on the characters are applied by the caller. */
+  passTime(days: number, hours: number): { fromDay: number; toDay: number } {
+    const fromDay = this.calendar.currentDay;
+    this.calendar = this.calendar.advance(days, hours);
+    this.updatedAt = new Date();
+    this.apply(new GameUpdatedEvent(this));
+    return { fromDay, toDay: this.calendar.currentDay };
   }
 
   getProps(): GameProps {
@@ -95,6 +122,7 @@ export class Game extends BaseAggregateRoot<GameProps> {
       accessType: this.accessType,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      calendar: this.calendar,
     };
   }
 }

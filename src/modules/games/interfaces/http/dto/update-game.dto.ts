@@ -4,6 +4,7 @@ import { IsObject, IsOptional, IsString, ValidateNested, IsInt, Min } from 'clas
 import { UpdateGameCommand } from '../../../application/cqrs/commands/update-game.command.js';
 import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
+import { UpdateGameCalendarDto } from './game-calendar.dto.js';
 
 export class UpdateGameDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign', required: false })
@@ -40,6 +41,17 @@ export class UpdateGameDto {
   @IsOptional()
   imageUrl?: string;
 
+  @ApiProperty({
+    description: 'Start date and correction of the elapsed days (spec 065, decision 6)',
+    type: UpdateGameCalendarDto,
+    required: false,
+  })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => UpdateGameCalendarDto)
+  calendar?: UpdateGameCalendarDto;
+
   @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
   @Type(() => Number)
   @IsInt()
@@ -59,6 +71,7 @@ export class UpdateGameDto {
       userId,
       roles,
       dto.version,
+      dto.calendar,
     );
   }
 }

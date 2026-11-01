@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { GameCalendarModel, GameCalendarSchema } from './game-calendar.model.js';
 import { Document } from 'mongoose';
 import type { GameStatus } from '../../../domain/value-objects/game-status.vo.js';
 import { GameOptions } from './game-options.model.js';
@@ -33,6 +34,10 @@ export class GameModel {
 
   @Prop({ required: true })
   powerLevel: GamePowerLevel;
+
+  /** Workspace spec 065; absent in games stored before it */
+  @Prop({ type: GameCalendarSchema, required: false })
+  calendar?: GameCalendarModel;
 
   @Prop({ type: String, required: false })
   shortDescription: string | undefined;

@@ -10,6 +10,7 @@ import { MongoQueryCriteriaMapper } from '../../../shared/infrastructure/db/mong
 import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
 import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo.js';
 import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo.js';
+import { resolveCalendar } from '../../domain/value-objects/game-calendar.vo.js';
 
 @Injectable()
 export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument> implements GameRepository {
@@ -78,6 +79,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       status: doc.status,
       options: this.mapOptions(doc),
       powerLevel: this.mapPowerLevel(doc),
+      calendar: resolveCalendar(doc.calendar),
       // Mapped since spec 020: an update writes every prop, and an unmapped one would be removed (F-strategic-21)
       shortDescription: doc.shortDescription,
       description: doc.description,

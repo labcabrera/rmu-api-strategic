@@ -3,6 +3,7 @@ import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
 import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command.js';
 import { GameDeletedEvent } from '../../../domain/events/game.events.js';
+import { type GameTimeLogRepository, GAME_TIME_LOG_REPOSITORY } from '../../ports/game-time-log-repository.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 /**
@@ -16,12 +17,14 @@ export class DeleteGamesByRealmHandler implements ICommandHandler<DeleteGamesByR
   constructor(
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_TIME_LOG_REPOSITORY) private readonly timeLogRepository: GameTimeLogRepository,
   ) {}
 
   async execute(command: DeleteGamesByRealmCommand): Promise<void> {
     const games = await this.gameRepository.findByRealm(command.realmId);
     this.logger.log(`Deleting ${games.length} games of realm ${command.realmId}`);
     for (const game of games) {
+      await this.timeLogRepository.deleteByGameId(game.id);
       await this.gameRepository.deleteById(game.id);
       await this.events.publish('game', new GameDeletedEvent(game));
     }

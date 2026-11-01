@@ -30,6 +30,9 @@ export class CharacterHealingLogModel {
   @Prop({ type: String, required: false })
   healerName?: string;
 
+  @Prop({ type: Number, required: false })
+  gameDay?: number;
+
   @Prop({ type: Object, required: false, default: {} })
   summary: Record<string, unknown>;
 }
