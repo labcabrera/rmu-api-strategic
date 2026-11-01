@@ -4,6 +4,7 @@ import type { GameStatus } from '../../../domain/value-objects/game-status.vo.js
 import { Game } from '../../../domain/aggregates/game.js';
 import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
+import { GameCalendarDto } from './game-calendar.dto.js';
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 
 export class GameDto {
@@ -30,6 +31,9 @@ export class GameDto {
 
   @ApiProperty({ description: 'Game power level', type: GamePowerLevelDto })
   powerLevel: GamePowerLevelDto;
+
+  @ApiProperty({ description: 'Calendar of the campaign (spec 065)', type: GameCalendarDto })
+  calendar: GameCalendarDto;
 
   @ApiProperty({ description: 'Game short description', type: String, required: false })
   shortDescription: string | undefined;
@@ -59,6 +63,7 @@ export class GameDto {
     dto.status = entity.status;
     dto.options = GameOptionsDto.fromEntity(entity.options);
     dto.powerLevel = GamePowerLevelDto.fromEntity(entity.powerLevel);
+    dto.calendar = GameCalendarDto.fromEntity(entity.calendar);
     dto.shortDescription = entity.shortDescription;
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;

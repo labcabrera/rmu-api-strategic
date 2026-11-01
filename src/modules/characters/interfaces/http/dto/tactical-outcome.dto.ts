@@ -300,6 +300,7 @@ export class TacticalOutcomeDto {
       createdAt: raw.createdAt || new Date().toISOString(),
       updatedAt: raw.updatedAt,
       healedAt: raw.healedAt,
+      gameDay: raw.gameDay,
     };
   }
 

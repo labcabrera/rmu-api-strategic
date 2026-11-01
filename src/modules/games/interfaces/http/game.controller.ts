@@ -13,6 +13,9 @@ import { DeleteGameCommand } from '../../application/cqrs/commands/delete-game.c
 import { UpdateGameCommand } from '../../application/cqrs/commands/update-game.command.js';
 import { PagedQueryDto } from '../../../shared/interfaces/http/dto/paged-rsql-query.js';
 import { Page } from '../../../shared/application/pagination/page.js';
+import { GetGameTimeLogQuery } from '../../application/cqrs/queries/get-game-time-log.query.js';
+import type { GameTimeLogEntry } from '../../domain/value-objects/game-time-log-entry.vo.js';
+import { GameTimeLogEntryDto, GameTimeLogPageDto } from './dto/game-time-log.dto.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
 import { CurrentUser } from '../../../shared/interfaces/http/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../../shared/interfaces/http/authenticated-request.js';
@@ -36,6 +39,17 @@ export class GameController {
     const query = new GetGameQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetGameQuery, Game>(query);
     return GameDto.fromEntity(entity);
+  }
+
+  @Get(':id/time-log')
+  @ApiOperation({ operationId: 'getGameTimeLog', summary: 'Time log of the campaign, newest first (spec 065)' })
+  @ApiOkResponse({ type: GameTimeLogPageDto })
+  @ApiErrors({ 404: 'Game not found' })
+  async getTimeLog(@Param('id') id: string, @Query() dto: PagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
+    const query = new GetGameTimeLogQuery(id, dto.page, dto.size, user.id, user.roles);
+    const page = await this.queryBus.execute<GetGameTimeLogQuery, Page<GameTimeLogEntry>>(query);
+    const content = page.content.map(entry => GameTimeLogEntryDto.fromEntity(entry));
+    return new Page<GameTimeLogEntryDto>(content, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
   @Get('')

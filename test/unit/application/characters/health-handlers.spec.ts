@@ -6,6 +6,7 @@ import { RollPermanentInjuryCommand } from '../../../../src/modules/characters/a
 import { TreatInjuryCommand } from '../../../../src/modules/characters/application/cqrs/commands/treat-injury.command.js';
 import { ApplyTacticalOutcomeHandler } from '../../../../src/modules/characters/application/cqrs/handlers/apply-tactical-outcome.handler.js';
 import { RestCharacterHandler } from '../../../../src/modules/characters/application/cqrs/handlers/rest-character.handler.js';
+import { CharacterRestService } from '../../../../src/modules/characters/application/services/character-rest.service.js';
 import { RollInjuryRecoveryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-injury-recovery.handler.js';
 import { RollPermanentInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/roll-permanent-injury.handler.js';
 import { TreatInjuryHandler } from '../../../../src/modules/characters/application/cqrs/handlers/treat-injury.handler.js';
@@ -460,7 +461,7 @@ describe('Health handlers', () => {
       const patient = character('patient');
       patient.hp.current = 0;
       const { store, tables } = setup([patient]);
-      const handler = new RestCharacterHandler(store, tables);
+      const handler = new RestCharacterHandler(store, new CharacterRestService(tables));
       await expect(handler.execute(new RestCharacterCommand('patient', 0, 0, false, MASTER, []))).rejects.toMatchObject({
         code: 'err-rest-time-required',
       });

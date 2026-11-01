@@ -125,6 +125,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   public appliedTacticalGames: string[] = [];
   public importId: string | undefined = undefined;
   private pendingHealingLog: HealingLogEntry[] = [];
+  /** Injuries received since the aggregate was loaded, to stamp them with the day of the campaign (spec 065) */
+  private newInjuryIds = new Set<string>();
 
   private constructor(
     id: string,
@@ -667,6 +669,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       throw new ValidationError(`Injury ${injury.id} already exists`, 'err-injury-already-exists');
     }
     this.injuries.push(injury);
+    this.newInjuryIds.add(injury.id);
     this.recordHealing(
       'manual',
       { action: 'injury-added', type: injury.type, severity: injury.severity, penalty: injury.penalty },
@@ -923,6 +926,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       ),
     };
     this.injuries.push(injury);
+    this.newInjuryIds.add(injury.id);
     const hits = poison.immediateHits ? PoisonStages.rollHits(poison.immediateHits, random) : 0;
     if (hits > 0) {
       this.hp.current -= hits;
@@ -1090,6 +1094,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     );
     this.hp.current = state.hp.current;
     this.status = state.status;
+    const previousIds = new Set(this.injuries.map(i => i.id));
+    state.injuries.filter(i => !previousIds.has(i.id)).forEach(i => this.newInjuryIds.add(i.id));
     this.injuries = state.injuries;
     this.conditions = state.conditions;
     this.appliedTacticalGames = [...this.appliedTacticalGames, outcome.tacticalGameId];
@@ -1118,6 +1124,19 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     extra: Partial<Pick<HealingLogEntry, 'injuryId' | 'tacticalGameId' | 'healerName'>> = {},
   ): void {
     this.pendingHealingLog.push({ id: randomUUID(), at: new Date().toISOString(), kind, summary, ...extra });
+  }
+
+  /**
+   * Stamps the day of the campaign (workspace spec 065) on the healing log entries still to be stored and on the
+   * injuries received since the load, when they have none.
+   */
+  stampGameDay(gameDay: number): void {
+    this.pendingHealingLog = this.pendingHealingLog.map(entry => (entry.gameDay === undefined ? { ...entry, gameDay } : entry));
+    if (this.newInjuryIds.size === 0) return;
+    this.injuries = this.injuries.map(injury =>
+      this.newInjuryIds.has(injury.id) && injury.gameDay === undefined ? { ...injury, gameDay } : injury,
+    );
+    this.newInjuryIds.clear();
   }
 
   /** Healing log entries produced since the last call, to be stored by the repository. */

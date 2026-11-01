@@ -1,4 +1,5 @@
 import { CommandHandler, type ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { resolveCalendar } from '../../../domain/value-objects/game-calendar.vo.js';
 import { Inject } from '@nestjs/common';
 import { Game } from '../../../domain/aggregates/game.js';
 import { CreateGameCommand } from '../commands/create-game.command.js';
@@ -36,6 +37,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       imageUrl: command.imageUrl,
       owner: command.userId,
       accessType: 'private',
+      calendar: resolveCalendar({ startDate: command.startDate }),
     } as CreateGameProps;
 
     const game = Game.create(props);

@@ -4,6 +4,7 @@ import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validato
 import { CreateGameCommand } from '../../../application/cqrs/commands/create-game.command.js';
 import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
+import { CreateGameCalendarDto } from './game-calendar.dto.js';
 
 export class CreateGameDto {
   @ApiProperty({ description: 'Game name', example: 'Mordor Campaign' })
@@ -43,6 +44,16 @@ export class CreateGameDto {
   @IsOptional()
   imageUrl: string | null;
 
+  @ApiProperty({
+    description: 'Calendar of the campaign: only its start date, a new game is at day 1 (spec 065)',
+    type: CreateGameCalendarDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateGameCalendarDto)
+  calendar?: CreateGameCalendarDto;
+
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
     return new CreateGameCommand(
       dto.name,
@@ -54,6 +65,7 @@ export class CreateGameDto {
       dto.imageUrl,
       userId,
       roles,
+      dto.calendar?.startDate,
     );
   }
 }

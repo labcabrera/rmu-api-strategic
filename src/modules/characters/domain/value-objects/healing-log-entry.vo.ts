@@ -8,6 +8,8 @@ export interface HealingLogEntry {
   injuryId?: string;
   tacticalGameId?: string;
   healerName?: string;
+  /** Day of the campaign when it happened (workspace spec 065); absent in older entries */
+  gameDay?: number;
   /** Data to render with i18n */
   summary: Record<string, unknown>;
 }

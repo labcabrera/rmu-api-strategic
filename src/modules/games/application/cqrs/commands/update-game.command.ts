@@ -15,6 +15,8 @@ export class UpdateGameCommand extends AuthenticatedCommand {
     roles: string[],
     /** The version the client read; undefined applies the change to the current one. */
     public readonly expectedVersion?: number,
+    /** Workspace spec 065, decision 6 */
+    public readonly calendar?: { startDate?: string; elapsedDays?: number },
   ) {
     super(userId, roles);
   }

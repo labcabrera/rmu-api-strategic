@@ -10,6 +10,10 @@ import { SharedModule } from '../shared/shared.module.js';
 import { GameController } from './interfaces/http/game.controller.js';
 import { MongoGameRepository } from './infrastructure/db/mongo.game.repository.js';
 import { GameModel, GameSchema } from './infrastructure/persistence/models/game.model.js';
+import { GameTimeLogModel, GameTimeLogSchema } from './infrastructure/persistence/models/game-time-log.model.js';
+import { MongoGameTimeLogRepository } from './infrastructure/db/mongo.game-time-log.repository.js';
+import { GAME_TIME_LOG_REPOSITORY } from './application/ports/game-time-log-repository.port.js';
+import { GetGameTimeLogHandler } from './application/cqrs/handlers/get-game-time-log.handler.js';
 import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter.js';
 import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler.js';
 import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler.js';
@@ -29,6 +33,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     CqrsModule,
     MongooseModule.forFeature([
       { name: GameModel.name, schema: GameSchema },
+      { name: GameTimeLogModel.name, schema: GameTimeLogSchema },
       // The players of a game (GamePlayersPort)
       { name: CharacterModel.name, schema: CharacterSchema },
     ]),
@@ -38,6 +43,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
   providers: [
     GetGameHandler,
     GetGamesHandler,
+    GetGameTimeLogHandler,
     CreateGameHandler,
     UpdateGameHandler,
     DeleteGameHandler,
@@ -46,6 +52,10 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     {
       provide: GAME_REPOSITORY,
       useClass: MongoGameRepository,
+    },
+    {
+      provide: GAME_TIME_LOG_REPOSITORY,
+      useClass: MongoGameTimeLogRepository,
     },
     {
       provide: REALM_CLIENT,
@@ -60,6 +70,6 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
       useClass: GameGuardAdapter,
     },
   ],
-  exports: [GAME_REPOSITORY, GameAccess, REALM_CLIENT],
+  exports: [GAME_REPOSITORY, GAME_TIME_LOG_REPOSITORY, GameAccess, REALM_CLIENT],
 })
 export class GamesModule {}
