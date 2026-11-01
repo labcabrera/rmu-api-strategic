@@ -76,6 +76,24 @@ describe('import planner (spec 024, decision 5)', () => {
     expect(character.traits.find(t => t.traitId === 'lost')!.missingReference).toBe(true);
   });
 
+  it('points the enchantment of an item to the imported alchemist, or keeps only its name (workspace spec 064)', () => {
+    const file = faction();
+    const soldier = file.data.characters.find(entry => entry.character.name === 'Soldier')!;
+    const enchantment = {
+      projectId: 'project-1',
+      itemLevel: 4,
+      alchemistName: 'Soldier',
+      spells: [{ spellId: 'spell-1', name: 'E2E spell', level: 4, listCode: 'e2e-list' }],
+      properties: [],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    };
+    soldier.items[0].enchantment = { ...enchantment, alchemistRef: soldier.ref };
+    const [{ character, items }] = planImport([soldier], [], target()).characters;
+    expect(items[0].enchantment).toEqual({ ...enchantment, alchemistId: character.id });
+    soldier.items[0].enchantment = enchantment;
+    expect(planImport([soldier], [], target()).characters[0].items[0].enchantment).toEqual({ ...enchantment, alchemistId: null });
+  });
+
   // Spec 044, decision 4: the export format has no category; the destination catalog gives it
   it('sets the category of each skill from the catalog map, and none for a skill the catalog lacks', () => {
     const file = faction();

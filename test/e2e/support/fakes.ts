@@ -30,6 +30,8 @@ import { NotFoundError } from '../../../src/modules/shared/domain/errors/errors.
 import { UpstreamBadGatewayError } from '../../../src/modules/shared/infrastructure/http/http-client.js';
 import type { SpellListClientPort, SpellResponse } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
 import type { EnumerationClientPort } from '../../../src/modules/characters/application/ports/enumeration-client.port.js';
+import type { AlchemyTablesClientPort } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
+import type { AlchemyTables } from '../../../src/modules/enchantments/domain/value-objects/alchemy.vo.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
 import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
@@ -124,16 +126,57 @@ export const SPELL_LISTS: SpellListInfo[] = [
   { id: 'list-open', code: 'e2e-open', name: 'E2E open', realms: ['essence'], type: 'open', professionId: null },
   { id: 'list-evil', code: 'e2e-evil', name: 'E2E evil', realms: ['essence'], type: 'evil', professionId: null },
   { id: 'list-channeling', code: 'e2e-channeling', name: 'E2E channeling', realms: ['channeling'], type: 'open', professionId: null },
+  // Workspace spec 064: an invented alchemy list of the magician
+  { id: 'list-alchemy', code: 'e2e-alchemy', name: 'E2E alchemy', realms: ['essence'], type: 'base', professionId: 'magician' },
 ];
 
-export const SPELLS: SpellResponse[] = [1, 2, 3].map(level => ({
-  id: `spell-base-${level}`,
-  spellListId: 'list-base',
-  name: `E2E spell ${level}`,
+const alchemySpell = (id: string, level: number, alchemy: Record<string, unknown> | null): SpellResponse => ({
+  id,
+  spellListId: 'list-alchemy',
+  name: `E2E ${id}`,
   level,
-  modifiers: { powerPoints: level === 2 ? 0 : null },
+  modifiers: { powerPoints: null, type: alchemy ? 'alchemical' : 'utility' },
+  alchemy,
   effects: [],
-}));
+});
+
+/** Invented spells of the alchemy list (workspace spec 064): a Work spell, a weapon bonus, a spell adder, a plain one. */
+export const ALCHEMY_SPELLS: SpellResponse[] = [
+  alchemySpell('spell-alc-work', 2, { failureTable: 'general', perItem: true, alters: true, effect: null }),
+  alchemySpell('spell-alc-weapon', 4, { failureTable: 'bonus', perItem: false, alters: false, effect: { kind: 'attack', value: 10 } }),
+  alchemySpell('spell-alc-adder', 1, {
+    failureTable: 'power-enhancer',
+    perItem: false,
+    alters: false,
+    effect: { kind: 'spell-adder', value: 1 },
+  }),
+  alchemySpell('spell-alc-plain', 1, null),
+  alchemySpell('spell-alc-high', 9, { failureTable: 'bonus', perItem: false, alters: false, effect: null }),
+];
+
+/** Invented alchemy tables of rmu-api-core (workspace spec 064): rows and multipliers are not the rulebook ones. */
+export const ALCHEMY_TABLES: AlchemyTables = {
+  failureTables: {
+    bonus: [
+      { min: 1, max: 65, text: 'E2E small trouble' },
+      { min: 66, max: 66, text: 'E2E lucky accident', serendipity: 'minor' },
+      { min: 67, max: null, text: 'E2E long delay' },
+    ],
+  },
+  powerLevels: { superior: 1, heroic: 2 },
+};
+
+export const SPELLS: SpellResponse[] = [
+  ...[1, 2, 3].map(level => ({
+    id: `spell-base-${level}`,
+    spellListId: 'list-base',
+    name: `E2E spell ${level}`,
+    level,
+    modifiers: { powerPoints: level === 2 ? 0 : null },
+    effects: [],
+  })),
+  ...ALCHEMY_SPELLS,
+];
 
 export const RACE = {
   id: 'race-001',
@@ -496,7 +539,9 @@ export function apiFakes() {
       Promise.resolve(ENUMERATIONS.filter(e => e.category === category && (e.realmId === null || e.realmId === realmId)).map(e => e.key)),
   };
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
+  const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
   return {
+    alchemyTablesClient,
     npcClient,
     enumerationClient,
     tradingTablesClient,

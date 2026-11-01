@@ -8,6 +8,7 @@ import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.v
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
 import type { ItemModifier, ItemModifierSource } from '../../../items/domain/value-objects/item-modifier.vo.js';
+import type { ItemEnchantment } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
 import type {
   CharacterEntry,
@@ -19,6 +20,7 @@ import type {
   ExportReferences,
   FactionExport,
   ItemExport,
+  ItemExportEnchantment,
   ItemExportModifier,
   ItemExportModifierSource,
 } from '../format/export-format.js';
@@ -204,6 +206,7 @@ function modifierSourceToExport(source: ItemModifierSource, refs: ExportRefs, cr
   if (source.tacticalGameName) result.tacticalGameName = source.tacticalGameName;
   if (source.round !== undefined && source.round !== null) result.round = source.round;
   if (source.actionId) result.actionId = source.actionId;
+  if (source.projectId) result.projectId = source.projectId;
   if (source.kind === 'crafting' || source.kind === 'repair') {
     const crafter = crafterOf(source);
     const crafterRef = crafter?.id ? refs.characters.get(crafter.id) : undefined;
@@ -226,6 +229,24 @@ function modifierToExport(modifier: ItemModifier, refs: ExportRefs, crafterOf: C
   if (modifier.description) result.description = modifier.description;
   if (modifier.condition) result.condition = modifier.condition;
   return result;
+}
+
+/** Workspace spec 064: the alchemist is a ref when it is a character of the file, otherwise only its name. */
+function enchantmentToExport(enchantment: ItemEnchantment, refs: ExportRefs): ItemExportEnchantment {
+  const alchemistRef = enchantment.alchemistId ? refs.characters.get(enchantment.alchemistId) : undefined;
+  return {
+    projectId: enchantment.projectId,
+    itemLevel: enchantment.itemLevel,
+    ...(alchemistRef ? { alchemistRef } : {}),
+    alchemistName: enchantment.alchemistName,
+    spells: enchantment.spells.map(spell => ({ spellId: spell.spellId, name: spell.name, level: spell.level, listCode: spell.listCode })),
+    properties: enchantment.properties.map(property => ({
+      kind: property.kind,
+      value: property.value,
+      ...(property.target ? { target: property.target } : {}),
+    })),
+    completedAt: enchantment.completedAt,
+  };
 }
 
 /** An item of the file. Items stored before specs 019 and 023 get the fields they lack. */
@@ -252,6 +273,7 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
     ...(item.carats !== null && item.carats !== undefined ? { carats: item.carats } : {}),
     ...(item.jewelryClass ? { jewelryClass: item.jewelryClass } : {}),
     ...(item.cutFactor !== null && item.cutFactor !== undefined ? { cutFactor: item.cutFactor } : {}),
+    ...(item.enchantment ? { enchantment: enchantmentToExport(item.enchantment, refs) } : {}),
     // Temporary modifiers live only in tactical games
     modifiers: (item.modifiers || []).filter(modifier => !modifier.temporary).map(modifier => modifierToExport(modifier, refs, crafterOf)),
   };

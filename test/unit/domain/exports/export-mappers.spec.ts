@@ -129,6 +129,32 @@ describe('export mappers (spec 024)', () => {
     ]);
   });
 
+  it('exports the enchantment of an item with the alchemist as a ref, or only its name (workspace spec 064)', () => {
+    const enchantment = {
+      projectId: 'project-1',
+      itemLevel: 8,
+      alchemistId: 'smith-1',
+      alchemistName: 'Smith',
+      spells: [{ spellId: 'spell-1', name: 'E2E spell', level: 8, listCode: 'e2e-list' }],
+      properties: [{ kind: 'spell-adder' as const, value: 1, target: null }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    };
+    const enchanted = item({ id: 'sword-1', enchantment });
+    const inFile = itemToExport(enchanted, assignRefs(['smith-1'], ['sword-1']), () => undefined);
+    expect(inFile.enchantment).toEqual({
+      projectId: 'project-1',
+      itemLevel: 8,
+      alchemistRef: 'c1',
+      alchemistName: 'Smith',
+      spells: enchantment.spells,
+      properties: [{ kind: 'spell-adder', value: 1 }],
+      completedAt: enchantment.completedAt,
+    });
+    const outside = itemToExport(enchanted, assignRefs([], ['sword-1']), () => undefined);
+    expect(outside.enchantment).not.toHaveProperty('alchemistRef');
+    expect(outside.enchantment).toMatchObject({ alchemistName: 'Smith' });
+  });
+
   it('fills the fields that items stored before specs 019 and 023 lack', () => {
     const old = item({ id: 'old-1', modifiers: undefined, catalog: undefined, value: undefined, unrepairable: undefined });
     const exported = itemToExport(old, assignRefs([], ['old-1']), () => undefined);

@@ -11,4 +11,6 @@ export interface Profession {
   fixedRealmTypes?: string[];
   /** Realms an arms profession may choose one from */
   availableRealmTypes?: string[];
+  /** Workspace spec 064: Base lists of the profession it may develop as Base (null or missing: no limit). */
+  baseListLimit?: number | null;
 }

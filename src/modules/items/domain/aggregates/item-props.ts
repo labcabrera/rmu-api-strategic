@@ -7,6 +7,7 @@ import type { ItemModifier } from '../value-objects/item-modifier.vo.js';
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../value-objects/item-material.vo.js';
+import type { ItemEnchantment } from '../value-objects/item-enchantment.vo.js';
 import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
 
 export interface ItemProps {
@@ -52,4 +53,6 @@ export interface ItemProps {
   jewelryClass?: JewelryClass | null;
   /** Workspace spec 062: modern cut multiplier of a gem (optional rule). */
   cutFactor?: number | null;
+  /** Workspace spec 064: what an alchemist enchanted it with. */
+  enchantment?: ItemEnchantment | null;
 }

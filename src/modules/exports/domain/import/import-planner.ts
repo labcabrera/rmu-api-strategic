@@ -15,7 +15,15 @@ import { Item } from '../../../items/domain/aggregates/item.js';
 import { ItemCreatedEvent } from '../../../items/domain/events/item.events.js';
 import type { ItemModifier, ItemModifierSource } from '../../../items/domain/value-objects/item-modifier.vo.js';
 import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
-import type { CharacterEntry, CharacterExport, ExportRef, ItemExport, ItemExportModifier } from '../format/export-format.js';
+import type {
+  CharacterEntry,
+  CharacterExport,
+  ExportRef,
+  ItemExport,
+  ItemExportEnchantment,
+  ItemExportModifier,
+} from '../format/export-format.js';
+import type { ItemEnchantment } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 
 /** Where the imported entities go and what the destination catalog lacks (workspace spec 024, decisions 5, 8 and 10). */
 export interface ImportTarget {
@@ -195,6 +203,14 @@ function modifierSource(
   return result;
 }
 
+/** Workspace spec 064: the alchemist of the enchantment is the imported character, or only its name. */
+function enchantmentOf(data: ItemExportEnchantment, characterIds: Map<ExportRef, string>, target: ImportTarget): ItemEnchantment {
+  const { alchemistRef, alchemistName, ...rest } = data;
+  const alchemistId = alchemistRef ? (characterIds.get(alchemistRef) ?? null) : null;
+  const name = alchemistName || (alchemistRef ? target.characterNames.get(alchemistRef) : undefined) || '';
+  return { ...rest, alchemistId, alchemistName: name };
+}
+
 function buildItem(
   data: ItemExport,
   id: string,
@@ -241,6 +257,7 @@ function buildItem(
     ...(data.carats !== undefined ? { carats: data.carats } : {}),
     ...(data.jewelryClass ? { jewelryClass: data.jewelryClass } : {}),
     ...(data.cutFactor !== undefined ? { cutFactor: data.cutFactor } : {}),
+    ...(data.enchantment ? { enchantment: enchantmentOf(data.enchantment, characterIds, target) } : {}),
     accessType: 'public',
     owner: target.owner,
     createdAt: new Date(),

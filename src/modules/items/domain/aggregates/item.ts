@@ -8,11 +8,12 @@ import { ItemInfo } from '../value-objects/item-info.vo.js';
 import type { AccessType } from '../../../shared/domain/entities/access-type.js';
 import { ItemShield } from '../value-objects/item-shield.vo.js';
 import { type ItemCondition, type ItemModifier, ItemModifiers } from '../value-objects/item-modifier.vo.js';
-import { NotFoundError, ValidationError } from '../../../shared/domain/errors/errors.js';
+import { ConflictError, NotFoundError, ValidationError } from '../../../shared/domain/errors/errors.js';
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../value-objects/item-material.vo.js';
+import type { ItemEnchantment } from '../value-objects/item-enchantment.vo.js';
 import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
 
 /** Item type of the coins of a character (spec 023, decision 7: they weigh). */
@@ -29,6 +30,8 @@ export class Item extends BaseAggregateRoot<ItemProps> {
   public carats: number | null = null;
   public jewelryClass: JewelryClass | null = null;
   public cutFactor: number | null = null;
+  /** Workspace spec 064: what an alchemist enchanted it with. */
+  public enchantment: ItemEnchantment | null = null;
 
   private constructor(
     public id: string,
@@ -125,11 +128,12 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     return item;
   }
 
-  private applyInstanceFields(props: Pick<ItemProps, 'size' | 'carats' | 'jewelryClass' | 'cutFactor'>): void {
+  private applyInstanceFields(props: Pick<ItemProps, 'size' | 'carats' | 'jewelryClass' | 'cutFactor' | 'enchantment'>): void {
     this.size = props.size ?? null;
     this.carats = props.carats ?? null;
     this.jewelryClass = props.jewelryClass ?? null;
     this.cutFactor = props.cutFactor ?? null;
+    this.enchantment = props.enchantment ?? null;
   }
 
   update(props: Partial<Omit<ItemProps, 'id' | 'gameId' | 'createdAt' | 'updatedAt'>>): void {
@@ -234,6 +238,20 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     this.apply(new ItemUpdatedEvent(this));
   }
 
+  /**
+   * Workspace spec 064, decision 6: an alchemist finished enchanting it. The item keeps the enchantment, gains its
+   * modifiers and is worth the market value of the enchantment (per unit). It is enchanted once.
+   */
+  enchant(enchantment: ItemEnchantment, modifiers: ItemModifier[], unitValue: number): void {
+    if (this.enchantment) throw new ConflictError(`Item ${this.id} is already enchanted`, 'err-enchantment-item-enchanted');
+    modifiers.forEach(modifier => ItemModifiers.validate(modifier));
+    this.enchantment = enchantment;
+    this.modifiers = [...this.modifiers, ...modifiers.map(modifier => ({ ...modifier }))];
+    this.value = unitValue;
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
   /** Workspace spec 042, decision 11: poison on a weapon, replacing the one it had. */
   coat(coating: ItemCoating): void {
     if (!this.weapon) throw new ValidationError('Only a weapon can be coated with poison', 'err-item-not-weapon');
@@ -282,6 +300,7 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       ...(this.carats !== null ? { carats: this.carats } : {}),
       ...(this.jewelryClass ? { jewelryClass: this.jewelryClass } : {}),
       ...(this.cutFactor !== null ? { cutFactor: this.cutFactor } : {}),
+      ...(this.enchantment ? { enchantment: this.enchantment } : {}),
     };
   }
 }

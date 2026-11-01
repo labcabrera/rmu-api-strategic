@@ -74,6 +74,10 @@ export function validateConsistency(file: ExportFile): ImportError[] {
         invalid(`${path}.modifiers[${index}].source.crafterRef`, `Crafter ${crafterRef} is not a character of the file`, crafterRef);
       }
     });
+    const alchemistRef = item.enchantment?.alchemistRef;
+    if (alchemistRef && !characterRefs.has(alchemistRef)) {
+      invalid(`${path}.enchantment.alchemistRef`, `Alchemist ${alchemistRef} is not a character of the file`, alchemistRef);
+    }
   }
   return errors;
 }

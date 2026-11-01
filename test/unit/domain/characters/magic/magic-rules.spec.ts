@@ -97,6 +97,18 @@ describe('spell list rules', () => {
     expect(spellListSkill(base, 'illusionist')).toBe('restricted-spell-list');
   });
 
+  it('takes the Base lists of the own profession beyond its limit as Closed (workspace spec 064)', () => {
+    const base = list({ type: 'base', professionId: 'adept' });
+    expect(spellListSkill(base, 'adept', { baseListLimit: 6, baseLists: 5 })).toBe('base-spell-list');
+    // The seventh one
+    expect(spellListSkill(base, 'adept', { baseListLimit: 6, baseLists: 6 })).toBe('closed-spell-list');
+    expect(listTypeModifier(spellListSkill(base, 'adept', { baseListLimit: 6, baseLists: 6 }))).toBe(-5);
+    expect(developmentCostKey(spellListSkill(base, 'adept', { baseListLimit: 6, baseLists: 6 }), 'spellcasting', [])).toBe('spells-closed');
+    // No limit, and the lists of another profession
+    expect(spellListSkill(base, 'adept', { baseListLimit: null, baseLists: 20 })).toBe('base-spell-list');
+    expect(spellListSkill(base, 'sanctifier', { baseListLimit: 6, baseLists: 6 })).toBe('restricted-spell-list');
+  });
+
   it('takes Open lists as Open and Closed and Evil lists as Closed', () => {
     expect(spellListSkill(list({ type: 'open' }), 'fighter')).toBe('open-spell-list');
     expect(spellListSkill(list({ type: 'closed' }), 'fighter')).toBe('closed-spell-list');

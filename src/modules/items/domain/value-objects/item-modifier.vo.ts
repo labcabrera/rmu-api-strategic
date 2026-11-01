@@ -1,8 +1,11 @@
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
 
-/** Kind of modifier of an item (spec 019): breakage damage, quality or material, or anything else of the game master. */
-export type ItemModifierType = 'breakage' | 'quality' | 'custom';
-export const ITEM_MODIFIER_TYPES: ItemModifierType[] = ['breakage', 'quality', 'custom'];
+/**
+ * Kind of modifier of an item (spec 019): breakage damage, quality or material, anything else of the game master, or
+ * (workspace spec 064) what an alchemist enchanted.
+ */
+export type ItemModifierType = 'breakage' | 'quality' | 'custom' | 'enchantment';
+export const ITEM_MODIFIER_TYPES: ItemModifierType[] = ['breakage', 'quality', 'custom', 'enchantment'];
 
 /** Uses of the item the modifier applies to: every use, only its breakage checks, or one kind of use. */
 export type ItemModifierTarget = 'all' | 'breakage' | 'attack' | 'defense' | 'maneuver';
@@ -10,9 +13,10 @@ export const ITEM_MODIFIER_TARGETS: ItemModifierTarget[] = ['all', 'breakage', '
 
 /**
  * Where a modifier comes from: a tactical game, the game master, or (workspace spec 023, decision 3) the crafting or
- * repair of the item, or its catalog type. `ledgerEntryId` points to the operation in the item ledger.
+ * repair of the item, or its catalog type, or (workspace spec 064) its enchantment. `ledgerEntryId` points to the operation in the item ledger.
  */
-export type ItemModifierSourceKind = 'tactical' | 'manual' | 'crafting' | 'repair' | 'catalog';
+export type ItemModifierSourceKind = 'tactical' | 'manual' | 'crafting' | 'repair' | 'catalog' | 'enchantment';
+export const ITEM_MODIFIER_SOURCE_KINDS: ItemModifierSourceKind[] = ['tactical', 'manual', 'crafting', 'repair', 'catalog', 'enchantment'];
 
 export interface ItemModifierSource {
   kind: ItemModifierSourceKind;
@@ -24,6 +28,8 @@ export interface ItemModifierSource {
   /** Spec 024: character who crafted or repaired it, and its name (kept alone when the character is not in this game). */
   crafterId?: string;
   crafterName?: string;
+  /** Workspace spec 064: the enchantment project that made it. */
+  projectId?: string;
 }
 
 /** A modifier of an item (spec 019, decision 2). Breakage damage is `type: 'breakage', appliesTo: 'all'`. */
