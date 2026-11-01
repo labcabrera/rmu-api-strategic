@@ -10,6 +10,7 @@ import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
+import type { ItemEnchantment } from '../../../domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, type ItemSize, JEWELRY_CLASSES, type JewelryClass } from '../../../domain/services/item-unit-value.js';
 
 export class ItemDto {
@@ -102,6 +103,13 @@ export class ItemDto {
   @ApiProperty({ description: 'Modern cut multiplier of a gem (workspace spec 062)', nullable: true, example: 5 })
   cutFactor: number | null;
 
+  @ApiProperty({
+    description: 'What an alchemist enchanted it with: item level, spells and properties (workspace spec 064)',
+    type: Object,
+    nullable: true,
+  })
+  enchantment: ItemEnchantment | null;
+
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
     dto.version = entity.version;
@@ -131,6 +139,7 @@ export class ItemDto {
     dto.carats = entity.carats ?? null;
     dto.jewelryClass = entity.jewelryClass ?? null;
     dto.cutFactor = entity.cutFactor ?? null;
+    dto.enchantment = entity.enchantment ?? null;
     return dto;
   }
 }

@@ -8,6 +8,7 @@ import { ItemShield } from './item-shield.model.js';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
+import type { ItemEnchantment } from '../../../domain/value-objects/item-enchantment.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export type ItemDocument = ItemModel & Document;
@@ -97,6 +98,10 @@ export class ItemModel {
 
   @Prop({ type: Number, required: false })
   cutFactor?: number | null;
+
+  /** Workspace spec 064: what an alchemist enchanted it with. */
+  @Prop({ type: Object, required: false })
+  enchantment?: ItemEnchantment | null;
 
   @Prop({ type: Date, required: true })
   createdAt: Date;
