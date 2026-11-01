@@ -22,6 +22,7 @@ import { SPELL_LIST_CLIENT } from '../../../src/modules/characters/application/p
 import { MANEUVER_CLIENT } from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
 import { MATERIAL_CLIENT } from '../../../src/modules/items/application/ports/material-client.port.js';
 import { TRADING_TABLES_CLIENT } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
+import { ALCHEMY_TABLES_CLIENT } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
 import { apiFakes, InMemoryEventPublisher } from './fakes.js';
@@ -126,6 +127,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.spellListClient)
     .overrideProvider(ENUMERATION_CLIENT)
     .useValue(fakes.enumerationClient)
+    .overrideProvider(ALCHEMY_TABLES_CLIENT)
+    .useValue(fakes.alchemyTablesClient)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);

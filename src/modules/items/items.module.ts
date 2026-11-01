@@ -134,6 +134,17 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
       useClass: ApiMaterialClientAdapter,
     },
   ],
-  exports: [ITEM_REPOSITORY, ITEM_CLIENT, ITEM_LEDGER_REPOSITORY, ItemLedger, ItemStock, InventorySync, ItemFactory],
+  exports: [
+    ITEM_REPOSITORY,
+    ITEM_CLIENT,
+    ITEM_LEDGER_REPOSITORY,
+    ItemLedger,
+    ItemStock,
+    InventorySync,
+    ItemFactory,
+    // Workspace spec 064: the enchantments pay and act on items like the operations of this module
+    HolderAccess,
+    Wallet,
+  ],
 })
 export class ItemsModule {}

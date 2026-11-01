@@ -9,6 +9,7 @@ import { GamesModule } from './modules/games/games.module.js';
 import { CharactersModule } from './modules/characters/characters.module.js';
 import { FactionsModule } from './modules/factions/factions.module.js';
 import { ExportsModule } from './modules/exports/exports.module.js';
+import { EnchantmentsModule } from './modules/enchantments/enchantments.module.js';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ExportsModule } from './modules/exports/exports.module.js';
     FactionsModule,
     CharactersModule,
     ExportsModule,
+    EnchantmentsModule,
   ],
 })
 export class AppModule {}

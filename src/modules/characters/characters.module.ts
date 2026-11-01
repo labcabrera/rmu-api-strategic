@@ -260,6 +260,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     SKILL_CLIENT,
     TRAIT_CLIENT,
     SpecializationCatalogService,
+    // Workspace spec 064: the grimoire of the alchemists
+    KnownSpellsReader,
   ],
 })
 export class CharactersModule {}
