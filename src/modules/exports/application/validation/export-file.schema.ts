@@ -15,7 +15,12 @@ import {
   TREATMENT_PROCEDURES,
   TREATMENT_RESULTS,
 } from '../../../characters/domain/value-objects/injury.vo.js';
-import { ITEM_MODIFIER_TARGETS, ITEM_MODIFIER_TYPES } from '../../../items/domain/value-objects/item-modifier.vo.js';
+import {
+  ITEM_MODIFIER_SOURCE_KINDS,
+  ITEM_MODIFIER_TARGETS,
+  ITEM_MODIFIER_TYPES,
+} from '../../../items/domain/value-objects/item-modifier.vo.js';
+import { ITEM_ENCHANTMENT_PROPERTY_KINDS } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, JEWELRY_CLASSES } from '../../../items/domain/services/item-unit-value.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
@@ -277,13 +282,16 @@ const modifier = Joi.object({
     .required(),
   broken: Joi.boolean(),
   source: Joi.object({
-    kind: Joi.string().valid('tactical', 'manual', 'crafting', 'repair', 'catalog').required(),
+    kind: Joi.string()
+      .valid(...ITEM_MODIFIER_SOURCE_KINDS)
+      .required(),
     tacticalGameId: id(),
     tacticalGameName: name(),
     round: int(),
     actionId: id(),
     crafterRef: ref('c'),
     crafterName: name(),
+    projectId: id(),
   }),
   description: text(),
   condition: text(),
@@ -376,6 +384,30 @@ const item = Joi.object({
   carats: num().greater(0),
   jewelryClass: Joi.string().valid(...JEWELRY_CLASSES),
   cutFactor: num().greater(0),
+  // Workspace spec 064 (format 10)
+  enchantment: Joi.object({
+    projectId: id().required(),
+    itemLevel: int().min(0).required(),
+    alchemistRef: ref('c'),
+    alchemistName: name().required(),
+    spells: Joi.array()
+      .items(Joi.object({ spellId: id().required(), name: name().required(), level: int().min(0).required(), listCode: id().required() }))
+      .max(50)
+      .required(),
+    properties: Joi.array()
+      .items(
+        Joi.object({
+          kind: Joi.string()
+            .valid(...ITEM_ENCHANTMENT_PROPERTY_KINDS)
+            .required(),
+          value: num().required(),
+          target: nullable(id()),
+        }),
+      )
+      .max(50)
+      .required(),
+    completedAt: date().required(),
+  }),
   modifiers: Joi.array().items(modifier).max(200).required(),
 });
 

@@ -104,6 +104,12 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the size, gems, jewelry and herb treatments of the items and injuries',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 064: optional enchantment of the items, enchantment modifiers and their source; older files have none
+    from: 9,
+    description: 'Allows the enchantments of the items',
+    up: (doc: ExportDocument): ExportDocument => doc,
+  },
 ];
 
 export interface UpcastStep {
