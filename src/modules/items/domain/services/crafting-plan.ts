@@ -166,6 +166,11 @@ export interface CraftingPlanInput {
 const invalid = (message: string, code: string) => new ValidationError(message, code);
 
 export const CraftingPlanner = {
+  /** Use of the item the bonuses of its kind apply to (workspace spec 064 reads it for the enchantments). */
+  bonusTarget(kind: CraftKind): Exclude<ItemModifierTarget, 'all' | 'breakage'> | null {
+    return BONUS_TARGET[kind];
+  },
+
   kind(itemType: Pick<PlanItemType, 'category' | 'weapon' | 'armor' | 'shield'>): CraftKind {
     if (itemType.category === 'ammunition') return 'ammunition';
     if (itemType.weapon) return LAUNCHER_SKILLS.includes(itemType.weapon.skillId) ? 'launcher' : 'weapon';
