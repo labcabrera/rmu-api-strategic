@@ -110,7 +110,37 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Allows the enchantments of the items',
     up: (doc: ExportDocument): ExportDocument => doc,
   },
+  {
+    // Workspace spec 067: every enchantment of an older file is the work of an alchemist, without attunement; the
+    // charges and the gem settings are optional
+    from: 10,
+    description: 'Adds the source and attunement of the enchantments, and allows the charges and gem settings',
+    up: (doc: ExportDocument): ExportDocument => mapItems(doc, withEnchantmentSource),
+  },
 ];
+
+type ItemDocument = { enchantment?: Record<string, unknown> } & Record<string, unknown>;
+
+const withEnchantmentSource = (item: ItemDocument): ItemDocument =>
+  item.enchantment ? { ...item, enchantment: { source: 'alchemy', attunement: false, ...item.enchantment } } : item;
+
+/** Applies `fn` to every item of a file: those of a character file, and the armory and characters of a faction file. */
+function mapItems(doc: ExportDocument, fn: (item: ItemDocument) => ItemDocument): ExportDocument {
+  type Entry = { items?: ItemDocument[] } & Record<string, unknown>;
+  const data = doc.data as ({ armory?: ItemDocument[]; characters?: Entry[] } & Entry) | undefined;
+  if (!data) return doc;
+  return {
+    ...doc,
+    data: {
+      ...data,
+      ...(data.items ? { items: data.items.map(fn) } : {}),
+      ...(data.armory ? { armory: data.armory.map(fn) } : {}),
+      ...(data.characters
+        ? { characters: data.characters.map(entry => (entry.items ? { ...entry, items: entry.items.map(fn) } : entry)) }
+        : {}),
+    },
+  };
+}
 
 export interface UpcastStep {
   from: number;

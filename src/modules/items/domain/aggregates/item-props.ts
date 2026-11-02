@@ -7,7 +7,7 @@ import type { ItemModifier } from '../value-objects/item-modifier.vo.js';
 import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../value-objects/item-material.vo.js';
-import type { ItemEnchantment } from '../value-objects/item-enchantment.vo.js';
+import type { ItemCharges, ItemEnchantment, ItemGemSetting } from '../value-objects/item-enchantment.vo.js';
 import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
 
 export interface ItemProps {
@@ -55,4 +55,8 @@ export interface ItemProps {
   cutFactor?: number | null;
   /** Workspace spec 064: what an alchemist enchanted it with. */
   enchantment?: ItemEnchantment | null;
+  /** Workspace spec 067: charges of a charged item. */
+  charges?: ItemCharges | null;
+  /** Workspace spec 067: gems set in the item. */
+  settings?: ItemGemSetting[];
 }

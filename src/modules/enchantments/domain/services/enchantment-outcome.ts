@@ -80,8 +80,11 @@ export const EnchantmentOutcomes = {
 
     return {
       enchantment: {
+        source: 'alchemy',
         projectId: project.id,
         itemLevel: plan.itemLevel,
+        kind: null,
+        attunement: false,
         alchemistId: project.alchemistId,
         alchemistName: project.alchemistName,
         spells: plan.spells.map(spell => ({ spellId: spell.spellId, name: spell.name, level: spell.level, listCode: spell.listCode })),

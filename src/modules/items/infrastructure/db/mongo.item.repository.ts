@@ -83,6 +83,8 @@ export class MongoItemRepository extends MongoBaseRepository<Item, ItemDocument>
       jewelryClass: (doc.jewelryClass as ItemProps['jewelryClass']) ?? null,
       cutFactor: doc.cutFactor ?? null,
       enchantment: doc.enchantment ?? null,
+      charges: doc.charges ?? null,
+      settings: (doc.settings ?? []).map(setting => ({ ...setting })),
     });
   }
 }

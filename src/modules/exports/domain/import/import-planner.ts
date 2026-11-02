@@ -205,10 +205,18 @@ function modifierSource(
 
 /** Workspace spec 064: the alchemist of the enchantment is the imported character, or only its name. */
 function enchantmentOf(data: ItemExportEnchantment, characterIds: Map<ExportRef, string>, target: ImportTarget): ItemEnchantment {
-  const { alchemistRef, alchemistName, ...rest } = data;
+  const { alchemistRef, alchemistName, projectId, kind, spells, ...rest } = data;
   const alchemistId = alchemistRef ? (characterIds.get(alchemistRef) ?? null) : null;
-  const name = alchemistName || (alchemistRef ? target.characterNames.get(alchemistRef) : undefined) || '';
-  return { ...rest, alchemistId, alchemistName: name };
+  const name = alchemistName || (alchemistRef ? target.characterNames.get(alchemistRef) : undefined) || null;
+  return {
+    ...rest,
+    projectId: projectId ?? null,
+    kind: kind ?? null,
+    alchemistId,
+    // The work of an alchemist always had a name (format 10)
+    alchemistName: name ?? (data.source === 'alchemy' ? '' : null),
+    spells: spells.map(spell => ({ ...spell, spellId: spell.spellId ?? null, listCode: spell.listCode ?? null })),
+  };
 }
 
 function buildItem(
@@ -258,6 +266,8 @@ function buildItem(
     ...(data.jewelryClass ? { jewelryClass: data.jewelryClass } : {}),
     ...(data.cutFactor !== undefined ? { cutFactor: data.cutFactor } : {}),
     ...(data.enchantment ? { enchantment: enchantmentOf(data.enchantment, characterIds, target) } : {}),
+    ...(data.charges ? { charges: { ...data.charges } } : {}),
+    ...(data.settings?.length ? { settings: data.settings.map(setting => ({ ...setting })) } : {}),
     accessType: 'public',
     owner: target.owner,
     createdAt: new Date(),
