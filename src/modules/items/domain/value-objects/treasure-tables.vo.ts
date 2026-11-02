@@ -29,7 +29,24 @@ export interface GenericMagicItem {
   itemLevel?: number | null;
   /** `against: 'random'` is rolled on 7-1k. */
   bonuses: MagicItemBonus[];
-  spell?: { levelMin: number; levelMax: number; use: MagicSpellUse; perDay?: number | null; charges?: number | null } | null;
+  spell?: {
+    levelMin: number;
+    levelMax: number;
+    use: MagicSpellUse;
+    perDay?: number | null;
+    charges?: number | null;
+    /** A fixed list, the realms to pick from, or the names of the spells to pick from (data beyond plan section 2). */
+    listCode?: string | null;
+    realms?: string[] | null;
+    names?: string[] | null;
+  } | null;
+  /** Data beyond plan section 2, read when present: 7-1k is rolled for `against: 'random'` anyway. */
+  againstRoll?: boolean;
+  abilities?: string[];
+  realm?: string | null;
+  armorClass?: string | null;
+  pp?: number | null;
+  baseOptions?: unknown;
 }
 
 export interface MagicTableRow extends RangeRow {
@@ -101,6 +118,8 @@ export interface TreasureTables {
   randomSpells: { realm: (RangeRow & { realm: string })[]; lists: Record<string, (RangeRow & { listCode: string | null })[]> };
   gems: { precious: GemRandomTable; semiPrecious: GemRandomTable };
   standardPricing: StandardPricing;
+  /** Refinements of core beyond plan section 2 (7-1n armor tables, base options): optional, not used yet. */
+  extras?: { armorTables?: unknown; baseOptions?: unknown } | null;
 }
 
 /** The row a roll falls in, or undefined. */

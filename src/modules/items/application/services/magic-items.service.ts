@@ -3,7 +3,7 @@ import type { PowerLevel } from '../../../enchantments/domain/value-objects/alch
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
 import type { Item } from '../../domain/aggregates/item.js';
 import { type MagicItemDesign, MagicItemPricing, type MagicItemQuote } from '../../domain/services/magic-item-pricing.js';
-import { ItemUnitValue } from '../../domain/services/item-unit-value.js';
+import { type ItemInstanceSpec, ItemUnitValue } from '../../domain/services/item-unit-value.js';
 import type { MagicItemFeature } from '../../domain/value-objects/item-catalog-info.vo.js';
 import type { ItemEnchantmentSource } from '../../domain/value-objects/item-enchantment.vo.js';
 import type { ItemResponse } from '../ports/item-client.port.js';
@@ -66,7 +66,13 @@ export class MagicItems {
   build(
     prepared: PreparedMagicItem,
     holder: HolderContext,
-    options: { source: ItemEnchantmentSource; acquiredPrice: number | null; owner: string; amount?: number | null },
+    options: {
+      source: ItemEnchantmentSource;
+      acquiredPrice: number | null;
+      owner: string;
+      amount?: number | null;
+      instance?: ItemInstanceSpec;
+    },
   ): Item {
     return this.itemFactory.build(prepared.itemType, {
       gameId: holder.gameId,
@@ -78,6 +84,7 @@ export class MagicItems {
       acquiredPrice: options.acquiredPrice,
       magic: prepared.feature,
       magicSource: options.source,
+      ...(options.instance ? { instance: options.instance } : {}),
       owner: options.owner,
     });
   }

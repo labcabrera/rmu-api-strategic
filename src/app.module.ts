@@ -10,6 +10,7 @@ import { CharactersModule } from './modules/characters/characters.module.js';
 import { FactionsModule } from './modules/factions/factions.module.js';
 import { ExportsModule } from './modules/exports/exports.module.js';
 import { EnchantmentsModule } from './modules/enchantments/enchantments.module.js';
+import { TreasureModule } from './modules/treasure/treasure.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EnchantmentsModule } from './modules/enchantments/enchantments.module.j
     CharactersModule,
     ExportsModule,
     EnchantmentsModule,
+    TreasureModule,
   ],
 })
 export class AppModule {}

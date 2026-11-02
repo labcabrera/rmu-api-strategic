@@ -173,6 +173,7 @@ import { ApiAlchemyTablesClientAdapter } from '../enchantments/infrastructure/ap
     PowerLevels,
     MagicItems,
     TREASURE_TABLES_CLIENT,
+    ITEM_GUARD,
   ],
 })
 export class ItemsModule {}
