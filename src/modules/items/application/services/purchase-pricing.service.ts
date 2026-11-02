@@ -13,6 +13,9 @@ import {
 import { type ItemInstanceSpec, ItemUnitValue } from '../../domain/services/item-unit-value.js';
 import type { ItemResponse } from '../ports/item-client.port.js';
 import { ItemFactory } from './item-factory.service.js';
+import { PowerLevels } from './power-levels.service.js';
+import { MagicItemMappings } from '../../domain/services/magic-item-mapping.js';
+import type { PowerLevel } from '../../../enchantments/domain/value-objects/alchemy.vo.js';
 import { type TradingRequest, TradingService } from './trading.service.js';
 
 /** Items of a type that does not stack created by one purchase (spec 041, decision 12). */
@@ -57,6 +60,7 @@ export class PurchasePricing {
   constructor(
     private readonly itemFactory: ItemFactory,
     private readonly trading: TradingService,
+    private readonly powerLevels: PowerLevels,
   ) {}
 
   /** A non-stacking type is bought in whole units, up to MAX_ITEMS_PER_PURCHASE. */
@@ -72,7 +76,13 @@ export class PurchasePricing {
    */
   async order(
     lines: PurchaseOrderLine[],
-    options: { factors?: PriceFactorSelection[]; trading?: TradingRequest; character: Character | null; check: boolean },
+    options: {
+      factors?: PriceFactorSelection[];
+      trading?: TradingRequest;
+      powerLevel?: PowerLevel;
+      character: Character | null;
+      check: boolean;
+    },
   ): Promise<PricedOrder> {
     if (lines.length === 0 || lines.length > MAX_ORDER_LINES) {
       throw new ValidationError(`An order has from 1 to ${MAX_ORDER_LINES} lines`, 'err-order-invalid-lines');
@@ -84,11 +94,18 @@ export class PurchasePricing {
         : await this.trading.evaluate('purchase', options.trading, options.character)
       : undefined;
     const trading = negotiated?.result;
+    const powerMultiplier = await this.powerLevels.multiplier(options.powerLevel);
     const priced: PricedOrderLine[] = [];
     for (const line of lines) {
       const itemType = await this.itemFactory.itemType(line.itemTypeId);
       PurchasePricing.checkAmount(itemType, line.amount);
-      const { instance, unitBase } = PurchasePricing.unitBase(itemType, line.instance, options.check ? Math.random : QUOTE_RANDOM);
+      const { instance, unitBase } = PurchasePricing.unitBase(
+        itemType,
+        line.instance,
+        options.check ? Math.random : QUOTE_RANDOM,
+        null,
+        powerMultiplier,
+      );
       const price = PriceCalculator.purchase(unitBase, line.amount, { factor, trading });
       priced.push({ itemType, amount: line.amount, stackable: !!itemType.info.stackable, instance, price });
     }
@@ -102,16 +119,26 @@ export class PurchasePricing {
 
   /**
    * Workspace spec 062: the instance fields with their defaults and the gold of one unit (gem carats, jewelry class,
-   * size). `random` rolls the base value of a jewel without one.
+   * size). `random` rolls the base value of a jewel without one. Workspace spec 067, decision 6: the power level
+   * multiplies the magic part of the standard price of a magic type, not its base item.
    */
   static unitBase(
     itemType: ItemResponse,
     requested: ItemInstanceSpec | undefined,
     random: () => number = Math.random,
     wielderSize?: string | null,
+    powerMultiplier = 1,
   ): { instance: ItemInstanceSpec; unitBase: number } {
     const spec = ItemFactory.instanceSpec(itemType, { instance: requested, wielderSize }, random);
-    return { instance: spec, unitBase: ItemUnitValue.unitValue(ItemFactory.valueType(itemType), spec) ?? 0 };
+    const value = ItemUnitValue.unitValue(ItemFactory.valueType(itemType), spec) ?? 0;
+    const magicPart = MagicItemMappings.enchantmentPart(itemType.features?.magic);
+    const unitBase = powerMultiplier === 1 || magicPart === 0 ? value : roundGold(Math.max(0, value + (powerMultiplier - 1) * magicPart));
+    return { instance: spec, unitBase };
+  }
+
+  /** Workspace spec 067: the multiplier of a power level (1 for the Superior level of the book). */
+  powerMultiplier(powerLevel: PowerLevel | null | undefined): Promise<number> {
+    return this.powerLevels.multiplier(powerLevel);
   }
 
   /** The factor of the market conditions; they need the trading tables of core. */
