@@ -36,7 +36,7 @@ import type { EnumerationClientPort } from '../../../src/modules/characters/appl
 import type { AlchemyTablesClientPort } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
 import type { AlchemyTables } from '../../../src/modules/enchantments/domain/value-objects/alchemy.vo.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
-import { TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
+import { SPEC_068_TABLES, TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
 // Invented catalog data (not book data): the minimum the strategic API reads from core and items.
 
@@ -477,10 +477,11 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
 
 /**
  * GET /v1/healing-tables of core: the unit fixture plus invented treatment difficulties in the shape of spec 022
- * (`treatmentDifficulties` and `treatmentRules`).
+ * (`treatmentDifficulties` and `treatmentRules`) and the invented fields of spec 068 (cauterization, surgery, limits).
  */
 export const CORE_HEALING_TABLES: HealingTables = {
   ...TABLES,
+  ...SPEC_068_TABLES,
   treatmentDifficulties: [
     { procedure: 'dress', injuryType: 'skin-tissue', severity: 'light', difficulty: 'r' },
     { procedure: 'splint', injuryType: 'bone', severity: 'light', difficulty: 'e' },

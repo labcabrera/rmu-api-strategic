@@ -14,7 +14,9 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
   async execute(command: RestCharacterCommand): Promise<Character> {
     CharacterRestService.checkTime(command.hours, command.days);
     const character = await this.store.load(command.characterId, command.userId, command.roles);
-    await this.restService.apply(character, { hours: command.hours, days: command.days, fullRest: command.fullRest });
+    // A rest of one character does not move the calendar: the modifiers expired by the current day are dropped
+    const currentGameDay = await this.store.currentGameDay(character);
+    await this.restService.apply(character, { hours: command.hours, days: command.days, fullRest: command.fullRest, currentGameDay });
     return this.store.save(character);
   }
 }

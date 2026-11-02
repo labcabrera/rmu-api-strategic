@@ -1,5 +1,6 @@
 import { characterRealms } from '../../../characters/domain/value-objects/character-realm.vo.js';
 import type { Character } from '../../../characters/domain/aggregates/character.js';
+import type { Injury } from '../../../characters/domain/value-objects/injury.vo.js';
 import type { EquipmentSlot } from '../../../characters/domain/value-objects/character-equipment.vo.js';
 import { STAT_KEYS, type StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import type { Faction } from '../../../factions/domain/aggregates/faction.js';
@@ -10,10 +11,12 @@ import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.
 import type { ItemModifier, ItemModifierSource } from '../../../items/domain/value-objects/item-modifier.vo.js';
 import { enchantmentSource, type ItemEnchantment } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
+import { isExpired } from '../../../characters/domain/value-objects/temporary-modifier.vo.js';
 import type {
   CharacterEntry,
   CharacterExport,
   CharacterExportStat,
+  CharacterExportTemporaryModifier,
   ExportKind,
   ExportRef,
   ExportReference,
@@ -47,6 +50,16 @@ const orNull = <T>(value: T | null | undefined): T | null => (value === undefine
 
 /** A plain copy of stored data (Mongo subdocuments included). */
 const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+/** Fields of an injury that may be null in the file (workspace spec 068). */
+const NULLABLE_INJURY_FIELDS = new Set(['limits', 'reopenOn', 'tourniquet']);
+
+/**
+ * The other optional fields of an injury are left out when null: Mongo stores the ones never set on an injury added
+ * by hand as null, and the format does not allow them.
+ */
+const withoutNullFields = (injury: Injury): Injury =>
+  Object.fromEntries(Object.entries(injury).filter(([key, value]) => value !== null || NULLABLE_INJURY_FIELDS.has(key))) as Injury;
 
 function weaponToExport(weapon: ItemWeapon): ItemWeapon {
   const result: ItemWeapon = {
@@ -102,8 +115,27 @@ function catalogToExport(catalog: ItemCatalogInfo): ItemCatalogInfo {
   };
 }
 
+/**
+ * Workspace spec 068: the temporary modifiers that still apply on `currentGameDay`, with the days they have left.
+ */
+function temporaryModifiersToExport(character: Character, currentGameDay: number): CharacterExportTemporaryModifier[] {
+  return (character.temporaryModifiers || [])
+    .filter(modifier => !isExpired(modifier, currentGameDay))
+    .map(modifier => ({
+      id: modifier.id,
+      kind: modifier.kind,
+      value: modifier.value,
+      source: modifier.source,
+      days: modifier.days ?? null,
+      createdAt: modifier.createdAt,
+      remainingDays:
+        modifier.expiresGameDay === null || modifier.expiresGameDay === undefined ? null : modifier.expiresGameDay - currentGameDay,
+    }));
+}
+
 /** The own data and the temporary state of a character (decision 3): no ids, owner, game or derived values. */
-export function characterToExport(character: Character, refs: ExportRefs): CharacterExport {
+/** `currentGameDay`: the day of the campaign of the source, for the days left of its temporary modifiers (spec 068). */
+export function characterToExport(character: Character, refs: ExportRefs, currentGameDay = 1): CharacterExport {
   const statistics = Object.fromEntries(
     STAT_KEYS.map(key => {
       const stat = character.statistics[key];
@@ -187,7 +219,8 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
     equipment: { slots },
     status: character.status,
     // The explanation of a recovery (workspace spec 052) is not part of the format: the file keeps its numbers
-    injuries: plain(character.injuries || []).map(injury => {
+    injuries: plain(character.injuries || []).map(stored => {
+      const injury = withoutNullFields(stored);
       if (!injury.recovery) return injury;
       const recovery = { ...injury.recovery };
       delete recovery.breakdown;
@@ -195,6 +228,7 @@ export function characterToExport(character: Character, refs: ExportRefs): Chara
       return { ...injury, recovery };
     }),
     conditions: plain(character.conditions || []),
+    temporaryModifiers: temporaryModifiersToExport(character, currentGameDay),
     description: orNull(character.description),
     imageUrl: orNull(character.imageUrl),
   };
@@ -295,10 +329,16 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
   };
 }
 
-export function characterEntry(character: Character, items: Item[], refs: ExportRefs, crafterOf: CrafterLookup): CharacterEntry {
+export function characterEntry(
+  character: Character,
+  items: Item[],
+  refs: ExportRefs,
+  crafterOf: CrafterLookup,
+  currentGameDay = 1,
+): CharacterEntry {
   return {
     ref: refs.characters.get(character.id)!,
-    character: characterToExport(character, refs),
+    character: characterToExport(character, refs, currentGameDay),
     items: items.map(item => itemToExport(item, refs, crafterOf)),
   };
 }

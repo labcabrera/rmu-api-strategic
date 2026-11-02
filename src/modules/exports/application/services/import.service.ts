@@ -169,6 +169,7 @@ export class ImportService {
           skillCategories: references.skillCategories,
           missingTraits: references.missingTraits,
           characterNames: new Map(all.map(({ entry }) => [entry.ref, entry.character.name])),
+          currentGameDay: destination.game.calendar?.currentDay ?? 1,
         },
       );
       for (const planned of plan.characters) {

@@ -11,6 +11,7 @@ import type { PriceBreakdown } from '../services/price-calculator.js';
  * Workspace spec 067 adds `treasure` (an award of a random treasure), `magic-item` (a magic item made by the game
  * master), `recharge` (of a charged item), `gem-cut`, `gem-set` and `gem-unset`.
  */
+/** Workspace spec 068 adds `consumed`: units of an item spent in a tactical game (herbs, potions). */
 export type ItemLedgerKind =
   | 'purchase'
   | 'sale'
@@ -28,7 +29,8 @@ export type ItemLedgerKind =
   | 'recharge'
   | 'gem-cut'
   | 'gem-set'
-  | 'gem-unset';
+  | 'gem-unset'
+  | 'consumed';
 export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'purchase',
   'sale',
@@ -47,6 +49,7 @@ export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'gem-cut',
   'gem-set',
   'gem-unset',
+  'consumed',
 ];
 
 /** Gold that moved in an operation: negative when the holder paid it, positive when it received it. */

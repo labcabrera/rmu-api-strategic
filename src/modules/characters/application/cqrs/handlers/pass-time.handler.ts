@@ -83,7 +83,11 @@ export class PassTimeHandler implements ICommandHandler<PassTimeCommand, PassTim
       const entry: GameTimeLogCharacter = { characterId: character.id, name: character.name, activity };
       if (activity !== 'excluded') {
         try {
-          const result = await this.restService.apply(character, { days, hours, fullRest: activity === 'full-rest' }, calculator);
+          const result = await this.restService.apply(
+            character,
+            { days, hours, fullRest: activity === 'full-rest', currentGameDay: toDay },
+            calculator,
+          );
           if (!command.dryRun) await this.store.save(character);
           entry.result = { ...result };
         } catch (error) {

@@ -74,6 +74,8 @@ import { ApiSpellListClientAdapter } from './infrastructure/api-clients/api.spel
 import { CharacterHealthStore } from './application/services/character-health.store.js';
 import { ApplyTacticalOutcomeHandler } from './application/cqrs/handlers/apply-tactical-outcome.handler.js';
 import { TacticalOutcomeItemsMerger } from './application/services/tactical-outcome-items.merger.js';
+import { TacticalOutcomeConsumption } from './application/services/tactical-outcome-consumption.service.js';
+import { RemoveTemporaryModifierHandler } from './application/cqrs/handlers/remove-temporary-modifier.handler.js';
 import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler.js';
 import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler.js';
 import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler.js';
@@ -178,6 +180,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     CharacterWriter,
     ApplyTacticalOutcomeHandler,
     TacticalOutcomeItemsMerger,
+    TacticalOutcomeConsumption,
+    RemoveTemporaryModifierHandler,
     AddInjuryHandler,
     UpdateInjuryHandler,
     TreatInjuryHandler,

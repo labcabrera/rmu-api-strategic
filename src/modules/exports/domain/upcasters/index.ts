@@ -117,7 +117,29 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Adds the source and attunement of the enchantments, and allows the charges and gem settings',
     up: (doc: ExportDocument): ExportDocument => mapItems(doc, withEnchantmentSource),
   },
+  {
+    // Workspace spec 068: the temporary modifiers of the characters (older files have none); the limits, reopening
+    // and tourniquet of the injuries and the new fields of the treatments are optional
+    from: 11,
+    description: 'Adds the temporary modifiers of the characters, and allows the limits and tourniquets of the injuries',
+    up: (doc: ExportDocument): ExportDocument => mapCharacters(doc, character => ({ temporaryModifiers: [], ...character })),
+  },
 ];
+
+/** Applies `fn` to every character of a file: data.character of a character file, data.characters[].character of a faction. */
+function mapCharacters(doc: ExportDocument, fn: (character: CharacterDocument) => CharacterDocument): ExportDocument {
+  type FactionEntry = { character: CharacterDocument } & Record<string, unknown>;
+  const data = doc.data as ({ character?: CharacterDocument; characters?: FactionEntry[] } & Record<string, unknown>) | undefined;
+  if (!data) return doc;
+  return {
+    ...doc,
+    data: {
+      ...data,
+      ...(data.character ? { character: fn(data.character) } : {}),
+      ...(data.characters ? { characters: data.characters.map(entry => ({ ...entry, character: fn(entry.character) })) } : {}),
+    },
+  };
+}
 
 type ItemDocument = { enchantment?: Record<string, unknown> } & Record<string, unknown>;
 

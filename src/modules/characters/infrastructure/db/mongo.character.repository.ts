@@ -73,6 +73,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       injuries: (doc.injuries || []).map(i => ({ ...i, treatments: i.treatments || [] })),
       conditions: doc.conditions || [],
       appliedTacticalGames: doc.appliedTacticalGames || [],
+      temporaryModifiers: doc.temporaryModifiers || [],
       description: doc.description,
       imageUrl: doc.imageUrl,
       owner: doc.owner,

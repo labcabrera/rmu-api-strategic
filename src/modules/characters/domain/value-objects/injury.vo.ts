@@ -1,5 +1,6 @@
 // Health model shared with rmu-api-tactical (workspace spec 013, section 1)
 
+import type { Pace } from './character-movement.vo.js';
 import type { InjuryPoison } from './poison.vo.js';
 
 export type InjuryType = 'bone' | 'cut-burn' | 'muscle-tendon' | 'organ' | 'poison-disease' | 'skin-tissue' | 'unknown';
@@ -16,6 +17,15 @@ export type TreatmentProcedure =
 export type TreatmentResult = 'absolute-failure' | 'failure' | 'partial-success' | 'success' | 'absolute-success';
 export type HealingType = 'none' | 'medicine' | 'medicine-absolute' | 'magic-or-herbs' | 'magic-and-herbs';
 export type TreatmentContext = 'tactical' | 'strategic';
+
+/** Workspace spec 068: what reopens a treated wound (completed pressure: exertion; stitches: a failed roll). */
+export type InjuryReopenOn = 'exertion' | 'failed-roll';
+/** Workspace spec 068: what holds a cast leg up, chosen when it is cast. */
+export type CastSupport = 'none' | 'cane' | 'crutches';
+
+export const INJURY_REOPEN_ON: InjuryReopenOn[] = ['exertion', 'failed-roll'];
+export const CAST_SUPPORTS: CastSupport[] = ['none', 'cane', 'crutches'];
+export const PACES: Pace[] = ['creep', 'walk', 'jog', 'run', 'sprint', 'dash'];
 
 export const INJURY_TYPES: InjuryType[] = ['bone', 'cut-burn', 'muscle-tendon', 'organ', 'poison-disease', 'skin-tissue', 'unknown'];
 export const INJURY_SEVERITIES: InjurySeverity[] = ['light', 'medium', 'severe'];
@@ -92,6 +102,32 @@ export interface InjuryTreatment {
   heatCritical?: string;
   /** Workspace spec 062: the herb used, and what it added to the Medicine and recovery rolls */
   herb?: TreatmentHerb;
+  /** Workspace spec 068: e.g. 'completed-after-combat' for a tactical treatment the end of the game completed */
+  note?: string;
+  /** Workspace spec 068: what holds up a cast leg */
+  castSupport?: CastSupport;
+  /** Workspace spec 068: recovery modifier of a salve chosen by the game master (range of core) */
+  salveModifier?: number;
+  /** Workspace spec 068: d10 of hits of the heat of a cauterization (Table 13-1c of core), for the game master */
+  heatHitsDice?: number;
+  /** Workspace spec 068: the unmodified roll of a cauterization was its unusual event */
+  unusualEvent?: boolean;
+}
+
+/**
+ * Workspace spec 068: what a splinted or cast limb is limited to. Tactical copies it in the first round: the pace
+ * of the movement, a useless arm and the factor of the maneuver penalty (the recovery penalty does not change).
+ */
+export interface InjuryLimits {
+  pace?: Pace | null;
+  limbUnusable?: boolean;
+  maneuverPenaltyFactor?: number | null;
+}
+
+/** Workspace spec 068: rounds (of a tactical game) when a tourniquet was tightened and last loosened. */
+export interface InjuryTourniquet {
+  tightSince: number;
+  loosenedAt: number | null;
 }
 
 /** A herb of the inventory used in a treatment (workspace spec 062): one dose is spent. */
@@ -173,4 +209,10 @@ export interface Injury {
   healedAt?: string;
   /** Day of the campaign when it was received (workspace spec 065); absent in older injuries */
   gameDay?: number;
+  /** Workspace spec 068: limits of a splint or a cast; cleared when the injury heals or by the game master */
+  limits?: InjuryLimits | null;
+  /** Workspace spec 068: what reopens the wound in a tactical game */
+  reopenOn?: InjuryReopenOn | null;
+  /** Workspace spec 068: a tourniquet on the wound (tactical rounds) */
+  tourniquet?: InjuryTourniquet | null;
 }

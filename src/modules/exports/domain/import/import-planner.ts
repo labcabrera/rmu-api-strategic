@@ -41,6 +41,8 @@ export interface ImportTarget {
   missingTraits: Set<string>;
   /** Names of the characters of the file, for crafters that are not imported (a character taken from a faction file). */
   characterNames: Map<ExportRef, string>;
+  /** Workspace spec 068: the current day of the destination campaign, from which the temporary modifiers count. */
+  currentGameDay?: number;
 }
 
 export interface PlannedCharacter {
@@ -176,6 +178,11 @@ function buildCharacter(data: CharacterExport, id: string, itemIds: Map<ExportRe
     injuries: structuredClone(data.injuries),
     conditions: structuredClone(data.conditions),
     appliedTacticalGames: [],
+    temporaryModifiers: (data.temporaryModifiers ?? []).map(({ remainingDays, ...modifier }) => ({
+      ...modifier,
+      tacticalGameId: null,
+      expiresGameDay: remainingDays === null ? null : (target.currentGameDay ?? 1) + remainingDays,
+    })),
     description: data.description ?? undefined,
     imageUrl: data.imageUrl ?? undefined,
     owner: target.owner,

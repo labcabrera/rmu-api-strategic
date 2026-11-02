@@ -1,5 +1,6 @@
 import type { CharacterCondition } from './character-condition.vo.js';
 import type { Injury } from './injury.vo.js';
+import type { TemporaryModifier } from './temporary-modifier.vo.js';
 import type { ItemModifier } from '../../../items/domain/value-objects/item-modifier.vo.js';
 
 export type TacticalFate = 'dead' | 'permanent-unconscious';
@@ -75,4 +76,14 @@ export interface TacticalCharacterOutcome {
   fate?: TacticalFate;
   /** Spec 019: missing in outcomes of tactical versions before it. */
   items?: TacticalItemOutcome[];
+  /** Workspace spec 068: units of items spent in the game (herbs, potions); missing in older outcomes */
+  itemsConsumed?: TacticalItemConsumed[];
+  /** Workspace spec 068: the temporary modifiers created in the game; missing in older outcomes */
+  temporaryModifiers?: TemporaryModifier[];
+}
+
+/** Workspace spec 068: units of an item of the character spent in a tactical game. */
+export interface TacticalItemConsumed {
+  itemId: string;
+  amount: number;
 }

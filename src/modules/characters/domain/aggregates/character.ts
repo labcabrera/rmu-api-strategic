@@ -45,6 +45,7 @@ import {
   PENALTY_STATUSES,
 } from '../value-objects/injury.vo.js';
 import type { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo.js';
+import { type CharacterTemporaryModifier, isExpired } from '../value-objects/temporary-modifier.vo.js';
 import { HealingCalculator, type InjuryProgress } from '../services/healing/healing-calculator.js';
 import { InjuryTreatmentRules } from '../services/healing/injury-treatment-rules.js';
 import type { HealingTables } from '../value-objects/healing-tables.vo.js';
@@ -101,6 +102,7 @@ export type InjuryChanges = Partial<
     | 'description'
     | 'permanent'
     | 'status'
+    | 'limits'
   >
 >;
 
@@ -115,6 +117,8 @@ export interface RestResult {
   powerAfter: number | null;
   /** Workspace spec 042: the poisonings that advanced. */
   poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
+  /** Workspace spec 068: the temporary modifiers that expired. */
+  expiredModifiers?: string[];
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -123,6 +127,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   public injuries: Injury[] = [];
   public conditions: CharacterCondition[] = [];
   public appliedTacticalGames: string[] = [];
+  /** Workspace spec 068: lasting morale and fear modifiers, with their day of expiry */
+  public temporaryModifiers: CharacterTemporaryModifier[] = [];
   public importId: string | undefined = undefined;
   private pendingHealingLog: HealingLogEntry[] = [];
   /** Injuries received since the aggregate was loaded, to stamp them with the day of the campaign (spec 065) */
@@ -242,6 +248,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     character.injuries = props.injuries || [];
     character.conditions = props.conditions || [];
     character.appliedTacticalGames = props.appliedTacticalGames || [];
+    character.temporaryModifiers = props.temporaryModifiers || [];
     character.importId = props.importId;
     return character;
   }
@@ -690,6 +697,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       updated.healedAt = now;
       updated.penalty = 0;
       updated.bleeding = injury.bleeding ? 0 : injury.bleeding;
+      // Workspace spec 068: a healed limb is no longer limited
+      updated.limits = null;
+      updated.reopenOn = null;
+      updated.tourniquet = null;
     }
     if (defined.status === 'permanent' && defined.penalty === undefined) {
       updated.penalty = updated.permanent?.penalty ?? injury.initialPenalty;
@@ -736,6 +747,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         severity: updated.severity,
         ...(treatment.heatCritical ? { heatCritical: treatment.heatCritical } : {}),
         ...(treatment.herb ? { herb: treatment.herb } : {}),
+        ...(treatment.heatHitsDice ? { heatHitsDice: treatment.heatHitsDice } : {}),
+        ...(treatment.unusualEvent ? { unusualEvent: true } : {}),
+        ...(treatment.castSupport ? { castSupport: treatment.castSupport } : {}),
+        ...(treatment.salveModifier !== undefined ? { salveModifier: treatment.salveModifier } : {}),
+        ...(updated.limits ? { limits: updated.limits } : {}),
         resolvedConditions: resolved,
       },
       { injuryId, healerName: treatment.healer.name },
@@ -780,6 +796,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       updated.status = 'healed';
       updated.penalty = 0;
       updated.healedAt = now;
+      updated.limits = null;
+      updated.reopenOn = null;
+      updated.tourniquet = null;
     }
     this.replaceInjury(updated);
     this.recordHealing('permanent-roll', { ...summary, penalty: permanent.penalty, roll: permanent.roll }, { injuryId });
@@ -789,7 +808,16 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
 
   /** Passes time resting: hits per rest period and days off the injury counters. */
   /** `poisonRounds`: the time of the rest in rounds, for the poisonings (workspace spec 042, decision 13). */
-  rest(hpAfter: number, days: number, now: string, summary: Record<string, unknown>, powerPeriods = 0, poisonRounds = 0): RestResult {
+  /** `currentGameDay`: the day of the campaign after the rest, to drop the expired modifiers (workspace spec 068). */
+  rest(
+    hpAfter: number,
+    days: number,
+    now: string,
+    summary: Record<string, unknown>,
+    powerPeriods = 0,
+    poisonRounds = 0,
+    currentGameDay?: number,
+  ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
@@ -822,6 +850,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       powerAfter: this.power ? this.power.current : null,
     };
     if (poisonings.length > 0) result.poisonings = poisonings;
+    if (currentGameDay !== undefined) {
+      const expired = this.expireTemporaryModifiers(currentGameDay);
+      if (expired.length > 0) result.expiredModifiers = expired;
+    }
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
@@ -1077,21 +1109,68 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return resolved;
   }
 
+  // Temporary modifiers (workspace spec 068, decision 19)
+
+  /** The game master removes a modifier (the -10 of morale lasts until then). */
+  removeTemporaryModifier(modifierId: string): CharacterTemporaryModifier {
+    const modifier = this.temporaryModifiers.find(each => each.id === modifierId);
+    if (!modifier) throw new NotFoundError('Temporary modifier', modifierId, 'err-temporary-modifier-not-found');
+    this.temporaryModifiers = this.temporaryModifiers.filter(each => each.id !== modifierId);
+    this.recordHealing('manual', {
+      action: 'temporary-modifier-removed',
+      modifierId,
+      kind: modifier.kind,
+      value: modifier.value,
+      source: modifier.source,
+    });
+    this.touch();
+    return modifier;
+  }
+
+  /**
+   * Drops the modifiers that no longer apply on `currentGameDay` and records them in the healing log (kind `manual`).
+   * Returns their ids. It does not touch the aggregate: the caller (a rest) does.
+   */
+  expireTemporaryModifiers(currentGameDay: number): string[] {
+    const expired = this.temporaryModifiers.filter(modifier => isExpired(modifier, currentGameDay));
+    if (expired.length === 0) return [];
+    this.temporaryModifiers = this.temporaryModifiers.filter(modifier => !isExpired(modifier, currentGameDay));
+    this.recordHealing('manual', {
+      action: 'temporary-modifiers-expired',
+      gameDay: currentGameDay,
+      modifiers: expired.map(({ id, kind, value, source, expiresGameDay }) => ({ id, kind, value, source, expiresGameDay })),
+    });
+    return expired.map(modifier => modifier.id);
+  }
+
   isTacticalGameApplied(tacticalGameId: string): boolean {
     return this.appliedTacticalGames.includes(tacticalGameId);
   }
 
   /** Applies a tactical game outcome. Returns undefined when it was already applied (idempotent). */
   /** `itemsSummary`: what the outcome changed in the items of the character (spec 019), for the healing log. */
-  applyTacticalOutcome(outcome: TacticalCharacterOutcome, itemsSummary?: Record<string, unknown>): OutcomeMergeSummary | undefined {
+  /** `currentGameDay`: the day of the campaign, from which the new temporary modifiers count (workspace spec 068). */
+  applyTacticalOutcome(
+    outcome: TacticalCharacterOutcome,
+    itemsSummary?: Record<string, unknown>,
+    currentGameDay = 1,
+  ): OutcomeMergeSummary | undefined {
     if (this.isTacticalGameApplied(outcome.tacticalGameId)) return undefined;
     const now = new Date().toISOString();
     const { state, summary } = TacticalOutcomeMerger.merge(
-      { hp: this.hp, status: this.status, injuries: this.injuries, conditions: this.conditions },
+      {
+        hp: this.hp,
+        status: this.status,
+        injuries: this.injuries,
+        conditions: this.conditions,
+        temporaryModifiers: this.temporaryModifiers,
+      },
       outcome,
       this.deathThreshold,
       now,
+      currentGameDay,
     );
+    this.temporaryModifiers = state.temporaryModifiers ?? [];
     this.hp.current = state.hp.current;
     this.status = state.status;
     const previousIds = new Set(this.injuries.map(i => i.id));
@@ -1171,6 +1250,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       injuries: this.injuries,
       conditions: this.conditions,
       appliedTacticalGames: this.appliedTacticalGames,
+      temporaryModifiers: this.temporaryModifiers,
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,

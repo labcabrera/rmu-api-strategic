@@ -3,12 +3,15 @@ import type { CharacterCondition } from '../../value-objects/character-condition
 import type { CharacterStatus } from '../../value-objects/character-status.vo.js';
 import type { Injury, InjurySource } from '../../value-objects/injury.vo.js';
 import type { TacticalCharacterOutcome } from '../../value-objects/tactical-game-outcome.vo.js';
+import { type CharacterTemporaryModifier, expiresGameDay } from '../../value-objects/temporary-modifier.vo.js';
 
 export interface CharacterHealthState {
   hp: { max: number; current: number };
   status: CharacterStatus;
   injuries: Injury[];
   conditions: CharacterCondition[];
+  /** Workspace spec 068 (always set in the merged state) */
+  temporaryModifiers?: CharacterTemporaryModifier[];
 }
 
 export interface OutcomeMergeSummary {
@@ -20,6 +23,8 @@ export interface OutcomeMergeSummary {
   injuriesHealed: string[];
   conditionsAdded: string[];
   conditionsResolved: string[];
+  /** Workspace spec 068: the temporary modifiers the game added */
+  temporaryModifiersAdded?: string[];
   fate?: string;
   dead: boolean;
 }
@@ -46,9 +51,17 @@ const withRecoveryBase = (injury: Injury): Injury => {
  * injuries by uuid (treatments concatenated), healed injuries, hits as a difference and conditions from the fate.
  * Injuries of the character that the outcome does not mention are kept as they are. The penalty, its recovery base
  * (`initialPenalty`) and the severity come from tactical, which updates them on an absolute failure (spec 022, D1).
+ * Workspace spec 068: the limits, reopening and tourniquet of the injuries come from tactical too, and the new
+ * temporary modifiers are added (by id) with their expiry counted from `currentGameDay`.
  */
 export class TacticalOutcomeMerger {
-  static merge(current: CharacterHealthState, outcome: TacticalCharacterOutcome, deathThreshold: number, now: string): OutcomeMergeResult {
+  static merge(
+    current: CharacterHealthState,
+    outcome: TacticalCharacterOutcome,
+    deathThreshold: number,
+    now: string,
+    currentGameDay = 1,
+  ): OutcomeMergeResult {
     const injuries = current.injuries.map(i => ({ ...i }));
     const added: string[] = [];
     const updated: string[] = [];
@@ -62,14 +75,31 @@ export class TacticalOutcomeMerger {
       const existing = injuries[index];
       const known = new Set(existing.treatments.map(t => t.id));
       const treatments = [...existing.treatments, ...(incoming.treatments || []).filter(t => !known.has(t.id))];
-      injuries[index] = withRecoveryBase({ ...incoming, treatments, createdAt: existing.createdAt || incoming.createdAt, updatedAt: now });
+      injuries[index] = withRecoveryBase({
+        ...incoming,
+        treatments,
+        // Workspace spec 068: a tactical before it sends no limits, so the strategic ones stay
+        ...(incoming.limits === undefined && existing.limits !== undefined ? { limits: existing.limits } : {}),
+        createdAt: existing.createdAt || incoming.createdAt,
+        updatedAt: now,
+      });
       updated.push(incoming.id);
     }
     const healed: string[] = [];
     for (const id of outcome.injuriesHealed || []) {
       const index = injuries.findIndex(i => i.id === id);
       if (index < 0) continue;
-      injuries[index] = { ...injuries[index], status: 'healed', penalty: 0, bleeding: 0, healedAt: now, updatedAt: now };
+      injuries[index] = {
+        ...injuries[index],
+        status: 'healed',
+        penalty: 0,
+        bleeding: 0,
+        healedAt: now,
+        updatedAt: now,
+        limits: null,
+        reopenOn: null,
+        tourniquet: null,
+      };
       healed.push(id);
     }
 
@@ -110,10 +140,22 @@ export class TacticalOutcomeMerger {
       });
     }
 
+    const temporaryModifiers = (current.temporaryModifiers || []).map(m => ({ ...m }));
+    const modifiersAdded: string[] = [];
+    for (const modifier of outcome.temporaryModifiers || []) {
+      if (temporaryModifiers.some(m => m.id === modifier.id)) continue;
+      temporaryModifiers.push({
+        ...modifier,
+        tacticalGameId: modifier.tacticalGameId ?? outcome.tacticalGameId,
+        expiresGameDay: expiresGameDay(modifier.days, currentGameDay),
+      });
+      modifiersAdded.push(modifier.id);
+    }
+
     const delta = outcome.hp?.delta ?? 0;
     const hpAfter = clamp(current.hp.current + delta, -Math.abs(deathThreshold), current.hp.max);
     return {
-      state: { hp: { max: current.hp.max, current: hpAfter }, status, injuries, conditions },
+      state: { hp: { max: current.hp.max, current: hpAfter }, status, injuries, conditions, temporaryModifiers },
       summary: {
         hpBefore: current.hp.current,
         hpAfter,
@@ -123,6 +165,7 @@ export class TacticalOutcomeMerger {
         injuriesHealed: healed,
         conditionsAdded,
         conditionsResolved: resolved,
+        ...(modifiersAdded.length > 0 ? { temporaryModifiersAdded: modifiersAdded } : {}),
         fate: outcome.fate,
         dead: status === 'dead',
       },

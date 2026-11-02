@@ -31,7 +31,13 @@ export interface RecoveryModifiers extends RecoveryPatient {
 }
 
 /** Rule references of the healing rolls (Core Law). */
-export const HEALING_RULES = { recovery: '§13.1', table: 'Table 13-1a', poison: '§15.6', herbs: 'Treasure Law §2.3' } as const;
+export const HEALING_RULES = {
+  recovery: '§13.1',
+  table: 'Table 13-1a',
+  poison: '§15.6',
+  herbs: 'Treasure Law §2.3',
+  salve: '§13.1',
+} as const;
 
 export interface PermanentInjuryResult {
   total: number;
@@ -110,6 +116,8 @@ export class HealingCalculator {
     // Workspace spec 052: the treatment, and the partial success of its medical roll, are explained apart
     const partial = latest?.result === 'partial-success' ? latest.recoveryModifier || 0 : 0;
     const herb = latest?.herb?.recoveryBonus || 0;
+    // Workspace spec 068: a salve gives the recovery modifier the game master chose, unless it failed
+    const salve = latest?.procedure === 'salve' && !FAILURES.includes(latest.result) ? latest.salveModifier || 0 : 0;
     // Params carry the translation keys of their values, as the MFE labels them
     const treatmentParams: RuleParams = {
       healingType: `healing-type-${healingType}`,
@@ -122,6 +130,7 @@ export class HealingCalculator {
       ...(partial ? [{ key: 'partial-success', value: partial, group: 'situation' as const, rule: HEALING_RULES.recovery }] : []),
       // Workspace spec 062: a herb that treats the injury
       ...(herb ? [{ key: 'herb', value: herb, group: 'situation' as const, rule: HEALING_RULES.herbs }] : []),
+      ...(salve ? [{ key: 'salve', value: salve, group: 'situation' as const, rule: HEALING_RULES.salve }] : []),
       { key: 'injury-penalty', value: -penalty, group: 'penalty', rule: HEALING_RULES.recovery },
     ];
     return {
@@ -130,7 +139,7 @@ export class HealingCalculator {
       healingType,
       healingTypeModifier: modifier,
       penalty,
-      total: patient.bodyDevelopmentRanks + patient.constitutionBonus + modifier + herb - penalty,
+      total: patient.bodyDevelopmentRanks + patient.constitutionBonus + modifier + herb + salve - penalty,
       breakdown,
     };
   }
@@ -295,6 +304,10 @@ export class HealingCalculator {
       next.status = 'healed';
       next.penalty = 0;
       next.healedAt = now;
+      // Workspace spec 068: a healed limb is no longer limited
+      next.limits = null;
+      next.reopenOn = null;
+      next.tourniquet = null;
     }
     return { injury: next, days: discounted, finished: true };
   }

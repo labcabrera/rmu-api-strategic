@@ -5,7 +5,10 @@ import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
   BODY_SIDES,
+  CAST_SUPPORTS,
   HEALING_TYPES,
+  INJURY_REOPEN_ON,
+  PACES,
   INJURY_FLAGS,
   INJURY_SEVERITIES,
   INJURY_SOURCE_KINDS,
@@ -18,9 +21,11 @@ import type {
   BleedingControl,
   BodyLocation,
   BodySide,
+  CastSupport,
   HealingType,
   Injury,
   InjuryFlag,
+  InjuryReopenOn,
   InjurySeverity,
   InjurySourceKind,
   InjuryStatus,
@@ -37,6 +42,14 @@ import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/char
 import type { CharacterCondition, CharacterConditionStatus } from '../../../domain/value-objects/character-condition.vo.js';
 import type { HealingLogEntry, HealingLogKind } from '../../../domain/value-objects/healing-log-entry.vo.js';
 import type { HealthSummary } from '../../../domain/value-objects/health-summary.vo.js';
+import type { Pace } from '../../../domain/value-objects/character-movement.vo.js';
+import {
+  TEMPORARY_MODIFIER_KINDS,
+  TEMPORARY_MODIFIER_SOURCES,
+  type CharacterTemporaryModifier,
+  type TemporaryModifierKind,
+  type TemporaryModifierSource,
+} from '../../../domain/value-objects/temporary-modifier.vo.js';
 
 export class InjurySourceDto {
   @ApiProperty({ type: String, enum: INJURY_SOURCE_KINDS, example: 'critical' })
@@ -103,6 +116,58 @@ export class InjuryTreatmentDto {
   heatCritical?: string;
   @ApiPropertyOptional({ description: 'Herb used and its Medicine and recovery bonuses (workspace spec 062)', type: Object })
   herb?: TreatmentHerb;
+  @ApiPropertyOptional({ description: "Spec 068: e.g. 'completed-after-combat'" })
+  note?: string;
+  @ApiPropertyOptional({ type: String, enum: CAST_SUPPORTS, description: 'Spec 068: what holds up a cast leg' })
+  castSupport?: CastSupport;
+  @ApiPropertyOptional({ description: 'Spec 068: recovery modifier of a salve chosen by the game master' })
+  salveModifier?: number;
+  @ApiPropertyOptional({ description: 'Spec 068: d10 of hits of the heat of a cauterization (Table 13-1c)' })
+  heatHitsDice?: number;
+  @ApiPropertyOptional({ description: 'Spec 068: the unmodified roll of a cauterization was its unusual event' })
+  unusualEvent?: boolean;
+}
+
+/** Workspace spec 068: limits of a splinted or cast limb. */
+export class InjuryLimitsDto {
+  @ApiPropertyOptional({ type: String, enum: PACES, nullable: true, description: 'Fastest pace' })
+  pace?: Pace | null;
+  @ApiPropertyOptional({ description: 'The limb cannot be used' })
+  limbUnusable?: boolean;
+  @ApiPropertyOptional({ type: Number, nullable: true, description: 'Factor of the maneuver penalty of the injury', example: 0.5 })
+  maneuverPenaltyFactor?: number | null;
+}
+
+/** Workspace spec 068: rounds of a tactical game when a tourniquet was tightened and loosened. */
+export class InjuryTourniquetDto {
+  @ApiProperty()
+  tightSince: number;
+  @ApiProperty({ type: Number, nullable: true })
+  loosenedAt: number | null;
+}
+
+/** Workspace spec 068: a lasting morale or fear modifier and the day of the campaign it expires. */
+export class TemporaryModifierDto {
+  @ApiProperty()
+  id: string;
+  @ApiProperty({ type: String, enum: TEMPORARY_MODIFIER_KINDS })
+  kind: TemporaryModifierKind;
+  @ApiProperty({ example: 5 })
+  value: number;
+  @ApiProperty({ type: String, enum: TEMPORARY_MODIFIER_SOURCES })
+  source: TemporaryModifierSource;
+  @ApiProperty({ type: Number, nullable: true, description: 'Days it lasts; null until the game master removes it' })
+  days: number | null;
+  @ApiProperty()
+  createdAt: string;
+  @ApiProperty({ type: String, nullable: true })
+  tacticalGameId: string | null;
+  @ApiProperty({ type: Number, nullable: true, description: 'First day of the campaign it no longer applies; null until removed' })
+  expiresGameDay: number | null;
+
+  static fromEntity(entity: CharacterTemporaryModifier): TemporaryModifierDto {
+    return Object.assign(new TemporaryModifierDto(), entity);
+  }
 }
 
 export class InjuryRecoveryDto {
@@ -182,6 +247,12 @@ export class InjuryDto {
   healedAt?: string;
   @ApiPropertyOptional({ description: 'Day of the campaign when it was received (spec 065)' })
   gameDay?: number;
+  @ApiPropertyOptional({ type: InjuryLimitsDto, nullable: true, description: 'Limits of a splint or a cast (spec 068)' })
+  limits?: InjuryLimitsDto | null;
+  @ApiPropertyOptional({ type: String, enum: INJURY_REOPEN_ON, nullable: true, description: 'What reopens the wound (spec 068)' })
+  reopenOn?: InjuryReopenOn | null;
+  @ApiPropertyOptional({ type: InjuryTourniquetDto, nullable: true, description: 'Tourniquet on the wound (spec 068)' })
+  tourniquet?: InjuryTourniquetDto | null;
 
   static fromEntity(entity: Injury): InjuryDto {
     return Object.assign(new InjuryDto(), entity, { treatments: [...(entity.treatments || [])] });

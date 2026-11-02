@@ -12,6 +12,8 @@ export interface RestInput {
   hours: number;
   days: number;
   fullRest: boolean;
+  /** Workspace spec 068: day of the campaign after the rest; the temporary modifiers expired by then are dropped */
+  currentGameDay?: number;
 }
 
 /**
@@ -49,6 +51,14 @@ export class CharacterRestService {
     const summary = { hours, restDays: days, fullRest: input.fullRest };
     // Workspace spec 042: every hour of the rest advances the poisonings.
     const poisonRounds = totalHours * ROUNDS_PER_HOUR;
-    return character.rest(hpAfter, counterDays, new Date().toISOString(), summary, restPowerPeriods(hours, days), poisonRounds);
+    return character.rest(
+      hpAfter,
+      counterDays,
+      new Date().toISOString(),
+      summary,
+      restPowerPeriods(hours, days),
+      poisonRounds,
+      input.currentGameDay,
+    );
   }
 }

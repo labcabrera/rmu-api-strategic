@@ -1,11 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateBy, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateBy,
+  ValidateNested,
+} from 'class-validator';
 import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/apply-tactical-outcome.command.js';
 import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
-import type { Injury, InjurySource } from '../../../domain/value-objects/injury.vo.js';
-import { INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES } from '../../../domain/value-objects/injury.vo.js';
+import type { Injury, InjuryLimits, InjurySource, InjuryTourniquet } from '../../../domain/value-objects/injury.vo.js';
+import { INJURY_REOPEN_ON, INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES, PACES } from '../../../domain/value-objects/injury.vo.js';
+import {
+  TEMPORARY_MODIFIER_KINDS,
+  TEMPORARY_MODIFIER_SOURCES,
+  type TemporaryModifier,
+  type TemporaryModifierKind,
+  type TemporaryModifierSource,
+} from '../../../domain/value-objects/temporary-modifier.vo.js';
 import type {
   TacticalCoatingSpent,
   TacticalItemOutcome,
@@ -59,6 +78,55 @@ export class TacticalItemOutcomeDto {
     },
   })
   coatingSpent?: boolean | { appliedAt: string };
+}
+
+/** Workspace spec 068: units of an item of the character spent in the game. */
+export class TacticalItemConsumedDto {
+  @ApiProperty({ description: 'Strategic item identifier', example: 'item-001' })
+  @IsString()
+  @IsNotEmpty()
+  itemId: string;
+
+  @ApiProperty({ description: 'Units spent', example: 1 })
+  @IsInt()
+  @Min(1)
+  amount: number;
+}
+
+/** Workspace spec 068: a temporary morale or fear modifier created in the game. */
+export class TacticalTemporaryModifierDto {
+  @ApiProperty({ example: 'modifier-001' })
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ type: String, enum: TEMPORARY_MODIFIER_KINDS })
+  @IsIn(TEMPORARY_MODIFIER_KINDS)
+  kind: TemporaryModifierKind;
+
+  @ApiProperty({ example: 5 })
+  @IsInt()
+  value: number;
+
+  @ApiProperty({ type: String, enum: TEMPORARY_MODIFIER_SOURCES })
+  @IsIn(TEMPORARY_MODIFIER_SOURCES)
+  source: TemporaryModifierSource;
+
+  @ApiProperty({ type: Number, nullable: true, description: 'Days of campaign it lasts; null until removed', example: 30 })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  days: number | null;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  createdAt?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  @IsString()
+  @IsOptional()
+  tacticalGameId?: string | null;
 }
 
 export class TacticalOutcomeHpDto {
@@ -161,6 +229,20 @@ export class TacticalOutcomeDto {
   @IsOptional()
   items?: TacticalItemOutcomeDto[];
 
+  @ApiPropertyOptional({ description: 'Units of items spent in the game (spec 068)', type: [TacticalItemConsumedDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TacticalItemConsumedDto)
+  @IsOptional()
+  itemsConsumed?: TacticalItemConsumedDto[];
+
+  @ApiPropertyOptional({ description: 'Temporary modifiers created in the game (spec 068)', type: [TacticalTemporaryModifierDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TacticalTemporaryModifierDto)
+  @IsOptional()
+  temporaryModifiers?: TacticalTemporaryModifierDto[];
+
   static toCommand(characterId: string, dto: TacticalOutcomeDto, userId: string, roles: string[]): ApplyTacticalOutcomeCommand {
     return new ApplyTacticalOutcomeCommand(
       characterId,
@@ -180,10 +262,51 @@ export class TacticalOutcomeDto {
         conditionsResolved: (dto.conditionsResolved || []).map(String),
         fate: dto.fate,
         ...(dto.items ? { items: dto.items.map(item => TacticalOutcomeDto.toItemOutcome(item)) } : {}),
+        ...(dto.itemsConsumed ? { itemsConsumed: dto.itemsConsumed.map(({ itemId, amount }) => ({ itemId, amount })) } : {}),
+        ...(dto.temporaryModifiers
+          ? { temporaryModifiers: dto.temporaryModifiers.map(modifier => TacticalOutcomeDto.toTemporaryModifier(modifier, dto)) }
+          : {}),
       },
       userId,
       roles,
     );
+  }
+
+  private static toTemporaryModifier(raw: TacticalTemporaryModifierDto, dto: TacticalOutcomeDto): TemporaryModifier {
+    return {
+      id: raw.id,
+      kind: raw.kind,
+      value: raw.value,
+      source: raw.source,
+      days: raw.days ?? null,
+      createdAt: raw.createdAt || new Date().toISOString(),
+      tacticalGameId: raw.tacticalGameId ?? dto.tacticalGameId,
+    };
+  }
+
+  /** Workspace spec 068: limits, reopening and tourniquet travel when tactical sends them; unknown shapes are dropped. */
+  private static toHealingState(raw: Injury): Pick<Injury, 'limits' | 'reopenOn' | 'tourniquet'> {
+    const result: Pick<Injury, 'limits' | 'reopenOn' | 'tourniquet'> = {};
+    if (raw.limits === null) result.limits = null;
+    else if (raw.limits && typeof raw.limits === 'object') {
+      const limits: InjuryLimits = {};
+      if (raw.limits.pace === null || PACES.includes(raw.limits.pace as never)) limits.pace = raw.limits.pace ?? null;
+      if (typeof raw.limits.limbUnusable === 'boolean') limits.limbUnusable = raw.limits.limbUnusable;
+      const factor = raw.limits.maneuverPenaltyFactor;
+      if (factor === null || (typeof factor === 'number' && Number.isFinite(factor))) limits.maneuverPenaltyFactor = factor;
+      result.limits = limits;
+    }
+    if (raw.reopenOn === null || INJURY_REOPEN_ON.includes(raw.reopenOn as never)) result.reopenOn = raw.reopenOn ?? null;
+    if (raw.tourniquet === null) result.tourniquet = null;
+    else if (raw.tourniquet && typeof raw.tourniquet === 'object' && Number.isFinite(Number(raw.tourniquet.tightSince))) {
+      const loosenedAt = raw.tourniquet.loosenedAt;
+      const tourniquet: InjuryTourniquet = {
+        tightSince: Number(raw.tourniquet.tightSince),
+        loosenedAt: loosenedAt === null || loosenedAt === undefined || !Number.isFinite(Number(loosenedAt)) ? null : Number(loosenedAt),
+      };
+      result.tourniquet = tourniquet;
+    }
+    return result;
   }
 
   /** Temporary damage does not last after the game: it is dropped. The others must be valid modifiers. */
@@ -301,6 +424,7 @@ export class TacticalOutcomeDto {
       updatedAt: raw.updatedAt,
       healedAt: raw.healedAt,
       gameDay: raw.gameDay,
+      ...TacticalOutcomeDto.toHealingState(raw),
     };
   }
 
