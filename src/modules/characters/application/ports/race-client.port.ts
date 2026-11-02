@@ -1,8 +1,10 @@
-import { StatKey } from '../../domain/value-objects/character-stat.vo';
+import type { StatKey } from '../../domain/value-objects/character-stat.vo.js';
 
 export interface RaceClientPort {
   getRaceById(raceId: string): Promise<Race>;
 }
+
+export const RACE_CLIENT = Symbol('RaceClientPort');
 
 export interface Race {
   id: string;
@@ -22,8 +24,17 @@ export interface Race {
   baseDevPoints: number;
   baseAt: number;
   talents: string[];
+  traits?: RaceTrait[];
   skillBonuses: RaceSkillBonus[];
   description: string;
+}
+
+export interface RaceTrait {
+  id?: string;
+  traitId: string;
+  isTalent: boolean;
+  tier?: number | null;
+  specialization?: string | null;
 }
 
 export interface RaceSkillBonus {

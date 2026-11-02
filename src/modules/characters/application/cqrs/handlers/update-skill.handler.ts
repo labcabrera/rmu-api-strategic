@@ -1,18 +1,22 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { UpdateSkillCommand } from '../commands/update-skill.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { UpdateSkillCommand } from '../commands/update-skill.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
 
 @CommandHandler(UpdateSkillCommand)
 export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    private readonly characterProcessorService: CharacterProcessorService,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: UpdateSkillCommand): Promise<Character> {
@@ -21,6 +25,8 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
 
     const character = await this.characterRepository.findById(characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     const skill = character.skills.find(skill => skill.skillId === skillId) || null;
     if (!skill) throw new ValidationError(`Skill ${skillId} not found for character ${characterId}`);
@@ -29,7 +35,7 @@ export class UpdateSkillHandler implements ICommandHandler<UpdateSkillCommand, C
 
     const items = await this.itemRepository.findByCharacterId(characterId);
     this.characterProcessorService.process(character, items);
-    await this.characterRepository.update(character.id, character);
+    await this.characterWriter.save(character);
     return character;
   }
 }

@@ -1,6 +1,5 @@
-import { ItemAffix } from 'src/modules/items/domain/value-objects/item-affix.vo';
-import { ItemInfo } from 'src/modules/items/domain/value-objects/item-info.vo';
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
+import { ItemInfo } from '../../../domain/value-objects/item-info.vo.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class CreateItemCommand extends AuthenticatedCommand {
   constructor(
@@ -10,11 +9,11 @@ export class CreateItemCommand extends AuthenticatedCommand {
     public readonly itemTypeId: string,
     public readonly name: string | null,
     public readonly carried: boolean | null,
-    public readonly affixes: ItemAffix[] | null,
     public readonly info: ItemInfo | null,
     public readonly amount: number | null,
     public readonly description: string | null,
     public readonly cost: number | null,
+    public readonly wielderSize: string | null,
     userId: string,
     roles: string[],
   ) {

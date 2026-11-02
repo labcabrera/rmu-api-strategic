@@ -1,18 +1,22 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject, Logger } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DeleteCharacterCommand } from '../commands/delete-character.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import { CharacterDeletedEvent } from 'src/modules/characters/domain/events/character.events';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { DeleteCharacterCommand } from '../commands/delete-character.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { CharacterDeletedEvent } from '../../../domain/events/character.events.js';
+import { type HealingLogRepository, HEALING_LOG_REPOSITORY } from '../../ports/healing-log-repository.port.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(DeleteCharacterCommand)
 export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCommand> {
   private readonly logger = new Logger(DeleteCharacterHandler.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(HEALING_LOG_REPOSITORY) private readonly healingLogRepository: HealingLogRepository,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   async execute(command: DeleteCharacterCommand): Promise<void> {
@@ -21,7 +25,10 @@ export class DeleteCharacterHandler implements ICommandHandler<DeleteCharacterCo
     if (!character) {
       throw new NotFoundError('Character', command.characterId);
     }
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
     await this.characterRepository.deleteById(command.characterId);
-    this.characterEventBus.publish(new CharacterDeletedEvent(character.getProps()));
+    await this.healingLogRepository.deleteByCharacterId(command.characterId);
+    await this.events.publish('character', new CharacterDeletedEvent(character.getProps()));
   }
 }

@@ -1,54 +1,75 @@
+import { CharacterModel, CharacterSchema } from '../characters/infrastructure/persistence/models/character.model.js';
+import { GAME_PLAYERS } from './application/ports/game-players.port.js';
+import { MongoGamePlayersAdapter } from './infrastructure/db/mongo.game-players.adapter.js';
+import { GameAccess } from './application/services/game-access.service.js';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-import { AuthModule } from '../auth/auth.module';
-import { SharedModule } from '../shared/shared.module';
-import { GameController } from './interfaces/http/game.controller';
-import { KafkaGameEventBusAdapter } from './infrastructure/messaging/kafka.game-event-bus.adapter';
-import { MongoGameRepository } from './infrastructure/db/mongo-game.repository';
-import { GameModel, GameSchema } from './infrastructure/persistence/models/game-model';
-import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter';
-import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler';
-import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler';
-import { GetGameHandler } from './application/cqrs/handlers/get-game.handler';
-import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler';
-import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler';
-import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
-import { GameGuardAdapter } from './infrastructure/security/game-guard.adapter';
+import { SharedModule } from '../shared/shared.module.js';
+import { GameController } from './interfaces/http/game.controller.js';
+import { MongoGameRepository } from './infrastructure/db/mongo.game.repository.js';
+import { GameModel, GameSchema } from './infrastructure/persistence/models/game.model.js';
+import { GameTimeLogModel, GameTimeLogSchema } from './infrastructure/persistence/models/game-time-log.model.js';
+import { MongoGameTimeLogRepository } from './infrastructure/db/mongo.game-time-log.repository.js';
+import { GAME_TIME_LOG_REPOSITORY } from './application/ports/game-time-log-repository.port.js';
+import { GetGameTimeLogHandler } from './application/cqrs/handlers/get-game-time-log.handler.js';
+import { ApiRealmClientAdapter } from './infrastructure/api-clients/api.realm-client.adapter.js';
+import { CreateGameHandler } from './application/cqrs/handlers/create-game.handler.js';
+import { DeleteGameHandler } from './application/cqrs/handlers/delete-game.handler.js';
+import { DeleteGamesByRealmHandler } from './application/cqrs/handlers/delete-games-by-realm.handler.js';
+import { GetGameHandler } from './application/cqrs/handlers/get-game.handler.js';
+import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler.js';
+import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler.js';
+import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer.js';
+import { GameGuardAdapter } from './infrastructure/security/game-guard.adapter.js';
 
+import { GAME_GUARD } from './application/ports/game-guard.port.js';
+import { GAME_REPOSITORY } from './application/ports/game-repository.port.js';
+import { REALM_CLIENT } from './application/ports/realm-client.port.js';
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
-    MongooseModule.forFeature([{ name: GameModel.name, schema: GameSchema }]),
-    AuthModule,
+    MongooseModule.forFeature([
+      { name: GameModel.name, schema: GameSchema },
+      { name: GameTimeLogModel.name, schema: GameTimeLogSchema },
+      // The players of a game (GamePlayersPort)
+      { name: CharacterModel.name, schema: CharacterSchema },
+    ]),
     SharedModule,
   ],
   controllers: [GameController, KafkaRealmEventConsumer],
   providers: [
     GetGameHandler,
     GetGamesHandler,
+    GetGameTimeLogHandler,
     CreateGameHandler,
     UpdateGameHandler,
     DeleteGameHandler,
+    DeleteGamesByRealmHandler,
+    GameAccess,
     {
-      provide: 'GameRepository',
+      provide: GAME_REPOSITORY,
       useClass: MongoGameRepository,
     },
     {
-      provide: 'RealmClient',
+      provide: GAME_TIME_LOG_REPOSITORY,
+      useClass: MongoGameTimeLogRepository,
+    },
+    {
+      provide: REALM_CLIENT,
       useClass: ApiRealmClientAdapter,
     },
     {
-      provide: 'GameEventProducer',
-      useClass: KafkaGameEventBusAdapter,
+      provide: GAME_PLAYERS,
+      useClass: MongoGamePlayersAdapter,
     },
     {
-      provide: 'GameGuardPort',
+      provide: GAME_GUARD,
       useClass: GameGuardAdapter,
     },
   ],
-  exports: ['GameRepository'],
+  exports: [GAME_REPOSITORY, GAME_TIME_LOG_REPOSITORY, GameAccess, REALM_CLIENT],
 })
 export class GamesModule {}

@@ -1,4 +1,11 @@
-import { ProfessionalBonusType } from './professional-bonus-type.vo';
+import type { StyleAbilitySelection } from './fighting-styles.vo.js';
+import type { ProfessionalBonusType } from './professional-bonus-type.vo.js';
+
+// Development points spent on the ranks developed in the current level, by pool
+export interface SkillDevPointsSpent {
+  normal: number;
+  bonus: number;
+}
 
 export class CharacterSkill {
   constructor(
@@ -7,6 +14,7 @@ export class CharacterSkill {
     public readonly statistics: string[],
     public readonly development: number[],
     public professional: ProfessionalBonusType[] | null,
+    // Total ranks: culture ranks plus developed ranks
     public ranks: number,
     public ranksDeveloped: number,
     public statBonus: number,
@@ -15,9 +23,49 @@ export class CharacterSkill {
     public professionalBonus: number,
     public customBonus: number,
     public totalBonus: number,
+    public traitBonus: number = 0,
+    // Ranks granted by the culture before level 1. They cost no points and are not removed by a level down
+    public cultureRanks: number = 0,
+    public devPointsSpent: SkillDevPointsSpent = { normal: 0, bonus: 0 },
+    // Knack bonus taken from the game power level when the knack was assigned
+    public knackBonus?: number,
+    // Spec 024: imported from a file whose skill the core catalog of this installation does not have
+    public missingReference?: boolean,
+    // Workspace spec 032: ranks of a fighting style allocated to its abilities
+    public styleAbilities?: StyleAbilitySelection[],
+    // Workspace spec 039: skill category, for the talents that affect a whole category
+    public categoryId?: string,
   ) {}
 
-  static empty(skillId: string, specialization: string | null, statistics: string[], development: number[], racialBonus: number) {
-    return new CharacterSkill(skillId, specialization, statistics, development, null, 0, 0, 0, racialBonus, 0, 0, 0, 0);
+  static empty(
+    skillId: string,
+    specialization: string | null,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+    categoryId?: string,
+  ) {
+    return new CharacterSkill(
+      skillId,
+      specialization,
+      statistics,
+      development,
+      null,
+      0,
+      0,
+      0,
+      racialBonus,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      { normal: 0, bonus: 0 },
+      undefined,
+      undefined,
+      undefined,
+      categoryId,
+    );
   }
 }

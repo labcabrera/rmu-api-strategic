@@ -1,8 +1,10 @@
+import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
 import { Injectable } from '@nestjs/common';
-import { Character } from '../../../aggregates/character.aggregate';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { CharacterEquipment } from '../../../value-objects/character-equipment.vo';
-import { DIFFICULTIES } from '../../../value-objects/difficulty.vo';
+import { Character } from '../../../aggregates/character.js';
+import { Item } from '../../../../../items/domain/aggregates/item.js';
+import { CharacterEquipment } from '../../../value-objects/character-equipment.vo.js';
+import { DIFFICULTIES } from '../../../value-objects/difficulty.vo.js';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 @Injectable()
 export class EquipmentProcessor {
@@ -15,7 +17,8 @@ export class EquipmentProcessor {
     }
     this.cleanUp(character, items);
 
-    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight, 0);
+    // Spec 023: a stack weighs each of its units
+    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight * item.units, 0);
     const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
     character.equipment.weight = carriedWeight;
 
@@ -36,8 +39,10 @@ export class EquipmentProcessor {
     armors.forEach(armorItems => {
       //TODO change name
       enc += armorItems.armor!.enc || 0;
-      maneuverPenalty += armorItems.armor!.maneuver || 0;
-      perceptionPenalty += armorItems.armor!.perception || 0;
+      maneuverPenalty += armorItems.armor!.maneuverPenalty || 0;
+      // Spec 019, decision 10: the breakage damage of armor is an armor maneuver penalty.
+      maneuverPenalty += ItemModifiers.condition(armorItems.modifiers).breakagePenalty;
+      perceptionPenalty += armorItems.armor!.perceptionPenalty || 0;
       rangedPenalty += armorItems.armor!.rangedPenalty || 0;
       difficultyIndex = Math.max(difficultyIndex, DIFFICULTIES.indexOf(armorItems.armor!.baseDifficulty));
     });
@@ -76,7 +81,8 @@ export class EquipmentProcessor {
   }
 
   private cleanUp(character: Character, items: Item[]) {
-    for (const slot in character.equipment.slots) {
+    for (const key in character.equipment.slots) {
+      const slot = key as EquipmentSlot;
       if (character.equipment.slots[slot]) {
         const itemId = character.equipment.slots[slot];
         if (!items.find(item => item.id === itemId)) {

@@ -1,15 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.aggregate';
-import { CharacterAttack } from '../../../value-objects/character-attack.vo';
-import { DomainError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import { ItemWeapon } from 'src/modules/items/domain/value-objects/item-weapon.vo';
-import { ItemWeaponMode } from 'src/modules/items/domain/value-objects/item-weapon-mode.vo';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import { EquipmentSlot } from '../../../value-objects/character-equipment.vo';
-import { CharacterSkill } from '../../../value-objects/character-skill.vo';
-import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo';
+import { Character, UNRANKED_SKILL_BONUS } from '../../../aggregates/character.js';
+import { CharacterAttack, type WeaponCategory } from '../../../value-objects/character-attack.vo.js';
+import { DomainError, ValidationError } from '../../../../../shared/domain/errors/errors.js';
+import { ItemWeapon } from '../../../../../items/domain/value-objects/item-weapon.vo.js';
+import { ItemWeaponMode } from '../../../../../items/domain/value-objects/item-weapon-mode.vo.js';
+import { Item } from '../../../../../items/domain/aggregates/item.js';
+import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
+import { CharacterSkill } from '../../../value-objects/character-skill.vo.js';
+import { CharacterAttackRange } from '../../../value-objects/character-attack-range.vo.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesAttack, matchesWeaponType } from '../traits/trait-specialization-matcher.js';
+import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 
 const SHIELD_FUMBLE = 4;
+// Core Law has no fumble column for shield bashes: the one-handed melee one is used (workspace spec 034)
+const SHIELD_FUMBLE_TABLE = 'melee-one-hand';
+const WRONG_SIZE_PENALTY = -20;
+const SHIELD_SKILL_ID = 'shield';
 
 @Injectable()
 export class AttackProcessor {
@@ -37,15 +44,43 @@ export class AttackProcessor {
       if (!item) {
         throw new ValidationError(`Item with id ${slotItemId} not found for character ${character.id} in slot ${slot}`);
       }
+      // Spec 019, decision 8: a broken weapon or shield gives no attack.
+      const condition = ItemModifiers.condition(item.modifiers);
+      if (condition.broken) {
+        return;
+      }
       if (item.weapon) {
         const skillId = item.weapon.skillId;
+        const attackType = skillId.startsWith('ranged-') ? 'ranged' : 'melee';
         const skill = this.getWeaponSkillBonus(character, item.weapon);
-        const boModifiers = this.getBoModifiers(skill, character, slot);
-        const fumble = this.getFumble(item.weapon.fumble, skill);
+        const boModifiers = this.getBoModifiers(skill, character, slot, attackType);
+        this.applyItemModifiers(boModifiers, item);
+        const fumble = this.getFumble(character, item.weapon.fumble, skill, skillId);
+        // A weapon made for another size uses its own size for the attack and gets a BO penalty
+        const wielderSize = item.weapon.wielderSize;
+        const wrongSize = !!wielderSize && wielderSize !== character.info.sizeId;
+        if (wrongSize) {
+          boModifiers['wrongSize'] = WRONG_SIZE_PENALTY;
+        }
+        const baseSizeAdjustment =
+          this.getSizeAdjustment(wrongSize ? wielderSize : character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId);
+        const rangeTraitBonus = this.getTraitRangeBonus(character, skillId);
         this.getAvailableModes(character, item.weapon).forEach(mode => {
+          // Workspace spec 041, decision 5: the OB modifier of the mode, such as an improvised weapon penalty
+          const modeModifiers = mode.obModifier ? { ...boModifiers, improvised: mode.obModifier } : boModifiers;
           const meleeRange = this.getMeleeRange(character, mode, item);
-          const sizeAdjustment = this.getCharacterSizeAdjustment(character) + mode.sizeAdjustment;
-          const ranges = mode.ranges ? mode.ranges.map(r => new CharacterAttackRange(r.from, r.to, r.bonus)) : null;
+          const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
+          const rangeFactor = this.getTraitRangeFactor(character, mode);
+          const ranges = mode.ranges
+            ? mode.ranges.map(
+                r =>
+                  new CharacterAttackRange(
+                    this.scaleRange(r.from, rangeFactor),
+                    this.scaleRange(r.to, rangeFactor),
+                    this.getRangeBonus(r.bonus, rangeTraitBonus),
+                  ),
+              )
+            : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
             attackTable: mode.attackTable,
@@ -53,23 +88,31 @@ export class AttackProcessor {
             fumbleTable: mode.fumbleTable,
             fumble: fumble,
             weaponFumble: item.weapon!.fumble,
-            type: skillId.startsWith('ranged-') ? 'ranged' : 'melee',
+            type: attackType,
             defaultAttack: true,
             meleeRange: meleeRange,
             ranges: ranges,
-            boModifiers: boModifiers,
+            boModifiers: modeModifiers,
+            twoHanded: mode.type === 'two-hands',
+            weaponCategory: this.getWeaponCategory(item, mode),
+            wrongSize: wrongSize,
+            skillId: skillId,
+            itemId: item.id,
+            ...(item.weapon!.tags?.length ? { weaponTags: [...item.weapon!.tags] } : {}),
+            strengthWeight: this.getStrengthWeight(skill),
           });
           attacks.push(attack);
         });
       } else if (item.shield) {
-        const skill = character.findSkill('shield', null);
-        const boModifiers = this.getBoModifiers(skill, character, slot);
-        const fumble = this.getFumble(SHIELD_FUMBLE, skill);
+        const skill = character.findSkill(SHIELD_SKILL_ID, null);
+        const boModifiers = this.getBoModifiers(skill, character, slot, 'melee');
+        this.applyItemModifiers(boModifiers, item);
+        const fumble = this.getFumble(character, SHIELD_FUMBLE, skill, SHIELD_SKILL_ID);
         const attack = CharacterAttack.fromProps({
           attackName: slot,
           attackTable: 'shield',
-          sizeAdjustment: 0,
-          fumbleTable: 'shield',
+          sizeAdjustment: this.getTraitSizeAdjustment(character, SHIELD_SKILL_ID),
+          fumbleTable: SHIELD_FUMBLE_TABLE,
           fumble: fumble,
           weaponFumble: SHIELD_FUMBLE,
           type: 'melee',
@@ -77,13 +120,37 @@ export class AttackProcessor {
           meleeRange: Math.round((character.info.height / 2) * 100) / 100,
           ranges: null,
           boModifiers: boModifiers,
+          twoHanded: false,
+          weaponCategory: 'standard',
+          wrongSize: false,
+          skillId: SHIELD_SKILL_ID,
+          itemId: item.id,
+          strengthWeight: this.getStrengthWeight(skill),
         });
         attacks.push(attack);
       }
     }
   }
 
-  private getBoModifiers(skill: CharacterSkill | null, character: Character, slot: EquipmentSlot): Record<string, number> {
+  // Workspace spec 040, decision 10: an unranked skill adds no stat bonus, so it has no weight
+  private getStrengthWeight(skill: CharacterSkill | null): number {
+    return (skill?.statistics ?? []).filter(stat => stat === 'st').length;
+  }
+
+  /** Spec 019: the breakage damage of the item and its other attack modifiers (quality, magic...). */
+  private applyItemModifiers(modifiers: Record<string, number>, item: Item): void {
+    const breakage = ItemModifiers.condition(item.modifiers).breakagePenalty;
+    const bonus = ItemModifiers.bonus(item.modifiers, 'attack');
+    if (breakage !== 0) modifiers['breakage'] = breakage;
+    if (bonus !== 0) modifiers['item'] = bonus;
+  }
+
+  private getBoModifiers(
+    skill: CharacterSkill | null,
+    character: Character,
+    slot: EquipmentSlot,
+    attackType: 'melee' | 'ranged',
+  ): Record<string, number> {
     const modifiers: Record<string, number> = {};
     if (skill) {
       modifiers['skill'] = skill.totalBonus;
@@ -91,14 +158,80 @@ export class AttackProcessor {
       modifiers['skill'] = UNRANKED_SKILL_BONUS;
     }
     if (slot === 'offHand') {
-      this.getOffHandPenalty(character, modifiers);
+      this.getOffHandPenalty(modifiers);
     }
+    this.applyTraitBoModifiers(character, modifiers, slot, attackType);
     return modifiers;
   }
 
-  private getFumble(baseFumble: number, skill: CharacterSkill | null): number {
+  private applyTraitBoModifiers(
+    character: Character,
+    modifiers: Record<string, number>,
+    slot: EquipmentSlot,
+    attackType: 'melee' | 'ranged',
+  ): void {
+    getTraitEffects(character.traits, 'attack-bo')
+      .filter(e => (!e.effect.offHand || slot === 'offHand') && (!e.effect.attackType || e.effect.attackType === attackType))
+      .forEach(e => {
+        const key = e.effect.key || e.traitId;
+        modifiers[key] = (modifiers[key] || 0) + e.value;
+      });
+  }
+
+  private getTraitSizeAdjustment(character: Character, skillId: string): number {
+    const effects = getTraitEffects(character.traits, 'attack-size').filter(e =>
+      matchesAttack(e.effect.specialization || 'skill', e.specialization, skillId),
+    );
+    return sumTraitEffects(effects);
+  }
+
+  private getTraitRangeBonus(character: Character, skillId: string): number {
+    const effects = getTraitEffects(character.traits, 'attack-range').filter(e =>
+      matchesAttack(e.effect.specialization || 'ranged-weapon-type', e.specialization, skillId),
+    );
+    return sumTraitEffects(effects);
+  }
+
+  // Range penalties are reduced by the trait bonus, never above 0
+  private getRangeBonus(bonus: number, traitBonus: number): number {
+    if (bonus >= 0 || traitBonus <= 0) {
+      return bonus;
+    }
+    return Math.min(0, bonus + traitBonus);
+  }
+
+  // Great Arm (thrown) and Nearsighted (all ranged) scale every range by a percentage per tier (workspace spec 039)
+  private getTraitRangeFactor(character: Character, mode: ItemWeaponMode): number {
+    const percent = sumTraitEffects(
+      getTraitEffects(character.traits, 'attack-range-percent').filter(e => !e.effect.thrown || !!mode.attackTypes?.includes('thrown')),
+    );
+    return Math.max(0, 1 + percent / 100);
+  }
+
+  private scaleRange(value: number | null | undefined, factor: number): number {
+    if (value === null || value === undefined || factor === 1) {
+      return value as number;
+    }
+    return Math.round(value * factor);
+  }
+
+  // Ranks and Weapon Control first (min 1), then Fumbler (workspace spec 039, decision 10)
+  private getFumble(character: Character, baseFumble: number, skill: CharacterSkill | null, skillId: string): number {
     const ranks = skill ? skill.ranks : 0;
-    return Math.max(1, baseFumble - Math.floor(ranks / 5));
+    let reduction = 0;
+    let increase = 0;
+    getTraitEffects(character.traits, 'fumble').forEach(e => {
+      if (e.value > 0) {
+        increase += e.value;
+      } else if (!e.effect.specialization) {
+        reduction += e.value;
+      } else if (matchesWeaponType(e.effect.specialization as 'melee-weapon-type', e.specialization, skillId)) {
+        reduction += e.value;
+      } else {
+        reduction += e.effect.otherwise ?? 0;
+      }
+    });
+    return Math.max(1, baseFumble - Math.floor(ranks / 5) + reduction) + increase;
   }
 
   private getMeleeRange(character: Character, mode: ItemWeaponMode, item: Item): number | null {
@@ -113,7 +246,7 @@ export class AttackProcessor {
     const skill = this.getWeaponSkillBonus(character, weapon);
     modifiers['skill'] = skill ? skill.totalBonus : -25;
     if (character.equipment.slots['offHand']) {
-      this.getOffHandPenalty(character, modifiers);
+      this.getOffHandPenalty(modifiers);
     }
     return modifiers;
   }
@@ -132,8 +265,19 @@ export class AttackProcessor {
     });
   }
 
-  private getCharacterSizeAdjustment(character: Character): number {
-    switch (character.info.sizeId) {
+  // 'natural' is reserved for natural and unarmed attacks, which are not generated yet
+  private getWeaponCategory(item: Item, mode: ItemWeaponMode): WeaponCategory {
+    if (item.itemTypeId === 'dagger') {
+      return 'dagger';
+    }
+    if (mode.sizeAdjustment < 0) {
+      return 'light';
+    }
+    return 'standard';
+  }
+
+  private getSizeAdjustment(sizeId: string): number {
+    switch (sizeId) {
       case 'medium':
         return 0;
       case 'big':
@@ -141,7 +285,7 @@ export class AttackProcessor {
       case 'small':
         return -1;
       default:
-        throw new DomainError('Unsupported character size ' + character.info.sizeId);
+        throw new DomainError('Unsupported size ' + sizeId);
     }
   }
 
@@ -155,11 +299,8 @@ export class AttackProcessor {
     throw new DomainError('Unsupported weapon skill format');
   }
 
-  private getOffHandPenalty(character: Character, modifiers: Record<string, number>) {
+  private getOffHandPenalty(modifiers: Record<string, number>) {
     //TODO check light off-hand weapon
     modifiers['offHand'] = -20;
-    if (character.traits?.some(t => t.traitId === 'ambidextrous')) {
-      modifiers['ambidextrous'] = 20;
-    }
   }
 }

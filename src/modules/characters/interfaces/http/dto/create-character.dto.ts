@@ -1,13 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CharacterSkillCreationDto } from './character-skill.dto';
-import { CharacterStatCreationDto } from './character-stat.dto';
-import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CreateCharacterCommand, CharacterStatCreation } from 'src/modules/characters/application/cqrs/commands/create-character.command';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
-import { CreateCharacterInfoDto } from './create-character-info.dto';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { CharacterSkillCreationDto } from './character-skill.dto.js';
+import { CharacterStatCreationDto } from './character-stat.dto.js';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
+import { CreateCharacterCommand, CharacterStatCreation } from '../../../application/cqrs/commands/create-character.command.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import { CreateCharacterInfoDto } from './create-character-info.dto.js';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import { CreateCharacterCultureDto } from './create-character-culture.dto.js';
 
 export class CreateCharacterDto {
   @ApiProperty({ description: 'Character name', example: 'Sauron' })
@@ -61,6 +62,16 @@ export class CreateCharacterDto {
   @IsOptional()
   imageUrl?: string;
 
+  @ApiProperty({
+    description: 'Optional culture: its ranks are applied before level 1 without spending development points',
+    type: CreateCharacterCultureDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateCharacterCultureDto)
+  culture?: CreateCharacterCultureDto;
+
   static toCommand(dto: CreateCharacterDto, userId: string, roles: string[]): CreateCharacterCommand {
     const skills = dto.skills!.map(skill => ({
       skillId: skill.skillId,
@@ -70,7 +81,7 @@ export class CreateCharacterDto {
     const statistics: Record<StatKey, CharacterStatCreation> = Object.fromEntries(
       Object.entries(dto.statistics || {}).map(([k, v]) => [
         k as StatKey,
-        new CharacterStatCreation((v as any).potential, (v as any).temporary),
+        new CharacterStatCreation((v as { potential: number }).potential, (v as { temporary: number }).temporary),
       ]),
     ) as Record<StatKey, CharacterStatCreation>;
 
@@ -87,6 +98,7 @@ export class CreateCharacterDto {
       dto.imageUrl,
       userId,
       roles,
+      CreateCharacterCultureDto.toCommand(dto.culture),
     );
   }
 }

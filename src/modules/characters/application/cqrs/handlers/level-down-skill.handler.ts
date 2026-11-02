@@ -1,18 +1,22 @@
+import { CharacterWriter } from '../../services/character-writer.service.js';
+import { CharacterAccess } from '../../services/character-access.service.js';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { LevelDownSkillCommand } from '../commands/level-down-skill.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { LevelDownSkillCommand } from '../commands/level-down-skill.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
 
 @CommandHandler(LevelDownSkillCommand)
 export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
+    private readonly characterProcessorService: CharacterProcessorService,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    private readonly characterAccess: CharacterAccess,
+    private readonly characterWriter: CharacterWriter,
   ) {}
 
   async execute(command: LevelDownSkillCommand): Promise<Character> {
@@ -20,11 +24,13 @@ export class LevelDownSkillHandler implements ICommandHandler<LevelDownSkillComm
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
     character.levelDownSkill(command.skillId, command.specialization);
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
-    const updated = await this.characterRepository.update(character.id, character);
+    const updated = await this.characterWriter.save(character);
     //TODO propagate events
     return updated;
   }

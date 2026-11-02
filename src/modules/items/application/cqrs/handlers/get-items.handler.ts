@@ -1,21 +1,22 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import type { SortCriteria } from '../../../../shared/application/criteria/query-criteria.js';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Page } from 'src/modules/shared/domain/entities/page';
-import { GetItemsQuery } from '../queries/get-items.query';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
-import type { ItemGuardPort } from '../../ports/item-guard.port';
-import type { ItemRepository } from '../../ports/item.repository';
+import { Page } from '../../../../shared/application/pagination/page.js';
+import { GetItemsQuery } from '../queries/get-items.query.js';
+import { Item } from '../../../domain/aggregates/item.js';
+import { ItemAccess } from '../../services/item-access.service.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../ports/item-repository.port.js';
 
 @QueryHandler(GetItemsQuery)
 export class GetItemsHandler implements IQueryHandler<GetItemsQuery, Page<Item>> {
   constructor(
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('ItemGuardPort') private readonly itemGuard: ItemGuardPort,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    private readonly itemAccess: ItemAccess,
   ) {}
 
   async execute(query: GetItemsQuery): Promise<Page<Item>> {
-    const filter = this.itemGuard.buildQueryPredicate(query.userId, query.roles);
-    const sort = { name: 1 };
+    const filter = await this.itemAccess.readFilter(query.userId, query.roles);
+    const sort: SortCriteria = { name: 'asc' };
     return await this.itemRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

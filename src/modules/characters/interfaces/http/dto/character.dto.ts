@@ -1,24 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterDefenseDto } from './character-defense.dto';
-import { CharacterEnduranceDto } from './character-endurance.dto';
-import { CharacterEquipmentDto } from './character-equipment.dto';
-import { CharacterHPDto } from './character-hp.dto';
-import { CharacterInitiativeDto } from './character-initiative.dto';
-import { CharacterMovementDto } from './character-movement-dto';
-import { CharacterSkillDto } from './character-skill.dto';
-import { CharacterStatDto } from './character-stat.dto';
-import { CharacterXPDto } from './character-xp.dto';
-import { CharacterInfoDto } from './character-info.dto';
-import { CharacterAttackDto } from './character-attack.dto';
-import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto';
-import { CharacterResistanceDto } from './character-resistance.dto';
-import { CharacterTraitDto } from './character-trait.dto';
-import { Character } from 'src/modules/characters/domain/aggregates/character.aggregate';
-import { NamedEntityDto } from 'src/modules/shared/interfaces/http/dto/named-entity.dto';
-import { PaginationDto } from 'src/modules/shared/interfaces/http/dto/page.dto';
-import { STAT_KEYS, StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
+import { CharacterDefenseDto } from './character-defense.dto.js';
+import { CharacterEnduranceDto } from './character-endurance.dto.js';
+import { CharacterEquipmentDto } from './character-equipment.dto.js';
+import { CharacterHPDto } from './character-hp.dto.js';
+import { CharacterInitiativeDto } from './character-initiative.dto.js';
+import { CharacterMovementDto } from './character-movement.dto.js';
+import { CharacterPowerDto } from './character-power.dto.js';
+import { CharacterSkillDto } from './character-skill.dto.js';
+import { CharacterStatDto } from './character-stat.dto.js';
+import { CharacterXPDto } from './character-xp.dto.js';
+import { CharacterInfoDto } from './character-info.dto.js';
+import { CharacterAttackDto } from './character-attack.dto.js';
+import { CharacterRoleplayInfoDto } from './character-roleplay-info.dto.js';
+import { CharacterResistanceDto } from './character-resistance.dto.js';
+import { CharacterTraitDto } from './character-trait.dto.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-entity.dto.js';
+import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
+import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto, TemporaryModifierDto } from './character-health.dto.js';
 
 export class CharacterDto {
+  @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
+  version: number;
+
   @ApiProperty({ description: 'Character identifier', example: 'character-001' })
   id: string;
 
@@ -58,6 +64,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character health points', type: CharacterHPDto })
   hp: CharacterHPDto;
 
+  @ApiProperty({ description: 'Character power points', type: CharacterPowerDto, nullable: true })
+  power: CharacterPowerDto | null;
+
   @ApiProperty({ description: 'Character initiative', type: CharacterInitiativeDto })
   initiative: CharacterInitiativeDto;
 
@@ -73,7 +82,25 @@ export class CharacterDto {
   @ApiProperty({ description: 'Character talents and flaws', type: [CharacterTraitDto] })
   traits: CharacterTraitDto[];
 
-  @ApiProperty({ description: 'Character description', example: 'The Dark Lord of Mordor' })
+  @ApiProperty({ type: String, description: 'Character status', enum: ['partially_created', 'created', 'dead'], example: 'created' })
+  status: CharacterStatus;
+
+  @ApiProperty({ description: 'Injuries, including the healed ones', type: [InjuryDto] })
+  injuries: InjuryDto[];
+
+  @ApiProperty({ description: 'Conditions (unconscious, dead...), including the resolved ones', type: [CharacterConditionDto] })
+  conditions: CharacterConditionDto[];
+
+  @ApiProperty({ description: 'Injury penalty, active injuries and bleeding', type: HealthSummaryDto })
+  healthSummary: HealthSummaryDto;
+
+  @ApiProperty({ description: 'Tactical games whose outcome has been applied', type: [String] })
+  appliedTacticalGames: string[];
+
+  @ApiProperty({ description: 'Lasting morale and fear modifiers (spec 068)', type: [TemporaryModifierDto] })
+  temporaryModifiers: TemporaryModifierDto[];
+
+  @ApiProperty({ type: String, description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
   @ApiProperty({ description: 'Character image URL', example: 'images/foo/bar.png', required: false })
@@ -88,6 +115,7 @@ export class CharacterDto {
       statistics[key] = CharacterStatDto.fromEntity(entity.statistics[key]);
     }
     const dto = new CharacterDto();
+    dto.version = entity.version;
     dto.id = entity.id;
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };
@@ -101,11 +129,18 @@ export class CharacterDto {
     dto.resistances = entity.resistances.map(resistance => CharacterResistanceDto.fromEntity(resistance));
     dto.endurance = CharacterEnduranceDto.fromEntity(entity.endurance);
     dto.hp = CharacterHPDto.fromEntity(entity.hp);
+    dto.power = entity.power ? CharacterPowerDto.fromEntity(entity.power) : null;
     dto.initiative = CharacterInitiativeDto.fromEntity(entity.initiative);
     dto.skills = entity.skills.map(skill => CharacterSkillDto.fromEntity(skill));
     dto.equipment = CharacterEquipmentDto.fromEntity(entity.equipment);
     dto.attacks = entity.attacks.map(attack => CharacterAttackDto.fromEntity(attack));
     dto.traits = entity.traits.map(trait => CharacterTraitDto.fromEntity(trait));
+    dto.status = entity.status;
+    dto.injuries = (entity.injuries || []).map(injury => InjuryDto.fromEntity(injury));
+    dto.conditions = (entity.conditions || []).map(condition => CharacterConditionDto.fromEntity(condition));
+    dto.healthSummary = HealthSummaryDto.fromEntity(entity.healthSummary);
+    dto.appliedTacticalGames = [...(entity.appliedTacticalGames || [])];
+    dto.temporaryModifiers = (entity.temporaryModifiers || []).map(modifier => TemporaryModifierDto.fromEntity(modifier));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
@@ -114,7 +149,7 @@ export class CharacterDto {
 }
 
 export class CharacterPageDto {
-  @ApiProperty({ type: [CharacterDto], description: 'Characters', isArray: true })
+  @ApiProperty({ type: [CharacterDto], description: 'Characters' })
   content: CharacterDto[];
 
   @ApiProperty({ type: PaginationDto, description: 'Pagination information' })

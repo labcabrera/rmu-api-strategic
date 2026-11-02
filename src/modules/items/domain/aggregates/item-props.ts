@@ -1,9 +1,14 @@
-import { AccessType } from 'src/modules/shared/domain/entities/access-type';
-import { ItemAffix } from '../value-objects/item-affix.vo';
-import { ItemArmor } from '../value-objects/item-armor.vo';
-import { ItemInfo } from '../value-objects/item-info.vo';
-import { ItemWeapon } from '../value-objects/item-weapon.vo';
-import { ItemShield } from '../value-objects/item-shield.vo';
+import type { AccessType } from '../../../shared/domain/entities/access-type.js';
+import { ItemArmor } from '../value-objects/item-armor.vo.js';
+import { ItemInfo } from '../value-objects/item-info.vo.js';
+import { ItemWeapon } from '../value-objects/item-weapon.vo.js';
+import { ItemShield } from '../value-objects/item-shield.vo.js';
+import type { ItemModifier } from '../value-objects/item-modifier.vo.js';
+import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
+import type { ItemCoating } from '../value-objects/item-coating.vo.js';
+import type { ItemMaterial } from '../value-objects/item-material.vo.js';
+import type { ItemCharges, ItemEnchantment, ItemGemSetting } from '../value-objects/item-enchantment.vo.js';
+import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
 
 export interface ItemProps {
   id: string;
@@ -17,12 +22,41 @@ export interface ItemProps {
   weapon: ItemWeapon | null;
   armor: ItemArmor | null;
   shield: ItemShield | null;
-  affixes: ItemAffix[];
+  /** Spec 019: missing in items stored before it. */
+  modifiers: ItemModifier[];
   amount: number | null;
   info: ItemInfo;
   description: string | null;
+  /** Spec 023: copy of the catalog type, missing in items stored before it. */
+  catalog?: ItemCatalogInfo | null;
+  /** Spec 023: reference value of one unit in gold (catalog average cost, or the crafting price). */
+  value?: number | null;
+  /** Spec 023: gold paid for one unit when it was bought or crafted. */
+  acquiredPrice?: number | null;
+  /** Spec 023: an absolute failure repairing it when broken: it can no longer be repaired. */
+  unrepairable?: boolean;
   createdAt: Date;
   updatedAt: Date | null;
   accessType: AccessType;
   owner: string;
+  /** Spec 024: the import that created it, to undo a failed import. */
+  importId?: string;
+  /** Workspace spec 042: poison on the weapon. */
+  coating?: ItemCoating | null;
+  /** Workspace spec 043: superior material it was crafted of. */
+  material?: ItemMaterial | null;
+  /** Workspace spec 062: size of the item (null is medium); a weapon keeps it equal to weapon.wielderSize. */
+  size?: ItemSize | null;
+  /** Workspace spec 062: carats of a gem. */
+  carats?: number | null;
+  /** Workspace spec 062: class of a jewel. */
+  jewelryClass?: JewelryClass | null;
+  /** Workspace spec 062: modern cut multiplier of a gem (optional rule). */
+  cutFactor?: number | null;
+  /** Workspace spec 064: what an alchemist enchanted it with. */
+  enchantment?: ItemEnchantment | null;
+  /** Workspace spec 067: charges of a charged item. */
+  charges?: ItemCharges | null;
+  /** Workspace spec 067: gems set in the item. */
+  settings?: ItemGemSetting[];
 }

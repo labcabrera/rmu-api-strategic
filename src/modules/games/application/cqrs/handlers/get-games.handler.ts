@@ -1,21 +1,22 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import type { SortCriteria } from '../../../../shared/application/criteria/query-criteria.js';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import type { GameRepository } from '../../ports/game.repository';
-import { GetGamesQuery } from '../queries/get-games.query';
-import { Page } from 'src/modules/shared/domain/entities/page';
-import type { GameGuardPort } from '../../ports/game-guard.port';
+import { Game } from '../../../domain/aggregates/game.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { GetGamesQuery } from '../queries/get-games.query.js';
+import { Page } from '../../../../shared/application/pagination/page.js';
+import { GameAccess } from '../../services/game-access.service.js';
 
 @QueryHandler(GetGamesQuery)
 export class GetGamesHandler implements IQueryHandler<GetGamesQuery, Page<Game>> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(query: GetGamesQuery): Promise<Page<Game>> {
-    const filter = this.gameGuard.buildQueryPredicate(query.userId, query.roles);
-    const sort = { name: 1 };
+    const filter = await this.gameAccess.readableGames(query.userId, query.roles);
+    const sort: SortCriteria = { name: 'asc' };
     return await this.gameRepository.findByRsql(query.rsql, query.page, query.size, filter, sort);
   }
 }

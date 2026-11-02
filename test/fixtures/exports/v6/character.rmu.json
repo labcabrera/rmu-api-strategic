@@ -1,0 +1,352 @@
+{
+  "format": "rmu-strategic-export",
+  "formatVersion": 6,
+  "kind": "character",
+  "exportedAt": "2026-10-25T21:33:06.823Z",
+  "source": {
+    "app": "rmu-api-strategic",
+    "appVersion": "0.5.3-SNAPSHOT",
+    "gameId": "4657ab20-8b19-4a1e-9552-19847f3f89c8",
+    "gameName": "E2E game",
+    "realmId": "realm-001",
+    "realmName": "E2E realm",
+    "factionId": "ae380319-8bf8-49cf-905c-a1c7baaada4e",
+    "factionName": "E2E faction",
+    "owner": "e2e-owner"
+  },
+  "references": {
+    "races": [
+      {
+        "id": "race-001",
+        "name": "E2E race"
+      }
+    ],
+    "professions": [
+      {
+        "id": "fighter",
+        "name": null
+      }
+    ],
+    "cultures": [],
+    "skills": [
+      {
+        "id": "body-development",
+        "name": null
+      },
+      {
+        "id": "melee-weapon",
+        "name": null
+      },
+      {
+        "id": "perception",
+        "name": null
+      }
+    ],
+    "traits": [],
+    "itemTypes": [
+      {
+        "id": "gold-coin",
+        "name": "gold-coin"
+      },
+      {
+        "id": "longsword",
+        "name": "E2E longsword"
+      }
+    ]
+  },
+  "data": {
+    "ref": "c1",
+    "character": {
+      "name": "Veteran",
+      "info": {
+        "raceId": "race-001",
+        "raceName": "E2E race",
+        "professionId": "fighter",
+        "sizeId": "medium",
+        "realmType": "essence",
+        "realmTypes": [
+          "essence"
+        ],
+        "height": 1.8,
+        "weight": 80,
+        "cultureId": null
+      },
+      "roleplay": {
+        "gender": "male",
+        "age": 30
+      },
+      "experience": {
+        "level": 0,
+        "availableLevel": 0,
+        "xp": 0,
+        "devPoints": 60,
+        "availableDevPoints": 0,
+        "availableBonusDevPoints": 50,
+        "availableStatLevelUp": 0,
+        "developedStatLevelUp": 0,
+        "weaponDevelopment": [
+          "melee",
+          "ranged",
+          "shield",
+          "unarmed"
+        ],
+        "bonusDevPointsSpentThisLevel": 0,
+        "flawDevPoints": 0
+      },
+      "statistics": {
+        "ag": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "co": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "em": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "in": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "me": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "pr": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "qu": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "re": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "sd": {
+          "potential": 70,
+          "temporary": 50
+        },
+        "st": {
+          "potential": 70,
+          "temporary": 40
+        }
+      },
+      "skills": [
+        {
+          "skillId": "body-development",
+          "specialization": null,
+          "statistics": [
+            "co"
+          ],
+          "development": [
+            2,
+            6
+          ],
+          "professional": null,
+          "ranks": 4,
+          "ranksDeveloped": 0,
+          "cultureRanks": 0,
+          "devPointsSpent": {
+            "normal": 0,
+            "bonus": 0
+          },
+          "knackBonus": null
+        },
+        {
+          "skillId": "melee-weapon",
+          "specialization": "sword",
+          "statistics": [
+            "st"
+          ],
+          "development": [
+            2,
+            5
+          ],
+          "professional": null,
+          "ranks": 0,
+          "ranksDeveloped": 0,
+          "cultureRanks": 0,
+          "devPointsSpent": {
+            "normal": 0,
+            "bonus": 0
+          },
+          "knackBonus": null
+        },
+        {
+          "skillId": "perception",
+          "specialization": null,
+          "statistics": [
+            "in"
+          ],
+          "development": [
+            2,
+            4
+          ],
+          "professional": null,
+          "ranks": 0,
+          "ranksDeveloped": 0,
+          "cultureRanks": 0,
+          "devPointsSpent": {
+            "normal": 0,
+            "bonus": 0
+          },
+          "knackBonus": null
+        }
+      ],
+      "traits": [],
+      "hp": {
+        "current": 30
+      },
+      "endurance": {
+        "base": 0,
+        "customBonus": 0,
+        "max": 0,
+        "current": 4,
+        "accumulator": 2,
+        "fatiguePenalty": -5
+      },
+      "power": null,
+      "resistances": [],
+      "equipment": {
+        "slots": {
+          "mainHand": "i1"
+        }
+      },
+      "status": "created",
+      "injuries": [
+        {
+          "id": "injury-e2e-1",
+          "type": "bone",
+          "severity": "medium",
+          "location": "arm",
+          "side": "left",
+          "penalty": -15,
+          "initialPenalty": -20,
+          "source": {
+            "kind": "manual"
+          },
+          "treatments": [],
+          "recovery": {
+            "roll": 50,
+            "modifiers": 0,
+            "total": 50,
+            "baseDays": 10,
+            "multiplier": 1,
+            "totalDays": 10,
+            "remainingDays": 7,
+            "startedAt": "2026-10-01T00:00:00.000Z"
+          },
+          "status": "recovering",
+          "createdAt": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "conditions": [],
+      "description": null,
+      "imageUrl": null
+    },
+    "items": [
+      {
+        "ref": "i1",
+        "itemTypeId": "longsword",
+        "name": "E2E longsword",
+        "category": "weapon",
+        "carried": true,
+        "weapon": {
+          "skillId": "melee-weapon@sword",
+          "fumble": 3,
+          "modes": [
+            {
+              "type": "one-hand",
+              "attackTypes": [
+                "slash"
+              ],
+              "attackTable": "e2e-table",
+              "fumbleTable": "e2e-fumble",
+              "sizeAdjustment": 0,
+              "ranges": []
+            }
+          ]
+        },
+        "armor": null,
+        "shield": null,
+        "info": {
+          "length": 1,
+          "weight": 3,
+          "strength": 20,
+          "stackable": false
+        },
+        "amount": null,
+        "description": null,
+        "catalog": {
+          "cost": {
+            "min": 8,
+            "average": 10,
+            "max": 12
+          },
+          "rarity": null,
+          "productionHours": 40,
+          "imageUrl": null
+        },
+        "value": 10,
+        "acquiredPrice": 10,
+        "unrepairable": false,
+        "modifiers": [
+          {
+            "id": "5f698357-2a56-4cc3-9ad3-2fbec61280d1",
+            "type": "quality",
+            "value": 5,
+            "appliesTo": "attack",
+            "createdAt": "2026-10-25T21:33:06.777Z",
+            "source": {
+              "kind": "catalog"
+            },
+            "description": "catalog-bonus"
+          },
+          {
+            "id": "c968ae7c-5be7-478a-b58a-95d94245fe8c",
+            "type": "breakage",
+            "value": -10,
+            "appliesTo": "all",
+            "createdAt": "2026-10-25T21:33:06.787Z",
+            "source": {
+              "kind": "manual"
+            },
+            "description": "Nicked"
+          }
+        ]
+      },
+      {
+        "ref": "i2",
+        "itemTypeId": "gold-coin",
+        "name": "gold-coin",
+        "category": "currency",
+        "carried": false,
+        "weapon": null,
+        "armor": null,
+        "shield": null,
+        "info": {
+          "length": null,
+          "weight": 0.01,
+          "strength": null,
+          "stackable": true
+        },
+        "amount": 25,
+        "description": null,
+        "catalog": {
+          "cost": null,
+          "rarity": null,
+          "productionHours": null,
+          "imageUrl": null
+        },
+        "value": null,
+        "acquiredPrice": 0,
+        "unrepairable": false,
+        "modifiers": []
+      }
+    ]
+  }
+}

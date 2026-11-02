@@ -1,10 +1,15 @@
+import type { StyleAbilitySelection } from '../../../domain/value-objects/fighting-styles.vo.js';
 import { Prop, Schema } from '@nestjs/mongoose';
-import { ProfessionalBonusType } from 'src/modules/characters/domain/value-objects/professional-bonus-type.vo';
+import type { ProfessionalBonusType } from '../../../domain/value-objects/professional-bonus-type.vo.js';
+import type { SkillDevPointsSpent } from '../../../domain/value-objects/character-skill.vo.js';
 
 @Schema({ _id: false })
 export class CharacterSkill {
   @Prop({ required: true })
   skillId: string;
+
+  @Prop({ type: String, required: false })
+  categoryId?: string;
 
   @Prop({ type: String, required: false })
   specialization: string | null;
@@ -41,4 +46,22 @@ export class CharacterSkill {
 
   @Prop({ required: true })
   totalBonus: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  traitBonus: number;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  cultureRanks: number;
+
+  @Prop({ type: Object, required: false, default: () => ({ normal: 0, bonus: 0 }) })
+  devPointsSpent: SkillDevPointsSpent;
+
+  @Prop({ type: Number, required: false })
+  knackBonus?: number;
+
+  @Prop({ type: Boolean, required: false })
+  missingReference?: boolean;
+
+  @Prop({ type: [Object], required: false })
+  styleAbilities?: StyleAbilitySelection[];
 }

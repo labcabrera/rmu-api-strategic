@@ -1,45 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { TokenService } from 'src/modules/auth/token.service';
-import { BadGatewayError, NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port';
+import { HttpClient, isUpstreamHttpError } from '../../../shared/infrastructure/http/http-client.js';
+import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
+import type { ItemClientPort, ItemResponse } from '../../application/ports/item-client.port.js';
 
 @Injectable()
 export class ApiItemClientAdapter implements ItemClientPort {
-  private readonly logger = new Logger(ApiItemClientAdapter.name);
-
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
+    private readonly httpClient: HttpClient,
   ) {}
 
-  async getItemById(itemId: string): Promise<ItemResponse> {
+  async getItemById(itemId: string): Promise<ItemResponse | undefined> {
     const token = await this.tokenService.getToken();
     const apiCoreUri = this.configService.get('RMU_API_ITEMS_URI') as string;
-    const uri = `${apiCoreUri}/items/${itemId}`;
+    const uri = `${apiCoreUri}/items/${encodeURIComponent(itemId)}`;
     try {
-      const response = await axios.get(uri, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data as ItemResponse;
+      return await this.httpClient.get<ItemResponse>(uri, { token });
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNREFUSED') {
-          this.logger.error(`Item API is not available at ${uri}. Error code: ${err.code}`);
-          throw new BadGatewayError('Item API is not available');
-        } else if (err.response && err.response.status) {
-          this.logger.error(`Item API return status ${err.response.status} at ${uri}. Error code: ${err.code}`);
-          switch (err.response.status) {
-            case 404:
-              throw new NotFoundError('Item', itemId);
-            default:
-              break;
-          }
-        }
-      }
+      // An unknown item type is the client's mistake: the handler answers 400 (F-strategic-19).
+      if (isUpstreamHttpError(err) && err.status === 404) return undefined;
       throw err;
     }
   }

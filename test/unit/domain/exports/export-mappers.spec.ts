@@ -1,0 +1,252 @@
+import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
+import type { ItemProps } from '../../../../src/modules/items/domain/aggregates/item-props.js';
+import type { Injury } from '../../../../src/modules/characters/domain/value-objects/injury.vo.js';
+import {
+  assignRefs,
+  characterEntry,
+  collectReferences,
+  exportFileName,
+  itemToExport,
+} from '../../../../src/modules/exports/domain/mappers/export.mappers.js';
+import { buildCharacter, skill, trait } from '../characters/traits/character.fixture.js';
+
+const item = (props: Partial<ItemProps> & { id: string }): Item =>
+  Item.fromProps({
+    gameId: 'game-001',
+    factionId: null,
+    characterId: 'character-001',
+    itemTypeId: 'sword',
+    name: 'Sword',
+    category: 'weapon',
+    carried: true,
+    weapon: null,
+    armor: null,
+    shield: null,
+    modifiers: [],
+    amount: null,
+    info: { length: 1, weight: 3, strength: 20, stackable: false },
+    description: null,
+    createdAt: new Date(),
+    updatedAt: null,
+    accessType: 'public',
+    owner: 'user-001',
+    ...props,
+  });
+
+const injury: Injury = {
+  id: 'injury-1',
+  type: 'bone',
+  severity: 'medium',
+  penalty: -15,
+  initialPenalty: -20,
+  source: { kind: 'manual' },
+  treatments: [],
+  recovery: {
+    roll: 50,
+    modifiers: 0,
+    total: 50,
+    baseDays: 10,
+    multiplier: 1,
+    totalDays: 10,
+    remainingDays: 7,
+    startedAt: '2026-10-01T00:00:00.000Z',
+  },
+  status: 'recovering',
+  createdAt: '2026-10-01T00:00:00.000Z',
+};
+
+describe('export mappers (spec 024)', () => {
+  const sword = item({
+    id: 'sword-1',
+    modifiers: [
+      { id: 'm1', type: 'quality', value: 5, appliesTo: 'attack', source: { kind: 'crafting', ledgerEntryId: 'l1' }, createdAt: 'x' },
+      { id: 'm2', type: 'breakage', value: -10, appliesTo: 'all', source: { kind: 'repair', ledgerEntryId: 'l2' }, createdAt: 'x' },
+      { id: 'm3', type: 'breakage', value: -5, appliesTo: 'all', temporary: true, createdAt: 'x' },
+    ],
+  });
+  const gold = item({
+    id: 'gold-1',
+    itemTypeId: 'gold-coin',
+    name: 'Gold',
+    category: 'currency',
+    amount: 12.5,
+    info: { length: null, weight: 0.01, strength: null, stackable: true },
+  });
+
+  it('exports the own data and temporary state of a character, with slots as refs and no ids or derived values', () => {
+    const character = buildCharacter({
+      skills: [skill('body-development', null, 4)],
+      traits: [trait('ambidextrous', 1), trait('night-vision', undefined, undefined, 'race')],
+      slots: { mainHand: 'sword-1', offHand: null },
+    });
+    character.statistics.st.temporary = 40;
+    character.hp = { max: 30, current: 12 };
+    character.endurance = { base: 10, racialBonus: 5, customBonus: 0, max: 20, current: 4, accumulator: 2, fatiguePenalty: -5 };
+    character.injuries = [injury];
+    character.appliedTacticalGames = ['tactical-1'];
+    const refs = assignRefs(['character-001'], ['sword-1', 'gold-1']);
+    const entry = characterEntry(character, [sword, gold], refs, () => undefined);
+
+    expect(entry.ref).toBe('c1');
+    expect(entry.character).toMatchObject({
+      name: 'Test',
+      info: { raceId: 'race-001', raceName: 'Race', cultureId: null },
+      hp: { current: 12 },
+      endurance: { current: 4, accumulator: 2, fatiguePenalty: -5 },
+      equipment: { slots: { mainHand: 'i1', offHand: null } },
+      injuries: [injury],
+    });
+    expect(entry.character.statistics.st).toEqual({ potential: 50, temporary: 40 });
+    expect(entry.character.traits.map(t => t.traitId)).toEqual(['ambidextrous']);
+    for (const key of [
+      'id',
+      'gameId',
+      'faction',
+      'owner',
+      'version',
+      'createdAt',
+      'appliedTacticalGames',
+      'movement',
+      'defense',
+      'attacks',
+    ]) {
+      expect(entry.character).not.toHaveProperty(key);
+    }
+    expect(entry.items.map(i => i.ref)).toEqual(['i1', 'i2']);
+    expect(entry.items[1]).toMatchObject({ itemTypeId: 'gold-coin', amount: 12.5 });
+  });
+
+  it('points a crafter in the file to its ref, keeps only the name of one outside it and drops temporary modifiers', () => {
+    const refs = assignRefs(['smith-1'], ['sword-1']);
+    const crafters: Record<string, { id: string | null; name: string | null }> = {
+      l1: { id: 'smith-1', name: 'Smith' },
+      l2: { id: 'stranger-1', name: 'Stranger' },
+    };
+    const exported = itemToExport(sword, refs, source => crafters[source.ledgerEntryId!]);
+    expect(exported.modifiers).toEqual([
+      { id: 'm1', type: 'quality', value: 5, appliesTo: 'attack', source: { kind: 'crafting', crafterRef: 'c1' }, createdAt: 'x' },
+      { id: 'm2', type: 'breakage', value: -10, appliesTo: 'all', source: { kind: 'repair', crafterName: 'Stranger' }, createdAt: 'x' },
+    ]);
+  });
+
+  it('exports the enchantment of an item with the alchemist as a ref, or only its name (workspace spec 064)', () => {
+    const enchantment = {
+      projectId: 'project-1',
+      itemLevel: 8,
+      alchemistId: 'smith-1',
+      alchemistName: 'Smith',
+      spells: [{ spellId: 'spell-1', name: 'E2E spell', level: 8, listCode: 'e2e-list' }],
+      properties: [{ kind: 'spell-adder' as const, value: 1, target: null }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    };
+    const enchanted = item({ id: 'sword-1', enchantment });
+    const inFile = itemToExport(enchanted, assignRefs(['smith-1'], ['sword-1']), () => undefined);
+    expect(inFile.enchantment).toEqual({
+      source: 'alchemy',
+      projectId: 'project-1',
+      itemLevel: 8,
+      attunement: false,
+      alchemistRef: 'c1',
+      alchemistName: 'Smith',
+      spells: enchantment.spells,
+      properties: [{ kind: 'spell-adder', value: 1 }],
+      completedAt: enchantment.completedAt,
+    });
+    const outside = itemToExport(enchanted, assignRefs([], ['sword-1']), () => undefined);
+    expect(outside.enchantment).not.toHaveProperty('alchemistRef');
+    expect(outside.enchantment).toMatchObject({ alchemistName: 'Smith' });
+  });
+
+  it('exports the magic of the catalog, its charges and the gems set in it (workspace spec 067)', () => {
+    const setting = {
+      itemTypeId: 'e2e-gem',
+      name: 'Gem',
+      carats: 2,
+      cutFactor: 5,
+      value: 20,
+      magic: null,
+      setAt: '2026-11-01T00:00:00.000Z',
+    };
+    const wand = item({
+      id: 'wand-1',
+      enchantment: {
+        source: 'catalog',
+        projectId: null,
+        itemLevel: 5,
+        kind: 'charged',
+        attunement: false,
+        alchemistId: null,
+        alchemistName: null,
+        spells: [{ spellId: null, name: 'E2E bolt', level: 5, listCode: null, use: 'charges', perDay: null }],
+        properties: [{ kind: 'db', value: 5, target: null, against: 'undead' }],
+        completedAt: '2026-11-01T00:00:00.000Z',
+      },
+      charges: { max: 10, current: 4 },
+      settings: [setting],
+    });
+    const inFile = itemToExport(wand, assignRefs([], ['wand-1']), () => undefined);
+    expect(inFile.enchantment).toEqual({
+      source: 'catalog',
+      itemLevel: 5,
+      kind: 'charged',
+      attunement: false,
+      spells: [{ name: 'E2E bolt', level: 5, use: 'charges' }],
+      properties: [{ kind: 'db', value: 5, against: 'undead' }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    });
+    expect(inFile.charges).toEqual({ max: 10, current: 4 });
+    expect(inFile.settings).toEqual([setting]);
+  });
+
+  it('fills the fields that items stored before specs 019 and 023 lack', () => {
+    const old = item({ id: 'old-1', modifiers: undefined, catalog: undefined, value: undefined, unrepairable: undefined });
+    const exported = itemToExport(old, assignRefs([], ['old-1']), () => undefined);
+    expect(exported).toMatchObject({ ref: 'i1', modifiers: [], catalog: null, value: null, acquiredPrice: null, unrepairable: false });
+  });
+
+  it('lists the references the file uses, with the names the source knew', () => {
+    const character = buildCharacter({ skills: [skill('perception')], traits: [trait('ambidextrous', 1)] });
+    const entry = characterEntry(character, [sword], assignRefs(['character-001'], ['sword-1']), () => undefined);
+    expect(collectReferences([entry])).toEqual({
+      races: [{ id: 'race-001', name: 'Race' }],
+      professions: [{ id: 'fighter', name: null }],
+      cultures: [],
+      skills: [{ id: 'perception', name: null }],
+      traits: [{ id: 'ambidextrous', name: 'ambidextrous' }],
+      itemTypes: [{ id: 'sword', name: 'Sword' }],
+    });
+  });
+
+  it('names the file after the kind, a slug of the name and the day', () => {
+    expect(exportFileName('character', 'Éowyn of Rohan!', new Date('2026-10-25T10:00:00Z'))).toBe(
+      'character-eowyn-of-rohan-20261025.rmu.json',
+    );
+    expect(exportFileName('faction', '***', new Date('2026-01-02T00:00:00Z'))).toBe('faction-faction-20260102.rmu.json');
+  });
+
+  it('exports the temporary modifiers that still apply with the days they have left (spec 068)', () => {
+    const character = buildCharacter();
+    const base = { kind: 'morale' as const, value: 5, source: 'manual' as const, days: 10, createdAt: '2026-11-02T00:00:00.000Z' };
+    character.temporaryModifiers = [
+      { ...base, id: 'm-1', tacticalGameId: 'tactical-1', expiresGameDay: 20 },
+      { ...base, id: 'm-2', tacticalGameId: null, expiresGameDay: 12 },
+      { ...base, id: 'm-3', tacticalGameId: null, days: null, expiresGameDay: null },
+    ];
+    const entry = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined, 12);
+    expect(entry.character.temporaryModifiers).toEqual([
+      { ...base, id: 'm-1', remainingDays: 8 },
+      { ...base, id: 'm-3', days: null, remainingDays: null },
+    ]);
+  });
+
+  it('leaves out the null optional fields of an injury added by hand, but keeps a null limit (spec 068)', () => {
+    const character = buildCharacter();
+    character.injuries = [{ ...injury, side: null, bleeding: null, flags: null, description: null, limits: null } as unknown as Injury];
+    const [exported] = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined).character.injuries;
+    expect(exported).not.toHaveProperty('side');
+    expect(exported).not.toHaveProperty('bleeding');
+    expect(exported).not.toHaveProperty('flags');
+    expect(exported).not.toHaveProperty('description');
+    expect(exported.limits).toBeNull();
+  });
+});

@@ -1,7 +1,7 @@
-import type { CharacterRealm } from 'src/modules/characters/domain/value-objects/character-realm.vo';
-import { CharacterRoleplayInfo } from 'src/modules/characters/domain/value-objects/character-roleplay-info.vo';
-import { StatKey } from 'src/modules/characters/domain/value-objects/character-stat.vo';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
+import type { CharacterRealm } from '../../../domain/value-objects/character-realm.vo.js';
+import type { CharacterRoleplayInfo } from '../../../domain/value-objects/character-roleplay-info.vo.js';
+import type { StatKey } from '../../../domain/value-objects/character-stat.vo.js';
+import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
 
 export class CreateCharacterCommand {
   constructor(
@@ -17,7 +17,22 @@ export class CreateCharacterCommand {
     public readonly imageUrl: string | undefined,
     public readonly userId: string,
     public readonly roles: string[],
+    public readonly culture?: CreateCharacterCulture,
   ) {}
+}
+
+// Culture chosen at creation. 'skill' entries are applied automatically; the other entries need assignments
+export interface CreateCharacterCulture {
+  cultureId: string;
+  assignments: CreateCharacterCultureAssignment[];
+}
+
+export interface CreateCharacterCultureAssignment {
+  // Index of the entry in culture.skillRanks
+  entry: number;
+  skillId: string;
+  specialization?: string | null;
+  ranks: number;
 }
 
 export class CharacterStatCreation {
@@ -32,7 +47,8 @@ export class CreateCharacterInfo {
     public readonly raceId: string,
     public readonly professionId: string,
     public readonly sizeId: string,
-    public readonly realmType: CharacterRealm,
+    // One realm, or the two of a hybrid profession (spec 029)
+    public readonly realmTypes: CharacterRealm[],
     public readonly height: number,
     public readonly weight: number,
   ) {}

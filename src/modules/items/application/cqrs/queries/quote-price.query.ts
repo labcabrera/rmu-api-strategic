@@ -1,0 +1,32 @@
+import type { PowerLevel } from '../../../../enchantments/domain/value-objects/alchemy.vo.js';
+import type { PriceFactorSelection, PriceKind } from '../../../domain/services/price-calculator.js';
+import type { ItemInstanceSpec } from '../../../domain/services/item-unit-value.js';
+import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
+import type { TradingRequest } from '../../services/trading.service.js';
+
+/** Price of a purchase or sale without making it (workspace spec 023, decision 14: the market shows it first). */
+export class QuotePriceQuery {
+  constructor(
+    public readonly kind: PriceKind,
+    public readonly options: {
+      itemTypeId?: string;
+      itemId?: string;
+      /** The buyer or seller, for the Trading bonus of its sheet. */
+      holder?: ItemHolder;
+      amount?: number;
+      unitPrice?: number;
+      salePercent?: number;
+      /** Market conditions of the expected price (workspace spec 048) */
+      factors?: PriceFactorSelection[];
+      trading?: TradingRequest;
+      /** Workspace spec 062: instance fields of a purchase, and the sale to a jeweler. */
+      instance?: ItemInstanceSpec;
+      jeweler?: boolean;
+      jewelerPercent?: number;
+      /** Workspace spec 067: power level of the campaign, for the magic part of the price. */
+      powerLevel?: PowerLevel;
+    },
+    public readonly userId: string,
+    public readonly roles: string[],
+  ) {}
+}

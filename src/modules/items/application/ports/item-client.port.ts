@@ -1,17 +1,37 @@
-import { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo';
-import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo';
+import type { Difficulty } from '../../../characters/domain/value-objects/difficulty.vo.js';
+import type { ArmorClass } from '../../domain/value-objects/item-armor.vo.js';
+import type { ItemFeatures } from '../../domain/value-objects/item-catalog-info.vo.js';
+import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 
 export interface ItemClientPort {
-  getItemById(itemId: string): Promise<ItemResponse>;
+  /** undefined when the items API has no such item type. */
+  getItemById(itemId: string): Promise<ItemResponse | undefined>;
 }
+
+export const ITEM_CLIENT = Symbol('ItemClientPort');
 
 export interface ItemResponse {
   id: string;
+  /** Spec 023: the catalog fields an instance copies (missing in the test doubles of before). */
+  name?: string;
   category: string;
   weapon: ItemWeapon | null;
   armor: ItemArmorResponse | null;
   shield: ItemShieldResponse | null;
+  /** Workspace spec 041: container, light, transport or ammunition data. */
+  features?: ItemFeatures | null;
   info: ItemInfoResponse;
+  modifiers?: ItemCatalogModifierResponse[] | null;
+  description?: string | null;
+  imageUrl?: string | null;
+}
+
+/** A modifier of the catalog type: `bonus`, `skill-bonus`, `material`, `slayer`... */
+export interface ItemCatalogModifierResponse {
+  id?: string;
+  type: string;
+  modifier?: string | null;
+  value?: number | null;
 }
 
 export interface ItemInfoResponse {
@@ -21,6 +41,10 @@ export interface ItemInfoResponse {
   weight: number | null;
   productionHours: number | undefined;
   stackable: boolean | undefined;
+  rarity?: string | null;
+  unique?: boolean;
+  /** Workspace spec 041: units of the lot the book sells. */
+  lotSize?: number | null;
 }
 
 export interface ItemCost {
@@ -33,10 +57,13 @@ export interface ItemArmorResponse {
   slot: string;
   at: number;
   enc: number;
-  maneuver: number;
+  maneuverPenalty: number;
   rangedPenalty: number;
-  perception: number;
+  perceptionPenalty: number;
   baseDifficulty: Difficulty;
+  /** Workspace spec 041. */
+  coverage?: string[] | null;
+  class?: ArmorClass | null;
 }
 
 export interface ItemShieldResponse {

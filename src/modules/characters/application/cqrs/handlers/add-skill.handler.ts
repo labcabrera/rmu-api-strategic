@@ -1,65 +1,90 @@
+import { CharacterAccess } from '../../services/character-access.service.js';
+import { GameAccess } from '../../../../games/application/services/game-access.service.js';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Character } from '../../../domain/aggregates/character.aggregate';
-import { CharacterProcessorService } from '../../../domain/services/character-processor.service';
-import { AddSkillCommand } from '../commands/add-skill.command';
-import type { CharacterRepository } from '../../ports/character.repository';
-import type { SkillCategoryClientPort } from '../../ports/skill-category-client.port';
-import type { SkillClientPort, SkillResponse } from '../../ports/skill-client.port';
-import type { ProfessionClientPort } from '../../ports/profession-client.port';
-import type { RaceClientPort } from '../../ports/race-client.port';
-import { WeaponDevelopmentType } from 'src/modules/characters/domain/value-objects/weapon-development-type.vo';
-import type { CharacterEventBusPort } from '../../ports/character-event-bus.port';
-import { NotFoundError, ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { ItemRepository } from 'src/modules/items/application/ports/item.repository';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { AddSkillCommand } from '../commands/add-skill.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
+import { type SkillCategoryClientPort, SKILL_CATEGORY_CLIENT } from '../../ports/skill-category-client.port.js';
+import { type SkillClientPort, type SkillResponse, SKILL_CLIENT } from '../../ports/skill-client.port.js';
+import { type ProfessionClientPort, PROFESSION_CLIENT } from '../../ports/profession-client.port.js';
+import { type RaceClientPort, RACE_CLIENT } from '../../ports/race-client.port.js';
+import { characterRealms } from '../../../domain/value-objects/character-realm.vo.js';
+import { developmentCostKey, skillStatistics } from '../../../domain/services/skills/skill-development.js';
+import { BASE_SPELL_LIST, isSpellListSkill } from '../../../domain/services/spells/spell-list-rules.js';
+import { SpellListSkillResolver } from '../../services/spell-list-skill.resolver.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { SpecializationCatalogService } from '../../services/specialization-catalog.service.js';
+import { specializationKey } from '../../../domain/services/skills/specialization-keys.js';
 
 @CommandHandler(AddSkillCommand)
 export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Character> {
   constructor(
-    @Inject() private readonly characterProcessorService: CharacterProcessorService,
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    @Inject('ItemRepository') private readonly itemRepository: ItemRepository,
-    @Inject('SkillClient') private readonly skillClient: SkillClientPort,
-    @Inject('ProfessionClient') private readonly professionClient: ProfessionClientPort,
-    @Inject('SkillCategoryClient') private readonly skillCategoryClient: SkillCategoryClientPort,
-    @Inject('RaceClient') private readonly raceClient: RaceClientPort,
-    @Inject('CharacterEventBus') private readonly characterEventBus: CharacterEventBusPort,
+    private readonly characterProcessorService: CharacterProcessorService,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(SKILL_CLIENT) private readonly skillClient: SkillClientPort,
+    @Inject(PROFESSION_CLIENT) private readonly professionClient: ProfessionClientPort,
+    @Inject(SKILL_CATEGORY_CLIENT) private readonly skillCategoryClient: SkillCategoryClientPort,
+    @Inject(RACE_CLIENT) private readonly raceClient: RaceClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    private readonly characterAccess: CharacterAccess,
+    private readonly spellListSkillResolver: SpellListSkillResolver,
+    private readonly specializationCatalog: SpecializationCatalogService,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
   ) {}
 
   async execute(command: AddSkillCommand): Promise<Character> {
     const characterId = command.characterId;
-    const skillId = command.skillId;
-    const specialization = command.specialization;
+    let specialization = command.specialization;
 
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
+    // Its owner, the owner of its game or an admin (F-strategic-15).
+    await this.characterAccess.checkChange(character, command.userId, command.roles);
 
-    if (character.findSkill(skillId, specialization)) {
-      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
-    }
-
-    if (command.ranks > 0 && !command.roles.includes('admin')) {
+    // Initial ranks are a correction of the sheet: only an admin (F-strategic-25, spec 044 decision 2)
+    if (command.ranks > 0 && !GameAccess.isAdmin(command.roles)) {
       throw new ValidationError(`Only admin users can add skills with ranks greater than 0`);
     }
 
-    const [readedSkill, readedProfession, readedRace] = await Promise.all([
+    const readedProfession = await this.professionClient.getProfessionById(character.info.professionId);
+    if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
+    // A spell list: the skill follows from the list and the profession (spec 029), and a Base list beyond the limit of
+    // the profession is Closed (workspace spec 064)
+    const skillId = await this.spellListSkillResolver.resolve(command.skillId, specialization, {
+      professionId: character.info.professionId,
+      realms: characterRealms(character.info),
+      baseListLimit: readedProfession.baseListLimit ?? null,
+      baseLists: character.skills.filter(skill => skill.skillId === BASE_SPELL_LIST).length,
+    });
+    const [readedSkill, readedRace] = await Promise.all([
       this.skillClient.getSkillById(skillId),
-      this.professionClient.getProfessionById(character.info.professionId),
       this.raceClient.getRaceById(character.info.race.id),
     ]);
 
     if (!readedSkill) throw new NotFoundError('Skill', skillId);
-    if (!readedProfession) throw new NotFoundError('Profession', character.info.professionId);
     if (!readedRace) throw new NotFoundError('Race', character.info.race.id);
 
-    this.validateSpecialization(readedSkill, specialization);
+    validateSkillSpecialization(readedSkill, specialization);
+    // Spec 050: a catalog specialization is stored as its key and must exist in the realm of the game
+    specialization = specializationKey(readedSkill.specialization, specialization);
+    if (this.alreadyHasSkill(character, skillId, specialization)) {
+      throw new ValidationError(`Skill ${skillId} with specialization ${specialization} already exists for character ${characterId}`);
+    }
+    const game = await this.gameRepository.findById(character.gameId);
+    await this.specializationCatalog.check([{ skillId, category: readedSkill.specialization, specialization }], game?.realmId || null);
 
     const readedCategory = await this.skillCategoryClient.getSkillCategoryById(readedSkill.categoryId);
     if (!readedCategory) throw new ValidationError(`Invalid skill category identifier '${readedSkill.categoryId}'`);
 
-    const categoryId = this.getSkillDevelopmentCategory(character, skillId, readedSkill.categoryId);
-    const devPoints = readedProfession.skillCosts[categoryId] || [];
-    const statistics = readedSkill.bonus.concat(readedCategory ? readedCategory.bonus : []);
+    const costKey = developmentCostKey(skillId, readedSkill.categoryId, character.experience.weaponDevelopment);
+    const devPoints = readedProfession.skillCosts[costKey] || [];
+    const statistics = skillStatistics(readedSkill.bonus, readedCategory);
 
     //TODO add to core model
     let racialBonus = 0;
@@ -71,39 +96,29 @@ export class AddSkillHandler implements ICommandHandler<AddSkillCommand, Charact
         racialBonus = skillBonus.bonus;
       }
     }
-    character.addSkill(command.skillId, command.specialization, statistics, devPoints, racialBonus);
+    character.addSkill(skillId, specialization, statistics, devPoints, racialBonus, readedSkill.categoryId, command.ranks);
 
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
-    const updated = await this.characterRepository.update(character.id, character);
-    character.getUncommittedEvents().forEach(event => this.characterEventBus.publish(event));
+    const updated = await this.characterRepository.update(character);
+    await this.events.publishChanges('character', character);
     return updated;
   }
 
-  private getSkillDevelopmentCategory(character: Character, skillId: string, categoryId: string): string {
-    const combatType = this.mapCombatSkill(skillId);
-    if (combatType) {
-      const index = character.experience.weaponDevelopment.indexOf(combatType);
-      return `combat${index + 1}`;
-    }
-    return categoryId;
+  // A list is learned once, whatever list skill it was taken with
+  private alreadyHasSkill(character: Character, skillId: string, specialization: string | null): boolean {
+    if (character.findSkill(skillId, specialization)) return true;
+    return isSpellListSkill(skillId) && character.skills.some(s => isSpellListSkill(s.skillId) && s.specialization === specialization);
   }
+}
 
-  private validateSpecialization(skill: SkillResponse, specialization: string | null): void {
-    if (skill.specialization) {
-      if (!specialization) {
-        throw new ValidationError(`Skill ${skill.id} requires a specialization`);
-      }
-    } else if (specialization) {
-      throw new ValidationError(`Skill ${skill.id} does not allow specialization`);
+/** A skill with a specialization category needs one unless it is optional; a skill without one allows none. */
+export function validateSkillSpecialization(skill: SkillResponse, specialization: string | null): void {
+  if (skill.specialization) {
+    if (!specialization && !skill.specializationOptional) {
+      throw new ValidationError(`Skill ${skill.id} requires a specialization`);
     }
-  }
-
-  private mapCombatSkill(skillId: string): WeaponDevelopmentType | undefined {
-    if (skillId.startsWith('melee-weapon')) return 'melee';
-    if (skillId.startsWith('ranged-weapon')) return 'ranged';
-    if (skillId === 'shield') return 'shield';
-    if (skillId === 'unarmed-combat') return 'unarmed';
-    return undefined;
+  } else if (specialization) {
+    throw new ValidationError(`Skill ${skill.id} does not allow specialization`);
   }
 }

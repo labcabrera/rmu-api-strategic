@@ -1,5 +1,6 @@
-import { CharacterAttack } from 'src/modules/characters/domain/value-objects/character-attack.vo';
-import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo';
+import { ApiProperty } from '@nestjs/swagger';
+import { CharacterAttack, type WeaponCategory } from '../../../domain/value-objects/character-attack.vo.js';
+import { CharacterAttackRange } from '../../../domain/value-objects/character-attack-range.vo.js';
 
 export class CharacterAttackRangeDto {
   from: number;
@@ -29,6 +30,37 @@ export class CharacterAttackDto {
   ranges: CharacterAttackRangeDto[] | null;
   boModifiers: Record<string, number>;
 
+  @ApiProperty({ description: 'Whether the attack uses a two-handed weapon mode', type: Boolean, example: false })
+  twoHanded: boolean;
+
+  @ApiProperty({
+    type: String,
+    description: 'Weapon category used by multiple attack rules',
+    enum: ['dagger', 'light', 'natural', 'standard'],
+    example: 'standard',
+  })
+  weaponCategory: WeaponCategory;
+
+  @ApiProperty({ description: 'Whether the weapon is made for a different size than the wielder', type: Boolean, example: false })
+  wrongSize: boolean;
+
+  @ApiProperty({
+    description: "Skill used by the attack ('shield' for shield attacks)",
+    type: String,
+    nullable: true,
+    example: 'melee-weapon@blade',
+  })
+  skillId: string | null;
+
+  @ApiProperty({ description: 'Strategic item of the attack (spec 019)', type: String, nullable: true, example: 'item-001' })
+  itemId: string | null;
+
+  @ApiProperty({ description: 'Tags of the weapon type (spec 032)', type: [String], example: ['fencing'] })
+  weaponTags: string[];
+
+  @ApiProperty({ description: 'Times St enters the skill bonus of the attack (spec 040)', type: Number, example: 2 })
+  strengthWeight: number;
+
   static fromEntity(entity: CharacterAttack): CharacterAttackDto {
     const dto = new CharacterAttackDto();
     dto.attackName = entity.attackName;
@@ -43,6 +75,13 @@ export class CharacterAttackDto {
     dto.meleeRange = entity.meleeRange;
     dto.ranges = entity.ranges ? entity.ranges.map(range => CharacterAttackRangeDto.fromEntity(range)) : null;
     dto.boModifiers = entity.boModifiers;
+    dto.twoHanded = entity.twoHanded ?? false;
+    dto.weaponCategory = entity.weaponCategory ?? 'standard';
+    dto.wrongSize = entity.wrongSize ?? false;
+    dto.skillId = entity.skillId ?? null;
+    dto.itemId = entity.itemId ?? null;
+    dto.weaponTags = [...(entity.weaponTags ?? [])];
+    dto.strengthWeight = entity.strengthWeight ?? 0;
     return dto;
   }
 }

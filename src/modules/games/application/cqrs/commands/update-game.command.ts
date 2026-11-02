@@ -1,6 +1,6 @@
-import { GameOptionsDto } from 'src/modules/games/interfaces/http/dtos/game-options.dto';
-import { GamePowerLevelDto } from 'src/modules/games/interfaces/http/dtos/game-power-level-dto';
-import { AuthenticatedCommand } from 'src/modules/shared/application/cqrs/authenticated-command';
+import { GameOptionsDto } from '../../../interfaces/http/dto/game-options.dto.js';
+import { GamePowerLevelDto } from '../../../interfaces/http/dto/game-power-level.dto.js';
+import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class UpdateGameCommand extends AuthenticatedCommand {
   constructor(
@@ -13,6 +13,10 @@ export class UpdateGameCommand extends AuthenticatedCommand {
     public readonly imageUrl: string | undefined,
     userId: string,
     roles: string[],
+    /** The version the client read; undefined applies the change to the current one. */
+    public readonly expectedVersion?: number,
+    /** Workspace spec 065, decision 6 */
+    public readonly calendar?: { startDate?: string; elapsedDays?: number },
   ) {
     super(userId, roles);
   }

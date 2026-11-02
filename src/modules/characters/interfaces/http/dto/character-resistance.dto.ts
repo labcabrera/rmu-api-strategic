@@ -1,4 +1,4 @@
-import { CharacterResistance } from 'src/modules/characters/domain/value-objects/character-resistances.vo';
+import { CharacterResistance } from '../../../domain/value-objects/character-resistances.vo.js';
 
 export class CharacterResistanceDto {
   resistance: string;
@@ -6,6 +6,9 @@ export class CharacterResistanceDto {
   racialBonus: number;
   realmBonus: number;
   customBonus: number;
+  traitBonus: number;
+  // +2 per character level
+  levelBonus: number;
   totalBonus: number;
 
   static fromEntity(entity: CharacterResistance): CharacterResistanceDto {
@@ -15,6 +18,8 @@ export class CharacterResistanceDto {
     dto.racialBonus = entity.racialBonus;
     dto.realmBonus = entity.realmBonus;
     dto.customBonus = entity.customBonus;
+    dto.traitBonus = entity.traitBonus ?? 0;
+    dto.levelBonus = entity.levelBonus ?? 0;
     dto.totalBonus = entity.totalBonus;
     return dto;
   }

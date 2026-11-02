@@ -1,4 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import type { CharacterTraitSource, TraitPayment } from '../../../domain/value-objects/character-trait.vo.js';
 
 @Schema({ _id: false })
 export class CharacterTrait {
@@ -19,4 +20,13 @@ export class CharacterTrait {
 
   @Prop({ type: String, required: false })
   specialization: string | undefined;
+
+  @Prop({ type: String, required: false, default: 'character' })
+  source: CharacterTraitSource;
+
+  @Prop({ type: Object, required: false })
+  paidWith?: TraitPayment;
+
+  @Prop({ type: Boolean, required: false })
+  missingReference?: boolean;
 }

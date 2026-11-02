@@ -1,20 +1,23 @@
-import { NamedEntity } from 'src/modules/shared/domain/entities/named-entity';
-import { CharacterAttack } from '../value-objects/character-attack.vo';
-import { CharacterDefense } from '../value-objects/character-defense.vo';
-import { CharacterEndurance } from '../value-objects/character-endurance.vo';
-import { CharacterEquipment } from '../value-objects/character-equipment.vo';
-import { CharacterHP } from '../value-objects/character-hp.vo';
-import { CharacterInfo } from '../value-objects/character-info.vo';
-import { CharacterInitiative } from '../value-objects/character-initiative.vo';
-import { CharacterMovement } from '../value-objects/character-movement.vo';
-import { CharacterPower } from '../value-objects/character-power.vo';
-import { CharacterResistance } from '../value-objects/character-resistances.vo';
-import { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo';
-import { CharacterSkill } from '../value-objects/character-skill.vo';
-import { CharacterStat, StatKey } from '../value-objects/character-stat.vo';
-import { CharacterStatus } from '../value-objects/character-status.vo';
-import { CharacterTrait } from '../value-objects/character-trait.vo';
-import { CharacterXP } from '../value-objects/character-xp.vo';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
+import { CharacterAttack } from '../value-objects/character-attack.vo.js';
+import { CharacterDefense } from '../value-objects/character-defense.vo.js';
+import { CharacterEndurance } from '../value-objects/character-endurance.vo.js';
+import { CharacterEquipment } from '../value-objects/character-equipment.vo.js';
+import { CharacterHP } from '../value-objects/character-hp.vo.js';
+import type { CharacterInfo } from '../value-objects/character-info.vo.js';
+import { CharacterInitiative } from '../value-objects/character-initiative.vo.js';
+import { CharacterMovement } from '../value-objects/character-movement.vo.js';
+import type { CharacterPower } from '../value-objects/character-power.vo.js';
+import { CharacterResistance } from '../value-objects/character-resistances.vo.js';
+import type { CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo.js';
+import { CharacterSkill } from '../value-objects/character-skill.vo.js';
+import { CharacterStat, type StatKey } from '../value-objects/character-stat.vo.js';
+import type { CharacterStatus } from '../value-objects/character-status.vo.js';
+import { CharacterTrait } from '../value-objects/character-trait.vo.js';
+import { CharacterXP } from '../value-objects/character-xp.vo.js';
+import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
+import type { Injury } from '../value-objects/injury.vo.js';
+import type { CharacterTemporaryModifier } from '../value-objects/temporary-modifier.vo.js';
 
 export interface CharacterProps {
   id: string;
@@ -30,16 +33,24 @@ export interface CharacterProps {
   resistances: CharacterResistance[];
   hp: CharacterHP;
   endurance: CharacterEndurance;
-  power: CharacterPower | undefined;
+  power: CharacterPower | null;
   initiative: CharacterInitiative;
   skills: CharacterSkill[];
   equipment: CharacterEquipment;
   attacks: CharacterAttack[];
   traits: CharacterTrait[];
   status: CharacterStatus;
+  injuries: Injury[];
+  conditions: CharacterCondition[];
+  /** Tactical games whose outcome has been applied (idempotency) */
+  appliedTacticalGames: string[];
+  /** Workspace spec 068: lasting morale and fear modifiers (missing in documents before it) */
+  temporaryModifiers?: CharacterTemporaryModifier[];
   description: string | undefined;
   imageUrl: string | undefined;
   owner: string;
   createdAt: Date;
   updatedAt: Date | undefined;
+  /** Spec 024: the import that created it, to undo a failed import. */
+  importId?: string;
 }

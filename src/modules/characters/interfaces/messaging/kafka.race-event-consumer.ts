@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
-import { UpdateCharacterRaceCommandProps } from 'src/modules/characters/application/cqrs/commands/update-character-race.command';
-import type { CharacterRepository } from 'src/modules/characters/application/ports/character.repository';
-import { DomainEvent } from 'src/modules/shared/domain/events/domain-event';
-import { KafkaProducerService } from 'src/modules/shared/infrastructure/messaging/kafka-producer.service';
+import type { UpdateCharacterRaceCommandProps } from '../../application/cqrs/commands/update-character-race.command.js';
+import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../application/ports/character-repository.port.js';
+import { DomainEvent } from '../../../shared/domain/events/domain-event.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../shared/application/ports/domain-event-publisher.port.js';
 
 export class CharacterRaceUpdatedEvent extends DomainEvent<UpdateCharacterRaceCommandProps> {
   constructor(data: UpdateCharacterRaceCommandProps) {
@@ -19,11 +19,11 @@ export class KafkaRaceEventConsumer {
   private readonly logger = new Logger(KafkaRaceEventConsumer.name);
 
   constructor(
-    @Inject('CharacterRepository') private readonly characterRepository: CharacterRepository,
-    private readonly kafkaProducerService: KafkaProducerService,
+    @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
   ) {}
 
-  @EventPattern('internal.rmu-core.race.updated.v1')
+  @EventPattern<string>('internal.rmu-core.race.updated.v1')
   async handleRaceUpdated(@Payload() event: any, @Ctx() context: KafkaContext) {
     this.logger.log(`Received race updated event on topic ${context.getTopic()}: ${event.data.id}: ${event.data.name}`);
     const data = event.data;
@@ -49,9 +49,11 @@ export class KafkaRaceEventConsumer {
         baseAt: data.baseAt as number | undefined,
         talents: data.talents as string[] | undefined,
         skillBonuses: data.skillBonuses as any[] | undefined,
+        traits: data.traits as any[] | undefined,
       } as UpdateCharacterRaceCommandProps;
       const event = new CharacterRaceUpdatedEvent(commandProps);
-      await this.kafkaProducerService.emit('internal.rmu-strategic.character.race-updated.v1', event);
+      // internal.rmu-strategic.character.race-updated.v1, consumed by KafkaCharacterEventConsumer
+      await this.events.publish('character', event);
     }
   }
 }

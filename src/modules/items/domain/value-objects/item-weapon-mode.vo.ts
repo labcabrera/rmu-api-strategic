@@ -1,4 +1,4 @@
-import { ItemWeaponRange } from './item-weapon-range.vo';
+import { ItemWeaponRange } from './item-weapon-range.vo.js';
 
 export class ItemWeaponMode {
   constructor(
@@ -8,5 +8,7 @@ export class ItemWeaponMode {
     public readonly fumbleTable: string,
     public readonly sizeAdjustment: number,
     public readonly ranges: ItemWeaponRange[] | null,
+    /** Workspace spec 041: OB modifier of the mode, such as the penalty of an improvised weapon. */
+    public readonly obModifier?: number,
   ) {}
 }

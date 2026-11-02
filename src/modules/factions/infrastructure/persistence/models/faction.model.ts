@@ -1,13 +1,22 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { FactionManagement } from './faction-management.model';
+import { FactionManagement } from './faction-management.model.js';
+import { FactionNpcModel } from './faction-npc.model.js';
 
 export type FactionDocument = FactionModel & Document;
 
 @Schema({ collection: 'factions', _id: false, versionKey: false })
 export class FactionModel {
+  /** Spec 024: the import that created it. */
+  @Prop({ type: String, required: false, index: { sparse: true } })
+  importId?: string;
+
   @Prop({ required: true })
   _id: string;
+
+  /** Optimistic concurrency: +1 on each write. Documents stored before it existed have none (version 0). */
+  @Prop({ type: Number, default: 0 })
+  version: number;
 
   @Prop({ required: true })
   gameId: string;
@@ -29,6 +38,10 @@ export class FactionModel {
 
   @Prop({ required: true })
   owner: string;
+
+  /** Workspace spec 055. Missing in documents stored before, which read as []. */
+  @Prop({ type: [FactionNpcModel], default: [] })
+  npcs: FactionNpcModel[];
 
   @Prop({ required: true })
   createdAt: Date;

@@ -1,0 +1,48 @@
+import { Inject, Logger } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { Character } from '../../../domain/aggregates/character.js';
+import { CharacterProcessorService } from '../../../domain/services/character-processor.service.js';
+import { CharacterHealthStore } from '../../services/character-health.store.js';
+import { TacticalOutcomeItemsMerger } from '../../services/tactical-outcome-items.merger.js';
+import { TacticalOutcomeConsumption } from '../../services/tactical-outcome-consumption.service.js';
+import { ApplyTacticalOutcomeCommand } from '../commands/apply-tactical-outcome.command.js';
+
+@CommandHandler(ApplyTacticalOutcomeCommand)
+export class ApplyTacticalOutcomeHandler implements ICommandHandler<ApplyTacticalOutcomeCommand, Character> {
+  private readonly logger = new Logger(ApplyTacticalOutcomeHandler.name);
+
+  constructor(
+    private readonly store: CharacterHealthStore,
+    @Inject(TacticalOutcomeItemsMerger) private readonly itemsMerger: TacticalOutcomeItemsMerger,
+    @Inject(CharacterProcessorService) private readonly characterProcessorService: CharacterProcessorService,
+    @Inject(TacticalOutcomeConsumption) private readonly consumption: TacticalOutcomeConsumption,
+  ) {}
+
+  async execute(command: ApplyTacticalOutcomeCommand): Promise<Character> {
+    const { outcome } = command;
+    if (outcome.characterId && outcome.characterId !== command.characterId) {
+      throw new ValidationError(
+        `Outcome of character ${outcome.characterId} sent to character ${command.characterId}`,
+        'err-outcome-character-mismatch',
+      );
+    }
+    const character = await this.store.load(command.characterId, command.userId, command.roles, { allowService: true });
+    if (character.isTacticalGameApplied(outcome.tacticalGameId)) {
+      this.logger.log(`Tactical game ${outcome.tacticalGameId} already applied to character ${character.id}`);
+      return character;
+    }
+    // Spec 019: the items first, idempotent by modifier, so a failure saving the character can be retried.
+    // Workspace spec 068: the units spent in the game, idempotent by their ledger entry.
+    const consumed = await this.consumption.consume(character, outcome.tacticalGameId, outcome.itemsConsumed || [], command.userId);
+    const { items, summary: itemsSummary } = await this.itemsMerger.merge(character.id, outcome.items || []);
+    const changes = itemsSummary || consumed ? { ...(itemsSummary ?? {}), ...(consumed ?? {}) } : undefined;
+    const currentGameDay = await this.store.currentGameDay(character);
+    const summary = character.applyTacticalOutcome(outcome, changes, currentGameDay);
+    if (changes) {
+      this.characterProcessorService.process(character, items);
+    }
+    this.logger.log(`Tactical game ${outcome.tacticalGameId} applied to character ${character.id}: ${JSON.stringify(summary)}`);
+    return this.store.save(character);
+  }
+}

@@ -1,0 +1,52 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { CreateFactionCommand } from '../../../application/cqrs/commands/create-faction.command.js';
+import { FactionManagementDto } from './faction.dto.js';
+
+export class CreateFactionDto {
+  @ApiProperty({ description: 'Strategic game identifier', example: 'strategic-game-01' })
+  @IsString()
+  @IsNotEmpty()
+  gameId: string;
+
+  @ApiProperty({ description: 'Faction name', example: 'Mordor faction' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ description: 'Faction management details', type: FactionManagementDto })
+  @Type(() => FactionManagementDto)
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  management: FactionManagementDto;
+
+  @ApiProperty({ type: String, description: 'Faction short description', example: 'Faction short description' })
+  @IsString()
+  @IsOptional()
+  shortDescription: string | null;
+
+  @ApiProperty({ type: String, description: 'Faction description', example: 'A faction from Mordor' })
+  @IsString()
+  @IsOptional()
+  description: string | null;
+
+  @ApiProperty({ type: String, description: 'Faction image', required: false, example: 'http://foo/bar.png' })
+  @IsString()
+  @IsOptional()
+  imageUrl: string | null;
+
+  static toCommand(dto: CreateFactionDto, userId: string, roles: string[]): CreateFactionCommand {
+    return new CreateFactionCommand(
+      dto.gameId,
+      dto.name,
+      dto.management,
+      dto.shortDescription,
+      dto.description,
+      dto.imageUrl,
+      userId,
+      roles,
+    );
+  }
+}

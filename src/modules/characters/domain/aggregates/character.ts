@@ -1,0 +1,1270 @@
+import { CharacterAttack } from '../value-objects/character-attack.vo.js';
+import type { CharacterInfo } from '../value-objects/character-info.vo.js';
+import type { CharacterPower } from '../value-objects/character-power.vo.js';
+import { CharacterResistance } from '../value-objects/character-resistances.vo.js';
+import { CharacterSkill } from '../value-objects/character-skill.vo.js';
+import { CharacterStat, type StatKey } from '../value-objects/character-stat.vo.js';
+import { CharacterDefense } from '../value-objects/character-defense.vo.js';
+import { CharacterEndurance } from '../value-objects/character-endurance.vo.js';
+import { CharacterEquipment, type EquipmentSlot } from '../value-objects/character-equipment.vo.js';
+import { CharacterHP } from '../value-objects/character-hp.vo.js';
+import { CharacterInitiative } from '../value-objects/character-initiative.vo.js';
+import { CharacterMovement } from '../value-objects/character-movement.vo.js';
+import { CharacterXP, isCreationLevel } from '../value-objects/character-xp.vo.js';
+import type { CharacterGender, CharacterRoleplayInfo } from '../value-objects/character-roleplay-info.vo.js';
+import type { CharacterStatus } from '../value-objects/character-status.vo.js';
+import { randomUUID } from 'crypto';
+import { Game } from '../../../games/domain/aggregates/game.js';
+import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events.js';
+import type { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo.js';
+import { CharacterTrait, type TraitPayment } from '../value-objects/character-trait.vo.js';
+import type { RaceTraitProps } from '../value-objects/race-trait-props.vo.js';
+import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
+import { ValidationError } from '../../../shared/domain/errors/errors.js';
+import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
+import type { CharacterProps } from './character-props.js';
+import { SkillBonus } from '../value-objects/skill-bonus.vo.js';
+import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo.js';
+import {
+  type DevPointsPayment,
+  DevPointsSpendingService,
+  type DevPointsSpendOptions,
+  emptyPayment,
+} from '../services/dev-points/dev-points-spending.service.js';
+import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules.js';
+import { ConflictError, NotFoundError } from '../../../shared/domain/errors/errors.js';
+import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
+import type { HealingLogEntry, HealingLogKind } from '../value-objects/healing-log-entry.vo.js';
+import type { HealthSummary } from '../value-objects/health-summary.vo.js';
+import {
+  type Injury,
+  type InjurySource,
+  type InjuryPermanent,
+  type InjuryRecovery,
+  type InjuryTreatment,
+  PENALTY_STATUSES,
+} from '../value-objects/injury.vo.js';
+import type { TacticalCharacterOutcome } from '../value-objects/tactical-game-outcome.vo.js';
+import { type CharacterTemporaryModifier, isExpired } from '../value-objects/temporary-modifier.vo.js';
+import { HealingCalculator, type InjuryProgress } from '../services/healing/healing-calculator.js';
+import { InjuryTreatmentRules } from '../services/healing/injury-treatment-rules.js';
+import type { HealingTables } from '../value-objects/healing-tables.vo.js';
+import { type OutcomeMergeSummary, TacticalOutcomeMerger } from '../services/healing/tactical-outcome-merger.js';
+import { UNRANKED_RANK_BONUS } from '../services/skills/rank-bonus.js';
+import { restPowerRecovery } from '../services/power/power-rules.js';
+import { PoisonStages, type Random } from '../services/healing/poison-stages.js';
+import type { PoisonRrResult } from '../services/healing/poison-rr.js';
+import type { AntidoteData, InjuryPoison, PoisonData, PoisonSeverityRow } from '../value-objects/poison.vo.js';
+
+// A character without the skill: no ranks (Core Law table 3-0b)
+export const UNRANKED_SKILL_BONUS = UNRANKED_RANK_BONUS;
+export const MAX_RANKS_PER_LEVEL = 2;
+export const MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK = 3;
+
+// Game values that drive development point spending
+export interface DevPointsRules {
+  bonusDevPointsPerLevel: number;
+}
+
+export interface SkillDevelopmentRules extends DevPointsRules {
+  allowThirdRank: boolean;
+}
+
+// How a trait is paid: the spending options for talents and the pool that receives the points of flaws
+export interface TraitSpending {
+  spend: DevPointsSpendOptions;
+  flawPool: 'normal' | 'flaw';
+  onInsufficient?: () => Error;
+}
+
+export interface CultureRanks {
+  skillId: string;
+  specialization: string | null;
+  ranks: number;
+}
+
+const DEFAULT_DEV_POINTS_RULES: DevPointsRules = { bonusDevPointsPerLevel: DEFAULT_RACE_DEV_POINTS_PER_LEVEL };
+const DEFAULT_TRAIT_SPENDING: TraitSpending = { spend: DEFAULT_DEV_POINTS_RULES, flawPool: 'normal' };
+
+/** Editable fields of an injury (game master). */
+export type InjuryChanges = Partial<
+  Pick<
+    Injury,
+    | 'type'
+    | 'severity'
+    | 'location'
+    | 'side'
+    | 'penalty'
+    | 'initialPenalty'
+    | 'bleeding'
+    | 'bleedingControl'
+    | 'flags'
+    | 'description'
+    | 'permanent'
+    | 'status'
+    | 'limits'
+  >
+>;
+
+export interface RestResult {
+  hpBefore: number;
+  hpAfter: number;
+  days: number;
+  injuries: { injuryId: string; days: number; penalty: number; remainingDays: number; status: string }[];
+  resolvedConditions: string[];
+  /** Power points before and after the rest: null without power */
+  powerBefore: number | null;
+  powerAfter: number | null;
+  /** Workspace spec 042: the poisonings that advanced. */
+  poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
+  /** Workspace spec 068: the temporary modifiers that expired. */
+  expiredModifiers?: string[];
+}
+
+export const BODY_DEVELOPMENT_SKILL = 'body-development';
+
+export class Character extends BaseAggregateRoot<CharacterProps> {
+  public injuries: Injury[] = [];
+  public conditions: CharacterCondition[] = [];
+  public appliedTacticalGames: string[] = [];
+  /** Workspace spec 068: lasting morale and fear modifiers, with their day of expiry */
+  public temporaryModifiers: CharacterTemporaryModifier[] = [];
+  public importId: string | undefined = undefined;
+  private pendingHealingLog: HealingLogEntry[] = [];
+  /** Injuries received since the aggregate was loaded, to stamp them with the day of the campaign (spec 065) */
+  private newInjuryIds = new Set<string>();
+
+  private constructor(
+    id: string,
+    public gameId: string,
+    public faction: NamedEntity,
+    public name: string,
+    public info: CharacterInfo,
+    public roleplay: CharacterRoleplayInfo,
+    public experience: CharacterXP,
+    public statistics: Record<StatKey, CharacterStat>,
+    public movement: CharacterMovement,
+    public defense: CharacterDefense,
+    public resistances: CharacterResistance[],
+    public hp: CharacterHP,
+    public endurance: CharacterEndurance,
+    public power: CharacterPower | null,
+    public initiative: CharacterInitiative,
+    public skills: CharacterSkill[],
+    public equipment: CharacterEquipment,
+    public attacks: CharacterAttack[],
+    public traits: CharacterTrait[],
+    public status: CharacterStatus,
+    public description: string | undefined,
+    public imageUrl: string | undefined,
+    public owner: string,
+    public createdAt: Date,
+    public updatedAt: Date | undefined,
+  ) {
+    super(id);
+  }
+
+  static partialCreate(
+    game: Game,
+    faction: NamedEntity,
+    name: string,
+    info: CharacterInfo,
+    roleplay: CharacterRoleplayInfo,
+    level: number,
+    weaponDevelopment: WeaponDevelopmentType[],
+    statistics: Record<StatKey, CharacterStat>,
+    imageUrl: string | undefined,
+    owner: string,
+    raceBonusDevPoints: number = 0,
+  ): Character {
+    if (!weaponDevelopment || weaponDevelopment.length !== 4) {
+      throw new ValidationError('Invalid weapon development types');
+    }
+    const character = new Character(
+      randomUUID(),
+      game.id,
+      faction,
+      name,
+      info,
+      roleplay,
+      CharacterXP.fromLevel(level, weaponDevelopment),
+      statistics,
+      CharacterMovement.empty(),
+      CharacterDefense.empty(),
+      [], // resistances
+      CharacterHP.empty(),
+      CharacterEndurance.empty(),
+      null, // power
+      new CharacterInitiative({}),
+      [], // skills
+      CharacterEquipment.empty(),
+      [], // attacks
+      [], // traits
+      'partially_created',
+      undefined, // description
+      imageUrl,
+      owner,
+      new Date(),
+      undefined,
+    );
+    // Level 0 has no development points: only the culture ranks. Level 1 grants devPoints
+    const powerLevel = resolvePowerLevel(game.powerLevel);
+    character.experience.devPoints = powerLevel.baseDevPoints;
+    character.experience.availableDevPoints = 0;
+    character.experience.availableBonusDevPoints = Math.max(0, (raceBonusDevPoints || 0) + powerLevel.creationBonusDevPoints);
+    character.experience.bonusDevPointsSpentThisLevel = 0;
+    character.experience.flawDevPoints = 0;
+    return character;
+  }
+
+  static fromProps(props: CharacterProps): Character {
+    const character = new Character(
+      props.id,
+      props.gameId,
+      props.faction,
+      props.name,
+      props.info,
+      props.roleplay,
+      props.experience,
+      props.statistics,
+      props.movement,
+      props.defense,
+      props.resistances,
+      props.hp,
+      props.endurance,
+      props.power,
+      props.initiative,
+      props.skills,
+      props.equipment,
+      props.attacks,
+      props.traits,
+      props.status,
+      props.description,
+      props.imageUrl,
+      props.owner,
+      props.createdAt,
+      props.updatedAt,
+    );
+    character.injuries = props.injuries || [];
+    character.conditions = props.conditions || [];
+    character.appliedTacticalGames = props.appliedTacticalGames || [];
+    character.temporaryModifiers = props.temporaryModifiers || [];
+    character.importId = props.importId;
+    return character;
+  }
+
+  updateRace(props: {
+    raceName: string | undefined;
+    sizeId: string | undefined;
+    stats: Record<StatKey, number> | undefined;
+    resistances: Map<string, number> | undefined;
+    strideBonus: number | undefined;
+    enduranceBonus: number | undefined;
+    recoveryMultiplier?: number | undefined;
+    baseHits: number | undefined;
+    baseAt: number | undefined;
+    skillBonuses: SkillBonus[];
+  }) {
+    if (props.recoveryMultiplier !== undefined && props.recoveryMultiplier !== null && props.recoveryMultiplier > 0) {
+      this.info.recoveryMultiplier = props.recoveryMultiplier;
+    }
+    if (props.baseHits) {
+      props.skillBonuses.push({ skillId: 'body-development', specialization: null, bonus: props.baseHits });
+    }
+    if (props.raceName) this.info.race = new NamedEntity(this.info.race.id, props.raceName);
+    if (props.sizeId) this.info.sizeId = props.sizeId;
+    if (props.stats) {
+      for (const [stat, bonus] of Object.entries(props.stats)) {
+        const statKey = stat as StatKey;
+        const prev = this.statistics[statKey];
+        const statModifiers = { ...prev.modifiers, racial: bonus || 0 };
+        this.statistics[statKey] = CharacterStat.fromModifiers(prev.potential, prev.temporary, statModifiers);
+      }
+    }
+    if (props.resistances) {
+      for (const [resistance, bonus] of Object.entries(props.resistances)) {
+        this.setupRacialResistanceBonus(resistance, (bonus as number) || 0);
+      }
+    }
+    if (props.strideBonus !== undefined) {
+      if (!this.movement.modifiers) {
+        this.movement.modifiers = {} as Record<string, number>;
+      }
+      this.movement.modifiers['racial'] = props.strideBonus;
+    }
+    if (props.enduranceBonus) this.endurance.racialBonus = props.enduranceBonus;
+    if (props.baseAt) {
+      this.defense.armor.racialAt = props.baseAt;
+    }
+    this.updateRaceSkillBonuses(props.skillBonuses || []);
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  private updateRaceSkillBonuses(skillBonuses: SkillBonus[]) {
+    this.skills.forEach(skill => {
+      skill.racialBonus = 0;
+    });
+    skillBonuses.forEach(bonus => {
+      const skill = this.findSkill(bonus.skillId, bonus.specialization);
+      if (skill) {
+        skill.racialBonus = bonus.bonus;
+      } else {
+        throw new ValidationError(
+          `Skill with id ${bonus.skillId} and specialization ${bonus.specialization} not found for racial bonus application`,
+        );
+      }
+    });
+  }
+
+  finishCreation(): void {
+    this.status = 'created';
+    this.apply(new CharacterCreatedEvent(this.getProps()));
+  }
+
+  update(props: {
+    name: string | undefined;
+    weight: number | undefined;
+    height: number | undefined;
+    age: number | undefined;
+    gender: CharacterGender | undefined;
+    description: string | undefined;
+    imageUrl: string | undefined;
+  }) {
+    const { name, description, weight, height, age, gender, imageUrl } = props;
+    if (name) this.name = name;
+    if (description) this.description = description;
+    if (weight !== undefined) this.info.weight = weight;
+    if (height !== undefined) this.info.height = height;
+    if (age !== undefined) this.roleplay.age = age;
+    if (gender !== undefined) this.roleplay.gender = gender;
+    if (imageUrl !== undefined) this.imageUrl = imageUrl;
+    this.updatedAt = new Date();
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  getSkillBonus(skillId: string, specialization: string | null): number {
+    const skill = this.findSkill(skillId, specialization);
+    return skill ? skill.totalBonus : UNRANKED_SKILL_BONUS;
+  }
+
+  addSkill(
+    skillId: string,
+    specialization: string | null,
+    statistics: string[],
+    development: number[],
+    racialBonus: number,
+    categoryId?: string,
+    ranks = 0,
+  ): void {
+    if (this.skills.find(s => s.skillId === skillId && s.specialization === specialization)) {
+      throw new ValidationError('Skill with the same specialization already exists');
+    }
+    if (!Number.isInteger(ranks) || ranks < 0) throw new ValidationError(`Invalid skill ranks ${ranks}`);
+    const skill = CharacterSkill.empty(skillId, specialization, statistics, development, racialBonus, categoryId);
+    // Initial ranks (an admin correcting the sheet): ranks, not ranksDeveloped, which are the ranks bought this level
+    skill.ranks = ranks;
+    this.skills.push(skill);
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  addTrait(
+    traitId: string,
+    traitName: string,
+    isTalent: boolean,
+    tier: number | undefined,
+    cost: number,
+    specialization: string | undefined,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+  ) {
+    if (this.findCharacterTrait(traitId, specialization)) {
+      throw new ValidationError('Trait with the same specialization already exists');
+    }
+    const payment = this.payTrait(cost, spending);
+    this.traits.push(
+      new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization, 'character', {
+        ...payment,
+        level: this.experience.level,
+      }),
+    );
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  // Raises the tier of a trait the character already has, paying the cost difference
+  improveTrait(
+    traitId: string,
+    specialization: string | undefined,
+    tier: number,
+    cost: number,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+  ) {
+    const current = this.findCharacterTrait(traitId, specialization);
+    if (!current) {
+      throw new ValidationError('Trait not found');
+    }
+    if (!current.tier || tier <= current.tier) {
+      throw new ValidationError(`Trait ${traitId} tier must be greater than the current tier ${current.tier}`);
+    }
+    const previous = this.getTraitPayment(current);
+    const payment = this.payTrait(cost - current.cost, spending);
+    const level = this.experience.level;
+    const paidWith: TraitPayment = {
+      normal: previous.normal + payment.normal,
+      bonus: previous.bonus + payment.bonus,
+      flaw: previous.flaw + payment.flaw,
+      cappedBonus: (previous.level === level ? previous.cappedBonus : 0) + payment.cappedBonus,
+      level,
+    };
+    const improved = new CharacterTrait(traitId, current.traitName, current.isTalent, tier, cost, specialization, 'character', paidWith);
+    this.traits = this.traits.map(t => (t === current ? improved : t));
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  deleteTrait(traitId: string, specialization: string | undefined) {
+    const trait = this.findCharacterTrait(traitId, specialization);
+    if (!trait) {
+      if (this.traits.some(t => t.source === 'race' && this.sameTrait(t, traitId, specialization))) {
+        throw new ValidationError(`Trait ${traitId} comes from the race and cannot be deleted`, 'err-trait-from-race');
+      }
+      throw new ValidationError('Trait not found');
+    }
+    const payment = this.getTraitPayment(trait);
+    DevPointsSpendingService.refund(this.experience, payment, payment.level === this.experience.level);
+    this.traits = this.traits.filter(t => t !== trait);
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  private payTrait(cost: number, spending: TraitSpending): DevPointsPayment {
+    if (cost < 0) {
+      return DevPointsSpendingService.grant(this.experience, -cost, spending.flawPool);
+    }
+    if (cost === 0) {
+      return emptyPayment();
+    }
+    return DevPointsSpendingService.spend(
+      this.experience,
+      cost,
+      spending.spend,
+      spending.onInsufficient ?? (() => new ValidationError('Insufficient development points to acquire the trait')),
+    );
+  }
+
+  // Traits stored before the payment was tracked were paid with normal points
+  private getTraitPayment(trait: CharacterTrait): TraitPayment {
+    return trait.paidWith ?? { normal: trait.cost || 0, bonus: 0, flaw: 0, cappedBonus: 0, level: this.experience.level };
+  }
+
+  // Replaces the race-sourced traits with the current race traits, at no cost
+  syncRaceTraits(raceTraits: RaceTraitProps[]) {
+    const characterTraits = this.traits.filter(t => t.source !== 'race');
+    const raceSourced = raceTraits.map(
+      t =>
+        new CharacterTrait(t.traitId, t.traitName || t.traitId, t.isTalent, t.tier ?? undefined, 0, t.specialization ?? undefined, 'race'),
+    );
+    this.traits = [...characterTraits, ...raceSourced];
+  }
+
+  // Character-sourced trait (race traits excluded)
+  findCharacterTrait(traitId: string, specialization: string | undefined): CharacterTrait | undefined {
+    return this.traits.find(t => t.source !== 'race' && this.sameTrait(t, traitId, specialization));
+  }
+
+  private sameTrait(trait: CharacterTrait, traitId: string, specialization: string | undefined): boolean {
+    return trait.traitId === traitId && (trait.specialization || undefined) === (specialization || undefined);
+  }
+
+  levelUpSkill(skillId: string, specialization: string | null, rules: SkillDevelopmentRules): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
+    // Culture ranks are not developed ranks and do not count towards the limit
+    const maxRanks = rules.allowThirdRank ? MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK : MAX_RANKS_PER_LEVEL;
+    if (skill.ranksDeveloped >= maxRanks) {
+      throw new ValidationError(
+        `Skill ${skillId} cannot be developed more than ${maxRanks} ranks in a level`,
+        'err-skill-max-ranks-per-level',
+      );
+    }
+    // The third rank costs the same as the second one
+    const cost = this.getRankCost(skill, skill.ranksDeveloped);
+    const payment = DevPointsSpendingService.spend(this.experience, cost, { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel });
+    const spent = skill.devPointsSpent ?? { normal: 0, bonus: 0 };
+    skill.devPointsSpent = { normal: spent.normal + payment.normal, bonus: spent.bonus + payment.bonus };
+    skill.ranks += 1;
+    skill.ranksDeveloped += 1;
+  }
+
+  // Refunds the last developed rank: bonus points first, since they are spent after the normal ones
+  levelDownSkill(skillId: string, specialization: string | null): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) {
+      throw new ValidationError('Skill not found');
+    }
+    if (skill.ranksDeveloped < 1) {
+      throw new ValidationError('Skill cannot be downgraded below 0 ranks');
+    }
+    if (skill.ranks - 1 < (skill.cultureRanks || 0)) {
+      throw new ValidationError(`Skill ${skillId} cannot be downgraded below its culture ranks`, 'err-skill-below-culture-ranks');
+    }
+    const cost = this.getRankCost(skill, skill.ranksDeveloped - 1);
+    const spent = skill.devPointsSpent ?? { normal: 0, bonus: 0 };
+    const bonus = Math.min(cost, spent.bonus);
+    const normal = cost - bonus;
+    DevPointsSpendingService.refund(this.experience, { normal, bonus, flaw: 0, cappedBonus: bonus }, true);
+    skill.devPointsSpent = { normal: Math.max(0, spent.normal - normal), bonus: spent.bonus - bonus };
+    skill.ranks -= 1;
+    skill.ranksDeveloped -= 1;
+  }
+
+  // Applies the culture ranks at creation. The skills must already exist. No development points are spent
+  applyCulture(cultureId: string, cultureRanks: CultureRanks[]): void {
+    this.info.cultureId = cultureId;
+    cultureRanks.forEach(entry => {
+      const skill = this.findSkill(entry.skillId, entry.specialization);
+      if (!skill) {
+        throw new ValidationError(`Skill ${entry.skillId} not found for culture ranks`);
+      }
+      skill.cultureRanks = (skill.cultureRanks || 0) + entry.ranks;
+      skill.ranks += entry.ranks;
+    });
+  }
+
+  private getRankCost(skill: CharacterSkill, ranksDeveloped: number): number {
+    const development = skill.development || [];
+    const cost = development[Math.min(ranksDeveloped, 1)] ?? development[0];
+    if (cost === undefined || cost === null) {
+      throw new ValidationError(`Skill ${skill.skillId} has no development cost`);
+    }
+    return cost;
+  }
+
+  deleteSkill(skillId: string, specialization: string | null): void {
+    const skill = this.findSkill(skillId, specialization);
+    if (!skill) throw new ValidationError('Skill not found');
+
+    if (skill.ranks > skill.ranksDeveloped) {
+      throw new ValidationError('Cannot delete skill with ranks acquired from previous levels');
+    }
+    while (skill.ranksDeveloped > 0) {
+      this.levelDownSkill(skillId, specialization);
+    }
+    this.removeSkill(skillId, specialization);
+  }
+
+  findSkill(skillId: string, specialization: string | null): CharacterSkill | null {
+    const found = this.skills.find(
+      s => s.skillId === skillId && (s.specialization === specialization || (!s.specialization && !specialization)),
+    );
+    return found || null;
+  }
+
+  removeSkill(skillId: string, specialization: string | null): void {
+    if (specialization) {
+      this.skills = this.skills.filter(s => s.skillId !== skillId || s.specialization !== specialization);
+    } else {
+      this.skills = this.skills.filter(s => s.skillId !== skillId);
+    }
+  }
+
+  levelUp(force: boolean): void {
+    const xp = this.experience;
+    if (xp.level >= xp.availableLevel) {
+      throw new ValidationError('Insufficient experience points to level up');
+    }
+    // Level 0 grants no development points, so leaving it never requires spending them
+    if (xp.level > 0 && xp.availableDevPoints > 0 && !force) {
+      throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
+    }
+    // Points returned by flaws at level 0 are kept for level 1
+    const carried = xp.level === 0 ? Math.max(0, xp.availableDevPoints || 0) : 0;
+    xp.level += 1;
+    xp.availableDevPoints = xp.devPoints + carried;
+    // Unspent bonus points are kept, the per level limit starts again
+    xp.bonusDevPointsSpentThisLevel = 0;
+    xp.availableStatLevelUp = xp.level > 1 ? 2 : 0;
+    xp.developedStatLevelUp = 0;
+    this.skills.forEach(s => {
+      s.ranksDeveloped = 0;
+      s.devPointsSpent = { normal: 0, bonus: 0 };
+    });
+  }
+
+  isInCreation(): boolean {
+    return isCreationLevel(this.experience.level);
+  }
+
+  /** Empties every slot the item is in: a full suit fills four (workspace spec 041). */
+  unequipItem(itemId: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const equippedSlots = Object.entries(this.equipment.slots).filter(([_, item]) => item === itemId);
+    if (equippedSlots.length === 0) {
+      throw new ValidationError('Item not equipped');
+    }
+    equippedSlots.forEach(([slot]) => (this.equipment.slots[slot as EquipmentSlot] = null));
+  }
+
+  // Applies a stat gain roll. Without free stat gains left, the extra roll costs development points
+  updateTemporaryStat(stat: StatKey, roll: number, rules: DevPointsRules = DEFAULT_DEV_POINTS_RULES) {
+    const c = this.statistics[stat];
+    if (!c) {
+      throw new ValidationError('Stat not found');
+    }
+    const range = getStatGainRollRange(c.temporary);
+    if (roll < range.min || roll > range.max) {
+      throw new ValidationError(
+        `Stat gain roll ${roll} is out of range ${range.min}-${range.max} for a temporary value of ${c.temporary}`,
+        'err-stat-gain-roll-out-of-range',
+      );
+    }
+    if (this.experience.availableStatLevelUp > 0) {
+      this.experience.availableStatLevelUp -= 1;
+    } else {
+      DevPointsSpendingService.spend(
+        this.experience,
+        STAT_GAIN_DEV_POINTS_COST,
+        { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel },
+        () => new ValidationError('No available temporary stat level ups or development points to increase the stat'),
+      );
+      this.experience.developedStatLevelUp += 1;
+    }
+    c.temporary = Math.min(c.potential, c.temporary + roll);
+  }
+
+  // Health (spec 013)
+
+  get healthSummary(): HealthSummary {
+    const withPenalty = this.injuries.filter(i => PENALTY_STATUSES.includes(i.status));
+    const notHealed = this.injuries.filter(i => i.status !== 'healed');
+    return {
+      injuryPenalty: withPenalty.reduce((acc, i) => acc + (i.penalty || 0), 0),
+      activeInjuries: this.injuries.filter(i => i.status === 'active' || i.status === 'recovering').length,
+      bleeding: notHealed.reduce((acc, i) => acc + (i.bleeding || 0), 0),
+    };
+  }
+
+  /** Hits below 0 at which the character dies: the Body Development bonus (the maximum hits without it). */
+  get deathThreshold(): number {
+    const bodyDevelopment = this.findSkill(BODY_DEVELOPMENT_SKILL, null);
+    return bodyDevelopment ? bodyDevelopment.totalBonus : this.hp.max;
+  }
+
+  get bodyDevelopmentRanks(): number {
+    return this.findSkill(BODY_DEVELOPMENT_SKILL, null)?.ranks ?? 0;
+  }
+
+  get recoveryMultiplier(): number {
+    return this.info.recoveryMultiplier && this.info.recoveryMultiplier > 0 ? this.info.recoveryMultiplier : 1;
+  }
+
+  findInjury(injuryId: string): Injury {
+    const injury = this.injuries.find(i => i.id === injuryId);
+    if (!injury) throw new NotFoundError('Injury', injuryId, 'err-injury-not-found');
+    return injury;
+  }
+
+  private replaceInjury(injury: Injury): Injury {
+    this.injuries = this.injuries.map(i => (i.id === injury.id ? injury : i));
+    return injury;
+  }
+
+  private touch(): void {
+    this.updatedAt = new Date();
+    this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  addInjury(injury: Injury): Injury {
+    if (this.injuries.some(i => i.id === injury.id)) {
+      throw new ValidationError(`Injury ${injury.id} already exists`, 'err-injury-already-exists');
+    }
+    this.injuries.push(injury);
+    this.newInjuryIds.add(injury.id);
+    this.recordHealing(
+      'manual',
+      { action: 'injury-added', type: injury.type, severity: injury.severity, penalty: injury.penalty },
+      {
+        injuryId: injury.id,
+      },
+    );
+    this.touch();
+    return injury;
+  }
+
+  updateInjury(injuryId: string, changes: InjuryChanges): Injury {
+    const injury = this.findInjury(injuryId);
+    const now = new Date().toISOString();
+    const defined = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)) as InjuryChanges;
+    const updated: Injury = { ...injury, ...defined, updatedAt: now };
+    if (defined.status === 'healed' && injury.status !== 'healed') {
+      updated.healedAt = now;
+      updated.penalty = 0;
+      updated.bleeding = injury.bleeding ? 0 : injury.bleeding;
+      // Workspace spec 068: a healed limb is no longer limited
+      updated.limits = null;
+      updated.reopenOn = null;
+      updated.tourniquet = null;
+    }
+    if (defined.status === 'permanent' && defined.penalty === undefined) {
+      updated.penalty = updated.permanent?.penalty ?? injury.initialPenalty;
+      updated.permanent = updated.permanent ?? { penalty: injury.initialPenalty };
+    }
+    if (updated.penalty > 0) updated.penalty = -updated.penalty;
+    if (updated.initialPenalty > 0) updated.initialPenalty = -updated.initialPenalty;
+    this.replaceInjury(updated);
+    this.recordHealing('manual', { action: 'injury-updated', changes: defined }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  private assertTreatable(injury: Injury): void {
+    if (injury.status === 'healed') {
+      throw new ValidationError(`Injury ${injury.id} is already healed`, 'err-injury-healed');
+    }
+  }
+
+  /**
+   * Stores a treatment and applies it to the injury (spec 022): see InjuryTreatmentRules. An absolute failure worsens
+   * the penalty and its recovery base by `penaltyWorsening`.
+   */
+  addInjuryTreatment(injuryId: string, treatment: InjuryTreatment, tables: HealingTables, penaltyWorsening = 0): Injury {
+    const injury = this.findInjury(injuryId);
+    InjuryTreatmentRules.validate(treatment.procedure, injury, tables);
+    const worsening = treatment.procedure === 'cauterize' ? 0 : Math.abs(penaltyWorsening || 0);
+    const updated = InjuryTreatmentRules.apply(injury, treatment, worsening, tables);
+    this.replaceInjury(updated);
+    const resolved = this.resolveUnconsciousIfConscious(treatment.at);
+    this.recordHealing(
+      'treatment',
+      {
+        procedure: treatment.procedure,
+        roll: treatment.roll,
+        total: treatment.total,
+        result: treatment.result,
+        healingType: treatment.healingType,
+        recoveryModifier: treatment.recoveryModifier,
+        difficulty: treatment.difficulty,
+        penaltyWorsening: worsening,
+        penalty: updated.penalty,
+        bleeding: updated.bleeding,
+        severity: updated.severity,
+        ...(treatment.heatCritical ? { heatCritical: treatment.heatCritical } : {}),
+        ...(treatment.herb ? { herb: treatment.herb } : {}),
+        ...(treatment.heatHitsDice ? { heatHitsDice: treatment.heatHitsDice } : {}),
+        ...(treatment.unusualEvent ? { unusualEvent: true } : {}),
+        ...(treatment.castSupport ? { castSupport: treatment.castSupport } : {}),
+        ...(treatment.salveModifier !== undefined ? { salveModifier: treatment.salveModifier } : {}),
+        ...(updated.limits ? { limits: updated.limits } : {}),
+        resolvedConditions: resolved,
+      },
+      { injuryId, healerName: treatment.healer.name },
+    );
+    this.touch();
+    return updated;
+  }
+
+  setInjuryRecovery(injuryId: string, recovery: InjuryRecovery, permanentCheckRequired: boolean): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (injury.status === 'permanent') {
+      throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
+    }
+    if (injury.poison && !injury.poison.finished) {
+      throw new ValidationError(`Injury ${injuryId} is a poisoning in progress`, 'err-injury-poison-active');
+    }
+    if (HealingCalculator.isRecoveryRolled(injury)) {
+      throw new ConflictError(`Injury ${injuryId} already has a recovery roll for its latest treatment`, 'err-injury-recovery-rolled');
+    }
+    const updated: Injury = { ...injury, recovery, status: 'recovering', permanent: undefined, updatedAt: recovery.startedAt };
+    this.replaceInjury(updated);
+    this.recordHealing('recovery-roll', { ...recovery, permanentCheckRequired }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  setInjuryPermanent(injuryId: string, permanent: InjuryPermanent, summary: Record<string, unknown>): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (!injury.recovery) {
+      throw new ValidationError(`Injury ${injuryId} has no recovery roll`, 'err-injury-recovery-required');
+    }
+    const now = new Date().toISOString();
+    const updated: Injury = { ...injury, permanent, updatedAt: now };
+    // Already recovered: the permanent part applies at once
+    if (injury.recovery.remainingDays <= 0 && permanent.penalty < 0) {
+      updated.status = 'permanent';
+      updated.penalty = permanent.penalty;
+    } else if (injury.recovery.remainingDays <= 0 && injury.status === 'permanent') {
+      // An untreated injury made permanent at its end, with a late roll that leaves nothing
+      updated.status = 'healed';
+      updated.penalty = 0;
+      updated.healedAt = now;
+      updated.limits = null;
+      updated.reopenOn = null;
+      updated.tourniquet = null;
+    }
+    this.replaceInjury(updated);
+    this.recordHealing('permanent-roll', { ...summary, penalty: permanent.penalty, roll: permanent.roll }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
+  /** Passes time resting: hits per rest period and days off the injury counters. */
+  /** `poisonRounds`: the time of the rest in rounds, for the poisonings (workspace spec 042, decision 13). */
+  /** `currentGameDay`: the day of the campaign after the rest, to drop the expired modifiers (workspace spec 068). */
+  rest(
+    hpAfter: number,
+    days: number,
+    now: string,
+    summary: Record<string, unknown>,
+    powerPeriods = 0,
+    poisonRounds = 0,
+    currentGameDay?: number,
+  ): RestResult {
+    const poisonings = this.advancePoisonings(poisonRounds, now);
+    const hpBefore = this.hp.current;
+    const powerBefore = this.power ? this.power.current : null;
+    if (this.power) {
+      const recovered = restPowerRecovery(this.power.max, powerPeriods);
+      this.power = { ...this.power, current: Math.max(this.power.current, Math.min(this.power.max, this.power.current + recovered)) };
+    }
+    this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
+    // A poisoning in progress follows its stages, not a recovery.
+    const progress: InjuryProgress[] = this.injuries.map(injury =>
+      injury.poison && !injury.poison.finished ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
+    );
+    this.injuries = progress.map(p => p.injury);
+    const resolvedConditions = this.resolveUnconsciousIfConscious(now);
+    const result: RestResult = {
+      hpBefore,
+      hpAfter: this.hp.current,
+      days,
+      injuries: progress
+        .filter(p => p.days > 0)
+        .map(p => ({
+          injuryId: p.injury.id,
+          days: p.days,
+          penalty: p.injury.penalty,
+          remainingDays: p.injury.recovery?.remainingDays ?? 0,
+          status: p.injury.status,
+        })),
+      resolvedConditions,
+      powerBefore,
+      powerAfter: this.power ? this.power.current : null,
+    };
+    if (poisonings.length > 0) result.poisonings = poisonings;
+    if (currentGameDay !== undefined) {
+      const expired = this.expireTemporaryModifiers(currentGameDay);
+      if (expired.length > 0) result.expiredModifiers = expired;
+    }
+    this.recordHealing('rest', { ...summary, ...result });
+    this.touch();
+    return result;
+  }
+
+  /**
+   * A dose of a healing herb (workspace spec 062): `hits` healed up to the maximum. Over 0 hits, the unconsciousness
+   * of the hits ends, as when resting. Returns the hits actually healed.
+   */
+  healWithHerb(hits: number, herb: { itemId: string; itemTypeId: string; name: string; roll: number }): number {
+    if (this.status === 'dead') throw new ValidationError(`Character ${this.id} is dead`, 'err-character-dead');
+    const now = new Date().toISOString();
+    const hpBefore = this.hp.current;
+    this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpBefore + Math.max(0, hits)));
+    const healed = this.hp.current - hpBefore;
+    const resolvedConditions = this.resolveUnconsciousIfConscious(now);
+    this.recordHealing('herb', { ...herb, hpBefore, hpAfter: this.hp.current, healed, resolvedConditions });
+    this.touch();
+    return healed;
+  }
+
+  /** Spends power points (casting a spell). Not enough points is an error. */
+  spendPower(amount: number): void {
+    if (!this.power) throw new ValidationError(`Character ${this.id} has no power points`, 'err-no-power');
+    if (amount > this.power.current) {
+      throw new ValidationError(
+        `Character ${this.id} has ${this.power.current} power points, ${amount} required`,
+        'err-insufficient-power',
+      );
+    }
+    this.power = { ...this.power, current: this.power.current - amount };
+    this.touch();
+  }
+
+  /** Gives back power points (game master or a correction), up to the maximum. */
+  restorePower(amount: number): void {
+    if (!this.power) throw new ValidationError(`Character ${this.id} has no power points`, 'err-no-power');
+    this.power = { ...this.power, current: Math.min(this.power.max, this.power.current + amount) };
+    this.touch();
+  }
+
+  /** Resolves the unconscious conditions once the hits are above 0. */
+  private resolveUnconsciousIfConscious(now: string): string[] {
+    if (this.hp.current <= 0) return [];
+    const resolved: string[] = [];
+    this.conditions = this.conditions.map(c => {
+      // The unconsciousness of a poisoning lasts its stage (workspace spec 042), whatever the hits.
+      if (c.status !== 'unconscious' || c.resolvedAt || c.source.kind === 'poison') return c;
+      resolved.push(c.id);
+      return { ...c, resolvedAt: now };
+    });
+    return resolved;
+  }
+
+  // Poisons (workspace spec 042)
+
+  /**
+   * The poison RR of an exposure (decisions 4-8): resisted, nothing happens. Failed, a `poison-disease` injury with its
+   * stages up to the severity reached and the poison's immediate hits; the stages that start at once start now.
+   * Irritants have no general effects: the game master applies theirs by hand.
+   */
+  poison(
+    poison: PoisonData,
+    source: InjurySource,
+    rr: PoisonRrResult,
+    rows: PoisonSeverityRow[],
+    random: Random = Math.random,
+  ): Injury | undefined {
+    const now = new Date().toISOString();
+    const outcome = {
+      poison: poison.name,
+      level: poison.level,
+      roll: rr.roll,
+      total: rr.total,
+      failure: rr.failure,
+      severity: rr.severity,
+    };
+    if (rr.resisted || !rr.severity || poison.category === 'irritant') {
+      this.recordHealing('manual', { action: 'poison-resisted', ...outcome, resisted: rr.resisted });
+      this.touch();
+      return undefined;
+    }
+    const severity = PoisonStages.severityOf(rr.severity, poison);
+    const injury: Injury = {
+      id: randomUUID(),
+      type: 'poison-disease',
+      severity: PoisonStages.injurySeverity(severity),
+      penalty: 0,
+      initialPenalty: 0,
+      description: poison.name,
+      source,
+      treatments: [],
+      status: 'active',
+      createdAt: now,
+      poison: PoisonStages.poisoning(
+        poison,
+        { roll: rr.roll, bonus: rr.bonus, total: rr.total, failure: rr.failure },
+        severity,
+        rows,
+        now,
+        random,
+      ),
+    };
+    this.injuries.push(injury);
+    this.newInjuryIds.add(injury.id);
+    const hits = poison.immediateHits ? PoisonStages.rollHits(poison.immediateHits, random) : 0;
+    if (hits > 0) {
+      this.hp.current -= hits;
+      this.checkPoisonHits(injury, now);
+    }
+    this.stepPoisoning(injury, 0, now);
+    this.recordHealing('manual', { action: 'poisoned', ...outcome, hits, penalty: injury.penalty }, { injuryId: injury.id });
+    this.touch();
+    return this.findInjury(injury.id);
+  }
+
+  /** An antidote for a poisoning (decision 10): kept in the poison block whether it worked or not. */
+  giveAntidote(injuryId: string, antidote: AntidoteData): { injury: Injury; neutralized: boolean } {
+    const injury = this.findInjury(injuryId);
+    if (!injury.poison) throw new ValidationError('The injury is not a poisoning', 'err-injury-not-poisoned');
+    const now = new Date().toISOString();
+    const poison: InjuryPoison = structuredClone(injury.poison);
+    const neutralized = PoisonStages.neutralizes(antidote, poison);
+    poison.antidotes = [
+      ...(poison.antidotes ?? []),
+      {
+        at: now,
+        source: antidote.source,
+        name: antidote.name,
+        ...(antidote.itemTypeId ? { itemTypeId: antidote.itemTypeId } : {}),
+        ...(antidote.level !== undefined && antidote.level !== null ? { level: antidote.level } : {}),
+        neutralized,
+      },
+    ];
+    if (neutralized) PoisonStages.neutralize(poison);
+    const updated = this.replaceInjury({ ...injury, poison, updatedAt: now });
+    if (neutralized) {
+      this.syncPoisonInjury(updated, now);
+      this.resolvePoisonConditions(updated, now);
+    }
+    this.recordHealing('manual', { action: 'antidote', antidote: antidote.name, source: antidote.source, neutralized }, { injuryId });
+    this.touch();
+    return { injury: this.findInjury(injuryId), neutralized };
+  }
+
+  /** The poisonings in progress advance `rounds` (decision 13): the stages that fall in that time apply in order. */
+  private advancePoisonings(rounds: number, now: string): NonNullable<RestResult['poisonings']> {
+    if (!(rounds > 0)) return [];
+    return this.injuries
+      .filter(injury => injury.poison && !injury.poison.finished)
+      .map(injury => {
+        const copy = this.replaceInjury({ ...injury, poison: structuredClone(injury.poison) });
+        this.stepPoisoning(copy, copy.poison!.elapsedRounds + Math.floor(rounds), now);
+        const after = this.findInjury(copy.id);
+        return { injuryId: after.id, elapsedRounds: after.poison!.elapsedRounds, penalty: after.penalty, status: after.status };
+      });
+  }
+
+  /**
+   * Strategic leaves out the hits per round (they belong to the tactical rounds) and the paralysis and incapacity
+   * (no such conditions here): it applies the stages, their penalties, the unconsciousness and the death.
+   */
+  private stepPoisoning(injury: Injury, elapsed: number, now: string): void {
+    const step = PoisonStages.step(injury.poison!, elapsed, true);
+    step.conditions.forEach(({ condition }) => {
+      if (condition === 'dead') {
+        this.addPoisonCondition('dead', injury, now);
+      } else if (condition === 'unconscious' || condition === 'coma') {
+        this.addPoisonCondition('unconscious', injury, now);
+      }
+    });
+    this.syncPoisonInjury(injury, now);
+    this.resolvePoisonConditions(injury, now);
+  }
+
+  /** Same rule as tactical: the stages in progress penalize; once over, a permanent stage stays, or it is healed. */
+  private syncPoisonInjury(injury: Injury, now: string): void {
+    const current = this.findInjury(injury.id);
+    const poison = current.poison!;
+    const next: Injury = { ...current, updatedAt: now };
+    if (poison.finished) {
+      const permanent = PoisonStages.permanentPenalty(poison);
+      next.penalty = permanent;
+      if (permanent < 0) {
+        next.status = 'permanent';
+        next.permanent = { penalty: permanent };
+      } else if (current.status !== 'healed') {
+        next.status = 'healed';
+        next.healedAt = now;
+      }
+    } else {
+      next.penalty = PoisonStages.penalty(poison);
+    }
+    next.initialPenalty = Math.min(current.initialPenalty, next.penalty);
+    this.replaceInjury(next);
+  }
+
+  /** The unconsciousness of a poisoning ends with its stage, or when the poisoning ends. */
+  private resolvePoisonConditions(injury: Injury, now: string): void {
+    const poison = this.findInjury(injury.id).poison!;
+    const ongoing = poison.stages.some(
+      stage =>
+        stage.started &&
+        !stage.ended &&
+        stage.conditionApplied &&
+        (stage.condition === 'unconscious' || stage.condition === 'coma') &&
+        (stage.conditionUntil === null || stage.conditionUntil > poison.elapsedRounds),
+    );
+    if (ongoing) return;
+    this.conditions = this.conditions.map(c =>
+      c.status === 'unconscious' && !c.resolvedAt && c.source.kind === 'poison' && c.source.injuryId === injury.id
+        ? { ...c, resolvedAt: now }
+        : c,
+    );
+  }
+
+  private addPoisonCondition(status: 'unconscious' | 'dead', injury: Injury, now: string): void {
+    if (this.conditions.some(c => !c.resolvedAt && c.status === status && c.source.injuryId === injury.id)) return;
+    this.conditions.push({
+      id: randomUUID(),
+      status,
+      source: { kind: 'poison', injuryId: injury.id },
+      description: injury.poison?.name,
+      createdAt: now,
+    });
+    if (status === 'dead') this.status = 'dead';
+  }
+
+  /** The immediate hits of a poison: unconscious at 0 or fewer hits, dead beyond the death threshold. */
+  private checkPoisonHits(injury: Injury, now: string): void {
+    if (this.hp.current < -Math.abs(this.deathThreshold)) {
+      this.addPoisonCondition('dead', injury, now);
+    } else if (this.hp.current <= 0 && !this.conditions.some(c => !c.resolvedAt && c.status === 'unconscious')) {
+      this.conditions.push({ id: randomUUID(), status: 'unconscious', source: { kind: 'manual' }, createdAt: now });
+    }
+  }
+
+  resolveCondition(conditionId: string): CharacterCondition {
+    const condition = this.conditions.find(c => c.id === conditionId);
+    if (!condition) throw new NotFoundError('Condition', conditionId, 'err-condition-not-found');
+    if (condition.resolvedAt) {
+      throw new ValidationError(`Condition ${conditionId} is already resolved`, 'err-condition-already-resolved');
+    }
+    const now = new Date().toISOString();
+    const resolved = { ...condition, resolvedAt: now };
+    this.conditions = this.conditions.map(c => (c.id === conditionId ? resolved : c));
+    // The game master can bring a dead character back by resolving its death
+    if (condition.status === 'dead' && !this.conditions.some(c => c.status === 'dead' && !c.resolvedAt)) {
+      this.status = 'created';
+    }
+    this.recordHealing('manual', { action: 'condition-resolved', conditionId, status: condition.status });
+    this.touch();
+    return resolved;
+  }
+
+  // Temporary modifiers (workspace spec 068, decision 19)
+
+  /** The game master removes a modifier (the -10 of morale lasts until then). */
+  removeTemporaryModifier(modifierId: string): CharacterTemporaryModifier {
+    const modifier = this.temporaryModifiers.find(each => each.id === modifierId);
+    if (!modifier) throw new NotFoundError('Temporary modifier', modifierId, 'err-temporary-modifier-not-found');
+    this.temporaryModifiers = this.temporaryModifiers.filter(each => each.id !== modifierId);
+    this.recordHealing('manual', {
+      action: 'temporary-modifier-removed',
+      modifierId,
+      kind: modifier.kind,
+      value: modifier.value,
+      source: modifier.source,
+    });
+    this.touch();
+    return modifier;
+  }
+
+  /**
+   * Drops the modifiers that no longer apply on `currentGameDay` and records them in the healing log (kind `manual`).
+   * Returns their ids. It does not touch the aggregate: the caller (a rest) does.
+   */
+  expireTemporaryModifiers(currentGameDay: number): string[] {
+    const expired = this.temporaryModifiers.filter(modifier => isExpired(modifier, currentGameDay));
+    if (expired.length === 0) return [];
+    this.temporaryModifiers = this.temporaryModifiers.filter(modifier => !isExpired(modifier, currentGameDay));
+    this.recordHealing('manual', {
+      action: 'temporary-modifiers-expired',
+      gameDay: currentGameDay,
+      modifiers: expired.map(({ id, kind, value, source, expiresGameDay }) => ({ id, kind, value, source, expiresGameDay })),
+    });
+    return expired.map(modifier => modifier.id);
+  }
+
+  isTacticalGameApplied(tacticalGameId: string): boolean {
+    return this.appliedTacticalGames.includes(tacticalGameId);
+  }
+
+  /** Applies a tactical game outcome. Returns undefined when it was already applied (idempotent). */
+  /** `itemsSummary`: what the outcome changed in the items of the character (spec 019), for the healing log. */
+  /** `currentGameDay`: the day of the campaign, from which the new temporary modifiers count (workspace spec 068). */
+  applyTacticalOutcome(
+    outcome: TacticalCharacterOutcome,
+    itemsSummary?: Record<string, unknown>,
+    currentGameDay = 1,
+  ): OutcomeMergeSummary | undefined {
+    if (this.isTacticalGameApplied(outcome.tacticalGameId)) return undefined;
+    const now = new Date().toISOString();
+    const { state, summary } = TacticalOutcomeMerger.merge(
+      {
+        hp: this.hp,
+        status: this.status,
+        injuries: this.injuries,
+        conditions: this.conditions,
+        temporaryModifiers: this.temporaryModifiers,
+      },
+      outcome,
+      this.deathThreshold,
+      now,
+      currentGameDay,
+    );
+    this.temporaryModifiers = state.temporaryModifiers ?? [];
+    this.hp.current = state.hp.current;
+    this.status = state.status;
+    const previousIds = new Set(this.injuries.map(i => i.id));
+    state.injuries.filter(i => !previousIds.has(i.id)).forEach(i => this.newInjuryIds.add(i.id));
+    this.injuries = state.injuries;
+    this.conditions = state.conditions;
+    this.appliedTacticalGames = [...this.appliedTacticalGames, outcome.tacticalGameId];
+    this.recordHealing(
+      'tactical-outcome',
+      {
+        ...summary,
+        tacticalGameName: outcome.tacticalGameName,
+        actorId: outcome.actorId,
+        // Spec 013, §1.1: the hits log stays out of the character, its totals go to the healing log.
+        ...(outcome.hpBySource ? { hpBySource: outcome.hpBySource } : {}),
+        ...(outcome.hpLog ? { hpLogEntries: outcome.hpLog.length } : {}),
+        ...(itemsSummary ?? {}),
+      },
+      {
+        tacticalGameId: outcome.tacticalGameId,
+      },
+    );
+    this.touch();
+    return summary;
+  }
+
+  private recordHealing(
+    kind: HealingLogKind,
+    summary: Record<string, unknown>,
+    extra: Partial<Pick<HealingLogEntry, 'injuryId' | 'tacticalGameId' | 'healerName'>> = {},
+  ): void {
+    this.pendingHealingLog.push({ id: randomUUID(), at: new Date().toISOString(), kind, summary, ...extra });
+  }
+
+  /**
+   * Stamps the day of the campaign (workspace spec 065) on the healing log entries still to be stored and on the
+   * injuries received since the load, when they have none.
+   */
+  stampGameDay(gameDay: number): void {
+    this.pendingHealingLog = this.pendingHealingLog.map(entry => (entry.gameDay === undefined ? { ...entry, gameDay } : entry));
+    if (this.newInjuryIds.size === 0) return;
+    this.injuries = this.injuries.map(injury =>
+      this.newInjuryIds.has(injury.id) && injury.gameDay === undefined ? { ...injury, gameDay } : injury,
+    );
+    this.newInjuryIds.clear();
+  }
+
+  /** Healing log entries produced since the last call, to be stored by the repository. */
+  pullHealingLog(): HealingLogEntry[] {
+    const entries = this.pendingHealingLog;
+    this.pendingHealingLog = [];
+    return entries;
+  }
+
+  getProps(): CharacterProps {
+    return {
+      id: this.id,
+      gameId: this.gameId,
+      faction: this.faction,
+      name: this.name,
+      info: this.info,
+      roleplay: this.roleplay,
+      experience: this.experience,
+      statistics: this.statistics,
+      movement: this.movement,
+      defense: this.defense,
+      resistances: this.resistances,
+      hp: this.hp,
+      endurance: this.endurance,
+      power: this.power,
+      initiative: this.initiative,
+      skills: this.skills,
+      equipment: this.equipment,
+      attacks: this.attacks,
+      traits: this.traits,
+      status: this.status,
+      injuries: this.injuries,
+      conditions: this.conditions,
+      appliedTacticalGames: this.appliedTacticalGames,
+      temporaryModifiers: this.temporaryModifiers,
+      description: this.description,
+      imageUrl: this.imageUrl,
+      owner: this.owner,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      ...(this.importId ? { importId: this.importId } : {}),
+    };
+  }
+
+  private setupRacialResistanceBonus(resistance: string, bonus: number): void {
+    const found = this.resistances.some(r => r.resistance === resistance);
+    if (found) {
+      return;
+    }
+    this.resistances.push(new CharacterResistance(resistance, 0, bonus, 0, 0, 0, 0));
+  }
+}

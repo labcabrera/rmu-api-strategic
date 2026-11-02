@@ -1,29 +1,32 @@
 import { Inject, Logger } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import type { GameEventBusPort } from '../../ports/game-event-bus.port';
-import type { GameRepository } from '../../ports/game.repository';
-import { DeleteGameCommand } from '../commands/delete-game.command';
-import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { DeleteGamesByRealmCommand } from '../commands/delete-games-by-realm.command.js';
+import { GameDeletedEvent } from '../../../domain/events/game.events.js';
+import { type GameTimeLogRepository, GAME_TIME_LOG_REPOSITORY } from '../../ports/game-time-log-repository.port.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
+/**
+ * Deletes the games of a deleted realm through the repository, one at a time, publishing a game.deleted per game like
+ * DeleteGameHandler (spec 016, decision 7). Idempotent: a repeated message no longer finds any game.
+ */
 @CommandHandler(DeleteGamesByRealmCommand)
 export class DeleteGamesByRealmHandler implements ICommandHandler<DeleteGamesByRealmCommand, void> {
   private readonly logger = new Logger(DeleteGamesByRealmHandler.name);
 
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameEventProducer') private readonly gameNotificationPort: GameEventBusPort,
-    private commandBus: CommandBus,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_TIME_LOG_REPOSITORY) private readonly timeLogRepository: GameTimeLogRepository,
   ) {}
 
   async execute(command: DeleteGamesByRealmCommand): Promise<void> {
-    this.logger.log(`Deleting games for realm ${command.realmId}`);
     const games = await this.gameRepository.findByRealm(command.realmId);
-    this.logger.log(`Found ${games.length} games for realm ${command.realmId}`);
-    await Promise.all(
-      games.map(game => {
-        const deleteGameCommand = new DeleteGameCommand(game.id, command.userId, command.roles);
-        return this.commandBus.execute(deleteGameCommand);
-      }),
-    );
+    this.logger.log(`Deleting ${games.length} games of realm ${command.realmId}`);
+    for (const game of games) {
+      await this.timeLogRepository.deleteByGameId(game.id);
+      await this.gameRepository.deleteById(game.id);
+      await this.events.publish('game', new GameDeletedEvent(game));
+    }
   }
 }

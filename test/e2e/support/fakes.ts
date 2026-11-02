@@ -1,0 +1,750 @@
+import type { TreasureTablesClientPort } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
+import type { TreasureTables } from '../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
+import type { Dice } from '../../../src/modules/treasure/domain/services/dice.js';
+import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
+import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
+import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
+import type { TradingTables } from '../../../src/modules/items/domain/value-objects/trading-tables.vo.js';
+import type { ItemClientPort, ItemResponse } from '../../../src/modules/items/application/ports/item-client.port.js';
+import type { ItemHerb } from '../../../src/modules/items/domain/value-objects/item-catalog-info.vo.js';
+import type { Race, RaceClientPort } from '../../../src/modules/characters/application/ports/race-client.port.js';
+import type { SkillClientPort, SkillResponse } from '../../../src/modules/characters/application/ports/skill-client.port.js';
+import type {
+  SkillCategoryClientPort,
+  SkillCategoryResponse,
+} from '../../../src/modules/characters/application/ports/skill-category-client.port.js';
+import type { Profession, ProfessionClientPort } from '../../../src/modules/characters/application/ports/profession-client.port.js';
+import type { TraitClientPort, TraitResponse } from '../../../src/modules/characters/application/ports/trait-client.port.js';
+import type { Culture, CultureClientPort } from '../../../src/modules/characters/application/ports/culture-client.port.js';
+import type { HealingTables } from '../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
+import type { FightingStylesClientPort } from '../../../src/modules/characters/application/ports/fighting-styles-client.port.js';
+import type { FightingStyleCatalog } from '../../../src/modules/characters/domain/value-objects/fighting-styles.vo.js';
+import type { HealingTablesClientPort } from '../../../src/modules/characters/application/ports/healing-tables-client.port.js';
+import type { PoisonRulesClientPort } from '../../../src/modules/characters/application/ports/poison-rules-client.port.js';
+import type {
+  AbsoluteManeuverResponse,
+  ManeuverClientPort,
+} from '../../../src/modules/characters/application/ports/maneuver-client.port.js';
+import type { DomainEventPublisher } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
+import type { BaseAggregateRoot } from '../../../src/modules/shared/domain/aggregates/base-aggregate.js';
+import type { DomainEvent } from '../../../src/modules/shared/domain/events/domain-event.js';
+import { NotFoundError } from '../../../src/modules/shared/domain/errors/errors.js';
+import { UpstreamBadGatewayError } from '../../../src/modules/shared/infrastructure/http/http-client.js';
+import type { SpellListClientPort, SpellResponse } from '../../../src/modules/characters/application/ports/spell-list-client.port.js';
+import type { EnumerationClientPort } from '../../../src/modules/characters/application/ports/enumeration-client.port.js';
+import type { AlchemyTablesClientPort } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
+import type { AlchemyTables } from '../../../src/modules/enchantments/domain/value-objects/alchemy.vo.js';
+import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
+import { SPEC_068_TABLES, TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
+
+// Invented catalog data (not book data): the minimum the strategic API reads from core and items.
+
+export const REALM: RealmResponse = { id: 'realm-001', name: 'E2E realm' };
+/** Workspace spec 055: a generic realm, like RMU Core, and another realm that is not. */
+export const GENERIC_REALM: RealmResponse = { id: 'realm-generic', name: 'E2E generic realm', generic: true };
+export const OTHER_REALM: RealmResponse = { id: 'realm-other', name: 'E2E other realm', generic: false };
+const REALMS = [REALM, GENERIC_REALM, OTHER_REALM];
+
+/** Invented NPCs of rmu-api-npcs (workspace spec 055), by realm, access and owner. */
+export const NPCS: NpcResponse[] = [
+  { id: 'npc-wolf', name: 'E2E wolf', realmId: GENERIC_REALM.id, accessType: 'public', owner: 'e2e-admin' },
+  { id: 'npc-guard', name: 'E2E guard', realmId: REALM.id, accessType: 'private', owner: 'e2e-owner' },
+  { id: 'npc-spy', name: 'E2E spy', realmId: REALM.id, accessType: 'private', owner: 'e2e-other' },
+  { id: 'npc-elf', name: 'E2E elf', realmId: OTHER_REALM.id, accessType: 'public', owner: 'e2e-admin' },
+];
+
+export const SKILLS: SkillResponse[] = [
+  { id: 'body-development', categoryId: 'physical', bonus: ['co'], specialization: undefined },
+  { id: 'perception', categoryId: 'awareness', bonus: ['in'], specialization: undefined },
+  { id: 'jumping', categoryId: 'athletic', bonus: ['ag'], specialization: undefined },
+  { id: 'melee-weapon', categoryId: 'combat', bonus: ['st'], specialization: 'weapon' },
+  { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
+  // Spec 050: a skill whose specializations are enumerations of core
+  { id: 'language-spoken', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
+  // Workspace spec 032: a fighting style skill, without stat bonus
+  { id: 'combat-styles', categoryId: 'combat-expertise', bonus: [], specialization: 'combat-style' },
+  ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
+    id: `${type}-spell-list`,
+    categoryId: 'spellcasting',
+    bonus: ['me'],
+    specialization: 'spell-list',
+  })),
+];
+
+export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
+  ...['physical', 'awareness', 'athletic', 'combat', 'combat-expertise', 'lore'].map(id => ({ id, bonus: [] })),
+  // Spec 029: the realm stat counts twice (R*+R*)
+  ...['spellcasting', 'power-manipulation'].map(id => ({ id, bonus: [], realmBonus: 2 })),
+];
+
+export const PROFESSION: Profession = {
+  id: 'fighter',
+  professionalSkills: [],
+  skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8], 'combat-expertise': [1, 1] },
+};
+
+/** Made-up fighting styles with the shape of rmu-api-core (spec 032), not the rulebook ones. */
+export const FIGHTING_STYLES: FightingStyleCatalog = {
+  styles: [
+    {
+      id: 'e2e-style',
+      skillId: 'combat-styles',
+      abilities: [
+        { abilityId: 'e2e-basic', cost: 2 },
+        { abilityId: 'e2e-advanced', cost: 1 },
+        { abilityId: 'e2e-repeatable', cost: 1 },
+      ],
+      requiresSkills: [],
+      requiresTraits: [],
+    },
+  ],
+  abilities: [
+    { id: 'e2e-basic', repeatable: false, maxTimes: null, requiresAbilities: [], requiresSkills: [], requiresTraits: [] },
+    { id: 'e2e-advanced', repeatable: false, maxTimes: null, requiresAbilities: ['e2e-basic'], requiresSkills: [], requiresTraits: [] },
+    { id: 'e2e-repeatable', repeatable: true, maxTimes: 2, requiresAbilities: [], requiresSkills: [], requiresTraits: [] },
+  ],
+};
+
+/** A pure spellcaster of essence, with invented costs. */
+export const MAGICIAN: Profession = {
+  id: 'magician',
+  professionalSkills: [],
+  fixedRealmTypes: ['essence'],
+  availableRealmTypes: [],
+  skillCosts: {
+    physical: [2, 6],
+    awareness: [2, 4],
+    'spells-base-open': [1, 2],
+    'spells-closed': [2, 4],
+    'spells-restricted': [6, 8],
+    'power-manipulation': [2, 3],
+  },
+};
+
+/** Invented spell lists and spells of rmu-api-spells (not book data). */
+export const SPELL_LISTS: SpellListInfo[] = [
+  { id: 'list-base', code: 'e2e-base', name: 'E2E base', realms: ['essence'], type: 'base', professionId: 'magician' },
+  { id: 'list-other-base', code: 'e2e-other-base', name: 'E2E other base', realms: ['essence'], type: 'base', professionId: 'illusionist' },
+  { id: 'list-open', code: 'e2e-open', name: 'E2E open', realms: ['essence'], type: 'open', professionId: null },
+  { id: 'list-evil', code: 'e2e-evil', name: 'E2E evil', realms: ['essence'], type: 'evil', professionId: null },
+  { id: 'list-channeling', code: 'e2e-channeling', name: 'E2E channeling', realms: ['channeling'], type: 'open', professionId: null },
+  // Workspace spec 064: an invented alchemy list of the magician
+  { id: 'list-alchemy', code: 'e2e-alchemy', name: 'E2E alchemy', realms: ['essence'], type: 'base', professionId: 'magician' },
+];
+
+const alchemySpell = (id: string, level: number, alchemy: Record<string, unknown> | null): SpellResponse => ({
+  id,
+  spellListId: 'list-alchemy',
+  name: `E2E ${id}`,
+  level,
+  modifiers: { powerPoints: null, type: alchemy ? 'alchemical' : 'utility' },
+  alchemy,
+  effects: [],
+});
+
+/** Invented spells of the alchemy list (workspace spec 064): a Work spell, a weapon bonus, a spell adder, a plain one. */
+export const ALCHEMY_SPELLS: SpellResponse[] = [
+  alchemySpell('spell-alc-work', 2, { failureTable: 'general', perItem: true, alters: true, effect: null }),
+  alchemySpell('spell-alc-weapon', 4, { failureTable: 'bonus', perItem: false, alters: false, effect: { kind: 'attack', value: 10 } }),
+  alchemySpell('spell-alc-adder', 1, {
+    failureTable: 'power-enhancer',
+    perItem: false,
+    alters: false,
+    effect: { kind: 'spell-adder', value: 1 },
+  }),
+  alchemySpell('spell-alc-plain', 1, null),
+  alchemySpell('spell-alc-high', 9, { failureTable: 'bonus', perItem: false, alters: false, effect: null }),
+];
+
+/** Invented alchemy tables of rmu-api-core (workspace spec 064): rows and multipliers are not the rulebook ones. */
+export const ALCHEMY_TABLES: AlchemyTables = {
+  failureTables: {
+    bonus: [
+      { min: 1, max: 65, text: 'E2E small trouble' },
+      { min: 66, max: 66, text: 'E2E lucky accident', serendipity: 'minor' },
+      { min: 67, max: null, text: 'E2E long delay' },
+    ],
+  },
+  powerLevels: { superior: 1, heroic: 2 },
+};
+
+export const SPELLS: SpellResponse[] = [
+  ...[1, 2, 3].map(level => ({
+    id: `spell-base-${level}`,
+    spellListId: 'list-base',
+    name: `E2E spell ${level}`,
+    level,
+    modifiers: { powerPoints: level === 2 ? 0 : null },
+    effects: [],
+  })),
+  ...ALCHEMY_SPELLS,
+];
+
+export const RACE = {
+  id: 'race-001',
+  name: 'E2E race',
+  sizeId: 'medium',
+  baseHits: 20,
+  baseDevPoints: 50,
+  baseAt: 1,
+  stats: {},
+  resistances: {},
+  traits: [],
+  skillBonuses: [],
+} as unknown as Race;
+
+// Invented enumeration keys by category and realm (null: global), spec 050
+export const ENUMERATIONS: { category: string; realmId: string | null; key: string }[] = [
+  { category: 'language', realmId: null, key: 'common-tongue' },
+  { category: 'language', realmId: REALM.id, key: 'north-tongue' },
+];
+
+export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
+
+function armorType(id: string, armor: Partial<NonNullable<ItemResponse['armor']>>): ItemResponse {
+  return {
+    id,
+    category: 'armor',
+    weapon: null,
+    armor: { rangedPenalty: 0, perceptionPenalty: 0, baseDifficulty: 'm', ...armor } as ItemResponse['armor'],
+    shield: null,
+    info: { cost: { min: 5, average: 5, max: 5 }, length: null, strength: 50, weight: 10, productionHours: 40, stackable: false },
+  };
+}
+
+/** An invented herb of workspace spec 062: the effects not given are null. */
+function herbType(
+  id: string,
+  herb: Partial<Omit<ItemHerb, 'effects'>> & { effects?: Partial<NonNullable<ItemHerb['effects']>> },
+): ItemResponse {
+  const { effects, ...rest } = herb;
+  return {
+    id,
+    name: id.replace('e2e-', 'E2E ').replace('-', ' '),
+    category: 'herb',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: {
+      herb: {
+        group: 'general',
+        biomes: ['F'],
+        highAltitude: false,
+        find: 'm',
+        form: 'leaf',
+        prep: 'ingest',
+        season: null,
+        effectDelay: 'immediate',
+        magical: true,
+        addictionFactor: null,
+        ...rest,
+        effects: effects ? { heal: null, stunRelief: null, treats: null, recoveryBonus: null, ...effects } : null,
+      },
+    },
+    info: { cost: { min: 0.1, average: 0.1, max: 0.1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  };
+}
+
+export const ITEM_TYPES: Record<string, ItemResponse> = {
+  stone: {
+    id: 'stone',
+    category: 'equipment',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: null, length: null, strength: null, weight: 1, productionHours: undefined, stackable: false },
+  },
+  rope: {
+    id: 'rope',
+    category: 'equipment',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: { min: 1, average: 2, max: 3 }, length: 10, strength: null, weight: 1, productionHours: undefined, stackable: false },
+  },
+  sword: {
+    id: 'sword',
+    name: 'E2E sword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: {
+      cost: { min: 8, average: 10, max: 12 },
+      length: 1,
+      strength: 20,
+      weight: 3,
+      productionHours: 40,
+      stackable: false,
+      rarity: 'common',
+    },
+    modifiers: [{ type: 'bonus', value: 5 }],
+    imageUrl: 'images/items/sword.png',
+  },
+  // A sword that can be equipped: the attacks need the `<skill>@<specialization>` form (spec 024)
+  longsword: {
+    id: 'longsword',
+    name: 'E2E longsword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: { cost: { min: 8, average: 10, max: 12 }, length: 1, strength: 20, weight: 3, productionHours: 40, stackable: false },
+    modifiers: [{ type: 'bonus', value: 5 }],
+  },
+  arrow: {
+    id: 'arrow',
+    category: 'ammunition',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: { min: 0.1, average: 0.1, max: 0.1 }, length: null, strength: 5, weight: 0.1, productionHours: 1, stackable: true },
+  },
+  // Workspace spec 041: a full suit, light/heavy pieces, two torsos and a tool used as an improvised weapon (invented data)
+  'e2e-suit': armorType('e2e-suit', { slot: 'body', at: 8, enc: 20, maneuverPenalty: -60, coverage: ['body', 'head', 'arms', 'legs'] }),
+  'e2e-heavy-helmet': armorType('e2e-heavy-helmet', { slot: 'head', at: 9, enc: 3, maneuverPenalty: -5, class: 'heavy' }),
+  'e2e-light-greaves': armorType('e2e-light-greaves', { slot: 'legs', at: 3, enc: 2, maneuverPenalty: -5, class: 'light' }),
+  'e2e-plate-torso': armorType('e2e-plate-torso', { slot: 'body', at: 10, enc: 10, maneuverPenalty: -40 }),
+  'e2e-leather-torso': armorType('e2e-leather-torso', { slot: 'body', at: 3, enc: 3, maneuverPenalty: -5 }),
+  'e2e-chisel': {
+    id: 'e2e-chisel',
+    category: 'tools',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      tags: ['improvised'],
+      modes: [
+        {
+          type: 'one-hand',
+          attackTypes: ['melee'],
+          attackTable: 'e2e-table',
+          fumbleTable: 'e2e-fumble',
+          sizeAdjustment: -1,
+          obModifier: -40,
+        },
+      ],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: 50, weight: 1, productionHours: 8, stackable: false },
+  },
+  'e2e-lantern': {
+    id: 'e2e-lantern',
+    category: 'light',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { light: { radius: 20, durationHours: 5 } },
+    info: {
+      cost: { min: 1, average: 1, max: 1 },
+      length: null,
+      strength: null,
+      weight: 1,
+      productionHours: 8,
+      stackable: false,
+      lotSize: 2,
+    },
+  },
+  // Workspace spec 042: a paste poison and an antidote (invented data)
+  'e2e-venom': {
+    id: 'e2e-venom',
+    name: 'E2E venom',
+    category: 'poison',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { poison: { category: 'muscle', level: 4, form: 'paste', maxSeverity: null, immediateHits: null, onsetRounds: null } },
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  },
+  'e2e-cure': {
+    id: 'e2e-cure',
+    name: 'E2E cure',
+    category: 'herb',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { antidote: { categories: ['muscle'], level: 5, withinHours: null } },
+    info: { cost: { min: 1, average: 1, max: 1 }, length: null, strength: null, weight: 0.01, productionHours: 1, stackable: true },
+  },
+  // Workspace spec 062: a gem, a jewel and four herbs (invented data, not the rulebook ones)
+  'e2e-gem': {
+    id: 'e2e-gem',
+    name: 'E2E gem',
+    category: 'gem',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { gem: { grade: 'precious', mineral: 'e2e-mineral', valuePerCarat: 2 } },
+    info: { cost: null, length: null, strength: null, weight: 0.001, productionHours: undefined, stackable: false },
+  },
+  'e2e-ring': {
+    id: 'e2e-ring',
+    name: 'E2E ring',
+    category: 'jewelry',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: { jewelry: { value: { min: 10, max: 20, dice: null, openEnded: false }, slot: 'finger' } },
+    info: { cost: { min: 1, average: 1.5, max: 2 }, length: null, strength: null, weight: 0.01, productionHours: 10, stackable: false },
+  },
+  'e2e-heal-leaf': herbType('e2e-heal-leaf', { group: 'minor-healing', biomes: ['F'], find: 'm', effects: { heal: { min: 3, max: 8 } } }),
+  'e2e-bone-moss': herbType('e2e-bone-moss', { group: 'injury', biomes: ['F', 'D'], find: 'h', effects: { treats: ['bone'] } }),
+  'e2e-plain-root': herbType('e2e-plain-root', { group: 'general', biomes: ['F'], find: 'e', magical: false }),
+  'e2e-stun-berry': herbType('e2e-stun-berry', { group: 'stun', biomes: ['A'], highAltitude: true, find: 'n', effects: { stunRelief: 2 } }),
+  // Workspace spec 067: magic types of the catalog, the generic art object and a potion (invented data)
+  'e2e-flame-sword': {
+    id: 'e2e-flame-sword',
+    name: 'E2E flame sword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    features: {
+      magic: {
+        itemLevel: 5,
+        kind: 'weapon',
+        days: 10,
+        standardPrice: 60,
+        basePrice: 10,
+        attunement: false,
+        charges: null,
+        realm: null,
+        bonuses: [
+          { kind: 'ob', value: 15 },
+          { kind: 'ob', value: 30, against: 'undead' },
+        ],
+        spells: [],
+        section: null,
+      },
+    },
+    info: { cost: null, length: 1, strength: 20, weight: 3, productionHours: 40, stackable: false },
+  },
+  'e2e-wand': {
+    id: 'e2e-wand',
+    name: 'E2E wand',
+    category: 'spell-item',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: {
+      magic: {
+        itemLevel: 3,
+        kind: 'charged',
+        days: 3,
+        standardPrice: 20,
+        basePrice: 0,
+        attunement: true,
+        charges: 5,
+        realm: 'essence',
+        bonuses: [],
+        spells: [{ name: 'E2E bolt', level: 3, list: 'e2e-open', use: 'charges' }],
+        section: null,
+      },
+    },
+    info: { cost: null, length: null, strength: null, weight: 0.1, productionHours: undefined, stackable: false },
+  },
+  'art-object': {
+    id: 'art-object',
+    name: 'Art object',
+    category: 'other',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: null, length: null, strength: null, weight: 1, productionHours: undefined, stackable: false },
+  },
+  'gold-coin': {
+    id: 'gold-coin',
+    category: 'currency',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: null, length: null, strength: null, weight: 0.01, productionHours: undefined, stackable: true },
+  },
+};
+
+/**
+ * GET /v1/healing-tables of core: the unit fixture plus invented treatment difficulties in the shape of spec 022
+ * (`treatmentDifficulties` and `treatmentRules`) and the invented fields of spec 068 (cauterization, surgery, limits).
+ */
+export const CORE_HEALING_TABLES: HealingTables = {
+  ...TABLES,
+  ...SPEC_068_TABLES,
+  treatmentDifficulties: [
+    { procedure: 'dress', injuryType: 'skin-tissue', severity: 'light', difficulty: 'r' },
+    { procedure: 'splint', injuryType: 'bone', severity: 'light', difficulty: 'e' },
+    { procedure: 'splint', injuryType: 'bone', severity: 'medium', difficulty: 'e' },
+    { procedure: 'stitches', injuryType: 'cut-burn', severity: 'medium', difficulty: 'm' },
+    { procedure: 'pressure', injuryType: 'cut-burn', severity: 'severe', difficulty: 'e' },
+    { procedure: 'cauterize', injuryType: 'cut-burn', severity: 'severe', difficulty: 'r' },
+    { procedure: 'cauterize', injuryType: 'cut-burn', severity: 'medium', difficulty: 'r' },
+  ],
+  treatmentRules: {
+    headDifficultySteps: 1,
+    cauterizePenaltyPerBleeding: -5,
+    bleedingProcedures: ['pressure', 'stitches', 'tourniquet', 'cauterize'],
+    tourniquetLocations: ['arm', 'leg'],
+  },
+};
+
+/** Results the fake medical maneuver table answers, in order (then success), and the totals it got. */
+export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; totals: number[]; tables: string[] } = {
+  results: [],
+  totals: [],
+  tables: [],
+};
+
+/**
+ * Trading tables of core (workspace spec 048): null by default (the Core Law rule); a test sets invented tables and
+ * puts null back when it ends.
+ */
+export const tradingTables: { value: TradingTables | null } = { value: null };
+
+const everyQuality = <T>(value: T) => ({ 'very-poor': value, poor: value, normal: value, rich: value, 'very-rich': value });
+
+/**
+ * Invented treasure tables of rmu-api-core (workspace spec 067): every roll of the fake dice (50 unless a test queues
+ * others) gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
+ */
+export const TREASURE_TABLES = {
+  codes: { wealth: { c: 'normal' }, lifestyle: { n: 'normal' }, magic: { x: 'normal' } },
+  wealthRolls: [{ min: 1, max: 100, rolls: 1 }],
+  wealthValue: [{ min: -999, max: 999, valueMin: 20, valueMax: 20 }],
+  wealthValueModifiers: [],
+  wealthType: [{ min: 1, max: 100, type: 'coins', multiplier: 1 }],
+  wealthMultipliers: { 'very-poor': 0.01, poor: 0.1, normal: 1, rich: 10, 'very-rich': 100 },
+  jewelryTypes: [{ min: 1, max: 100, itemTypeId: 'e2e-ring' }],
+  artTypes: [{ min: 1, max: 100, key: 'statuette' }],
+  gearQuality: [{ min: 1, max: 100, ...everyQuality({ total: 10, max: 5 }) }],
+  magicTreasure: [{ min: 1, max: 100, ...everyQuality([0]) }],
+  magicMaxLevel: everyQuality(null),
+  itemType: [{ min: 1, max: 100, table: 'melee' }],
+  magicTables: {
+    melee: [
+      {
+        min: 1,
+        max: 300,
+        label: 'E2E +10 weapon',
+        price: { min: 150, max: 150 },
+        generic: { base: 'weapon', kind: 'weapon', bonuses: [{ kind: 'ob', value: 10 }] },
+      },
+    ],
+    ranged: [],
+    armor: [],
+    utility: [],
+    spell: [],
+    charged: [],
+  },
+  randomWeapons: {
+    table: [{ min: 1, max: 100, group: 'blades' }],
+    size: [{ min: 1, max: 100, size: 'medium' }],
+    groups: { blades: [{ min: 1, max: 100, itemTypeId: 'sword' }] },
+  },
+  creatureTypes: [{ min: 1, max: 100, key: 'undead' }],
+  randomArmor: [],
+  randomSpells: { realm: [], lists: {} },
+  gems: { precious: { columns: [] }, semiPrecious: { columns: [] } },
+  standardPricing: {
+    pricePerDay: [{ ppMin: 0, ppMax: null, extraSp: 2 }],
+    weapon: [{ bonus: 10, days: 20, level: 8, price: 400 }],
+    ranged: [],
+    armor: [],
+    shield: [],
+    generalBonus: [],
+    powerEnhancers: [],
+    daily: [],
+    constant: [],
+    emplaced: [],
+    potions: [],
+    charged: [],
+  },
+} as unknown as TreasureTables;
+
+/** Rolls the fake dice answer: queued values first, then 50 (within the range asked). */
+export const diceQueue: number[] = [];
+
+/** Every outbound API port of strategic, answered from the data above. */
+export function apiFakes() {
+  const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)) };
+  const npcClient: NpcClientPort = { getNpcById: id => Promise.resolve(NPCS.find(npc => npc.id === id)) };
+  const itemClient: ItemClientPort = {
+    getItemById: id => Promise.resolve(ITEM_TYPES[id]),
+  };
+  const raceClient: RaceClientPort = {
+    // Core answers 404 for an unknown id, which the HttpClient maps to an UpstreamBadGatewayError with that status
+    getRaceById: id =>
+      id === RACE.id ? Promise.resolve(RACE) : Promise.reject(new UpstreamBadGatewayError(`core/races/${id} answered 404`, 404)),
+  };
+  const skillClient: SkillClientPort = {
+    getAllSkills: () => Promise.resolve({ content: SKILLS, pagination: { page: 0, size: 1000, totalElements: SKILLS.length } } as never),
+    getSkillById: id => Promise.resolve(SKILLS.find(skill => skill.id === id)!),
+  };
+  const skillCategoryClient: SkillCategoryClientPort = {
+    getAllSkillCategories: () => Promise.resolve(SKILL_CATEGORIES),
+    getSkillCategoryById: (id: string) => Promise.resolve(SKILL_CATEGORIES.find(category => category.id === id)!),
+  };
+  const professionClient: ProfessionClientPort = {
+    getProfessionById: id => Promise.resolve(id === MAGICIAN.id ? MAGICIAN : PROFESSION),
+  };
+  const spellListClient: SpellListClientPort = {
+    getSpellListByCode: code => Promise.resolve(SPELL_LISTS.find(list => list.code === code)),
+    getSpellsByListId: id => Promise.resolve(SPELLS.filter(spell => spell.spellListId === id)),
+  };
+  const traitClient: TraitClientPort = {
+    getTraitById: (id: string) => Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
+  };
+  const cultureClient: CultureClientPort = {
+    getCultureById: id =>
+      id === CULTURE.id ? Promise.resolve(CULTURE) : Promise.reject(new UpstreamBadGatewayError(`core/cultures/${id} answered 404`, 404)),
+  };
+  const healingTablesClient: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(CORE_HEALING_TABLES) };
+  const fightingStylesClient: FightingStylesClientPort = { getFightingStyles: () => Promise.resolve(FIGHTING_STYLES) };
+  // Workspace spec 042: invented RR rules (required 50, -2 per level) and a muscle row per severity, each a round later
+  const poisonRulesClient: PoisonRulesClientPort = {
+    getRrRules: () =>
+      Promise.resolve({
+        requiredTotal: 50,
+        attackLevelMultiplier: -2,
+        bands: [
+          { min: 1, max: 20, severity: 'mild' },
+          { min: 21, max: 40, severity: 'moderate' },
+          { min: 41, max: 80, severity: 'severe' },
+          { min: 81, max: null, severity: 'extreme' },
+        ],
+      }),
+    getPoisonTables: () =>
+      Promise.resolve({
+        rows: (['mild', 'moderate', 'severe', 'extreme'] as const).map((severity, i) => ({
+          category: 'muscle' as const,
+          severity,
+          start: { min: i, max: i, unit: 'round' as const },
+          duration: { min: 2, max: 2, unit: 'hour' as const },
+          penalty: { min: -5 * (i + 1), max: -5 * (i + 1) },
+          hitsPerRound: null,
+          hitsRounds: null,
+          condition: severity === 'extreme' ? ('dead' as const) : null,
+          conditionDelay: null,
+          conditionDuration: null,
+          permanent: false,
+        })),
+      }),
+  };
+  // Workspace spec 043: invented materials, not the rulebook ones
+  const materialClient: MaterialClientPort = { getMaterial: id => Promise.resolve(MATERIALS.find(material => material.id === id)) };
+  const maneuverClient: ManeuverClientPort = {
+    absolute: (total: number, table: string) => {
+      maneuverCalls.totals.push(total);
+      maneuverCalls.tables.push(table);
+      const result = maneuverCalls.results.shift() ?? 'success';
+      const effects =
+        table === 'crafting'
+          ? result === 'absolute-success'
+            ? [{ status: 'itemBreakage', value: 10 }]
+            : result === 'partial-success'
+              ? [{ status: 'itemBreakage', value: -10 }]
+              : []
+          : result === 'absolute-failure'
+            ? [{ status: 'injuryPenalty', value: 10 }]
+            : [];
+      return Promise.resolve<AbsoluteManeuverResponse>({ result, message: result, effects });
+    },
+    // Invented percent table: the total itself, between 0 and 150
+    percent: (total: number) => {
+      maneuverCalls.totals.push(total);
+      return Promise.resolve({ percent: Math.max(0, Math.min(150, total)), message: 'percent' });
+    },
+  };
+  const enumerationClient: EnumerationClientPort = {
+    getKeys: (category, realmId) =>
+      Promise.resolve(ENUMERATIONS.filter(e => e.category === category && (e.realmId === null || e.realmId === realmId)).map(e => e.key)),
+  };
+  const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
+  const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
+  const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
+  const dice: Dice = { roll: (min, max) => Math.min(max, Math.max(min, diceQueue.shift() ?? 50)) };
+  return {
+    treasureTablesClient,
+    dice,
+    alchemyTablesClient,
+    npcClient,
+    enumerationClient,
+    tradingTablesClient,
+    realmClient,
+    itemClient,
+    raceClient,
+    skillClient,
+    skillCategoryClient,
+    professionClient,
+    traitClient,
+    cultureClient,
+    healingTablesClient,
+    fightingStylesClient,
+    poisonRulesClient,
+    maneuverClient,
+    materialClient,
+    spellListClient,
+  };
+}
+
+const material = (id: string, values: Partial<MaterialResponse>): MaterialResponse => ({
+  id,
+  group: 'metal',
+  durability: 0,
+  workability: 0,
+  bonus: 0,
+  bluntBonus: null,
+  metalBonus: null,
+  cost: { add: 0, multiplier: null },
+  magical: false,
+  armorWeightMultiplier: null,
+  uses: ['weapon', 'ammunition', 'armor', 'shield'],
+  ...values,
+});
+
+export const MATERIALS: MaterialResponse[] = [
+  material('e2e-steel', { durability: 3, workability: -7, bonus: 4, cost: { add: 1.5, multiplier: null } }),
+  material('e2e-feather-steel', {
+    durability: 2,
+    workability: -12,
+    bonus: 6,
+    cost: { add: 4, multiplier: null },
+    armorWeightMultiplier: 0.5,
+  }),
+  material('e2e-yew', { group: 'bow-wood', bonus: 3, cost: { add: 2, multiplier: null }, uses: ['launcher'] }),
+];
+
+/** The DomainEventPublisher of the suite: keeps the topics and messages Kafka would get. */
+export class InMemoryEventPublisher implements DomainEventPublisher {
+  readonly published: { topic: string; event: DomainEvent<unknown> }[] = [];
+
+  publish(aggregateType: string, ...events: DomainEvent<unknown>[]): Promise<void> {
+    for (const event of events) this.published.push({ topic: `internal.rmu-strategic.${aggregateType}.${event.eventType}.v1`, event });
+    return Promise.resolve();
+  }
+
+  publishChanges(aggregateType: string, aggregate: BaseAggregateRoot<{ id: string }>): Promise<void> {
+    const events = [...aggregate.getUncommittedEvents()];
+    aggregate.uncommit();
+    return this.publish(aggregateType, ...events);
+  }
+
+  topics(): string[] {
+    return this.published.map(entry => entry.topic);
+  }
+
+  clear(): void {
+    this.published.length = 0;
+  }
+}

@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo';
+import type { Difficulty } from '../../../../characters/domain/value-objects/difficulty.vo.js';
+import type { ArmorClass } from '../../../domain/value-objects/item-armor.vo.js';
 
 @Schema({ _id: false })
 export class ItemArmor {
@@ -13,14 +14,20 @@ export class ItemArmor {
   enc: number;
 
   @Prop({ required: true })
-  maneuver: number;
+  maneuverPenalty: number;
 
   @Prop({ required: true })
   rangedPenalty: number;
 
   @Prop({ required: true })
-  perception: number;
+  perceptionPenalty: number;
 
   @Prop({ type: String, required: true })
   baseDifficulty: Difficulty;
+
+  @Prop({ type: [String], required: false, default: undefined })
+  coverage?: string[] | null;
+
+  @Prop({ type: String, required: false })
+  class?: ArmorClass | null;
 }

@@ -1,0 +1,737 @@
+{
+  "format": "rmu-strategic-export",
+  "formatVersion": 2,
+  "kind": "faction",
+  "exportedAt": "2026-10-25T21:33:07.065Z",
+  "source": {
+    "app": "rmu-api-strategic",
+    "appVersion": "0.5.3-SNAPSHOT",
+    "gameId": "ca75ed0e-6a61-4830-b265-246ff71c91e6",
+    "gameName": "E2E game",
+    "realmId": "realm-001",
+    "realmName": "E2E realm",
+    "factionId": "2c59a2ea-98c6-4395-b2f8-0eca40813221",
+    "factionName": "Realm",
+    "owner": "e2e-owner"
+  },
+  "references": {
+    "races": [
+      {
+        "id": "race-001",
+        "name": "E2E race"
+      }
+    ],
+    "professions": [
+      {
+        "id": "fighter",
+        "name": null
+      }
+    ],
+    "cultures": [],
+    "skills": [
+      {
+        "id": "body-development",
+        "name": null
+      },
+      {
+        "id": "melee-weapon",
+        "name": null
+      },
+      {
+        "id": "perception",
+        "name": null
+      }
+    ],
+    "traits": [],
+    "itemTypes": [
+      {
+        "id": "gold-coin",
+        "name": "gold-coin"
+      },
+      {
+        "id": "longsword",
+        "name": "E2E longsword"
+      },
+      {
+        "id": "sword",
+        "name": "Realm blade"
+      }
+    ]
+  },
+  "data": {
+    "faction": {
+      "name": "Realm",
+      "shortDescription": null,
+      "description": null,
+      "imageUrl": null,
+      "management": {
+        "availableXP": 2000,
+        "availableGold": 165
+      }
+    },
+    "armory": [
+      {
+        "ref": "i1",
+        "itemTypeId": "sword",
+        "name": "Realm blade",
+        "category": "weapon",
+        "carried": false,
+        "weapon": {
+          "skillId": "melee-weapon",
+          "fumble": 3,
+          "modes": [
+            {
+              "type": "one-hand",
+              "attackTypes": [
+                "slash"
+              ],
+              "attackTable": "e2e-table",
+              "fumbleTable": "e2e-fumble",
+              "sizeAdjustment": 0,
+              "ranges": []
+            }
+          ]
+        },
+        "armor": null,
+        "shield": null,
+        "info": {
+          "length": 1,
+          "weight": 3,
+          "strength": 20,
+          "stackable": false
+        },
+        "amount": null,
+        "description": null,
+        "catalog": {
+          "cost": {
+            "min": 8,
+            "average": 10,
+            "max": 12
+          },
+          "rarity": "common",
+          "productionHours": 40,
+          "imageUrl": "images/items/sword.png"
+        },
+        "value": 30,
+        "acquiredPrice": 25,
+        "unrepairable": false,
+        "modifiers": [
+          {
+            "id": "e814ed20-c154-47a3-ae77-98b69830e997",
+            "type": "quality",
+            "value": 5,
+            "appliesTo": "attack",
+            "createdAt": "2026-10-25T21:33:07.051Z",
+            "source": {
+              "kind": "catalog"
+            },
+            "description": "catalog-bonus"
+          },
+          {
+            "id": "c95d5850-ad7b-4cac-aedb-df4b9f3071c8",
+            "type": "quality",
+            "value": 5,
+            "appliesTo": "attack",
+            "createdAt": "2026-10-25T21:33:07.051Z",
+            "source": {
+              "kind": "crafting",
+              "crafterRef": "c1"
+            },
+            "description": "Fine edge"
+          }
+        ]
+      }
+    ],
+    "characters": [
+      {
+        "ref": "c1",
+        "character": {
+          "name": "Smith",
+          "info": {
+            "raceId": "race-001",
+            "raceName": "E2E race",
+            "professionId": "fighter",
+            "sizeId": "medium",
+            "realmType": "essence",
+            "realmTypes": [
+              "essence"
+            ],
+            "height": 1.8,
+            "weight": 80,
+            "cultureId": null
+          },
+          "roleplay": {
+            "gender": "male",
+            "age": 30
+          },
+          "experience": {
+            "level": 0,
+            "availableLevel": 0,
+            "xp": 0,
+            "devPoints": 60,
+            "availableDevPoints": 0,
+            "availableBonusDevPoints": 50,
+            "availableStatLevelUp": 0,
+            "developedStatLevelUp": 0,
+            "weaponDevelopment": [
+              "melee",
+              "ranged",
+              "shield",
+              "unarmed"
+            ],
+            "bonusDevPointsSpentThisLevel": 0,
+            "flawDevPoints": 0
+          },
+          "statistics": {
+            "ag": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "co": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "em": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "in": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "me": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "pr": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "qu": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "re": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "sd": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "st": {
+              "potential": 70,
+              "temporary": 50
+            }
+          },
+          "skills": [
+            {
+              "skillId": "body-development",
+              "specialization": null,
+              "statistics": [
+                "co"
+              ],
+              "development": [
+                2,
+                6
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            },
+            {
+              "skillId": "perception",
+              "specialization": null,
+              "statistics": [
+                "in"
+              ],
+              "development": [
+                2,
+                4
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            }
+          ],
+          "traits": [],
+          "hp": {
+            "current": 0
+          },
+          "endurance": {
+            "base": 0,
+            "customBonus": 0,
+            "max": 0,
+            "current": 0,
+            "accumulator": 0,
+            "fatiguePenalty": 0
+          },
+          "power": null,
+          "resistances": [],
+          "equipment": {
+            "slots": {}
+          },
+          "status": "created",
+          "injuries": [],
+          "conditions": [],
+          "description": null,
+          "imageUrl": null
+        },
+        "items": []
+      },
+      {
+        "ref": "c2",
+        "character": {
+          "name": "Soldier",
+          "info": {
+            "raceId": "race-001",
+            "raceName": "E2E race",
+            "professionId": "fighter",
+            "sizeId": "medium",
+            "realmType": "essence",
+            "realmTypes": [
+              "essence"
+            ],
+            "height": 1.8,
+            "weight": 80,
+            "cultureId": null
+          },
+          "roleplay": {
+            "gender": "male",
+            "age": 30
+          },
+          "experience": {
+            "level": 0,
+            "availableLevel": 0,
+            "xp": 0,
+            "devPoints": 60,
+            "availableDevPoints": 0,
+            "availableBonusDevPoints": 50,
+            "availableStatLevelUp": 0,
+            "developedStatLevelUp": 0,
+            "weaponDevelopment": [
+              "melee",
+              "ranged",
+              "shield",
+              "unarmed"
+            ],
+            "bonusDevPointsSpentThisLevel": 0,
+            "flawDevPoints": 0
+          },
+          "statistics": {
+            "ag": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "co": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "em": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "in": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "me": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "pr": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "qu": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "re": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "sd": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "st": {
+              "potential": 70,
+              "temporary": 40
+            }
+          },
+          "skills": [
+            {
+              "skillId": "body-development",
+              "specialization": null,
+              "statistics": [
+                "co"
+              ],
+              "development": [
+                2,
+                6
+              ],
+              "professional": null,
+              "ranks": 4,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            },
+            {
+              "skillId": "melee-weapon",
+              "specialization": "sword",
+              "statistics": [
+                "st"
+              ],
+              "development": [
+                2,
+                5
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            },
+            {
+              "skillId": "perception",
+              "specialization": null,
+              "statistics": [
+                "in"
+              ],
+              "development": [
+                2,
+                4
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            }
+          ],
+          "traits": [],
+          "hp": {
+            "current": 30
+          },
+          "endurance": {
+            "base": 0,
+            "customBonus": 0,
+            "max": 0,
+            "current": 4,
+            "accumulator": 2,
+            "fatiguePenalty": -5
+          },
+          "power": null,
+          "resistances": [],
+          "equipment": {
+            "slots": {}
+          },
+          "status": "created",
+          "injuries": [
+            {
+              "id": "injury-e2e-1",
+              "type": "bone",
+              "severity": "medium",
+              "location": "arm",
+              "side": "left",
+              "penalty": -15,
+              "initialPenalty": -20,
+              "source": {
+                "kind": "manual"
+              },
+              "treatments": [],
+              "recovery": {
+                "roll": 50,
+                "modifiers": 0,
+                "total": 50,
+                "baseDays": 10,
+                "multiplier": 1,
+                "totalDays": 10,
+                "remainingDays": 7,
+                "startedAt": "2026-10-01T00:00:00.000Z"
+              },
+              "status": "recovering",
+              "createdAt": "2026-10-01T00:00:00.000Z"
+            }
+          ],
+          "conditions": [],
+          "description": null,
+          "imageUrl": null
+        },
+        "items": [
+          {
+            "ref": "i2",
+            "itemTypeId": "longsword",
+            "name": "E2E longsword",
+            "category": "weapon",
+            "carried": true,
+            "weapon": {
+              "skillId": "melee-weapon@sword",
+              "fumble": 3,
+              "modes": [
+                {
+                  "type": "one-hand",
+                  "attackTypes": [
+                    "slash"
+                  ],
+                  "attackTable": "e2e-table",
+                  "fumbleTable": "e2e-fumble",
+                  "sizeAdjustment": 0,
+                  "ranges": []
+                }
+              ]
+            },
+            "armor": null,
+            "shield": null,
+            "info": {
+              "length": 1,
+              "weight": 3,
+              "strength": 20,
+              "stackable": false
+            },
+            "amount": null,
+            "description": null,
+            "catalog": {
+              "cost": {
+                "min": 8,
+                "average": 10,
+                "max": 12
+              },
+              "rarity": null,
+              "productionHours": 40,
+              "imageUrl": null
+            },
+            "value": 10,
+            "acquiredPrice": 10,
+            "unrepairable": false,
+            "modifiers": [
+              {
+                "id": "ac97fb0e-4b90-44c5-a273-d2c3e97b6091",
+                "type": "quality",
+                "value": 5,
+                "appliesTo": "attack",
+                "createdAt": "2026-10-25T21:33:06.985Z",
+                "source": {
+                  "kind": "catalog"
+                },
+                "description": "catalog-bonus"
+              },
+              {
+                "id": "f6e6710d-5abd-4227-a37b-1b8c5a44a498",
+                "type": "breakage",
+                "value": -10,
+                "appliesTo": "all",
+                "createdAt": "2026-10-25T21:33:06.995Z",
+                "source": {
+                  "kind": "manual"
+                },
+                "description": "Nicked"
+              }
+            ]
+          },
+          {
+            "ref": "i3",
+            "itemTypeId": "gold-coin",
+            "name": "gold-coin",
+            "category": "currency",
+            "carried": false,
+            "weapon": null,
+            "armor": null,
+            "shield": null,
+            "info": {
+              "length": null,
+              "weight": 0.01,
+              "strength": null,
+              "stackable": true
+            },
+            "amount": 25,
+            "description": null,
+            "catalog": {
+              "cost": null,
+              "rarity": null,
+              "productionHours": null,
+              "imageUrl": null
+            },
+            "value": null,
+            "acquiredPrice": 0,
+            "unrepairable": false,
+            "modifiers": []
+          }
+        ]
+      },
+      {
+        "ref": "c3",
+        "character": {
+          "name": "Scout",
+          "info": {
+            "raceId": "race-001",
+            "raceName": "E2E race",
+            "professionId": "fighter",
+            "sizeId": "medium",
+            "realmType": "essence",
+            "realmTypes": [
+              "essence"
+            ],
+            "height": 1.8,
+            "weight": 80,
+            "cultureId": null
+          },
+          "roleplay": {
+            "gender": "male",
+            "age": 30
+          },
+          "experience": {
+            "level": 0,
+            "availableLevel": 0,
+            "xp": 0,
+            "devPoints": 60,
+            "availableDevPoints": 0,
+            "availableBonusDevPoints": 50,
+            "availableStatLevelUp": 0,
+            "developedStatLevelUp": 0,
+            "weaponDevelopment": [
+              "melee",
+              "ranged",
+              "shield",
+              "unarmed"
+            ],
+            "bonusDevPointsSpentThisLevel": 0,
+            "flawDevPoints": 0
+          },
+          "statistics": {
+            "ag": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "co": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "em": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "in": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "me": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "pr": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "qu": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "re": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "sd": {
+              "potential": 70,
+              "temporary": 50
+            },
+            "st": {
+              "potential": 70,
+              "temporary": 50
+            }
+          },
+          "skills": [
+            {
+              "skillId": "body-development",
+              "specialization": null,
+              "statistics": [
+                "co"
+              ],
+              "development": [
+                2,
+                6
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            },
+            {
+              "skillId": "perception",
+              "specialization": null,
+              "statistics": [
+                "in"
+              ],
+              "development": [
+                2,
+                4
+              ],
+              "professional": null,
+              "ranks": 0,
+              "ranksDeveloped": 0,
+              "cultureRanks": 0,
+              "devPointsSpent": {
+                "normal": 0,
+                "bonus": 0
+              },
+              "knackBonus": null
+            }
+          ],
+          "traits": [],
+          "hp": {
+            "current": 0
+          },
+          "endurance": {
+            "base": 0,
+            "customBonus": 0,
+            "max": 0,
+            "current": 0,
+            "accumulator": 0,
+            "fatiguePenalty": 0
+          },
+          "power": null,
+          "resistances": [],
+          "equipment": {
+            "slots": {}
+          },
+          "status": "created",
+          "injuries": [],
+          "conditions": [],
+          "description": null,
+          "imageUrl": null
+        },
+        "items": []
+      }
+    ]
+  }
+}

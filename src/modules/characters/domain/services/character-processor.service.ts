@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../aggregates/character.aggregate';
-import { AttackProcessor } from './character/processors/attack-processor';
-import { DefenseProcessor } from './character/processors/defense-processor';
-import { EquipmentProcessor } from './character/processors/equipment-processor';
-import { HPProcessor } from './character/processors/hp-processor';
-import { InitiativeProcessor } from './character/processors/initiative-processor';
-import { MovementProcessor } from './character/processors/movement-processor';
-import { SkillProcessor } from './character/processors/skill-processor';
-import { StatProcessor } from './character/processors/stat-processor';
-import { XPProcessor } from './character/processors/xp-processor';
-import { ResistancesProcessor } from './character/processors/resistances-processor';
-import { Item } from 'src/modules/items/domain/aggregates/item.aggregate';
+import { Character } from '../aggregates/character.js';
+import { AttackProcessor } from './character/processors/attack-processor.js';
+import { DefenseProcessor } from './character/processors/defense-processor.js';
+import { EquipmentProcessor } from './character/processors/equipment-processor.js';
+import { HPProcessor } from './character/processors/hp-processor.js';
+import { InitiativeProcessor } from './character/processors/initiative-processor.js';
+import { MovementProcessor } from './character/processors/movement-processor.js';
+import { PowerProcessor } from './character/processors/power-processor.js';
+import { SkillProcessor } from './character/processors/skill-processor.js';
+import { StatProcessor } from './character/processors/stat-processor.js';
+import { XPProcessor } from './character/processors/xp-processor.js';
+import { ResistancesProcessor } from './character/processors/resistances-processor.js';
+import { Item } from '../../../items/domain/aggregates/item.js';
 
 @Injectable()
 export class CharacterProcessorService {
@@ -22,6 +23,7 @@ export class CharacterProcessorService {
     private readonly skillProcessor: SkillProcessor,
     private readonly equipmentProcessor: EquipmentProcessor,
     private readonly hpProcessor: HPProcessor,
+    private readonly powerProcessor: PowerProcessor,
     private readonly defenseProcessor: DefenseProcessor,
     private readonly xpProcessor: XPProcessor,
     private readonly attackProcessor: AttackProcessor,
@@ -36,6 +38,7 @@ export class CharacterProcessorService {
     this.attackProcessor.process(character, items);
     this.movementProcessor.process(character);
     this.hpProcessor.process(character);
+    this.powerProcessor.process(character);
     this.defenseProcessor.process(character, items);
     this.resistancesProcessor.process(character);
     this.xpProcessor.process(character);

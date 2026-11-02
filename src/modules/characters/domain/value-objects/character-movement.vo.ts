@@ -1,5 +1,5 @@
 export type Pace = 'creep' | 'walk' | 'jog' | 'run' | 'sprint' | 'dash';
-export type BmrModifierKey = 'racial' | 'qu';
+export type BmrModifierKey = 'racial' | 'qu' | 'trait';
 
 export class CharacterMovement {
   constructor(

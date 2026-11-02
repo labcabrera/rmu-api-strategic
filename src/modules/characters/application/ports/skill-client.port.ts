@@ -1,4 +1,4 @@
-import { Page } from 'src/modules/shared/domain/entities/page';
+import { Page } from '../../../shared/application/pagination/page.js';
 
 export interface SkillClientPort {
   getAllSkills(): Promise<Page<SkillResponse>>;
@@ -6,9 +6,13 @@ export interface SkillClientPort {
   getSkillById(skillId: string): Promise<SkillResponse>;
 }
 
+export const SKILL_CLIENT = Symbol('SkillClientPort');
+
 export interface SkillResponse {
   id: string;
   categoryId: string;
   bonus: string[];
   specialization: string | undefined;
+  /** The specialization may be left empty (crafting skills, spec 037). */
+  specializationOptional?: boolean;
 }

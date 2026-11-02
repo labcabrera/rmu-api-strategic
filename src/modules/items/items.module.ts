@@ -1,58 +1,179 @@
+import { TRADING_TABLES_CLIENT } from './application/ports/trading-tables-client.port.js';
+import { ApiTradingTablesClientAdapter } from './infrastructure/api-clients/api.trading-tables-client.adapter.js';
+import { GamesModule } from '../games/games.module.js';
+import { ItemAccess } from './application/services/item-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TerminusModule } from '@nestjs/terminus';
-import { AuthModule } from '../auth/auth.module';
-import { SharedModule } from '../shared/shared.module';
-import { ItemModel, ItemSchema } from './infrastructure/persistence/models/item.model';
-import { ItemController } from './interfaces/http/item.controller';
-import { GetItemHandler } from './application/cqrs/handlers/get-item.handler';
-import { GetItemsHandler } from './application/cqrs/handlers/get-items.handler';
-import { CreateItemHandler } from './application/cqrs/handlers/create-item.handler';
-import { UpdateItemHandler } from './application/cqrs/handlers/update-item.handler';
-import { MongoItemRepository } from './infrastructure/db/mongo-item.repository';
-import { ItemGuardAdapter } from './infrastructure/security/game-guard.adapter';
-import { KafkaItemEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer';
-import { KafkaItemEventBusAdapter } from './infrastructure/messaging/kafka.item-event-bus.adapter';
-import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter';
-import { FactionsModule } from '../factions/factions.module';
-import { CharactersModule } from '../characters/characters.module';
-import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler';
+import { SharedModule } from '../shared/shared.module.js';
+import { ItemModel, ItemSchema } from './infrastructure/persistence/models/item.model.js';
+import { ItemController } from './interfaces/http/item.controller.js';
+import { GetItemHandler } from './application/cqrs/handlers/get-item.handler.js';
+import { GetItemsHandler } from './application/cqrs/handlers/get-items.handler.js';
+import { CreateItemHandler } from './application/cqrs/handlers/create-item.handler.js';
+import { UpdateItemHandler } from './application/cqrs/handlers/update-item.handler.js';
+import { MongoItemRepository } from './infrastructure/db/mongo.item.repository.js';
+import { ItemGuardAdapter } from './infrastructure/security/item-guard.adapter.js';
+import { KafkaItemCharacterEventConsumer } from './interfaces/messaging/kafka.character-event-consumer.js';
+import { KafkaItemGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
+import { ApiItemClientAdapter } from './infrastructure/api-clients/api.item-client.adapter.js';
+import { ApiMaterialClientAdapter } from './infrastructure/api-clients/api.material-client.adapter.js';
+import { MATERIAL_CLIENT } from './application/ports/material-client.port.js';
+import { FactionsModule } from '../factions/factions.module.js';
+import { CharactersModule } from '../characters/characters.module.js';
+import { DeleteItemHandler } from './application/cqrs/handlers/delete-item.handler.js';
+import { DeleteItemsByGameHandler } from './application/cqrs/handlers/delete-items-by-game.handler.js';
+import { AddItemModifierHandler } from './application/cqrs/handlers/add-item-modifier.handler.js';
+import { DeleteItemModifierHandler } from './application/cqrs/handlers/delete-item-modifier.handler.js';
+import { ItemModifierStore } from './application/services/item-modifier.store.js';
 
+import { ItemLedgerEntryModel, ItemLedgerEntrySchema } from './infrastructure/persistence/models/item-ledger-entry.model.js';
+import { MongoItemLedgerRepository } from './infrastructure/db/mongo.item-ledger.repository.js';
+import { ITEM_LEDGER_REPOSITORY } from './application/ports/item-ledger-repository.port.js';
+import { ItemLedgerController } from './interfaces/http/item-ledger.controller.js';
+import { HolderAccess } from './application/services/holder-access.service.js';
+import { EconomyRulesProvider } from './application/services/economy-rules.provider.js';
+import { ItemLedger } from './application/services/item-ledger.service.js';
+import { ItemFactory } from './application/services/item-factory.service.js';
+import { InventorySync } from './application/services/inventory-sync.service.js';
+import { Wallet } from './application/services/wallet.service.js';
+import { TradingService } from './application/services/trading.service.js';
+import { ItemStock } from './application/services/item-stock.service.js';
+import { ItemManeuverService } from './application/services/item-maneuver.service.js';
+import { PurchaseItemHandler } from './application/cqrs/handlers/purchase-item.handler.js';
+import { PurchaseOrderHandler } from './application/cqrs/handlers/purchase-order.handler.js';
+import { QuotePurchaseOrderHandler } from './application/cqrs/handlers/quote-purchase-order.handler.js';
+import { PurchasePricing } from './application/services/purchase-pricing.service.js';
+import { SellItemHandler } from './application/cqrs/handlers/sell-item.handler.js';
+import { TransferItemHandler } from './application/cqrs/handlers/transfer-item.handler.js';
+import { DiscardItemHandler } from './application/cqrs/handlers/discard-item.handler.js';
+import { CoatItemHandler, RemoveCoatingHandler } from './application/cqrs/handlers/coat-item.handler.js';
+import { CraftItemHandler } from './application/cqrs/handlers/craft-item.handler.js';
+import { RepairItemHandler } from './application/cqrs/handlers/repair-item.handler.js';
+import { TransferFactionGoldHandler } from './application/cqrs/handlers/transfer-faction-gold.handler.js';
+import { GetItemLedgerHandler } from './application/cqrs/handlers/get-item-ledger.handler.js';
+import { QuotePriceHandler } from './application/cqrs/handlers/quote-price.handler.js';
+import { QuoteCraftHandler } from './application/cqrs/handlers/quote-craft.handler.js';
+import { CraftingPlanning } from './application/services/crafting-planning.service.js';
+import { ITEM_CLIENT } from './application/ports/item-client.port.js';
+import { ITEM_GUARD } from './application/ports/item-guard.port.js';
+import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
+import { PowerLevels } from './application/services/power-levels.service.js';
+import { MagicItems } from './application/services/magic-items.service.js';
+import { TREASURE_TABLES_CLIENT } from './application/ports/treasure-tables-client.port.js';
+import { ApiTreasureTablesClientAdapter } from './infrastructure/api-clients/api.treasure-tables-client.adapter.js';
+import { MagicItemController } from './interfaces/http/magic-item.controller.js';
+import {
+  ChangeItemChargesHandler,
+  CreateMagicItemHandler,
+  QuoteMagicItemHandler,
+} from './application/cqrs/handlers/magic-item.handlers.js';
+import { CutGemHandler, SetGemHandler, UnsetGemHandler } from './application/cqrs/handlers/gem.handlers.js';
+import { ALCHEMY_TABLES_CLIENT } from '../enchantments/application/ports/alchemy-tables-client.port.js';
+import { ApiAlchemyTablesClientAdapter } from '../enchantments/infrastructure/api-clients/api.alchemy-tables-client.adapter.js';
 @Module({
   imports: [
     TerminusModule,
     CqrsModule,
-    MongooseModule.forFeature([{ name: ItemModel.name, schema: ItemSchema }]),
-    AuthModule,
+    MongooseModule.forFeature([
+      { name: ItemModel.name, schema: ItemSchema },
+      { name: ItemLedgerEntryModel.name, schema: ItemLedgerEntrySchema },
+    ]),
     SharedModule,
     FactionsModule,
+    GamesModule,
     forwardRef(() => CharactersModule),
   ],
-  controllers: [ItemController, KafkaItemEventConsumer],
+  controllers: [ItemController, MagicItemController, ItemLedgerController, KafkaItemGameEventConsumer, KafkaItemCharacterEventConsumer],
   providers: [
     GetItemHandler,
+    ItemAccess,
     GetItemsHandler,
     CreateItemHandler,
     UpdateItemHandler,
     DeleteItemHandler,
+    DeleteItemsByGameHandler,
+    AddItemModifierHandler,
+    DeleteItemModifierHandler,
+    ItemModifierStore,
+    HolderAccess,
+    EconomyRulesProvider,
+    ItemLedger,
+    ItemFactory,
+    InventorySync,
+    Wallet,
+    TradingService,
+    ItemStock,
+    ItemManeuverService,
+    PurchaseItemHandler,
+    PurchaseOrderHandler,
+    QuotePurchaseOrderHandler,
+    PurchasePricing,
+    SellItemHandler,
+    TransferItemHandler,
+    DiscardItemHandler,
+    CoatItemHandler,
+    RemoveCoatingHandler,
+    CraftItemHandler,
+    RepairItemHandler,
+    TransferFactionGoldHandler,
+    GetItemLedgerHandler,
+    QuotePriceHandler,
+    QuoteCraftHandler,
+    CraftingPlanning,
+    PowerLevels,
+    MagicItems,
+    QuoteMagicItemHandler,
+    CreateMagicItemHandler,
+    ChangeItemChargesHandler,
+    CutGemHandler,
+    SetGemHandler,
+    UnsetGemHandler,
+    { provide: TREASURE_TABLES_CLIENT, useClass: ApiTreasureTablesClientAdapter },
+    // Workspace spec 067: the power levels of the alchemy tables of core, for the magic part of the prices
+    { provide: ALCHEMY_TABLES_CLIENT, useClass: ApiAlchemyTablesClientAdapter },
     {
-      provide: 'ItemRepository',
+      provide: ITEM_LEDGER_REPOSITORY,
+      useClass: MongoItemLedgerRepository,
+    },
+    {
+      provide: ITEM_REPOSITORY,
       useClass: MongoItemRepository,
     },
     {
-      provide: 'ItemEventProducer',
-      useClass: KafkaItemEventBusAdapter,
-    },
-    {
-      provide: 'ItemGuardPort',
+      provide: ITEM_GUARD,
       useClass: ItemGuardAdapter,
     },
     {
-      provide: 'ItemClientPort',
+      provide: ITEM_CLIENT,
       useClass: ApiItemClientAdapter,
     },
+    {
+      provide: TRADING_TABLES_CLIENT,
+      useClass: ApiTradingTablesClientAdapter,
+    },
+    {
+      provide: MATERIAL_CLIENT,
+      useClass: ApiMaterialClientAdapter,
+    },
   ],
-  exports: ['ItemRepository', 'ItemClientPort'],
+  exports: [
+    ITEM_REPOSITORY,
+    ITEM_CLIENT,
+    ITEM_LEDGER_REPOSITORY,
+    ItemLedger,
+    ItemStock,
+    InventorySync,
+    ItemFactory,
+    // Workspace spec 064: the enchantments pay and act on items like the operations of this module
+    HolderAccess,
+    Wallet,
+    // Workspace spec 067: the treasure awards make items and magic items
+    PowerLevels,
+    MagicItems,
+    TREASURE_TABLES_CLIENT,
+    ITEM_GUARD,
+  ],
 })
 export class ItemsModule {}

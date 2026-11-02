@@ -1,22 +1,23 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import type { GameRepository } from '../../ports/game.repository';
-import { GetGameQuery } from '../queries/get-game.query';
-import { NotFoundError } from 'src/modules/shared/domain/errors/errors';
-import type { GameGuardPort } from '../../ports/game-guard.port';
+import { Game } from '../../../domain/aggregates/game.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { GetGameQuery } from '../queries/get-game.query.js';
+import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { GameAccess } from '../../services/game-access.service.js';
 
 @QueryHandler(GetGameQuery)
 export class GetGameHandler implements IQueryHandler<GetGameQuery, Game> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    private readonly gameAccess: GameAccess,
   ) {}
 
   async execute(query: GetGameQuery): Promise<Game> {
     const current = await this.gameRepository.findById(query.gameId);
     if (!current) throw new NotFoundError('Game', query.gameId);
-    this.gameGuard.checkRead(current, query.userId, query.roles);
+    // Public, its owner, its players or an admin
+    await this.gameAccess.checkRead(current, query.userId, query.roles);
     return current;
   }
 }

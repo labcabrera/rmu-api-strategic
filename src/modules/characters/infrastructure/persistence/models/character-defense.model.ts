@@ -43,4 +43,7 @@ export class CharacterDefense {
 
   @Prop({ type: Number, required: false })
   protect: number;
+
+  @Prop({ type: Map, of: Number, required: false, default: {} })
+  modifiers: Record<string, number>;
 }

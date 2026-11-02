@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import { ItemWeaponRange } from './item-weapon-range.model';
+import { ItemWeaponRange } from './item-weapon-range.model.js';
 
 @Schema({ _id: false })
 export class ItemWeaponMode {
@@ -20,4 +20,7 @@ export class ItemWeaponMode {
 
   @Prop({ type: [ItemWeaponRange], required: false })
   ranges: ItemWeaponRange[] | null;
+
+  @Prop({ type: Number, required: false })
+  obModifier?: number;
 }

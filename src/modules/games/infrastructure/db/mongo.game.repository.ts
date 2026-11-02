@@ -1,0 +1,93 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import type { GameRepository } from '../../application/ports/game-repository.port.js';
+import { GameModel, type GameDocument } from '../persistence/models/game.model.js';
+import { Game } from '../../domain/aggregates/game.js';
+import { RsqlParser } from '../../../shared/infrastructure/db/rsql-parser.js';
+import type { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
+import { MongoQueryCriteriaMapper } from '../../../shared/infrastructure/db/mongo-query-criteria.mapper.js';
+import { MongoBaseRepository } from '../../../shared/infrastructure/db/mongo.base.repository.js';
+import { GamePowerLevel, resolvePowerLevel } from '../../domain/value-objects/game-power-level.vo.js';
+import { GameOptions, resolveOptions } from '../../domain/value-objects/game-options.vo.js';
+import { resolveCalendar } from '../../domain/value-objects/game-calendar.vo.js';
+
+@Injectable()
+export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument> implements GameRepository {
+  constructor(@InjectModel(GameModel.name) model: Model<GameDocument>, rsqlParser: RsqlParser) {
+    super(model, rsqlParser);
+  }
+
+  async findByRealm(realmId: string): Promise<Game[]> {
+    const docs = await this.model.find({ realmId }).sort({ name: 1 });
+    return docs.map(doc => this.toEntity(doc));
+  }
+
+  async findIds(criteria: QueryCriteria): Promise<string[]> {
+    const docs = await this.model.find(MongoQueryCriteriaMapper.toFilterQuery(criteria), { _id: 1 }).lean<{ _id: string }[]>();
+    return docs.map(doc => String(doc._id));
+  }
+
+  private mapPowerLevel(doc: GameDocument): GamePowerLevel {
+    const powerLevel = doc.powerLevel;
+    if (!powerLevel) {
+      return powerLevel;
+    }
+    // Documents stored before a field existed get the Superior default
+    const resolved = resolvePowerLevel(powerLevel);
+    return new GamePowerLevel(
+      powerLevel.baseDevPoints,
+      powerLevel.statRandomMin,
+      powerLevel.statBoostPotential,
+      powerLevel.statBoostTemporary,
+      powerLevel.statCreationBoost,
+      powerLevel.statCreationSwap,
+      resolved.maxTraitCost,
+      resolved.raceDevPointsPerLevel,
+      resolved.creationBonusDevPoints,
+      resolved.statPoints,
+      resolved.knackCount,
+      resolved.knackBonus,
+    );
+  }
+
+  private mapOptions(doc: GameDocument): GameOptions {
+    const options = doc.options;
+    if (!options) {
+      return options;
+    }
+    const resolved = resolveOptions(options);
+    return new GameOptions(
+      options.experienceMultiplier,
+      options.fatigueMultiplier,
+      options.boardScaleMultiplier,
+      options.letality,
+      resolved.allowThirdRank,
+      resolved.talentPolicy,
+      resolved.bonusDevPointsCapAtCreation,
+      resolved.statGeneration,
+      resolved.openRounds,
+    );
+  }
+
+  protected mapToEntity(doc: GameDocument): Game {
+    return Game.fromProps({
+      id: doc._id,
+      name: doc.name,
+      realmId: doc.realmId,
+      realmName: doc.realmName,
+      status: doc.status,
+      options: this.mapOptions(doc),
+      powerLevel: this.mapPowerLevel(doc),
+      calendar: resolveCalendar(doc.calendar),
+      // Mapped since spec 020: an update writes every prop, and an unmapped one would be removed (F-strategic-21)
+      shortDescription: doc.shortDescription,
+      description: doc.description,
+      imageUrl: doc.imageUrl,
+      owner: doc.owner,
+      accessType: doc.accessType,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    });
+  }
+}

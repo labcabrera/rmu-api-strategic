@@ -1,21 +1,22 @@
-import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { CommandHandler, type ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { resolveCalendar } from '../../../domain/value-objects/game-calendar.vo.js';
 import { Inject } from '@nestjs/common';
-import { Game } from 'src/modules/games/domain/aggregates/game.aggregate';
-import { CreateGameCommand } from '../commands/create-game.command';
-import type { GameEventBusPort } from '../../ports/game-event-bus.port';
-import type { GameRepository } from '../../ports/game.repository';
-import type { RealmClientPort } from '../../ports/realm-client.port';
-import { ValidationError } from 'src/modules/shared/domain/errors/errors';
-import type { GameGuardPort } from '../../ports/game-guard.port';
-import { CreateGameProps } from 'src/modules/games/domain/aggregates/game-props';
+import { Game } from '../../../domain/aggregates/game.js';
+import { CreateGameCommand } from '../commands/create-game.command.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
+import { type RealmClientPort, REALM_CLIENT } from '../../ports/realm-client.port.js';
+import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
+import type { CreateGameProps } from '../../../domain/aggregates/game-props.js';
+import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
 @CommandHandler(CreateGameCommand)
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
   constructor(
-    @Inject('GameRepository') private readonly gameRepository: GameRepository,
-    @Inject('RealmClient') private readonly realmClient: RealmClientPort,
-    @Inject('GameEventProducer') private readonly gameEventBus: GameEventBusPort,
-    @Inject('GameGuardPort') private readonly gameGuard: GameGuardPort,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
+    @Inject(REALM_CLIENT) private readonly realmClient: RealmClientPort,
+    @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
+    @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
@@ -36,11 +37,12 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       imageUrl: command.imageUrl,
       owner: command.userId,
       accessType: 'private',
+      calendar: resolveCalendar({ startDate: command.startDate }),
     } as CreateGameProps;
 
     const game = Game.create(props);
     const savedGame = await this.gameRepository.save(game);
-    game.getUncommittedEvents().forEach(event => this.gameEventBus.publish(event));
+    await this.events.publishChanges('game', game);
     return savedGame;
   }
 }

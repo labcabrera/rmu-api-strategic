@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
-import { Character } from '../../../aggregates/character.aggregate';
-import { CharacterResistance } from '../../../value-objects/character-resistances.vo';
+import { Character } from '../../../aggregates/character.js';
+import { characterRealms } from '../../../value-objects/character-realm.vo.js';
+import { CharacterResistance, RESISTANCE_BONUS_PER_LEVEL } from '../../../value-objects/character-resistances.vo.js';
+import { type AppliedTraitEffect, getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { matchesKey } from '../traits/trait-specialization-matcher.js';
 
 @Injectable()
 export class ResistancesProcessor {
   process(character: Partial<Character>): void {
     this.setDefaultResistances(character);
-    character.resistances!.map(r => this.calculateResistances(character, r.resistance));
+    const resistanceEffects = getTraitEffects(character.traits, 'resistance');
+    character.resistances!.map(r => this.calculateResistances(character, r.resistance, resistanceEffects));
   }
 
   private setDefaultResistances(character: Partial<Character>): void {
@@ -23,6 +27,8 @@ export class ResistancesProcessor {
           statBonus: 0,
           racialBonus: 0,
           customBonus: 0,
+          traitBonus: 0,
+          levelBonus: 0,
           totalBonus: 0,
         } as CharacterResistance;
         character.resistances?.push(resistanceEntry);
@@ -30,7 +36,7 @@ export class ResistancesProcessor {
     });
   }
 
-  private calculateResistances(character: Partial<Character>, resistance: string): void {
+  private calculateResistances(character: Partial<Character>, resistance: string, resistanceEffects: AppliedTraitEffect[]): void {
     let re = character.resistances?.find(r => r.resistance === resistance);
     if (!re) {
       re = {
@@ -39,18 +45,32 @@ export class ResistancesProcessor {
         racialBonus: 0,
         realmBonus: 0,
         customBonus: 0,
+        traitBonus: 0,
+        levelBonus: 0,
         totalBonus: 0,
-      } as CharacterResistance;
+      };
       character.resistances?.push(re);
     }
     re.realmBonus = this.getRealmBonus(character, resistance);
     re.statBonus = this.getStatusBonus(character, resistance);
-    re.totalBonus = re.statBonus + re.racialBonus + re.realmBonus + re.customBonus;
+    re.traitBonus = this.getTraitBonus(resistance, resistanceEffects);
+    re.levelBonus = RESISTANCE_BONUS_PER_LEVEL * (character.experience?.level || 0);
+    re.totalBonus = re.statBonus + re.racialBonus + re.realmBonus + (re.customBonus || 0) + re.traitBonus + re.levelBonus;
+  }
+
+  private getTraitBonus(resistance: string, resistanceEffects: AppliedTraitEffect[]): number {
+    const matching = resistanceEffects.filter(e =>
+      e.effect.ids ? e.effect.ids.includes(resistance) : matchesKey(e.specialization, resistance),
+    );
+    return sumTraitEffects(matching);
   }
 
   private getStatusBonus(character: Partial<Character>, resistance: string): number {
     switch (resistance) {
+      // Poison and disease RRs are physical (Table 5-6): Constitution too (workspace spec 042, decision 8).
       case 'physical':
+      case 'poison':
+      case 'disease':
         return character.statistics?.co.totalBonus || 0;
       case 'fear':
         return character.statistics?.sd.totalBonus || 0;
@@ -70,7 +90,7 @@ export class ResistancesProcessor {
       case 'channeling':
       case 'essence':
       case 'mentalism':
-        return character.info?.realmType === resistance ? 10 : 0;
+        return characterRealms(character.info).includes(resistance) ? 10 : 0;
       default:
         return 0;
     }

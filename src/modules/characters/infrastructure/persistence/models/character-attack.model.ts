@@ -1,4 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import type { WeaponCategory } from '../../../domain/value-objects/character-attack.vo.js';
 
 @Schema({ _id: false })
 export class CharacterAttackRange {
@@ -49,4 +50,25 @@ export class CharacterAttack {
 
   @Prop({ type: Map, required: true })
   boModifiers: Record<string, number>;
+
+  @Prop({ type: Boolean, required: false, default: false })
+  twoHanded: boolean;
+
+  @Prop({ type: String, required: false, default: 'standard' })
+  weaponCategory: WeaponCategory;
+
+  @Prop({ type: Boolean, required: false, default: false })
+  wrongSize: boolean;
+
+  @Prop({ type: String, required: false })
+  skillId: string;
+
+  @Prop({ type: String, required: false })
+  itemId?: string;
+
+  @Prop({ type: [String], required: false })
+  weaponTags?: string[];
+
+  @Prop({ type: Number, required: false })
+  strengthWeight?: number;
 }
