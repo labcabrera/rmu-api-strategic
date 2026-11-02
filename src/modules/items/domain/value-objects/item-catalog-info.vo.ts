@@ -1,5 +1,6 @@
 import type { InjuryType } from '../../../characters/domain/value-objects/injury.vo.js';
 import type { PoisonData } from '../../../characters/domain/value-objects/poison.vo.js';
+import type { MagicItemKind, MagicSpellUse } from './item-enchantment.vo.js';
 
 /** Cost of an item type in the catalog, in gold pieces. */
 export interface ItemCost {
@@ -41,6 +42,59 @@ export interface ItemFeatures {
   jewelry?: ItemJewelry | null;
   animal?: Record<string, unknown> | null;
   property?: Record<string, unknown> | null;
+  /** Workspace spec 067: a magic item of Treasure Law (any category). */
+  magic?: MagicItemFeature | null;
+}
+
+/** Kinds of bonus of a magic item (workspace spec 067): the same values as rmu-api-items. */
+export const MAGIC_BONUS_KINDS = [
+  'ob',
+  'db',
+  'shield',
+  'skill',
+  'rr',
+  'stat',
+  'spell-adder',
+  'pp-multiplier',
+  'pp-adder',
+  'armor-penalty',
+] as const;
+export type MagicBonusKind = (typeof MAGIC_BONUS_KINDS)[number];
+
+export interface MagicItemBonus {
+  kind: MagicBonusKind;
+  value: number;
+  target?: string | null;
+  /** Creature type it applies against (a key of table 7-1k); null applies always. */
+  against?: string | null;
+}
+
+export interface MagicItemSpell {
+  name: string;
+  level: number;
+  /** Code of the spell list in rmu-api-spells. */
+  list?: string | null;
+  use: MagicSpellUse;
+  perDay?: number | null;
+}
+
+/** The `features.magic` block of a catalog type (workspace spec 067, decision 4). */
+export interface MagicItemFeature {
+  itemLevel: number;
+  kind: MagicItemKind;
+  /** Working days of the recipe. */
+  days: number | null;
+  /** Gold, power level Superior, base item included. */
+  standardPrice: number | null;
+  /** Gold, the base item part of standardPrice. */
+  basePrice: number | null;
+  attunement: boolean;
+  /** Maximum charges. */
+  charges: number | null;
+  realm: string | null;
+  bonuses: MagicItemBonus[];
+  spells: MagicItemSpell[];
+  section: string | null;
 }
 
 /** Biome codes of Treasure Law table 2-3b (Core Law 15-1). */

@@ -20,7 +20,12 @@ import {
   ITEM_MODIFIER_TARGETS,
   ITEM_MODIFIER_TYPES,
 } from '../../../items/domain/value-objects/item-modifier.vo.js';
-import { ITEM_ENCHANTMENT_PROPERTY_KINDS } from '../../../items/domain/value-objects/item-enchantment.vo.js';
+import {
+  ITEM_ENCHANTMENT_PROPERTY_KINDS,
+  ITEM_ENCHANTMENT_SOURCES,
+  MAGIC_ITEM_KINDS,
+  MAGIC_SPELL_USES,
+} from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, JEWELRY_CLASSES } from '../../../items/domain/services/item-unit-value.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
@@ -384,14 +389,28 @@ const item = Joi.object({
   carats: num().greater(0),
   jewelryClass: Joi.string().valid(...JEWELRY_CLASSES),
   cutFactor: num().greater(0),
-  // Workspace spec 064 (format 10)
+  // Workspace spec 064 (format 10); source, kind, attunement, optional alchemist and spell ids of spec 067 (format 11)
   enchantment: Joi.object({
-    projectId: id().required(),
+    source: Joi.string()
+      .valid(...ITEM_ENCHANTMENT_SOURCES)
+      .required(),
+    projectId: id(),
     itemLevel: int().min(0).required(),
+    kind: Joi.string().valid(...MAGIC_ITEM_KINDS),
+    attunement: Joi.boolean().required(),
     alchemistRef: ref('c'),
-    alchemistName: name().required(),
+    alchemistName: name(),
     spells: Joi.array()
-      .items(Joi.object({ spellId: id().required(), name: name().required(), level: int().min(0).required(), listCode: id().required() }))
+      .items(
+        Joi.object({
+          spellId: id(),
+          name: name().required(),
+          level: int().min(0).required(),
+          listCode: id(),
+          use: Joi.string().valid(...MAGIC_SPELL_USES),
+          perDay: int().min(0),
+        }),
+      )
       .max(50)
       .required(),
     properties: Joi.array()
@@ -402,12 +421,35 @@ const item = Joi.object({
             .required(),
           value: num().required(),
           target: nullable(id()),
+          against: nullable(id()),
         }),
       )
       .max(50)
       .required(),
     completedAt: date().required(),
   }),
+  // Workspace spec 067 (format 11)
+  charges: Joi.object({ max: int().min(0).required(), current: int().min(0).required() }),
+  settings: Joi.array()
+    .items(
+      Joi.object({
+        itemTypeId: id().required(),
+        name: name().required(),
+        carats: nullable(num().greater(0)).required(),
+        cutFactor: nullable(num().greater(0)).required(),
+        value: num().min(0).required(),
+        magic: nullable(
+          Joi.object({
+            spells: nullable(text()),
+            stats: Joi.array().items(id()).max(20),
+            skills: nullable(text()),
+            other: nullable(text()),
+          }),
+        ).required(),
+        setAt: date().required(),
+      }),
+    )
+    .max(50),
   modifiers: Joi.array().items(modifier).max(200).required(),
 });
 

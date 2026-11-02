@@ -268,6 +268,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     SpecializationCatalogService,
     // Workspace spec 064: the grimoire of the alchemists
     KnownSpellsReader,
+    // Workspace spec 067: the spells of a random treasure
+    SPELL_LIST_CLIENT,
   ],
 })
 export class CharactersModule {}

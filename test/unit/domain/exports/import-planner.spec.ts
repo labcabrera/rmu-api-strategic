@@ -80,8 +80,10 @@ describe('import planner (spec 024, decision 5)', () => {
     const file = faction();
     const soldier = file.data.characters.find(entry => entry.character.name === 'Soldier')!;
     const enchantment = {
+      source: 'alchemy' as const,
       projectId: 'project-1',
       itemLevel: 4,
+      attunement: false,
       alchemistName: 'Soldier',
       spells: [{ spellId: 'spell-1', name: 'E2E spell', level: 4, listCode: 'e2e-list' }],
       properties: [],
@@ -89,9 +91,53 @@ describe('import planner (spec 024, decision 5)', () => {
     };
     soldier.items[0].enchantment = { ...enchantment, alchemistRef: soldier.ref };
     const [{ character, items }] = planImport([soldier], [], target()).characters;
-    expect(items[0].enchantment).toEqual({ ...enchantment, alchemistId: character.id });
+    expect(items[0].enchantment).toEqual({ ...enchantment, kind: null, alchemistId: character.id });
     soldier.items[0].enchantment = enchantment;
-    expect(planImport([soldier], [], target()).characters[0].items[0].enchantment).toEqual({ ...enchantment, alchemistId: null });
+    expect(planImport([soldier], [], target()).characters[0].items[0].enchantment).toEqual({
+      ...enchantment,
+      kind: null,
+      alchemistId: null,
+    });
+  });
+
+  it('imports the magic of the catalog, the charges and the gem settings (workspace spec 067)', () => {
+    const file = faction();
+    const soldier = file.data.characters.find(entry => entry.character.name === 'Soldier')!;
+    const setting = {
+      itemTypeId: 'e2e-gem',
+      name: 'Gem',
+      carats: 2,
+      cutFactor: null,
+      value: 4,
+      magic: { spells: 'E2E', stats: [], skills: null, other: null },
+      setAt: '2026-11-01T00:00:00.000Z',
+    };
+    soldier.items[0].enchantment = {
+      source: 'catalog',
+      itemLevel: 5,
+      kind: 'charged',
+      attunement: true,
+      spells: [{ name: 'E2E bolt', level: 5, listCode: 'e2e-list', use: 'charges' }],
+      properties: [{ kind: 'ob', value: 10, against: 'undead' }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    };
+    soldier.items[0].charges = { max: 10, current: 3 };
+    soldier.items[0].settings = [setting];
+    const [{ items }] = planImport([soldier], [], target()).characters;
+    expect(items[0].enchantment).toEqual({
+      source: 'catalog',
+      projectId: null,
+      itemLevel: 5,
+      kind: 'charged',
+      attunement: true,
+      alchemistId: null,
+      alchemistName: null,
+      spells: [{ spellId: null, name: 'E2E bolt', level: 5, listCode: 'e2e-list', use: 'charges' }],
+      properties: [{ kind: 'ob', value: 10, against: 'undead' }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    });
+    expect(items[0].charges).toEqual({ max: 10, current: 3 });
+    expect(items[0].settings).toEqual([setting]);
   });
 
   // Spec 044, decision 4: the export format has no category; the destination catalog gives it

@@ -8,7 +8,7 @@ import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.v
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
 import type { ItemModifier, ItemModifierSource } from '../../../items/domain/value-objects/item-modifier.vo.js';
-import type { ItemEnchantment } from '../../../items/domain/value-objects/item-enchantment.vo.js';
+import { enchantmentSource, type ItemEnchantment } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
 import type {
   CharacterEntry,
@@ -231,19 +231,33 @@ function modifierToExport(modifier: ItemModifier, refs: ExportRefs, crafterOf: C
   return result;
 }
 
-/** Workspace spec 064: the alchemist is a ref when it is a character of the file, otherwise only its name. */
+/**
+ * Workspace spec 064: the alchemist is a ref when it is a character of the file, otherwise only its name. Workspace
+ * spec 067: the source, kind and attunement, and the fields of the work of an alchemist only when it has them.
+ */
 function enchantmentToExport(enchantment: ItemEnchantment, refs: ExportRefs): ItemExportEnchantment {
   const alchemistRef = enchantment.alchemistId ? refs.characters.get(enchantment.alchemistId) : undefined;
   return {
-    projectId: enchantment.projectId,
+    source: enchantmentSource(enchantment)!,
+    ...(enchantment.projectId ? { projectId: enchantment.projectId } : {}),
     itemLevel: enchantment.itemLevel,
+    ...(enchantment.kind ? { kind: enchantment.kind } : {}),
+    attunement: !!enchantment.attunement,
     ...(alchemistRef ? { alchemistRef } : {}),
-    alchemistName: enchantment.alchemistName,
-    spells: enchantment.spells.map(spell => ({ spellId: spell.spellId, name: spell.name, level: spell.level, listCode: spell.listCode })),
+    ...(enchantment.alchemistName ? { alchemistName: enchantment.alchemistName } : {}),
+    spells: enchantment.spells.map(spell => ({
+      ...(spell.spellId ? { spellId: spell.spellId } : {}),
+      name: spell.name,
+      level: spell.level,
+      ...(spell.listCode ? { listCode: spell.listCode } : {}),
+      ...(spell.use ? { use: spell.use } : {}),
+      ...(spell.perDay !== undefined && spell.perDay !== null ? { perDay: spell.perDay } : {}),
+    })),
     properties: enchantment.properties.map(property => ({
       kind: property.kind,
       value: property.value,
       ...(property.target ? { target: property.target } : {}),
+      ...(property.against ? { against: property.against } : {}),
     })),
     completedAt: enchantment.completedAt,
   };
@@ -274,6 +288,8 @@ export function itemToExport(item: Item, refs: ExportRefs, crafterOf: CrafterLoo
     ...(item.jewelryClass ? { jewelryClass: item.jewelryClass } : {}),
     ...(item.cutFactor !== null && item.cutFactor !== undefined ? { cutFactor: item.cutFactor } : {}),
     ...(item.enchantment ? { enchantment: enchantmentToExport(item.enchantment, refs) } : {}),
+    ...(item.charges ? { charges: { max: item.charges.max, current: item.charges.current } } : {}),
+    ...(item.settings.length ? { settings: item.settings.map(setting => ({ ...setting })) } : {}),
     // Temporary modifiers live only in tactical games
     modifiers: (item.modifiers || []).filter(modifier => !modifier.temporary).map(modifier => modifierToExport(modifier, refs, crafterOf)),
   };

@@ -42,6 +42,7 @@ import { MAX_ORDER_LINES } from '../../../application/services/purchase-pricing.
 import { ITEM_HOLDER_KINDS, type ItemHolder, type ItemHolderKind } from '../../../domain/value-objects/item-holder.vo.js';
 import { ITEM_MODIFIER_TARGETS, type ItemModifierTarget } from '../../../domain/value-objects/item-modifier.vo.js';
 import { WEAPON_WIELDER_SIZES } from '../../../domain/value-objects/item-weapon.vo.js';
+import { POWER_LEVELS, type PowerLevel } from '../../../../enchantments/domain/value-objects/alchemy.vo.js';
 import {
   ITEM_SIZES,
   type ItemInstanceSpec,
@@ -217,6 +218,11 @@ class PurchaseOrderTermsDto {
   @Type(() => TradingRequestDto)
   @IsOptional()
   trading?: TradingRequestDto;
+
+  @ApiProperty({ enum: POWER_LEVELS, required: false, description: 'Power level of the campaign: multiplies the magic part (spec 067)' })
+  @IsIn(POWER_LEVELS)
+  @IsOptional()
+  powerLevel?: PowerLevel;
 }
 
 export class PurchaseOrderDto extends PurchaseOrderTermsDto {
@@ -244,6 +250,7 @@ export class PurchaseOrderDto extends PurchaseOrderTermsDto {
         payer: dto.payer,
         factors: PriceFactorSelectionDto.of(dto.factors),
         trading: TradingRequestDto.of(dto.trading),
+        powerLevel: dto.powerLevel,
       },
       userId,
       roles,
@@ -262,7 +269,7 @@ export class QuotePurchaseOrderDto extends PurchaseOrderTermsDto {
     return new QuotePurchaseOrderQuery(
       ItemHolderDto.of(dto.buyer),
       dto.lines.map(line => PurchaseOrderLineDto.line(line)),
-      { factors: PriceFactorSelectionDto.of(dto.factors), trading: TradingRequestDto.of(dto.trading) },
+      { factors: PriceFactorSelectionDto.of(dto.factors), trading: TradingRequestDto.of(dto.trading), powerLevel: dto.powerLevel },
       userId,
       roles,
     );
@@ -330,6 +337,11 @@ export class PurchaseItemDto extends ItemInstanceFieldsDto {
   @IsOptional()
   carried?: boolean;
 
+  @ApiProperty({ enum: POWER_LEVELS, required: false, description: 'Power level of the campaign: multiplies the magic part (spec 067)' })
+  @IsIn(POWER_LEVELS)
+  @IsOptional()
+  powerLevel?: PowerLevel;
+
   static toCommand(dto: PurchaseItemDto, userId: string, roles: string[]): PurchaseItemCommand {
     return new PurchaseItemCommand(
       ItemHolderDto.of(dto.buyer)!,
@@ -345,6 +357,7 @@ export class PurchaseItemDto extends ItemInstanceFieldsDto {
         wielderSize: dto.wielderSize,
         carried: dto.carried,
         instance: ItemInstanceFieldsDto.of(dto),
+        powerLevel: dto.powerLevel,
       },
       userId,
       roles,
@@ -800,6 +813,11 @@ export class QuotePriceDto extends ItemInstanceFieldsDto {
   @IsOptional()
   jewelerPercent?: number;
 
+  @ApiProperty({ enum: POWER_LEVELS, required: false, description: 'Power level of the campaign: multiplies the magic part (spec 067)' })
+  @IsIn(POWER_LEVELS)
+  @IsOptional()
+  powerLevel?: PowerLevel;
+
   static toQuery(dto: QuotePriceDto, userId: string, roles: string[]): QuotePriceQuery {
     return new QuotePriceQuery(
       dto.kind,
@@ -815,6 +833,7 @@ export class QuotePriceDto extends ItemInstanceFieldsDto {
         instance: ItemInstanceFieldsDto.of(dto),
         jeweler: dto.jeweler,
         jewelerPercent: dto.jewelerPercent,
+        powerLevel: dto.powerLevel,
       },
       userId,
       roles,

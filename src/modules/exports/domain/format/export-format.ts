@@ -15,7 +15,14 @@ import type { ItemModifierSourceKind, ItemModifierTarget, ItemModifierType } fro
 import type { ItemShield } from '../../../items/domain/value-objects/item-shield.vo.js';
 import type { ItemCoating } from '../../../items/domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../items/domain/value-objects/item-material.vo.js';
-import type { ItemEnchantmentProperty, ItemEnchantmentSpell } from '../../../items/domain/value-objects/item-enchantment.vo.js';
+import type {
+  ItemCharges,
+  ItemEnchantmentProperty,
+  ItemEnchantmentSource,
+  ItemEnchantmentSpell,
+  ItemGemSetting,
+  MagicItemKind,
+} from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import type { ItemSize, JewelryClass } from '../../../items/domain/services/item-unit-value.js';
 import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon.vo.js';
 
@@ -25,7 +32,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 10;
+export const CURRENT_FORMAT_VERSION = 11;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -179,16 +186,28 @@ export interface ItemExportModifierSource {
 /**
  * Workspace spec 064 (format 10): the enchantment of an item. The alchemist is a character of the file (`alchemistRef`)
  * or only its name; the project id stays as information (projects do not travel).
+ * Workspace spec 067 (format 11): its source, kind and attunement; the project, the alchemist and the spell ids are
+ * only there for the work of an alchemist.
  */
 export interface ItemExportEnchantment {
-  projectId: string;
+  source: ItemEnchantmentSource;
+  projectId?: string;
   itemLevel: number;
+  kind?: MagicItemKind;
+  attunement: boolean;
   alchemistRef?: ExportRef;
-  alchemistName: string;
-  spells: ItemEnchantmentSpell[];
+  alchemistName?: string;
+  spells: ItemExportEnchantmentSpell[];
   properties: ItemEnchantmentProperty[];
   completedAt: string;
 }
+
+export type ItemExportEnchantmentSpell = Pick<ItemEnchantmentSpell, 'name' | 'level'> & {
+  spellId?: string;
+  listCode?: string;
+  use?: NonNullable<ItemEnchantmentSpell['use']>;
+  perDay?: number;
+};
 
 export interface ItemExportModifier {
   id: string;
@@ -230,6 +249,9 @@ export interface ItemExport {
   cutFactor?: number;
   /** Workspace spec 064: what an alchemist enchanted it with. */
   enchantment?: ItemExportEnchantment;
+  /** Workspace spec 067 (format 11): charges and gems set in it. */
+  charges?: ItemCharges;
+  settings?: ItemGemSetting[];
   modifiers: ItemExportModifier[];
 }
 

@@ -32,6 +32,7 @@ export class PurchaseItemHandler implements ICommandHandler<PurchaseItemCommand,
     private readonly trading: TradingService,
     private readonly ledger: ItemLedger,
     private readonly inventorySync: InventorySync,
+    private readonly pricing: PurchasePricing,
   ) {}
 
   async execute(command: PurchaseItemCommand): Promise<ItemOperationResult> {
@@ -49,7 +50,8 @@ export class PurchaseItemHandler implements ICommandHandler<PurchaseItemCommand,
     const amount = options.amount ?? 1;
     const stackable = !!itemType.info.stackable;
     PurchasePricing.checkAmount(itemType, amount);
-    const { instance, unitBase } = PurchasePricing.unitBase(itemType, options.instance, Math.random, options.wielderSize);
+    const powerMultiplier = await this.pricing.powerMultiplier(options.powerLevel);
+    const { instance, unitBase } = PurchasePricing.unitBase(itemType, options.instance, Math.random, options.wielderSize, powerMultiplier);
     const base = options.unitPrice ?? unitBase;
     if (base < 0) throw new ValidationError('The price cannot be negative', 'err-item-invalid-price');
     const trading = options.trading ? await this.trading.resolve('purchase', options.trading, buyer.character) : undefined;

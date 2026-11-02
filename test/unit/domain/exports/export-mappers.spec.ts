@@ -142,8 +142,10 @@ describe('export mappers (spec 024)', () => {
     const enchanted = item({ id: 'sword-1', enchantment });
     const inFile = itemToExport(enchanted, assignRefs(['smith-1'], ['sword-1']), () => undefined);
     expect(inFile.enchantment).toEqual({
+      source: 'alchemy',
       projectId: 'project-1',
       itemLevel: 8,
+      attunement: false,
       alchemistRef: 'c1',
       alchemistName: 'Smith',
       spells: enchantment.spells,
@@ -153,6 +155,47 @@ describe('export mappers (spec 024)', () => {
     const outside = itemToExport(enchanted, assignRefs([], ['sword-1']), () => undefined);
     expect(outside.enchantment).not.toHaveProperty('alchemistRef');
     expect(outside.enchantment).toMatchObject({ alchemistName: 'Smith' });
+  });
+
+  it('exports the magic of the catalog, its charges and the gems set in it (workspace spec 067)', () => {
+    const setting = {
+      itemTypeId: 'e2e-gem',
+      name: 'Gem',
+      carats: 2,
+      cutFactor: 5,
+      value: 20,
+      magic: null,
+      setAt: '2026-11-01T00:00:00.000Z',
+    };
+    const wand = item({
+      id: 'wand-1',
+      enchantment: {
+        source: 'catalog',
+        projectId: null,
+        itemLevel: 5,
+        kind: 'charged',
+        attunement: false,
+        alchemistId: null,
+        alchemistName: null,
+        spells: [{ spellId: null, name: 'E2E bolt', level: 5, listCode: null, use: 'charges', perDay: null }],
+        properties: [{ kind: 'db', value: 5, target: null, against: 'undead' }],
+        completedAt: '2026-11-01T00:00:00.000Z',
+      },
+      charges: { max: 10, current: 4 },
+      settings: [setting],
+    });
+    const inFile = itemToExport(wand, assignRefs([], ['wand-1']), () => undefined);
+    expect(inFile.enchantment).toEqual({
+      source: 'catalog',
+      itemLevel: 5,
+      kind: 'charged',
+      attunement: false,
+      spells: [{ name: 'E2E bolt', level: 5, use: 'charges' }],
+      properties: [{ kind: 'db', value: 5, against: 'undead' }],
+      completedAt: '2026-11-01T00:00:00.000Z',
+    });
+    expect(inFile.charges).toEqual({ max: 10, current: 4 });
+    expect(inFile.settings).toEqual([setting]);
   });
 
   it('fills the fields that items stored before specs 019 and 023 lack', () => {

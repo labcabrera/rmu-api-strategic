@@ -10,7 +10,7 @@ import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
-import type { ItemEnchantment } from '../../../domain/value-objects/item-enchantment.vo.js';
+import type { ItemCharges, ItemEnchantment, ItemGemSetting } from '../../../domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, type ItemSize, JEWELRY_CLASSES, type JewelryClass } from '../../../domain/services/item-unit-value.js';
 
 export class ItemDto {
@@ -110,6 +110,12 @@ export class ItemDto {
   })
   enchantment: ItemEnchantment | null;
 
+  @ApiProperty({ description: 'Charges of a charged item: max and current (workspace spec 067)', type: Object, nullable: true })
+  charges: ItemCharges | null;
+
+  @ApiProperty({ description: 'Gems set in the item, with a copy of their data and magic traits (workspace spec 067)', type: [Object] })
+  settings: ItemGemSetting[];
+
   static fromEntity(entity: Item): ItemDto {
     const dto = new ItemDto();
     dto.version = entity.version;
@@ -139,7 +145,17 @@ export class ItemDto {
     dto.carats = entity.carats ?? null;
     dto.jewelryClass = entity.jewelryClass ?? null;
     dto.cutFactor = entity.cutFactor ?? null;
-    dto.enchantment = entity.enchantment ?? null;
+    // Workspace spec 067: the enchantments stored before it are the work of an alchemist
+    dto.enchantment = entity.enchantment
+      ? {
+          ...entity.enchantment,
+          source: entity.enchantment.source ?? 'alchemy',
+          kind: entity.enchantment.kind ?? null,
+          attunement: !!entity.enchantment.attunement,
+        }
+      : null;
+    dto.charges = entity.charges ?? null;
+    dto.settings = entity.settings ?? [];
     return dto;
   }
 }

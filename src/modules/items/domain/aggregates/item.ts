@@ -13,8 +13,9 @@ import type { ItemCatalogInfo } from '../value-objects/item-catalog-info.vo.js';
 import { type ItemHolder, ItemHolders } from '../value-objects/item-holder.vo.js';
 import type { ItemCoating } from '../value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../value-objects/item-material.vo.js';
-import type { ItemEnchantment } from '../value-objects/item-enchantment.vo.js';
-import type { ItemSize, JewelryClass } from '../services/item-unit-value.js';
+import type { ItemCharges, ItemEnchantment, ItemGemSetting } from '../value-objects/item-enchantment.vo.js';
+import { GEM_CATEGORY, type ItemSize, type JewelryClass } from '../services/item-unit-value.js';
+import { roundGold } from '../services/price-calculator.js';
 
 /** Item type of the coins of a character (spec 023, decision 7: they weigh). */
 export const GOLD_COIN = 'gold-coin';
@@ -32,6 +33,9 @@ export class Item extends BaseAggregateRoot<ItemProps> {
   public cutFactor: number | null = null;
   /** Workspace spec 064: what an alchemist enchanted it with. */
   public enchantment: ItemEnchantment | null = null;
+  /** Workspace spec 067: charges of a charged item, and the gems set in it. */
+  public charges: ItemCharges | null = null;
+  public settings: ItemGemSetting[] = [];
 
   private constructor(
     public id: string,
@@ -128,12 +132,16 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     return item;
   }
 
-  private applyInstanceFields(props: Pick<ItemProps, 'size' | 'carats' | 'jewelryClass' | 'cutFactor' | 'enchantment'>): void {
+  private applyInstanceFields(
+    props: Pick<ItemProps, 'size' | 'carats' | 'jewelryClass' | 'cutFactor' | 'enchantment' | 'charges' | 'settings'>,
+  ): void {
     this.size = props.size ?? null;
     this.carats = props.carats ?? null;
     this.jewelryClass = props.jewelryClass ?? null;
     this.cutFactor = props.cutFactor ?? null;
     this.enchantment = props.enchantment ?? null;
+    this.charges = props.charges ? { ...props.charges } : null;
+    this.settings = (props.settings ?? []).map(setting => ({ ...setting }));
   }
 
   update(props: Partial<Omit<ItemProps, 'id' | 'gameId' | 'createdAt' | 'updatedAt'>>): void {
@@ -252,6 +260,65 @@ export class Item extends BaseAggregateRoot<ItemProps> {
     this.apply(new ItemUpdatedEvent(this));
   }
 
+  /**
+   * Workspace spec 067, decision 8: spends (negative) or adds charges, between 0 and the maximum. `recharge` fills it.
+   */
+  changeCharges(delta: number): void {
+    if (!this.charges) throw new ValidationError(`Item ${this.id} has no charges`, 'err-item-no-charges');
+    if (!Number.isInteger(delta) || delta === 0) {
+      throw new ValidationError('The change of charges must be a whole number other than 0', 'err-item-charges-invalid');
+    }
+    const current = this.charges.current + delta;
+    if (current < 0 || current > this.charges.max) {
+      throw new ValidationError(
+        `The item has ${this.charges.current} of ${this.charges.max} charges: ${delta} is not possible`,
+        'err-item-charges-invalid',
+      );
+    }
+    this.charges = { ...this.charges, current };
+    this.touch();
+  }
+
+  recharge(): void {
+    if (!this.charges) throw new ValidationError(`Item ${this.id} has no charges`, 'err-item-no-charges');
+    if (this.charges.current >= this.charges.max) throw new ValidationError('The item is fully charged', 'err-item-charges-full');
+    this.charges = { ...this.charges, current: this.charges.max };
+    this.touch();
+  }
+
+  /** Workspace spec 067, decision 18: the modern cut of a gem multiplies its value (optional rule of 2.4). */
+  cut(cutFactor: number): void {
+    if (this.category !== GEM_CATEGORY) throw new ValidationError('Only a gem can be cut', 'err-item-not-gem');
+    if (this.cutFactor !== null) throw new ConflictError(`Gem ${this.id} already has a modern cut`, 'err-item-gem-cut');
+    this.value = roundGold(this.unitValue * cutFactor);
+    this.cutFactor = cutFactor;
+    this.touch();
+  }
+
+  /** Workspace spec 067, decision 19: a gem set in the item, which adds its value. */
+  setGem(setting: ItemGemSetting): void {
+    if (this.category === GEM_CATEGORY) throw new ValidationError('A gem cannot be set in another gem', 'err-item-setting-invalid');
+    if (this.info.stackable) throw new ValidationError('A gem cannot be set in a stack', 'err-item-setting-invalid');
+    this.value = roundGold(this.unitValue + setting.value);
+    this.settings = [...this.settings, { ...setting }];
+    this.touch();
+  }
+
+  /** Takes a gem out: the item loses its value. */
+  unsetGem(index: number): ItemGemSetting {
+    const setting = Number.isInteger(index) ? this.settings[index] : undefined;
+    if (!setting) throw new NotFoundError('ItemGemSetting', String(index), 'err-item-setting-not-found');
+    this.settings = this.settings.filter((_, position) => position !== index);
+    this.value = roundGold(Math.max(0, this.unitValue - setting.value));
+    this.touch();
+    return setting;
+  }
+
+  private touch(): void {
+    this.updatedAt = new Date();
+    this.apply(new ItemUpdatedEvent(this));
+  }
+
   /** Workspace spec 042, decision 11: poison on a weapon, replacing the one it had. */
   coat(coating: ItemCoating): void {
     if (!this.weapon) throw new ValidationError('Only a weapon can be coated with poison', 'err-item-not-weapon');
@@ -301,6 +368,9 @@ export class Item extends BaseAggregateRoot<ItemProps> {
       ...(this.jewelryClass ? { jewelryClass: this.jewelryClass } : {}),
       ...(this.cutFactor !== null ? { cutFactor: this.cutFactor } : {}),
       ...(this.enchantment ? { enchantment: this.enchantment } : {}),
+      ...(this.charges ? { charges: this.charges } : {}),
+      // Undefined (not missing) when empty: an update removes the last setting from the stored document
+      settings: this.settings.length ? this.settings : undefined,
     };
   }
 }

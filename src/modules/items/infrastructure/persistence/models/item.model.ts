@@ -8,7 +8,7 @@ import { ItemShield } from './item-shield.model.js';
 import type { ItemModifier } from '../../../domain/value-objects/item-modifier.vo.js';
 import type { ItemCoating } from '../../../domain/value-objects/item-coating.vo.js';
 import type { ItemMaterial } from '../../../domain/value-objects/item-material.vo.js';
-import type { ItemEnchantment } from '../../../domain/value-objects/item-enchantment.vo.js';
+import type { ItemCharges, ItemEnchantment, ItemGemSetting } from '../../../domain/value-objects/item-enchantment.vo.js';
 import type { ItemCatalogInfo } from '../../../domain/value-objects/item-catalog-info.vo.js';
 
 export type ItemDocument = ItemModel & Document;
@@ -102,6 +102,14 @@ export class ItemModel {
   /** Workspace spec 064: what an alchemist enchanted it with. */
   @Prop({ type: Object, required: false })
   enchantment?: ItemEnchantment | null;
+
+  /** Workspace spec 067: charges of a charged item. */
+  @Prop({ type: Object, required: false })
+  charges?: ItemCharges | null;
+
+  /** Workspace spec 067: gems set in the item. */
+  @Prop({ type: [Object], required: false, default: undefined })
+  settings?: ItemGemSetting[];
 
   @Prop({ type: Date, required: true })
   createdAt: Date;

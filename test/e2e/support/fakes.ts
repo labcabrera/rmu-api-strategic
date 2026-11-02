@@ -1,3 +1,6 @@
+import type { TreasureTablesClientPort } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
+import type { TreasureTables } from '../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
+import type { Dice } from '../../../src/modules/treasure/domain/services/dice.js';
 import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
 import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
 import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
@@ -397,6 +400,71 @@ export const ITEM_TYPES: Record<string, ItemResponse> = {
   'e2e-bone-moss': herbType('e2e-bone-moss', { group: 'injury', biomes: ['F', 'D'], find: 'h', effects: { treats: ['bone'] } }),
   'e2e-plain-root': herbType('e2e-plain-root', { group: 'general', biomes: ['F'], find: 'e', magical: false }),
   'e2e-stun-berry': herbType('e2e-stun-berry', { group: 'stun', biomes: ['A'], highAltitude: true, find: 'n', effects: { stunRelief: 2 } }),
+  // Workspace spec 067: magic types of the catalog, the generic art object and a potion (invented data)
+  'e2e-flame-sword': {
+    id: 'e2e-flame-sword',
+    name: 'E2E flame sword',
+    category: 'weapon',
+    weapon: {
+      skillId: 'melee-weapon@sword',
+      fumble: 3,
+      modes: [{ type: 'one-hand', attackTypes: ['slash'], attackTable: 'e2e-table', fumbleTable: 'e2e-fumble', sizeAdjustment: 0 }],
+    } as unknown as ItemResponse['weapon'],
+    armor: null,
+    shield: null,
+    features: {
+      magic: {
+        itemLevel: 5,
+        kind: 'weapon',
+        days: 10,
+        standardPrice: 60,
+        basePrice: 10,
+        attunement: false,
+        charges: null,
+        realm: null,
+        bonuses: [
+          { kind: 'ob', value: 15 },
+          { kind: 'ob', value: 30, against: 'undead' },
+        ],
+        spells: [],
+        section: null,
+      },
+    },
+    info: { cost: null, length: 1, strength: 20, weight: 3, productionHours: 40, stackable: false },
+  },
+  'e2e-wand': {
+    id: 'e2e-wand',
+    name: 'E2E wand',
+    category: 'spell-item',
+    weapon: null,
+    armor: null,
+    shield: null,
+    features: {
+      magic: {
+        itemLevel: 3,
+        kind: 'charged',
+        days: 3,
+        standardPrice: 20,
+        basePrice: 0,
+        attunement: true,
+        charges: 5,
+        realm: 'essence',
+        bonuses: [],
+        spells: [{ name: 'E2E bolt', level: 3, list: 'e2e-open', use: 'charges' }],
+        section: null,
+      },
+    },
+    info: { cost: null, length: null, strength: null, weight: 0.1, productionHours: undefined, stackable: false },
+  },
+  'art-object': {
+    id: 'art-object',
+    name: 'Art object',
+    category: 'other',
+    weapon: null,
+    armor: null,
+    shield: null,
+    info: { cost: null, length: null, strength: null, weight: 1, productionHours: undefined, stackable: false },
+  },
   'gold-coin': {
     id: 'gold-coin',
     category: 'currency',
@@ -442,6 +510,69 @@ export const maneuverCalls: { results: AbsoluteManeuverResponse['result'][]; tot
  * puts null back when it ends.
  */
 export const tradingTables: { value: TradingTables | null } = { value: null };
+
+const everyQuality = <T>(value: T) => ({ 'very-poor': value, poor: value, normal: value, rich: value, 'very-rich': value });
+
+/**
+ * Invented treasure tables of rmu-api-core (workspace spec 067): every roll of the fake dice (50 unless a test queues
+ * others) gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
+ */
+export const TREASURE_TABLES = {
+  codes: { wealth: { c: 'normal' }, lifestyle: { n: 'normal' }, magic: { x: 'normal' } },
+  wealthRolls: [{ min: 1, max: 100, rolls: 1 }],
+  wealthValue: [{ min: -999, max: 999, valueMin: 20, valueMax: 20 }],
+  wealthValueModifiers: [],
+  wealthType: [{ min: 1, max: 100, type: 'coins', multiplier: 1 }],
+  wealthMultipliers: { 'very-poor': 0.01, poor: 0.1, normal: 1, rich: 10, 'very-rich': 100 },
+  jewelryTypes: [{ min: 1, max: 100, itemTypeId: 'e2e-ring' }],
+  artTypes: [{ min: 1, max: 100, key: 'statuette' }],
+  gearQuality: [{ min: 1, max: 100, ...everyQuality({ total: 10, max: 5 }) }],
+  magicTreasure: [{ min: 1, max: 100, ...everyQuality([0]) }],
+  magicMaxLevel: everyQuality(null),
+  itemType: [{ min: 1, max: 100, table: 'melee' }],
+  magicTables: {
+    melee: [
+      {
+        min: 1,
+        max: 300,
+        label: 'E2E +10 weapon',
+        price: { min: 150, max: 150 },
+        generic: { base: 'weapon', kind: 'weapon', bonuses: [{ kind: 'ob', value: 10 }] },
+      },
+    ],
+    ranged: [],
+    armor: [],
+    utility: [],
+    spell: [],
+    charged: [],
+  },
+  randomWeapons: {
+    table: [{ min: 1, max: 100, group: 'blades' }],
+    size: [{ min: 1, max: 100, size: 'medium' }],
+    groups: { blades: [{ min: 1, max: 100, itemTypeId: 'sword' }] },
+  },
+  creatureTypes: [{ min: 1, max: 100, key: 'undead' }],
+  randomArmor: [],
+  randomSpells: { realm: [], lists: {} },
+  gems: { precious: { columns: [] }, semiPrecious: { columns: [] } },
+  standardPricing: {
+    pricePerDay: [{ ppMin: 0, ppMax: null, extraSp: 2 }],
+    weapon: [{ bonus: 10, days: 20, level: 8, price: 400 }],
+    ranged: [],
+    armor: [],
+    shield: [],
+    generalBonus: [],
+    powerEnhancers: [],
+    daily: [],
+    constant: [],
+    emplaced: [],
+    potions: [],
+    charged: [],
+  },
+} as unknown as TreasureTables;
+
+/** Rolls the fake dice answer: queued values first, then 50 (within the range asked). */
+export const diceQueue: number[] = [];
 
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
@@ -540,7 +671,11 @@ export function apiFakes() {
   };
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
+  const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
+  const dice: Dice = { roll: (min, max) => Math.min(max, Math.max(min, diceQueue.shift() ?? 50)) };
   return {
+    treasureTablesClient,
+    dice,
     alchemyTablesClient,
     npcClient,
     enumerationClient,

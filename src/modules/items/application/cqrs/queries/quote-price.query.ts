@@ -1,3 +1,4 @@
+import type { PowerLevel } from '../../../../enchantments/domain/value-objects/alchemy.vo.js';
 import type { PriceFactorSelection, PriceKind } from '../../../domain/services/price-calculator.js';
 import type { ItemInstanceSpec } from '../../../domain/services/item-unit-value.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
@@ -22,6 +23,8 @@ export class QuotePriceQuery {
       instance?: ItemInstanceSpec;
       jeweler?: boolean;
       jewelerPercent?: number;
+      /** Workspace spec 067: power level of the campaign, for the magic part of the price. */
+      powerLevel?: PowerLevel;
     },
     public readonly userId: string,
     public readonly roles: string[],

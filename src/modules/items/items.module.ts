@@ -59,6 +59,19 @@ import { CraftingPlanning } from './application/services/crafting-planning.servi
 import { ITEM_CLIENT } from './application/ports/item-client.port.js';
 import { ITEM_GUARD } from './application/ports/item-guard.port.js';
 import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
+import { PowerLevels } from './application/services/power-levels.service.js';
+import { MagicItems } from './application/services/magic-items.service.js';
+import { TREASURE_TABLES_CLIENT } from './application/ports/treasure-tables-client.port.js';
+import { ApiTreasureTablesClientAdapter } from './infrastructure/api-clients/api.treasure-tables-client.adapter.js';
+import { MagicItemController } from './interfaces/http/magic-item.controller.js';
+import {
+  ChangeItemChargesHandler,
+  CreateMagicItemHandler,
+  QuoteMagicItemHandler,
+} from './application/cqrs/handlers/magic-item.handlers.js';
+import { CutGemHandler, SetGemHandler, UnsetGemHandler } from './application/cqrs/handlers/gem.handlers.js';
+import { ALCHEMY_TABLES_CLIENT } from '../enchantments/application/ports/alchemy-tables-client.port.js';
+import { ApiAlchemyTablesClientAdapter } from '../enchantments/infrastructure/api-clients/api.alchemy-tables-client.adapter.js';
 @Module({
   imports: [
     TerminusModule,
@@ -72,7 +85,7 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     GamesModule,
     forwardRef(() => CharactersModule),
   ],
-  controllers: [ItemController, ItemLedgerController, KafkaItemGameEventConsumer, KafkaItemCharacterEventConsumer],
+  controllers: [ItemController, MagicItemController, ItemLedgerController, KafkaItemGameEventConsumer, KafkaItemCharacterEventConsumer],
   providers: [
     GetItemHandler,
     ItemAccess,
@@ -109,6 +122,17 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     QuotePriceHandler,
     QuoteCraftHandler,
     CraftingPlanning,
+    PowerLevels,
+    MagicItems,
+    QuoteMagicItemHandler,
+    CreateMagicItemHandler,
+    ChangeItemChargesHandler,
+    CutGemHandler,
+    SetGemHandler,
+    UnsetGemHandler,
+    { provide: TREASURE_TABLES_CLIENT, useClass: ApiTreasureTablesClientAdapter },
+    // Workspace spec 067: the power levels of the alchemy tables of core, for the magic part of the prices
+    { provide: ALCHEMY_TABLES_CLIENT, useClass: ApiAlchemyTablesClientAdapter },
     {
       provide: ITEM_LEDGER_REPOSITORY,
       useClass: MongoItemLedgerRepository,
@@ -145,6 +169,11 @@ import { ITEM_REPOSITORY } from './application/ports/item-repository.port.js';
     // Workspace spec 064: the enchantments pay and act on items like the operations of this module
     HolderAccess,
     Wallet,
+    // Workspace spec 067: the treasure awards make items and magic items
+    PowerLevels,
+    MagicItems,
+    TREASURE_TABLES_CLIENT,
+    ITEM_GUARD,
   ],
 })
 export class ItemsModule {}

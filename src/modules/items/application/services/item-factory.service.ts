@@ -10,6 +10,9 @@ import type { ItemMaterial } from '../../domain/value-objects/item-material.vo.j
 import type { ItemModifier, ItemModifierTarget } from '../../domain/value-objects/item-modifier.vo.js';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
 import { type ItemInstanceSpec, type ItemSize, ItemUnitValue, type UnitValueType } from '../../domain/services/item-unit-value.js';
+import { MagicItemMappings } from '../../domain/services/magic-item-mapping.js';
+import type { MagicItemFeature } from '../../domain/value-objects/item-catalog-info.vo.js';
+import type { ItemEnchantmentSource } from '../../domain/value-objects/item-enchantment.vo.js';
 import { type ItemClientPort, type ItemResponse, ITEM_CLIENT } from '../ports/item-client.port.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../ports/item-repository.port.js';
 
@@ -36,11 +39,19 @@ export interface NewItemOptions {
    * computed from them (ItemUnitValue); the size also scales the weight and the length.
    */
   instance?: ItemInstanceSpec;
+  /**
+   * Workspace spec 067: the magic of the item. By default the `features.magic` block of its type; null makes a plain
+   * item of a magic type.
+   */
+  magic?: MagicItemFeature | null;
+  /** Where the magic comes from: `catalog` by default. */
+  magicSource?: ItemEnchantmentSource;
 }
 
 /**
  * Builds and stores instances of the catalog types (workspace spec 023, decision 2): the instance copies what it
- * needs of its type, and the catalog `bonus` modifiers become modifiers of the instance (decision 4).
+ * needs of its type, and the catalog `bonus` modifiers become modifiers of the instance (decision 4). Workspace spec
+ * 067, decision 5: a type with `features.magic` gives its instances an enchantment, its OB/DB modifiers and charges.
  */
 @Injectable()
 export class ItemFactory {
@@ -59,9 +70,13 @@ export class ItemFactory {
 
   /** The catalog data of the unit value of a type (workspace spec 062). */
   static valueType(itemType: ItemResponse): UnitValueType {
+    // Workspace spec 067: a magic type without a cost is worth its standard price
+    const standardPrice = itemType.features?.magic?.standardPrice;
+    const cost =
+      itemType.info.cost ?? (typeof standardPrice === 'number' ? { min: standardPrice, average: standardPrice, max: standardPrice } : null);
     return {
       category: itemType.category,
-      cost: itemType.info.cost ?? null,
+      cost,
       features: itemType.features ?? null,
       baseSize: itemType.weapon?.wielderSize ?? null,
     };
@@ -97,6 +112,12 @@ export class ItemFactory {
     const weight = enc
       ? this.weight(itemType, options.character)
       : ItemUnitValue.scaleWeight(this.weight(itemType, options.character), steps);
+    const feature = options.magic !== undefined ? options.magic : (itemType.features?.magic ?? null);
+    const magic = feature
+      ? MagicItemMappings.map(feature, options.magicSource ?? 'catalog', {
+          breakable: !!(itemType.weapon || itemType.armor || itemType.shield),
+        })
+      : null;
     const props: Omit<ItemProps, 'id' | 'createdAt' | 'updatedAt'> = {
       gameId: options.gameId,
       ...ItemHolders.ids(options.holder),
@@ -107,7 +128,7 @@ export class ItemFactory {
       weapon: this.weapon(itemType, itemType.weapon ? (instance.size ?? options.wielderSize) : options.wielderSize),
       armor: itemType.armor,
       shield: itemType.shield,
-      modifiers: [...this.catalogModifiers(itemType), ...(options.modifiers ?? [])],
+      modifiers: [...this.catalogModifiers(itemType), ...(magic?.modifiers ?? []), ...(options.modifiers ?? [])],
       amount: stackable ? (options.amount ?? 1) : null,
       info: {
         length: ItemUnitValue.scaleLength(itemType.info.length, steps),
@@ -133,6 +154,8 @@ export class ItemFactory {
       ...(instance.carats !== undefined && instance.carats !== null ? { carats: instance.carats } : {}),
       ...(instance.jewelryClass ? { jewelryClass: instance.jewelryClass } : {}),
       ...(instance.cutFactor !== undefined && instance.cutFactor !== null ? { cutFactor: instance.cutFactor } : {}),
+      ...(magic ? { enchantment: magic.enchantment } : {}),
+      ...(magic?.charges ? { charges: magic.charges } : {}),
     };
     return Item.create(props);
   }
@@ -163,6 +186,8 @@ export class ItemFactory {
       (a.carats ?? null) === (b.carats ?? null) &&
       (a.cutFactor ?? null) === (b.cutFactor ?? null) &&
       (a.jewelryClass ?? null) === (b.jewelryClass ?? null) &&
+      // Workspace spec 067: charged units are not the same stack
+      JSON.stringify(a.charges) === JSON.stringify(b.charges) &&
       ((a.size === null && a.carats === null && a.jewelryClass === null) || a.value === b.value)
     );
   }

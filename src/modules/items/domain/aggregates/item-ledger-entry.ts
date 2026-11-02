@@ -7,8 +7,28 @@ import type { PriceBreakdown } from '../services/price-calculator.js';
 /** Spec 024 adds `import`: an item or gold that came from an export file. */
 /** Workspace spec 062 adds `found`: doses of a herb search, for free. */
 /** Workspace spec 064 adds `enchant` (materials and extra costs of an enchantment) and `enchant-refund` (its cancel). */
+/**
+ * Workspace spec 067 adds `treasure` (an award of a random treasure), `magic-item` (a magic item made by the game
+ * master), `recharge` (of a charged item), `gem-cut`, `gem-set` and `gem-unset`.
+ */
 export type ItemLedgerKind =
-  'purchase' | 'sale' | 'transfer' | 'craft' | 'repair' | 'discard' | 'gold-transfer' | 'import' | 'found' | 'enchant' | 'enchant-refund';
+  | 'purchase'
+  | 'sale'
+  | 'transfer'
+  | 'craft'
+  | 'repair'
+  | 'discard'
+  | 'gold-transfer'
+  | 'import'
+  | 'found'
+  | 'enchant'
+  | 'enchant-refund'
+  | 'treasure'
+  | 'magic-item'
+  | 'recharge'
+  | 'gem-cut'
+  | 'gem-set'
+  | 'gem-unset';
 export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'purchase',
   'sale',
@@ -21,6 +41,12 @@ export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'found',
   'enchant',
   'enchant-refund',
+  'treasure',
+  'magic-item',
+  'recharge',
+  'gem-cut',
+  'gem-set',
+  'gem-unset',
 ];
 
 /** Gold that moved in an operation: negative when the holder paid it, positive when it received it. */

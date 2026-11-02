@@ -1,3 +1,4 @@
+import type { PowerLevel } from '../../../../enchantments/domain/value-objects/alchemy.vo.js';
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 import type { PriceFactorSelection } from '../../../domain/services/price-calculator.js';
 import type { ItemHolder } from '../../../domain/value-objects/item-holder.vo.js';
@@ -13,7 +14,14 @@ export class PurchaseOrderCommand extends AuthenticatedCommand {
   constructor(
     public readonly buyer: ItemHolder,
     public readonly lines: PurchaseOrderLine[],
-    public readonly options: { gameId?: string; payer?: PayerMode; factors?: PriceFactorSelection[]; trading?: TradingRequest },
+    public readonly options: {
+      gameId?: string;
+      payer?: PayerMode;
+      factors?: PriceFactorSelection[];
+      trading?: TradingRequest;
+      /** Workspace spec 067: power level of the campaign, for the magic part of the prices. */
+      powerLevel?: PowerLevel;
+    },
     userId: string,
     roles: string[],
   ) {

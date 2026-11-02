@@ -13,10 +13,21 @@ export const ITEM_MODIFIER_TARGETS: ItemModifierTarget[] = ['all', 'breakage', '
 
 /**
  * Where a modifier comes from: a tactical game, the game master, or (workspace spec 023, decision 3) the crafting or
- * repair of the item, or its catalog type, or (workspace spec 064) its enchantment. `ledgerEntryId` points to the operation in the item ledger.
+ * repair of the item, or its catalog type, or (workspace spec 064) its enchantment, or (workspace spec 067) the magic
+ * of its catalog type or of a treasure. `ledgerEntryId` points to the operation in the item ledger.
  */
-export type ItemModifierSourceKind = 'tactical' | 'manual' | 'crafting' | 'repair' | 'catalog' | 'enchantment';
-export const ITEM_MODIFIER_SOURCE_KINDS: ItemModifierSourceKind[] = ['tactical', 'manual', 'crafting', 'repair', 'catalog', 'enchantment'];
+export type ItemModifierSourceKind =
+  'tactical' | 'manual' | 'crafting' | 'repair' | 'catalog' | 'enchantment' | 'catalog-magic' | 'treasure';
+export const ITEM_MODIFIER_SOURCE_KINDS: ItemModifierSourceKind[] = [
+  'tactical',
+  'manual',
+  'crafting',
+  'repair',
+  'catalog',
+  'enchantment',
+  'catalog-magic',
+  'treasure',
+];
 
 export interface ItemModifierSource {
   kind: ItemModifierSourceKind;
