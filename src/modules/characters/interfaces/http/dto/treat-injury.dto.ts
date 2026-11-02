@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { TreatInjuryCommand } from '../../../application/cqrs/commands/treat-injury.command.js';
-import { HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo.js';
-import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
+import { CAST_SUPPORTS, HEALING_TYPES, TREATMENT_PROCEDURES } from '../../../domain/value-objects/injury.vo.js';
+import type { CastSupport, HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
 import { DIFFICULTIES, type Difficulty } from '../../../domain/value-objects/difficulty.vo.js';
 import type { TreatmentDifficulty } from '../../../domain/services/healing/injury-treatment-rules.js';
 
@@ -88,6 +88,25 @@ export class TreatInjuryDto {
   @IsOptional()
   herbItemId?: string;
 
+  @ApiPropertyOptional({
+    type: String,
+    enum: CAST_SUPPORTS,
+    description: 'Cast on a leg (spec 068): the fastest pace is that of the cast alone, with a cane or with crutches',
+  })
+  @IsIn(CAST_SUPPORTS)
+  @IsOptional()
+  castSupport?: CastSupport;
+
+  @ApiPropertyOptional({
+    description: 'Salve (spec 068): recovery modifier chosen by the game master, within the range of the core tables',
+    example: 10,
+  })
+  @IsInt()
+  @Min(-100)
+  @Max(100)
+  @IsOptional()
+  salveModifier?: number;
+
   static toCommand(characterId: string, injuryId: string, dto: TreatInjuryDto, userId: string, roles: string[]): TreatInjuryCommand {
     return new TreatInjuryCommand(
       characterId,
@@ -104,6 +123,8 @@ export class TreatInjuryDto {
       userId,
       roles,
       dto.herbItemId,
+      dto.castSupport,
+      dto.salveModifier,
     );
   }
 }

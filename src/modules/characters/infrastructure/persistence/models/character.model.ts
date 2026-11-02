@@ -22,6 +22,7 @@ import { CharacterAttack } from './character-attack.model.js';
 import { CharacterXP } from './character-xp.model.js';
 import type { Injury } from '../../../domain/value-objects/injury.vo.js';
 import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
+import type { CharacterTemporaryModifier } from '../../../domain/value-objects/temporary-modifier.vo.js';
 
 export type CharacterDocument = CharacterModel & Document;
 
@@ -104,6 +105,10 @@ export class CharacterModel {
 
   @Prop({ type: [String], required: false, default: [] })
   appliedTacticalGames: string[];
+
+  // Workspace spec 068: plain subdocuments with the TemporaryModifier shape
+  @Prop({ type: [Object], required: false, default: [] })
+  temporaryModifiers: CharacterTemporaryModifier[];
 
   @Prop({ type: String, required: false })
   description: string | undefined;

@@ -106,12 +106,12 @@ describe('character health (e2e)', () => {
     expect(refused.body).toMatchObject({ code: 'err-treatment-invalid-severity' });
   });
 
-  it('pressure slows a heavy bleeding and cauterizing reports its heat critical (D5)', async () => {
+  it('pressure slows a heavy bleeding and cauterizing reports its heat critical (D5, Table 13-1c of core in spec 068)', async () => {
     const injury = await addInjury({ type: 'cut-burn', penalty: -5, bleeding: 7 });
     const pressed = injuryOf(await treat(injury.id, { procedure: 'pressure' }), injury.id);
     expect(pressed).toMatchObject({ bleeding: 3, bleedingControl: 'pressure' });
-    maneuverCalls.results = ['failure'];
-    const cauterized = injuryOf(await treat(injury.id, { procedure: 'cauterize' }), injury.id);
+    // 20 + 10 + 15 falls in the invented failure band of the fake 13-1c: the bleeding is halved
+    const cauterized = injuryOf(await treat(injury.id, { procedure: 'cauterize', roll: 20 }), injury.id);
     expect(cauterized).toMatchObject({ bleeding: 1, bleedingControl: 'cauterized' });
     expect(cauterized.treatments[1]).toMatchObject({ result: 'failure', heatCritical: 'C', difficulty: 30 - 15 });
   });

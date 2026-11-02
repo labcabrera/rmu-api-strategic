@@ -1,5 +1,6 @@
 import type { Difficulty } from './difficulty.vo.js';
-import type { BodyLocation, HealingType, InjurySeverity, InjuryType, TreatmentProcedure } from './injury.vo.js';
+import type { Pace } from './character-movement.vo.js';
+import type { BodyLocation, HealingType, InjurySeverity, InjuryType, TreatmentProcedure, TreatmentResult } from './injury.vo.js';
 
 /** Injury types with a recovery column ('unknown' has none). */
 export type RecoveryInjuryType = Exclude<InjuryType, 'unknown'>;
@@ -44,6 +45,29 @@ export interface TreatmentRules {
   tourniquetLocations: BodyLocation[];
 }
 
+/** Workspace spec 068: a band of absolute maneuver totals of a cauterization (Table 13-1c of core). */
+export interface CauterizationRow {
+  min: number | null;
+  max: number | null;
+  result: TreatmentResult;
+  bleeding: 'unchanged' | 'halved' | 'stopped';
+  heatSeverity: 'A' | 'B' | 'C' | 'D' | 'E' | null;
+  /** Number of d10 of hits */
+  hitsDice: number;
+}
+
+/** Workspace spec 068: an injury type and severity that only surgery (or magic) treats. */
+export interface SurgeryRequirement {
+  injuryType: InjuryType;
+  severity: InjurySeverity;
+}
+
+/** Workspace spec 068: what a splint or a cast limits, by location. */
+export interface TreatmentLimitsRules {
+  splint: { leg: { pace: Pace }; arm: { limbUnusable: boolean } };
+  cast: { leg: { pace: Pace; cane: Pace; crutches: Pace }; maneuverPenaltyFactor: number };
+}
+
 /**
  * Healing tables read from rmu-api-core (GET /v1/healing-tables). The values are rulebook content and are never
  * written in this repository.
@@ -66,4 +90,13 @@ export interface HealingTables {
    */
   treatmentDifficulties?: TreatmentDifficultyRow[];
   treatmentRules?: TreatmentRules;
+  /**
+   * Workspace spec 068. Missing in core versions before it, empty or null in documents imported before it: see
+   * InjuryTreatmentRules for what happens without each one.
+   */
+  cauterization?: CauterizationRow[] | null;
+  cauterizationUnusualRoll?: number | null;
+  surgeryRequired?: SurgeryRequirement[] | null;
+  treatmentLimits?: TreatmentLimitsRules | null;
+  salveModifier?: { min: number; max: number } | null;
 }

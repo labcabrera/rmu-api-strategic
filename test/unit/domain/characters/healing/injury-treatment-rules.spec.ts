@@ -1,6 +1,8 @@
 import { InjuryTreatmentRules } from '../../../../../src/modules/characters/domain/services/healing/injury-treatment-rules.js';
 import type { HealingTables } from '../../../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
-import { injury, TABLES, treatment } from './healing.fixture.js';
+import { injury, SPEC_068_TABLES, TABLES, treatment } from './healing.fixture.js';
+
+const WITH_068: HealingTables = { ...TABLES, ...SPEC_068_TABLES };
 
 /** Invented rows: the rulebook difficulties live only in the gitignored data directory. */
 const WITH_DIFFICULTIES: HealingTables = {
@@ -121,18 +123,29 @@ describe('InjuryTreatmentRules', () => {
       expect(InjuryTreatmentRules.apply(injury({ bleeding: 3 }), treatment({ procedure: 'pressure' }), 0, fallback).bleeding).toBe(0);
     });
 
-    it('cauterizing stops the bleeding (partial success too), halves it on a failure, nothing on an absolute failure (D5)', () => {
+    it('cauterizing follows the band of its total in Table 13-1c of core (spec 068)', () => {
       const bleeding = injury({ bleeding: 5, penalty: -10 });
-      const cauterize = (result: Parameters<typeof treatment>[0]) =>
-        InjuryTreatmentRules.apply(bleeding, treatment({ procedure: 'cauterize', ...result }), 10, TABLES);
-      expect(cauterize({ result: 'partial-success' })).toMatchObject({ bleeding: 0, bleedingControl: 'cauterized' });
-      expect(cauterize({ result: 'success' }).bleeding).toBe(0);
-      expect(cauterize({ result: 'failure' })).toMatchObject({ bleeding: 2, bleedingControl: 'cauterized' });
-      expect(cauterize({ result: 'absolute-failure' })).toMatchObject({ bleeding: 5, penalty: -10 });
-      expect(InjuryTreatmentRules.heatCritical('cauterize', 'absolute-failure')).toBe('D');
-      expect(InjuryTreatmentRules.heatCritical('cauterize', 'success')).toBe('A');
-      expect(InjuryTreatmentRules.heatCritical('cauterize', 'absolute-success')).toBeUndefined();
-      expect(InjuryTreatmentRules.heatCritical('dress', 'failure')).toBeUndefined();
+      const cauterize = (total: number) =>
+        InjuryTreatmentRules.apply(bleeding, treatment({ procedure: 'cauterize', total, roll: 40 }), 10, WITH_068);
+      expect(cauterize(60)).toMatchObject({ bleeding: 0, bleedingControl: 'cauterized' });
+      expect(cauterize(120).bleeding).toBe(0);
+      expect(cauterize(20)).toMatchObject({ bleeding: 2, bleedingControl: 'cauterized' });
+      expect(cauterize(-5)).toMatchObject({ bleeding: 5, penalty: -10 });
+      expect(InjuryTreatmentRules.cauterization(20, 40, WITH_068)).toEqual({ row: SPEC_068_TABLES.cauterization![1], unusualEvent: false });
+      expect(InjuryTreatmentRules.cauterization(60, 77, WITH_068).unusualEvent).toBe(true);
+    });
+
+    it('refuses a cauterization when core has no Table 13-1c (spec 068)', () => {
+      expect(() => InjuryTreatmentRules.cauterization(60, 40, TABLES)).toThrow(
+        expect.objectContaining({ code: 'err-cauterization-table-missing' }),
+      );
+      expect(() => InjuryTreatmentRules.cauterization(60, 40, { ...TABLES, cauterization: [] })).toThrow(
+        expect.objectContaining({ code: 'err-cauterization-table-missing' }),
+      );
+      const gap: HealingTables = { ...TABLES, cauterization: [SPEC_068_TABLES.cauterization![1]] };
+      expect(() => InjuryTreatmentRules.cauterization(60, 40, gap)).toThrow(
+        expect.objectContaining({ code: 'err-healing-table-out-of-range' }),
+      );
     });
 
     it('magic always stops the bleeding; an absolute failure worsens the penalty and its base (D1)', () => {
@@ -175,6 +188,50 @@ describe('InjuryTreatmentRules', () => {
       expect(() => InjuryTreatmentRules.validate('dress', injury({ status: 'healed' }), TABLES)).toThrow(
         expect.objectContaining({ code: 'err-injury-healed' }) as Error,
       );
+    });
+  });
+
+  describe('spec 068: surgery, limits and salve', () => {
+    it('an injury of surgeryRequired only admits surgery or magic', () => {
+      const organ = injury({ type: 'organ', severity: 'medium' });
+      for (const procedure of ['dress', 'stitches', 'pressure', 'herbs'] as const) {
+        expect(() => InjuryTreatmentRules.validate(procedure, organ, WITH_068)).toThrow(
+          expect.objectContaining({ code: 'err-treatment-surgery-required' }),
+        );
+      }
+      expect(() => InjuryTreatmentRules.validate('surgery', organ, WITH_068)).not.toThrow();
+      expect(() => InjuryTreatmentRules.validate('magic', organ, WITH_068)).not.toThrow();
+      expect(() => InjuryTreatmentRules.validate('dress', injury({ type: 'organ', severity: 'light' }), WITH_068)).not.toThrow();
+      // Without the list in core nothing is refused
+      expect(() => InjuryTreatmentRules.validate('dress', organ, TABLES)).not.toThrow();
+    });
+
+    it('a successful splint or cast sets the limits of the location', () => {
+      const apply = (procedure: 'splint' | 'cast', location: 'leg' | 'arm' | 'chest', extra: Parameters<typeof treatment>[0] = {}) =>
+        InjuryTreatmentRules.apply(injury({ location }), treatment({ procedure, ...extra }), 0, WITH_068).limits;
+      expect(apply('splint', 'leg')).toEqual({ pace: 'jog' });
+      expect(apply('splint', 'arm')).toEqual({ limbUnusable: true });
+      expect(apply('splint', 'chest')).toBeUndefined();
+      expect(apply('cast', 'leg')).toEqual({ maneuverPenaltyFactor: 0.25, pace: 'creep' });
+      expect(apply('cast', 'leg', { castSupport: 'cane' })).toEqual({ maneuverPenaltyFactor: 0.25, pace: 'walk' });
+      expect(apply('cast', 'leg', { castSupport: 'crutches' })).toEqual({ maneuverPenaltyFactor: 0.25, pace: 'run' });
+      expect(apply('cast', 'arm')).toEqual({ maneuverPenaltyFactor: 0.25 });
+      expect(apply('splint', 'leg', { result: 'failure' })).toBeUndefined();
+      expect(apply('cast', 'leg', { result: 'partial-success' })).toBeUndefined();
+      // Without the limits of core nothing is limited
+      expect(InjuryTreatmentRules.apply(injury({ location: 'leg' }), treatment(), 0, TABLES).limits).toBeUndefined();
+    });
+
+    it('checks the salve modifier against the range of core, any value without it', () => {
+      expect(() => InjuryTreatmentRules.validateSalveModifier(35, WITH_068)).not.toThrow();
+      expect(() => InjuryTreatmentRules.validateSalveModifier(-15, WITH_068)).not.toThrow();
+      expect(() => InjuryTreatmentRules.validateSalveModifier(36, WITH_068)).toThrow(
+        expect.objectContaining({ code: 'err-treatment-salve-modifier-range' }),
+      );
+      expect(() => InjuryTreatmentRules.validateSalveModifier(-16, WITH_068)).toThrow(
+        expect.objectContaining({ code: 'err-treatment-salve-modifier-range' }),
+      );
+      expect(() => InjuryTreatmentRules.validateSalveModifier(80, TABLES)).not.toThrow();
     });
   });
 });

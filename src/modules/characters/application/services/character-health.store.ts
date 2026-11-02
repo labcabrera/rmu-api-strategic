@@ -47,6 +47,15 @@ export class CharacterHealthStore {
     throw new ForbiddenError('You do not have permission to change the health of this character', 'err-character-health-forbidden');
   }
 
+  /**
+   * The current day of the campaign of the character (workspace spec 065), for the expiry of its temporary modifiers
+   * (workspace spec 068). Day 1 when the game is not found.
+   */
+  async currentGameDay(character: Character): Promise<number> {
+    const game = await this.gameRepository.findById(character.gameId);
+    return game?.calendar?.currentDay ?? 1;
+  }
+
   async save(character: Character): Promise<Character> {
     // Workspace spec 065: what happens to the health carries the day of the campaign.
     const game = await this.gameRepository.findById(character.gameId);

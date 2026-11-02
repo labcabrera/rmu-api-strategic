@@ -17,6 +17,7 @@ import { CharacterTrait } from '../value-objects/character-trait.vo.js';
 import { CharacterXP } from '../value-objects/character-xp.vo.js';
 import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
 import type { Injury } from '../value-objects/injury.vo.js';
+import type { CharacterTemporaryModifier } from '../value-objects/temporary-modifier.vo.js';
 
 export interface CharacterProps {
   id: string;
@@ -43,6 +44,8 @@ export interface CharacterProps {
   conditions: CharacterCondition[];
   /** Tactical games whose outcome has been applied (idempotency) */
   appliedTacticalGames: string[];
+  /** Workspace spec 068: lasting morale and fear modifiers (missing in documents before it) */
+  temporaryModifiers?: CharacterTemporaryModifier[];
   description: string | undefined;
   imageUrl: string | undefined;
   owner: string;

@@ -37,6 +37,26 @@ export const TABLES: HealingTables = {
   talentMultipliers: { 'fast-healer': 0.5, 'slow-healer': 2 },
 };
 
+/**
+ * Workspace spec 068: invented rows of the spec 068 fields (cauterization bands, surgery, limits, salve range). The
+ * rulebook values live only in the gitignored data directory.
+ */
+export const SPEC_068_TABLES: Partial<HealingTables> = {
+  cauterization: [
+    { min: null, max: 9, result: 'absolute-failure', bleeding: 'unchanged', heatSeverity: 'E', hitsDice: 3 },
+    { min: 10, max: 49, result: 'failure', bleeding: 'halved', heatSeverity: 'C', hitsDice: 2 },
+    { min: 50, max: 99, result: 'success', bleeding: 'stopped', heatSeverity: 'B', hitsDice: 1 },
+    { min: 100, max: null, result: 'absolute-success', bleeding: 'stopped', heatSeverity: null, hitsDice: 0 },
+  ],
+  cauterizationUnusualRoll: 77,
+  surgeryRequired: [{ injuryType: 'organ', severity: 'medium' }],
+  treatmentLimits: {
+    splint: { leg: { pace: 'jog' }, arm: { limbUnusable: true } },
+    cast: { leg: { pace: 'creep', cane: 'walk', crutches: 'run' }, maneuverPenaltyFactor: 0.25 },
+  },
+  salveModifier: { min: -15, max: 35 },
+};
+
 export const treatment = (props: Partial<InjuryTreatment> = {}): InjuryTreatment => ({
   id: 'treatment-001',
   procedure: 'splint',

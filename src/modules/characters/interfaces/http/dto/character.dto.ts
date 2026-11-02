@@ -19,7 +19,7 @@ import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-ent
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
-import { CharacterConditionDto, HealthSummaryDto, InjuryDto } from './character-health.dto.js';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto, TemporaryModifierDto } from './character-health.dto.js';
 
 export class CharacterDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -97,6 +97,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Tactical games whose outcome has been applied', type: [String] })
   appliedTacticalGames: string[];
 
+  @ApiProperty({ description: 'Lasting morale and fear modifiers (spec 068)', type: [TemporaryModifierDto] })
+  temporaryModifiers: TemporaryModifierDto[];
+
   @ApiProperty({ type: String, description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
@@ -137,6 +140,7 @@ export class CharacterDto {
     dto.conditions = (entity.conditions || []).map(condition => CharacterConditionDto.fromEntity(condition));
     dto.healthSummary = HealthSummaryDto.fromEntity(entity.healthSummary);
     dto.appliedTacticalGames = [...(entity.appliedTacticalGames || [])];
+    dto.temporaryModifiers = (entity.temporaryModifiers || []).map(modifier => TemporaryModifierDto.fromEntity(modifier));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;

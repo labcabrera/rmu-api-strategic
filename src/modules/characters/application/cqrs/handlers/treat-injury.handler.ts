@@ -51,6 +51,9 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     const injury = character.findInjury(command.injuryId);
     const tables = await this.healingTablesClient.getHealingTables();
     InjuryTreatmentRules.validate(command.procedure, injury, tables);
+    const salveModifier = command.procedure === 'salve' ? (command.salveModifier ?? undefined) : undefined;
+    if (salveModifier !== undefined) InjuryTreatmentRules.validateSalveModifier(salveModifier, tables);
+    const castSupport = command.procedure === 'cast' ? (command.castSupport ?? undefined) : undefined;
     const override = command.difficulty !== undefined && command.difficulty !== null;
     const computed = InjuryTreatmentRules.difficulty(command.procedure, injury, tables);
     // No row in the core table: the procedure does not apply, unless the game master sets the difficulty
@@ -87,10 +90,14 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       maneuver = await this.maneuverClient.absolute(total, MEDICAL_MANEUVER_TABLE);
       result = maneuver.result;
     }
+    // Workspace spec 068: a cauterization follows Table 13-1c of core, by the same total
+    const cauterization =
+      command.procedure === 'cauterize' ? InjuryTreatmentRules.cauterization(total, command.roll ?? 0, tables) : undefined;
+    if (cauterization) result = cauterization.row.result;
     const recoveryModifier = this.effectValue(maneuver, 'recoveryRollModifier') ?? 0;
     const worsening =
       result === 'absolute-failure' ? (this.effectValue(maneuver, 'injuryPenalty') ?? DEFAULT_ABSOLUTE_FAILURE_WORSENING) : 0;
-    const heatCritical = InjuryTreatmentRules.heatCritical(command.procedure, result);
+    const heatCritical = cauterization?.row.heatSeverity ?? undefined;
     const treatment: InjuryTreatment = {
       id: randomUUID(),
       procedure: command.procedure,
@@ -105,6 +112,10 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
       at: new Date().toISOString(),
       context: 'strategic',
       ...(heatCritical ? { heatCritical } : {}),
+      ...(cauterization?.row.hitsDice ? { heatHitsDice: cauterization.row.hitsDice } : {}),
+      ...(cauterization?.unusualEvent ? { unusualEvent: true } : {}),
+      ...(castSupport ? { castSupport } : {}),
+      ...(salveModifier !== undefined ? { salveModifier } : {}),
       ...(held && herbBonus ? { herb: TreatInjuryHandler.herbOf(held, herbBonus) } : {}),
     };
     character.addInjuryTreatment(injury.id, treatment, tables, Math.abs(worsening));

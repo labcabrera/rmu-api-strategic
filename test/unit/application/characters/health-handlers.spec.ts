@@ -28,7 +28,12 @@ import { CharacterProcessorService } from '../../../../src/modules/characters/do
 import type { ItemRepository } from '../../../../src/modules/items/application/ports/item-repository.port.js';
 import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
 import type { ItemModifier } from '../../../../src/modules/items/domain/value-objects/item-modifier.vo.js';
-import { injury, TABLES, treatment } from '../../domain/characters/healing/healing.fixture.js';
+import { injury, SPEC_068_TABLES, TABLES, treatment } from '../../domain/characters/healing/healing.fixture.js';
+import { TacticalOutcomeConsumption } from '../../../../src/modules/characters/application/services/tactical-outcome-consumption.service.js';
+import type { ItemLedgerRepository } from '../../../../src/modules/items/application/ports/item-ledger-repository.port.js';
+import { ItemLedger } from '../../../../src/modules/items/application/services/item-ledger.service.js';
+import { ItemStock } from '../../../../src/modules/items/application/services/item-stock.service.js';
+import type { ItemLedgerEntry } from '../../../../src/modules/items/domain/aggregates/item-ledger-entry.js';
 import type { HealingTables } from '../../../../src/modules/characters/domain/value-objects/healing-tables.vo.js';
 import { GetTreatmentDifficultyHandler } from '../../../../src/modules/characters/application/cqrs/handlers/get-treatment-difficulty.handler.js';
 import { GetTreatmentDifficultyQuery } from '../../../../src/modules/characters/application/cqrs/queries/get-treatment-difficulty.query.js';
@@ -137,13 +142,47 @@ const outcomeHandler = (store: CharacterHealthStore, items: Item[] = []) => {
   const itemUpdate = vi.fn((item: Item) => Promise.resolve(item));
   const itemRepository = {
     findByCharacterId: vi.fn((characterId: string) => Promise.resolve(items.filter(item => item.characterId === characterId))),
+    findById: vi.fn((id: string) => Promise.resolve(items.find(item => item.id === id) ?? null)),
+    deleteById: vi.fn((id: string) => {
+      items.splice(
+        items.findIndex(item => item.id === id),
+        1,
+      );
+      return Promise.resolve();
+    }),
     update: itemUpdate,
   } as unknown as ItemRepository;
   const { publisher, publish: itemPublish } = fakeEventPublisher();
   const merger = new TacticalOutcomeItemsMerger(itemRepository, publisher);
   const process = vi.fn();
   const processor = { process } as unknown as CharacterProcessorService;
-  return { handler: new ApplyTacticalOutcomeHandler(store, merger, processor), itemUpdate, itemPublish, process };
+  // Workspace spec 068: the units spent in the game, with an in-memory ledger
+  const ledgerEntries = new Map<string, ItemLedgerEntry>();
+  const ledgerRepository = {
+    findById: vi.fn((id: string) => Promise.resolve(ledgerEntries.get(id) ?? null)),
+    save: vi.fn((entry: ItemLedgerEntry) => {
+      ledgerEntries.set(entry.id, entry);
+      return Promise.resolve(entry);
+    }),
+  } as unknown as ItemLedgerRepository;
+  const consumption = new TacticalOutcomeConsumption(
+    itemRepository,
+    ledgerRepository,
+    new ItemStock(itemRepository, publisher),
+    new ItemLedger(ledgerRepository),
+  );
+  return {
+    handler: new ApplyTacticalOutcomeHandler(store, merger, processor, consumption),
+    itemUpdate,
+    itemPublish,
+    process,
+    ledgerEntries,
+  };
+};
+
+const stack = (id: string, characterId: string, amount: number): Item => {
+  const item = buildItem(id, characterId);
+  return Item.fromProps({ ...item.getProps(), category: 'herb', amount, info: { ...item.info, stackable: true } });
 };
 
 const treat = (props: Partial<ConstructorParameters<typeof TreatInjuryCommand>[number]> & Record<string, unknown> = {}) =>
@@ -159,6 +198,9 @@ const treat = (props: Partial<ConstructorParameters<typeof TreatInjuryCommand>[n
     props.healingType as never,
     MASTER,
     ['rmu-user'],
+    undefined,
+    props.castSupport as never,
+    props.salveModifier as number | undefined,
   );
 
 describe('Health handlers', () => {
@@ -256,6 +298,84 @@ describe('Health handlers', () => {
         new ApplyTacticalOutcomeCommand('patient', { ...outcome, items: [{ itemId: 'item-001', modifiers: [] }] }, 'sa', ['rmu-service']),
       );
       expect(process).not.toHaveBeenCalled();
+    });
+
+    it('spends the units consumed in the game once, with a consumed ledger entry (spec 068)', async () => {
+      const patient = character('patient');
+      const items = [stack('herb-001', 'patient', 3), stack('potion-001', 'patient', 1), stack('herb-009', 'other', 2)];
+      const { store, saveAll } = setup([patient]);
+      const { handler, ledgerEntries, process } = outcomeHandler(store, items);
+      const withConsumed = {
+        ...outcome,
+        itemsConsumed: [
+          { itemId: 'herb-001', amount: 1 },
+          { itemId: 'herb-001', amount: 1 },
+          { itemId: 'potion-001', amount: 1 },
+          { itemId: 'herb-009', amount: 1 },
+        ],
+      };
+      await handler.execute(new ApplyTacticalOutcomeCommand('patient', withConsumed, 'sa', ['rmu-service']));
+      expect(items.find(item => item.id === 'herb-001')?.amount).toBe(1);
+      expect(items.find(item => item.id === 'potion-001')).toBeUndefined();
+      expect(items.find(item => item.id === 'herb-009')?.amount).toBe(2);
+      expect([...ledgerEntries.values()].map(entry => entry.getProps())).toEqual([
+        expect.objectContaining({
+          id: 'consumed:tactical-001:herb-001',
+          kind: 'consumed',
+          amount: 2,
+          from: { kind: 'character', id: 'patient' },
+        }),
+        expect.objectContaining({ id: 'consumed:tactical-001:potion-001', kind: 'consumed', amount: 1 }),
+      ]);
+      expect(process).toHaveBeenCalledWith(patient, [items[0]]);
+      expect(saveAll).toHaveBeenCalledWith('patient', 'game-001', [
+        expect.objectContaining({
+          summary: expect.objectContaining({
+            itemsConsumed: [
+              { itemId: 'herb-001', amount: 2, removed: false },
+              { itemId: 'potion-001', amount: 1, removed: true },
+            ],
+            itemsConsumedIgnored: ['herb-009'],
+          }) as unknown,
+        }),
+      ]);
+      // A retry after the character failed to be stored spends nothing again
+      patient.appliedTacticalGames = [];
+      await handler.execute(new ApplyTacticalOutcomeCommand('patient', withConsumed, 'sa', ['rmu-service']));
+      expect(items.find(item => item.id === 'herb-001')?.amount).toBe(1);
+      expect(ledgerEntries.size).toBe(2);
+    });
+
+    it('adds the temporary modifiers of the game once, expiring from the day of the campaign (spec 068)', async () => {
+      const patient = character('patient');
+      patient.temporaryModifiers = [
+        { id: 'tm-1', kind: 'morale', value: -10, source: 'manual', days: null, createdAt: '', tacticalGameId: null, expiresGameDay: null },
+      ];
+      const { store } = setup([patient]);
+      const { handler } = outcomeHandler(store);
+      const modifier = (id: string, days: number | null) => ({
+        id,
+        kind: 'morale' as const,
+        value: 5,
+        source: 'morale-absolute-success' as const,
+        days,
+        createdAt: '2026-11-02T00:00:00.000Z',
+        tacticalGameId: 'tactical-001',
+      });
+      const result = await handler.execute(
+        new ApplyTacticalOutcomeCommand(
+          'patient',
+          { ...outcome, temporaryModifiers: [modifier('tm-1', 3), modifier('tm-2', 30), modifier('tm-3', null)] },
+          'sa',
+          ['rmu-service'],
+        ),
+      );
+      // The fake game has no calendar: day 1
+      expect(result.temporaryModifiers).toEqual([
+        expect.objectContaining({ id: 'tm-1', value: -10, expiresGameDay: null }),
+        expect.objectContaining({ id: 'tm-2', value: 5, expiresGameDay: 31, tacticalGameId: 'tactical-001' }),
+        expect.objectContaining({ id: 'tm-3', expiresGameDay: null }),
+      ]);
     });
 
     it('rejects an outcome of another character', async () => {
@@ -374,15 +494,83 @@ describe('Health handlers', () => {
       expect(absolute).not.toHaveBeenCalled();
     });
 
-    it('stores the heat critical of a cauterization and does not worsen the penalty on its absolute failure', async () => {
+    it('takes a cauterization from Table 13-1c of core and does not worsen the penalty on its absolute failure', async () => {
       const patient = character('patient');
       patient.injuries = [injury({ id: 'i-1', bleeding: 4 })];
-      const { store, tables, maneuvers } = setup([patient], ['absolute-failure']);
+      // The medical table says success; the band of the total (5 + 10 - 20) is the absolute failure of the invented 13-1c
+      const { store, tables, maneuvers } = setup([patient], ['success'], { ...TABLES, ...SPEC_068_TABLES });
       const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
-        treat({ procedure: 'cauterize', healer: { name: 'Healer', bonus: 10 } }),
+        treat({ procedure: 'cauterize', roll: 5, healer: { name: 'Healer', bonus: 10 } }),
       );
       expect(result.injuries[0]).toMatchObject({ penalty: -10, bleeding: 4 });
-      expect(result.injuries[0].treatments[0]).toMatchObject({ heatCritical: 'D', difficulty: -20 });
+      expect(result.injuries[0].treatments[0]).toMatchObject({
+        result: 'absolute-failure',
+        heatCritical: 'E',
+        heatHitsDice: 3,
+        difficulty: -20,
+      });
+      expect(result.injuries[0].treatments[0]).not.toHaveProperty('unusualEvent');
+    });
+
+    it('marks the unusual roll of a cauterization and refuses it without the core table (spec 068)', async () => {
+      const patient = character('patient');
+      patient.injuries = [injury({ id: 'i-1', bleeding: 4 })];
+      const { store, tables, maneuvers } = setup([patient], [], { ...TABLES, ...SPEC_068_TABLES });
+      const result = await new TreatInjuryHandler(store, tables, maneuvers, {} as never).execute(
+        treat({ procedure: 'cauterize', roll: 77, healer: { name: 'Healer', bonus: 10 } }),
+      );
+      expect(result.injuries[0]).toMatchObject({ bleeding: 0, bleedingControl: 'cauterized' });
+      expect(result.injuries[0].treatments[0]).toMatchObject({ result: 'success', heatCritical: 'B', unusualEvent: true });
+      const other = character('patient');
+      other.injuries = [injury({ id: 'i-1', bleeding: 4 })];
+      const old = setup([other]);
+      await expect(
+        new TreatInjuryHandler(old.store, old.tables, old.maneuvers, {} as never).execute(
+          treat({ procedure: 'cauterize', healer: { name: 'Healer', bonus: 10 } }),
+        ),
+      ).rejects.toMatchObject({ code: 'err-cauterization-table-missing' });
+    });
+
+    it('casts a leg with crutches, keeps a salve modifier in range and refuses what needs surgery (spec 068)', async () => {
+      const patient = character('patient');
+      patient.injuries = [
+        injury({ id: 'i-1', location: 'leg' }),
+        injury({ id: 'i-2', type: 'skin-tissue' }),
+        injury({ id: 'i-3', type: 'organ', severity: 'medium' }),
+      ];
+      const { store, tables, maneuvers, absolute } = setup([patient], [], { ...TABLES, ...SPEC_068_TABLES });
+      const handler = new TreatInjuryHandler(store, tables, maneuvers, {} as never);
+      const healer = { name: 'Healer', bonus: 10 };
+      const cast = await handler.execute(treat({ procedure: 'cast', castSupport: 'crutches', healer }));
+      expect(cast.findInjury('i-1')).toMatchObject({ limits: { pace: 'run', maneuverPenaltyFactor: 0.25 } });
+      expect(cast.findInjury('i-1').treatments[0]).toMatchObject({ castSupport: 'crutches' });
+
+      const command = (injuryId: string, procedure: 'salve' | 'dress', salveModifier?: number) =>
+        new TreatInjuryCommand(
+          'patient',
+          injuryId,
+          procedure,
+          undefined,
+          healer,
+          70,
+          undefined,
+          undefined,
+          undefined,
+          MASTER,
+          ['rmu-user'],
+          undefined,
+          undefined,
+          salveModifier,
+        );
+      const withSalve = (value: number) => command('i-2', 'salve', value);
+      await expect(handler.execute(withSalve(36))).rejects.toMatchObject({ code: 'err-treatment-salve-modifier-range' });
+      const salved = await handler.execute(withSalve(20));
+      expect(salved.findInjury('i-2').treatments[0]).toMatchObject({ procedure: 'salve', salveModifier: 20 });
+
+      absolute.mockClear();
+      const organ = command('i-3', 'dress');
+      await expect(handler.execute(organ)).rejects.toMatchObject({ code: 'err-treatment-surgery-required' });
+      expect(absolute).not.toHaveBeenCalled();
     });
 
     it('treats with magic without a Medicine roll and honours the requested type of healing', async () => {

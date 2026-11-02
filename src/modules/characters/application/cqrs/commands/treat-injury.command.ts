@@ -1,5 +1,5 @@
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
-import type { HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
+import type { CastSupport, HealingType, TreatmentProcedure } from '../../../domain/value-objects/injury.vo.js';
 
 export interface ExternalHealer {
   name: string;
@@ -28,6 +28,10 @@ export class TreatInjuryCommand extends AuthenticatedCommand {
     roles: string[],
     /** Workspace spec 062: a herb of the patient or of a character of its game; one dose is spent. */
     public readonly herbItemId?: string,
+    /** Workspace spec 068: what holds up a cast leg (a cast only). */
+    public readonly castSupport?: CastSupport,
+    /** Workspace spec 068: recovery modifier of a salve, chosen by the game master (a salve only). */
+    public readonly salveModifier?: number,
   ) {
     super(userId, roles);
   }

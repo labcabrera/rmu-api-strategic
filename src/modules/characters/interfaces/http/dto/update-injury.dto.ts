@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { UpdateInjuryCommand } from '../../../application/cqrs/commands/update-injury.command.js';
 import {
   BLEEDING_CONTROLS,
@@ -10,7 +10,9 @@ import {
   INJURY_SEVERITIES,
   INJURY_STATUSES,
   INJURY_TYPES,
+  PACES,
 } from '../../../domain/value-objects/injury.vo.js';
+import type { Pace } from '../../../domain/value-objects/character-movement.vo.js';
 import type {
   BleedingControl,
   BodyLocation,
@@ -30,6 +32,26 @@ export class UpdateInjuryPermanentDto {
   @IsInt()
   @IsOptional()
   roll?: number;
+}
+
+/** Workspace spec 068: limits of a splinted or cast limb, set by the game master. */
+export class UpdateInjuryLimitsDto {
+  @ApiPropertyOptional({ type: String, enum: PACES, nullable: true })
+  @IsIn(PACES)
+  @IsOptional()
+  pace?: Pace | null;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  limbUnusable?: boolean;
+
+  @ApiPropertyOptional({ type: Number, nullable: true, example: 0.5 })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  maneuverPenaltyFactor?: number | null;
 }
 
 export class UpdateInjuryDto {
@@ -96,6 +118,16 @@ export class UpdateInjuryDto {
   @IsOptional()
   status?: InjuryStatus;
 
+  @ApiPropertyOptional({
+    type: UpdateInjuryLimitsDto,
+    nullable: true,
+    description: 'Limits of a splint or a cast (spec 068); null removes them',
+  })
+  @ValidateNested()
+  @Type(() => UpdateInjuryLimitsDto)
+  @IsOptional()
+  limits?: UpdateInjuryLimitsDto | null;
+
   static toCommand(characterId: string, injuryId: string, dto: UpdateInjuryDto, userId: string, roles: string[]): UpdateInjuryCommand {
     return new UpdateInjuryCommand(
       characterId,
@@ -113,9 +145,20 @@ export class UpdateInjuryDto {
         description: dto.description,
         permanent: dto.permanent ? { penalty: -Math.abs(dto.permanent.penalty) || 0, roll: dto.permanent.roll } : undefined,
         status: dto.status,
+        limits: UpdateInjuryDto.toLimits(dto.limits),
       },
       userId,
       roles,
     );
+  }
+
+  private static toLimits(limits: UpdateInjuryLimitsDto | null | undefined) {
+    if (limits === null) return null;
+    if (!limits) return undefined;
+    return {
+      ...(limits.pace !== undefined ? { pace: limits.pace } : {}),
+      ...(limits.limbUnusable !== undefined ? { limbUnusable: limits.limbUnusable } : {}),
+      ...(limits.maneuverPenaltyFactor !== undefined ? { maneuverPenaltyFactor: limits.maneuverPenaltyFactor } : {}),
+    };
   }
 }
