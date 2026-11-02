@@ -8,7 +8,7 @@ HOST_PORT      ?= 3002
 CONTAINER_PORT ?= 3002
 NETWORK        ?= rmu-network
 REMOTE         ?= origin
-MASTER_BRANCH  ?= main
+MASTER_BRANCH  ?= master
 DEVELOP_BRANCH ?= develop
 RELEASE_BUMP   ?=
 
