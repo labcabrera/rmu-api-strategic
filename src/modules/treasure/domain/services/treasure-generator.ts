@@ -24,6 +24,12 @@ const PRECIOUS_GEM_SP = 10;
 /** The generic catalog type of the art of a treasure (workspace spec 067, plan section 0). */
 export const ART_OBJECT_TYPE = 'art-object';
 
+/** The stored name of an art object: its 7-1e key as words ("carved-horn" → "Carved horn"). */
+export const artName = (key: string): string => {
+  const words = key.replace(/-/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
 /** One roll, shown to the game master (decision 10). */
@@ -273,7 +279,7 @@ export class TreasureGenerator {
     const row = findRow(this.tables.artTypes, roll.total);
     dice.push(this.die('7-1e', roll.roll, 0, roll.total, row?.key ?? '-'));
     if (!row) return this.unresolved('treasure-no-row: 7-1e', dice);
-    this.lines.push({ kind: 'item', itemTypeId: ART_OBJECT_TYPE, name: row.key, amount: null, value: gold, dice });
+    this.lines.push({ kind: 'item', itemTypeId: ART_OBJECT_TYPE, name: artName(row.key), amount: null, value: gold, dice });
   }
 
   // Decision 14: the quality of the gear is a note for the game master

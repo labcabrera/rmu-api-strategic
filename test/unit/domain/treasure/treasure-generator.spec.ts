@@ -275,7 +275,7 @@ describe('TreasureGenerator (workspace spec 067, decisions 10-15)', () => {
 
   it('makes art a generic art object named by its type', async () => {
     const roll = await generate([10, 1, 80, 5], { wealth: ['normal'] }).result;
-    expect(roll.lines[0]).toMatchObject({ kind: 'item', itemTypeId: 'art-object', name: 'statuette', value: 3 });
+    expect(roll.lines[0]).toMatchObject({ kind: 'item', itemTypeId: 'art-object', name: 'Statuette', value: 3 });
   });
 
   it('shows the gear quality of a lifestyle code as a note', async () => {
