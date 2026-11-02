@@ -6,7 +6,10 @@ import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
   BODY_SIDES,
+  CAST_SUPPORTS,
   HEALING_TYPES,
+  INJURY_REOPEN_ON,
+  PACES,
   INJURY_FLAGS,
   INJURY_SEVERITIES,
   INJURY_SOURCE_KINDS,
@@ -15,6 +18,7 @@ import {
   TREATMENT_PROCEDURES,
   TREATMENT_RESULTS,
 } from '../../../characters/domain/value-objects/injury.vo.js';
+import { TEMPORARY_MODIFIER_KINDS, TEMPORARY_MODIFIER_SOURCES } from '../../../characters/domain/value-objects/temporary-modifier.vo.js';
 import {
   ITEM_MODIFIER_SOURCE_KINDS,
   ITEM_MODIFIER_TARGETS,
@@ -105,6 +109,12 @@ const treatment = Joi.object({
     medicineBonus: num().required(),
     recoveryBonus: num().required(),
   }),
+  // Workspace spec 068 (format 12)
+  note: Joi.string().max(NAME),
+  castSupport: Joi.string().valid(...CAST_SUPPORTS),
+  salveModifier: num(),
+  heatHitsDice: int().min(0),
+  unusualEvent: Joi.boolean(),
 });
 
 const injury = Joi.object({
@@ -145,6 +155,31 @@ const injury = Joi.object({
   createdAt: date().required(),
   updatedAt: date(),
   healedAt: date(),
+  // Workspace spec 068 (format 12)
+  limits: nullable(
+    Joi.object({
+      pace: nullable(Joi.string().valid(...PACES)),
+      limbUnusable: Joi.boolean(),
+      maneuverPenaltyFactor: nullable(num().min(0).max(1)),
+    }),
+  ),
+  reopenOn: nullable(Joi.string().valid(...INJURY_REOPEN_ON)),
+  tourniquet: nullable(Joi.object({ tightSince: int().required(), loosenedAt: nullable(int()).required() })),
+});
+
+/** Workspace spec 068 (format 12): a temporary morale or fear modifier with the days it has left. */
+const temporaryModifier = Joi.object({
+  id: id().required(),
+  kind: Joi.string()
+    .valid(...TEMPORARY_MODIFIER_KINDS)
+    .required(),
+  value: num().required(),
+  source: Joi.string()
+    .valid(...TEMPORARY_MODIFIER_SOURCES)
+    .required(),
+  days: nullable(int().min(0)).required(),
+  createdAt: date().required(),
+  remainingDays: nullable(int().min(0)).required(),
 });
 
 const condition = Joi.object({
@@ -272,6 +307,7 @@ const character = Joi.object({
   status: Joi.string().valid('partially_created', 'created', 'dead').required(),
   injuries: Joi.array().items(injury).max(500).required(),
   conditions: Joi.array().items(condition).max(500).required(),
+  temporaryModifiers: Joi.array().items(temporaryModifier).max(100).required(),
   description: nullable(text()).required(),
   imageUrl: nullable(Joi.string().max(2000)).required(),
 });

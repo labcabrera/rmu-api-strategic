@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument -- HTTP bodies read as loose JSON */
 import request from 'supertest';
 import { startApp, type E2eApp, type UserName } from './support/app.js';
-import { createCharacter, createItem, gameWithFaction } from './support/builders.js';
+import { createCharacter, createFaction, createGame, createItem, gameWithFaction } from './support/builders.js';
 import { maneuverCalls } from './support/fakes.js';
 
 type Body = Record<string, any>;
@@ -143,6 +143,55 @@ describe('healing in combat, fear and morale (e2e)', () => {
         expect.objectContaining({ kind: 'manual', summary: expect.objectContaining({ action: 'temporary-modifiers-expired' }) }),
       ]),
     );
+  });
+
+  it('exports the limits of the injuries and the days left of the temporary modifiers, counted again on import', async () => {
+    const leg = await addInjury({ type: 'bone', penalty: -10, location: 'leg' });
+    await treat(leg.id, { procedure: 'splint' });
+    const outcome = {
+      tacticalGameId: 'tactical-070',
+      actorId: 'actor-001',
+      characterId,
+      hp: { start: 0, end: 0, delta: 0 },
+      injuries: [],
+      temporaryModifiers: [
+        { id: 'tm-1', kind: 'fear-rr', value: 20, source: 'rally-unusual', days: 10, createdAt: '2026-11-02T10:00:00.000Z' },
+      ],
+    };
+    expect((await as('service').post(`${base()}/tactical-outcomes`, outcome)).status).toBe(200);
+    // Three days later in the source campaign
+    expect((await as('owner').post(`/v1/strategic-games/${gameId}/pass-time`, { days: 3, hours: 0, version: gameVersion })).status).toBe(
+      200,
+    );
+    const exported = await as('owner').get(`${base()}/export`);
+    expect(exported.status).toBe(200);
+    const file = exported.body as Body;
+    expect(file.formatVersion).toBe(12);
+    expect(file.data.character.injuries[0].limits).toEqual({ pace: 'jog' });
+    expect(file.data.character.temporaryModifiers).toEqual([
+      {
+        id: 'tm-1',
+        kind: 'fear-rr',
+        value: 20,
+        source: 'rally-unusual',
+        days: 10,
+        createdAt: '2026-11-02T10:00:00.000Z',
+        remainingDays: 7,
+      },
+    ]);
+
+    // The destination campaign is on day 1
+    const target = await createGame(e2e, 'other');
+    const targetFaction = await createFaction(e2e, target.id, 'other');
+    const imported = await request(e2e.server)
+      .post(`/v1/factions/${targetFaction.id}/character-imports`)
+      .set('Authorization', e2e.auth('other'))
+      .set('X-RMU-File-Name', 'test.rmu.json')
+      .send(file);
+    expect(imported.status, JSON.stringify(imported.body)).toBe(200);
+    const created = (await as('other').get(`/v1/characters/${(imported.body as Body).characterIds[0]}`)).body as Body;
+    expect(created.injuries[0].limits).toEqual({ pace: 'jog' });
+    expect(created.temporaryModifiers).toEqual([expect.objectContaining({ id: 'tm-1', expiresGameDay: 8, tacticalGameId: null })]);
   });
 
   it('a spent item that is not of the character is ignored', async () => {

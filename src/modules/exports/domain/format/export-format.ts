@@ -8,6 +8,7 @@ import type { TraitPayment } from '../../../characters/domain/value-objects/char
 import type { ProfessionalBonusType } from '../../../characters/domain/value-objects/professional-bonus-type.vo.js';
 import type { WeaponDevelopmentType } from '../../../characters/domain/value-objects/weapon-development-type.vo.js';
 import type { Injury } from '../../../characters/domain/value-objects/injury.vo.js';
+import type { TemporaryModifier } from '../../../characters/domain/value-objects/temporary-modifier.vo.js';
 import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.vo.js';
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
@@ -32,7 +33,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 11;
+export const CURRENT_FORMAT_VERSION = 12;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -147,6 +148,13 @@ export interface CharacterExportResistance {
   customBonus: number;
 }
 
+/**
+ * Workspace spec 068 (format 12): a temporary modifier of the character. The day of the campaign does not travel (each
+ * game has its own calendar): `remainingDays` counts from the day of the export, and the import counts it again from
+ * the current day of the destination. Null: until the game master removes it.
+ */
+export type CharacterExportTemporaryModifier = Omit<TemporaryModifier, 'tacticalGameId'> & { remainingDays: number | null };
+
 /** A character without ids, owner, game or derived values (decision 3). */
 export interface CharacterExport {
   name: string;
@@ -163,8 +171,11 @@ export interface CharacterExport {
   /** Slots point to the `ref` of the items of the same character. */
   equipment: { slots: Partial<Record<EquipmentSlot, ExportRef | null>> };
   status: CharacterStatus;
+  /** Workspace spec 068 (format 12): limits, reopening and tourniquet of the injuries are optional. */
   injuries: Injury[];
   conditions: CharacterCondition[];
+  /** Workspace spec 068 (format 12) */
+  temporaryModifiers: CharacterExportTemporaryModifier[];
   description: string | null;
   imageUrl: string | null;
 }

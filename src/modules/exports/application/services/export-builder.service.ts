@@ -54,13 +54,14 @@ export class ExportBuilder {
       items.map(item => item.id),
     );
     const crafterOf = await this.crafters(items, [character]);
-    const data = characterEntry(character, items, refs, crafterOf);
+    const { source, currentGameDay } = await this.source(character.gameId, faction, character.owner);
+    const data = characterEntry(character, items, refs, crafterOf, currentGameDay);
     const file: CharacterFile = {
       format: EXPORT_FORMAT,
       formatVersion: CURRENT_FORMAT_VERSION,
       kind: 'character',
       exportedAt: now.toISOString(),
-      source: await this.source(character.gameId, faction, character.owner),
+      source,
       references: collectReferences([data]),
       data,
     };
@@ -82,24 +83,28 @@ export class ExportBuilder {
       allItems.map(item => item.id),
     );
     const crafterOf = await this.crafters(allItems, characters);
-    const entries = characters.map(character => characterEntry(character, itemsByCharacter.get(character.id)!, refs, crafterOf));
+    const { source, currentGameDay } = await this.source(faction.gameId, faction, faction.owner);
+    const entries = characters.map(character =>
+      characterEntry(character, itemsByCharacter.get(character.id)!, refs, crafterOf, currentGameDay),
+    );
     const armoryData = armory.map(item => itemToExport(item, refs, crafterOf));
     const file: FactionFile = {
       format: EXPORT_FORMAT,
       formatVersion: CURRENT_FORMAT_VERSION,
       kind: 'faction',
       exportedAt: now.toISOString(),
-      source: await this.source(faction.gameId, faction, faction.owner),
+      source,
       references: collectReferences(entries, armoryData),
       data: { faction: factionToExport(faction), armory: armoryData, characters: entries },
     };
     return { file, fileName: exportFileName('faction', faction.name, now) };
   }
 
-  private async source(gameId: string, faction: Faction, owner: string): Promise<ExportSource> {
+  /** The source of the file, and the day of its campaign (spec 068: the days left of the temporary modifiers). */
+  private async source(gameId: string, faction: Faction, owner: string): Promise<{ source: ExportSource; currentGameDay: number }> {
     const game = await this.gameRepository.findById(gameId);
     if (!game) throw new NotFoundError('Game', gameId, 'err-game-not-found');
-    return {
+    const source: ExportSource = {
       app: EXPORT_APP,
       appVersion: appVersion(),
       gameId: game.id,
@@ -110,6 +115,7 @@ export class ExportBuilder {
       factionName: faction.name,
       owner: owner ?? null,
     };
+    return { source, currentGameDay: game.calendar?.currentDay ?? 1 };
   }
 
   /**

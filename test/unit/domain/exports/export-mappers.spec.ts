@@ -223,4 +223,30 @@ describe('export mappers (spec 024)', () => {
     );
     expect(exportFileName('faction', '***', new Date('2026-01-02T00:00:00Z'))).toBe('faction-faction-20260102.rmu.json');
   });
+
+  it('exports the temporary modifiers that still apply with the days they have left (spec 068)', () => {
+    const character = buildCharacter();
+    const base = { kind: 'morale' as const, value: 5, source: 'manual' as const, days: 10, createdAt: '2026-11-02T00:00:00.000Z' };
+    character.temporaryModifiers = [
+      { ...base, id: 'm-1', tacticalGameId: 'tactical-1', expiresGameDay: 20 },
+      { ...base, id: 'm-2', tacticalGameId: null, expiresGameDay: 12 },
+      { ...base, id: 'm-3', tacticalGameId: null, days: null, expiresGameDay: null },
+    ];
+    const entry = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined, 12);
+    expect(entry.character.temporaryModifiers).toEqual([
+      { ...base, id: 'm-1', remainingDays: 8 },
+      { ...base, id: 'm-3', days: null, remainingDays: null },
+    ]);
+  });
+
+  it('leaves out the null optional fields of an injury added by hand, but keeps a null limit (spec 068)', () => {
+    const character = buildCharacter();
+    character.injuries = [{ ...injury, side: null, bleeding: null, flags: null, description: null, limits: null } as unknown as Injury];
+    const [exported] = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined).character.injuries;
+    expect(exported).not.toHaveProperty('side');
+    expect(exported).not.toHaveProperty('bleeding');
+    expect(exported).not.toHaveProperty('flags');
+    expect(exported).not.toHaveProperty('description');
+    expect(exported.limits).toBeNull();
+  });
 });

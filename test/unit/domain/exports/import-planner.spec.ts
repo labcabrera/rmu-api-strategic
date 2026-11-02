@@ -154,4 +154,18 @@ describe('import planner (spec 024, decision 5)', () => {
       else expect(skill.categoryId).toBe(`category-of-${skill.skillId}`);
     }
   });
+
+  it('counts the days left of the temporary modifiers from the current day of the destination (spec 068)', () => {
+    const [soldier] = faction().data.characters;
+    const modifier = { kind: 'morale' as const, value: -10, source: 'manual' as const, createdAt: '2026-11-02T00:00:00.000Z' };
+    soldier.character.temporaryModifiers = [
+      { ...modifier, id: 'm-1', days: 10, remainingDays: 4 },
+      { ...modifier, id: 'm-2', days: null, remainingDays: null },
+    ];
+    const [{ character }] = planImport([soldier], [], target({ currentGameDay: 30 })).characters;
+    expect(character.temporaryModifiers).toEqual([
+      { ...modifier, id: 'm-1', days: 10, tacticalGameId: null, expiresGameDay: 34 },
+      { ...modifier, id: 'm-2', days: null, tacticalGameId: null, expiresGameDay: null },
+    ]);
+  });
 });
