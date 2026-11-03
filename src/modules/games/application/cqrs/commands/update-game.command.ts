@@ -1,5 +1,6 @@
 import { GameOptionsDto } from '../../../interfaces/http/dto/game-options.dto.js';
 import { GamePowerLevelDto } from '../../../interfaces/http/dto/game-power-level.dto.js';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class UpdateGameCommand extends AuthenticatedCommand {
@@ -17,6 +18,8 @@ export class UpdateGameCommand extends AuthenticatedCommand {
     public readonly expectedVersion?: number,
     /** Workspace spec 065, decision 6 */
     public readonly calendar?: { startDate?: string; elapsedDays?: number },
+    /** Spec 071: only the owner changes it. */
+    public readonly accessType?: AccessType,
   ) {
     super(userId, roles);
   }

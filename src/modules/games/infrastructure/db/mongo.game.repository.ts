@@ -86,6 +86,13 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       imageUrl: doc.imageUrl,
       owner: doc.owner,
       accessType: doc.accessType,
+      members: (doc.members ?? []).map(m => ({ userId: m.userId, userName: m.userName, role: m.role, joinedAt: m.joinedAt })),
+      joinRequests: (doc.joinRequests ?? []).map(r => ({
+        userId: r.userId,
+        userName: r.userName,
+        message: r.message ?? null,
+        requestedAt: r.requestedAt,
+      })),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });

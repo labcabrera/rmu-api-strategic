@@ -27,7 +27,8 @@ import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
 import { TREASURE_TABLES_CLIENT } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
 import { DICE } from '../../../src/modules/treasure/domain/services/dice.js';
-import { apiFakes, InMemoryEventPublisher } from './fakes.js';
+import { apiFakes, InMemoryEventPublisher, resetSocialFakes } from './fakes.js';
+import { USERS_CLIENT } from '../../../src/modules/games/application/ports/users-client.port.js';
 import { AUDIENCE, ISSUER, LocalJwks } from './jwks.js';
 
 export type Server = Parameters<typeof request>[0];
@@ -73,6 +74,7 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     RMU_API_ITEMS_URI: 'http://127.0.0.1:1/v1',
     RMU_API_SPELLS_URI: 'http://127.0.0.1:1/v1',
     RMU_API_NPCS_URI: 'http://127.0.0.1:1/v1',
+    RMU_API_USERS_URI: 'http://127.0.0.1:1/v1',
     RMU_IAM_JWK_URI: jwks.uri,
     RMU_IAM_ISSUER_URI: ISSUER,
     RMU_IAM_AUDIENCE: AUDIENCE,
@@ -97,6 +99,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(events)
     .overrideProvider(REALM_CLIENT)
     .useValue(fakes.realmClient)
+    .overrideProvider(USERS_CLIENT)
+    .useValue(fakes.usersClient)
     .overrideProvider(NPC_CLIENT)
     .useValue(fakes.npcClient)
     .overrideProvider(ITEM_CLIENT)
@@ -152,6 +156,7 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
       const connection = app.get<Connection>(getConnectionToken());
       await Promise.all(Object.values(connection.collections).map(collection => collection.deleteMany({})));
       events.clear();
+      resetSocialFakes();
     },
     stop: async () => {
       await app.close();
@@ -163,3 +168,12 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
 
 /** The ids of a page response. */
 export const ids = (body: unknown) => (body as { content: { id: string }[] }).content.map(item => item.id);
+
+/** Makes `user` a member of the game with `role` (spec 071), as the owner of the game. */
+export async function addMember(e2e: E2eApp, gameId: string, user: UserName, role: 'master' | 'player' | 'spectator' = 'player') {
+  await request(e2e.server)
+    .put(`/v1/strategic-games/${gameId}/members/${USERS[user].sub}`)
+    .set('Authorization', e2e.auth('admin'))
+    .send({ role })
+    .expect(200);
+}

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 import { CreateGameCommand } from '../../../application/cqrs/commands/create-game.command.js';
 import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
@@ -54,6 +55,11 @@ export class CreateGameDto {
   @Type(() => CreateGameCalendarDto)
   calendar?: CreateGameCalendarDto;
 
+  @ApiProperty({ enum: ['public', 'private'], required: false, description: 'Visibility (spec 071): private by default' })
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  accessType?: AccessType;
+
   static toCommand(dto: CreateGameDto, userId: string, roles: string[]): CreateGameCommand {
     return new CreateGameCommand(
       dto.name,
@@ -66,6 +72,7 @@ export class CreateGameDto {
       userId,
       roles,
       dto.calendar?.startDate,
+      dto.accessType ?? 'private',
     );
   }
 }

@@ -19,6 +19,7 @@ const setup = () => {
         id === 'generic' ? { id, name: 'RMU Core', generic: true } : id === 'other-realm' ? { id, name: 'Other' } : undefined,
       ),
     ),
+    getUserAccess: vi.fn(() => Promise.resolve('read' as const)),
   } satisfies RealmClientPort;
   return { resolver: new FactionNpcsResolver(npcClient, realmClient), npcClient, realmClient };
 };

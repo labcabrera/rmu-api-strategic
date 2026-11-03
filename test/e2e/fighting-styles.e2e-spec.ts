@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { startApp, type E2eApp, type UserName } from './support/app.js';
-import { characterBody, gameWithFaction } from './support/builders.js';
+import { characterBody, gameWithFaction, joinAsPlayer } from './support/builders.js';
 
 type Skill = {
   skillId: string;
@@ -41,6 +41,7 @@ describe('fighting styles (e2e)', () => {
   beforeEach(async () => {
     await e2e.clear();
     const { game, faction } = await gameWithFaction(e2e, 'other');
+    await joinAsPlayer(e2e, game.id, 'owner');
     const created = await as('owner').post('/v1/characters', characterBody(game.id, faction.id));
     expect(created.status).toBe(201);
     characterId = (created.body as CharacterBody).id;

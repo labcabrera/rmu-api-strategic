@@ -10,7 +10,6 @@ import { Character } from '../../../../src/modules/characters/domain/aggregates/
 import type { GameRepository } from '../../../../src/modules/games/application/ports/game-repository.port.js';
 import type { GameTimeLogRepository } from '../../../../src/modules/games/application/ports/game-time-log-repository.port.js';
 import { GameAccess } from '../../../../src/modules/games/application/services/game-access.service.js';
-import type { GamePlayersPort } from '../../../../src/modules/games/application/ports/game-players.port.js';
 import { Game } from '../../../../src/modules/games/domain/aggregates/game.js';
 import { GameCalendar } from '../../../../src/modules/games/domain/value-objects/game-calendar.vo.js';
 import type { GameTimeLogEntry, PassTimeActivity } from '../../../../src/modules/games/domain/value-objects/game-time-log-entry.vo.js';
@@ -55,13 +54,12 @@ const setup = (characters: Character[], calendar = new GameCalendar('Spring', 0,
   const { publisher } = fakeEventPublisher();
   const store = new CharacterHealthStore(characterRepository, gameRepository, healingLog, publisher);
   const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
-  const players = { isPlayer: () => Promise.resolve(false) } as unknown as GamePlayersPort;
   const handler = new PassTimeHandler(
     gameRepository,
     timeLog,
     characterRepository,
     publisher,
-    new GameAccess(gameRepository, players),
+    new GameAccess(gameRepository),
     store,
     new CharacterRestService(tables),
   );

@@ -1,6 +1,3 @@
-import { CharacterModel, CharacterSchema } from '../characters/infrastructure/persistence/models/character.model.js';
-import { GAME_PLAYERS } from './application/ports/game-players.port.js';
-import { MongoGamePlayersAdapter } from './infrastructure/db/mongo.game-players.adapter.js';
 import { GameAccess } from './application/services/game-access.service.js';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -24,6 +21,17 @@ import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handl
 import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer.js';
 import { GameGuardAdapter } from './infrastructure/security/game-guard.adapter.js';
 
+import {
+  ApproveJoinRequestHandler,
+  GetGameMembersHandler,
+  RemoveGameMemberHandler,
+  RemoveJoinRequestHandler,
+  RequestJoinGameHandler,
+  SetGameMemberHandler,
+} from './application/cqrs/handlers/game-members.handlers.js';
+import { GameRealmService } from './application/services/game-realm.service.js';
+import { USERS_CLIENT } from './application/ports/users-client.port.js';
+import { ApiUsersClientAdapter } from './infrastructure/api-clients/api.users-client.adapter.js';
 import { GAME_GUARD } from './application/ports/game-guard.port.js';
 import { GAME_REPOSITORY } from './application/ports/game-repository.port.js';
 import { REALM_CLIENT } from './application/ports/realm-client.port.js';
@@ -34,8 +42,6 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     MongooseModule.forFeature([
       { name: GameModel.name, schema: GameSchema },
       { name: GameTimeLogModel.name, schema: GameTimeLogSchema },
-      // The players of a game (GamePlayersPort)
-      { name: CharacterModel.name, schema: CharacterSchema },
     ]),
     SharedModule,
   ],
@@ -48,7 +54,18 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     UpdateGameHandler,
     DeleteGameHandler,
     DeleteGamesByRealmHandler,
+    SetGameMemberHandler,
+    RemoveGameMemberHandler,
+    RequestJoinGameHandler,
+    ApproveJoinRequestHandler,
+    RemoveJoinRequestHandler,
+    GetGameMembersHandler,
     GameAccess,
+    GameRealmService,
+    {
+      provide: USERS_CLIENT,
+      useClass: ApiUsersClientAdapter,
+    },
     {
       provide: GAME_REPOSITORY,
       useClass: MongoGameRepository,
@@ -62,14 +79,10 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
       useClass: ApiRealmClientAdapter,
     },
     {
-      provide: GAME_PLAYERS,
-      useClass: MongoGamePlayersAdapter,
-    },
-    {
       provide: GAME_GUARD,
       useClass: GameGuardAdapter,
     },
   ],
-  exports: [GAME_REPOSITORY, GAME_TIME_LOG_REPOSITORY, GameAccess, REALM_CLIENT],
+  exports: [GAME_REPOSITORY, GAME_TIME_LOG_REPOSITORY, GameAccess, GameRealmService, REALM_CLIENT, USERS_CLIENT],
 })
 export class GamesModule {}

@@ -4,7 +4,7 @@ import { Game } from '../../../domain/aggregates/game.js';
 import { UpdateGameCommand } from '../commands/update-game.command.js';
 import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
 import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
-import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
+import { GameAccess } from '../../services/game-access.service.js';
 import { randomUUID } from 'crypto';
 import { type GameTimeLogRepository, GAME_TIME_LOG_REPOSITORY } from '../../ports/game-time-log-repository.port.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
@@ -14,7 +14,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
   constructor(
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
-    @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
+    private readonly gameAccess: GameAccess,
     @Inject(GAME_TIME_LOG_REPOSITORY) private readonly timeLogRepository: GameTimeLogRepository,
   ) {}
 
@@ -23,8 +23,11 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
     if (!current) {
       throw new NotFoundError('Game', command.gameId);
     }
-    // The owner of the game or an admin (F-strategic-15).
-    this.gameGuard.checkUpdate(current, command.userId, command.roles);
+    // The owner, a co-master or an admin (spec 071); the visibility only the owner.
+    this.gameAccess.checkManage(current, command.userId, command.roles);
+    if (command.accessType && command.accessType !== current.accessType) {
+      this.gameAccess.checkOwner(current, command.userId, command.roles, 'the visibility of the game');
+    }
     current.checkVersion(command.expectedVersion);
     current.update({
       name: command.name,
@@ -33,6 +36,7 @@ export class UpdateGameHandler implements ICommandHandler<UpdateGameCommand, Gam
       shortDescription: command.shortDescription,
       description: command.description,
       imageUrl: command.imageUrl,
+      accessType: command.accessType,
     });
     // Workspace spec 065, decision 6: a correction of the calendar applies no effects, but leaves a trace.
     const adjust = command.calendar

@@ -28,9 +28,10 @@ describe('healing in combat, fear and morale (e2e)', () => {
     await e2e.clear();
     const { game, faction } = await gameWithFaction(e2e);
     gameId = game.id;
-    gameVersion = (game as unknown as { version: number }).version;
     // A character of a player (`other`) in the game of `owner`
     characterId = (await createCharacter(e2e, gameId, faction.id, 'other')).id;
+    // `other` joined the game, which changed its version (spec 071)
+    gameVersion = ((await as('owner').get(`/v1/strategic-games/${game.id}`)).body as { version: number }).version;
     maneuverCalls.results = [];
     maneuverCalls.totals = [];
   });
