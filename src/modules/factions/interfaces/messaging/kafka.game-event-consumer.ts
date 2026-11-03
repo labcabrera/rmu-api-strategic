@@ -2,10 +2,16 @@ import { Controller, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { DeleteFactionsByGameCommand } from '../../application/cqrs/commands/delete-factions-by-game.command.js';
+import { SyncFactionPlayersCommand } from '../../application/cqrs/commands/faction-players.commands.js';
 
 /** The part of a game event this consumer reads. */
 export interface GameDeletedPayload {
   data?: { id?: string };
+}
+
+/** The part of a game.updated event this consumer reads (spec 072). */
+export interface GameUpdatedPayload {
+  data?: { id?: string; members?: { userId: string; role: string }[] };
 }
 
 /**
@@ -36,6 +42,21 @@ export class KafkaFactionGameEventConsumer {
         `Error deleting the factions of game ${gameId} (${topic}): ${message}`,
         error instanceof Error ? error.stack : undefined,
       );
+    }
+  }
+
+  /** Spec 072, decision 9: the players who leave the game, or stop being players, leave its factions. Never rethrown. */
+  @EventPattern<string>('internal.rmu-strategic.game.updated.v1')
+  async onGameUpdated(@Payload() event: GameUpdatedPayload, @Ctx() context: KafkaContext): Promise<void> {
+    const topic = context.getTopic();
+    const gameId = event?.data?.id;
+    if (!gameId || !event.data?.members) return;
+    const playerIds = event.data.members.filter(member => member.role === 'player').map(member => member.userId);
+    try {
+      await this.commandBus.execute(new SyncFactionPlayersCommand(gameId, playerIds));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error syncing the faction players of game ${gameId} (${topic}): ${message}`);
     }
   }
 }

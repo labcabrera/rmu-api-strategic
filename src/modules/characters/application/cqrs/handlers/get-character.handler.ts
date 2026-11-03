@@ -16,8 +16,7 @@ export class GetCharacterHandler implements IQueryHandler<GetCharacterQuery, Cha
   async execute(query: GetCharacterQuery): Promise<Character> {
     const data = await this.characterRepository.findById(query.characterId);
     if (!data) throw new NotFoundError('Character', query.characterId);
-    // Its sheet or its summary (spec 071, decision 11); the controller projects it.
-    await this.characterAccess.checkReadSummary(data, query.userId, query.roles);
+    await this.characterAccess.checkRead(data, query.userId, query.roles);
     return data;
   }
 }

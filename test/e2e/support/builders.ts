@@ -52,8 +52,8 @@ export const createFaction = (e2e: E2eApp, gameId: string, user: UserName = 'own
  * Makes `user` a player of the game unless they own it or are an admin (spec 071: only players create characters).
  * The owner of the game answers 400 `member-owner`, which is fine.
  */
-export async function joinAsPlayer(e2e: E2eApp, gameId: string, user: UserName): Promise<void> {
-  if (user === 'admin' || user === 'service' || user === 'noRole') return;
+export async function joinAsPlayer(e2e: E2eApp, gameId: string, user: UserName): Promise<boolean> {
+  if (user === 'admin' || user === 'service' || user === 'noRole') return false;
   const response = await request(e2e.server)
     .put(`/v1/strategic-games/${gameId}/members/${USERS[user].sub}`)
     .set('Authorization', e2e.auth('admin'))
@@ -61,9 +61,23 @@ export async function joinAsPlayer(e2e: E2eApp, gameId: string, user: UserName):
   if (response.status !== 200 && (response.body as { code?: string }).code !== 'member-owner') {
     throw new Error(`PUT members answered ${response.status}: ${JSON.stringify(response.body)}`);
   }
+  return response.status === 200;
 }
 
-/** A character of `user`, who first joins the game as a player. */
+/** `user`, a player of the game, joins a faction as one of its players (spec 072): an admin adds them. */
+export async function joinFaction(e2e: E2eApp, factionId: string, user: UserName): Promise<void> {
+  const response = await request(e2e.server)
+    .put(`/v1/factions/${factionId}/players/${USERS[user].sub}`)
+    .set('Authorization', e2e.auth('admin'));
+  if (response.status !== 200) throw new Error(`PUT faction players answered ${response.status}: ${JSON.stringify(response.body)}`);
+}
+
+/** `user` joins the game as a player and its faction as one of its players (the owner of the game is its master). */
+export async function joinAsFactionPlayer(e2e: E2eApp, gameId: string, factionId: string, user: UserName): Promise<void> {
+  if (await joinAsPlayer(e2e, gameId, user)) await joinFaction(e2e, factionId, user);
+}
+
+/** A character of `user`, who first joins the game as a player and the faction as one of its players. */
 export async function createCharacter(
   e2e: E2eApp,
   gameId: string,
@@ -71,7 +85,7 @@ export async function createCharacter(
   user: UserName = 'owner',
   overrides: Record<string, unknown> = {},
 ) {
-  await joinAsPlayer(e2e, gameId, user);
+  await joinAsFactionPlayer(e2e, gameId, factionId, user);
   return create(e2e, '/v1/characters', user, characterBody(gameId, factionId, overrides));
 }
 

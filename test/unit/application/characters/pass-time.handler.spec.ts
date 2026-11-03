@@ -1,4 +1,5 @@
 import { fakeEventPublisher } from '../../support/fake-event-publisher.js';
+import type { CharacterAccess } from '../../../../src/modules/characters/application/services/character-access.service.js';
 import { PassTimeCommand } from '../../../../src/modules/characters/application/cqrs/commands/pass-time.command.js';
 import { PassTimeHandler } from '../../../../src/modules/characters/application/cqrs/handlers/pass-time.handler.js';
 import type { CharacterRepository } from '../../../../src/modules/characters/application/ports/character-repository.port.js';
@@ -52,7 +53,14 @@ const setup = (characters: Character[], calendar = new GameCalendar('Spring', 0,
   const saveHealingLog = vi.fn<(characterId: string, gameId: string, entries: unknown[]) => Promise<void>>(() => Promise.resolve());
   const healingLog = { saveAll: saveHealingLog } as unknown as HealingLogRepository;
   const { publisher } = fakeEventPublisher();
-  const store = new CharacterHealthStore(characterRepository, gameRepository, healingLog, publisher);
+  const store = new CharacterHealthStore(
+    characterRepository,
+    gameRepository,
+    healingLog,
+    publisher,
+    { canManage: (game: Game | null, userId: string) => game?.owner === userId } as unknown as GameAccess,
+    { canChange: (c: Character, userId: string) => Promise.resolve(c.owner === userId) } as unknown as CharacterAccess,
+  );
   const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(TABLES) };
   const handler = new PassTimeHandler(
     gameRepository,

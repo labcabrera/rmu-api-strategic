@@ -209,13 +209,14 @@ describe('export and import (e2e)', () => {
       ]);
     });
 
-    it('lets only the owner, the game master or an admin export it', async () => {
+    it('lets only the players of its faction, the game master or an admin export it', async () => {
       const game = await createGame(e2e);
       const faction = await createFaction(e2e, game.id);
       const character = await createCharacter(e2e, game.id, faction.id, 'other');
       expect((await as('noRole').get(`/v1/characters/${character.id}/export`)).status).toBe(403);
       const mine = await createCharacter(e2e, game.id, faction.id, 'owner');
-      expect((await as('other').get(`/v1/characters/${mine.id}/export`)).status).toBe(403);
+      // Spec 072: 'other' is a player of the faction of both characters
+      ok(await as('other').get(`/v1/characters/${mine.id}/export`));
       ok(await as('other').get(`/v1/characters/${character.id}/export`));
       ok(await as('owner').get(`/v1/characters/${character.id}/export`));
       ok(await as('admin').get(`/v1/characters/${character.id}/export`));

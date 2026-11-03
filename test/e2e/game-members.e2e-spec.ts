@@ -150,6 +150,7 @@ describe('game members (e2e)', () => {
       const member = await as('carol').post(`/v1/strategic-games/${game.id}/join-requests`, {});
       expect(member.status).toBe(409);
       expect(member.body).toMatchObject({ code: 'already-member' });
+      await as('owner').put(`/v1/factions/${faction.id}/players/${carol.sub}`, {}).expect(200);
       expect((await as('carol').post('/v1/characters', characterBody(game.id, faction.id))).status).toBe(201);
     });
 
@@ -181,6 +182,7 @@ describe('game members (e2e)', () => {
 
       const { game, faction } = await gameWithFaction(e2e);
       await as('owner').put(`/v1/strategic-games/${game.id}/members/${USERS.other.sub}`, { role: 'player' }).expect(200);
+      await as('owner').put(`/v1/factions/${faction.id}/players/${USERS.other.sub}`, {}).expect(200);
       realmAccess.set(`${REALM.id}:${USERS.owner.sub}`, 'none');
       expect((await as('owner').get(`/v1/strategic-games/${game.id}`)).body).toMatchObject({ realmReadable: false });
       const blocked = await as('other').post('/v1/characters', characterBody(game.id, faction.id));

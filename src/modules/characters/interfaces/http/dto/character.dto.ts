@@ -22,6 +22,13 @@ import type { CharacterStatus } from '../../../domain/value-objects/character-st
 import { CharacterConditionDto, HealthSummaryDto, InjuryDto, TemporaryModifierDto } from './character-health.dto.js';
 
 export class CharacterDto {
+  @ApiProperty({
+    enum: ['manage', 'write', 'read'],
+    required: false,
+    description: 'Spec 072: what the user can do with the character (manage: masters; write: players of its faction)',
+  })
+  access?: 'manage' | 'write' | 'read';
+
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
   version: number;
 

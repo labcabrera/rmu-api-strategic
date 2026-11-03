@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { CharacterSummaryDto } from './dto/character-summary.dto.js';
 import { CharacterAccess } from '../../application/services/character-access.service.js';
+import type { EntityAccess } from '../../../factions/application/services/faction-access.service.js';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
@@ -46,7 +46,7 @@ export class CharacterController {
     const roles = user.roles;
     const query = new GetCharacterQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
-    return CharacterSummaryDto.forView(entity, await this.characterAccess.view(entity, userId, roles));
+    return this.toDto(entity, user);
   }
 
   @Get('')
@@ -61,9 +61,9 @@ export class CharacterController {
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
     const viewer = this.characterAccess.viewer(userId, roles);
     const mapped = await Promise.all(
-      page.content.map(async character => CharacterSummaryDto.forView(character, await viewer.character(character))),
+      page.content.map(async character => CharacterController.withAccess(character, await viewer.character(character))),
     );
-    return new Page<CharacterDto | CharacterSummaryDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
+    return new Page<CharacterDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
   @Post('')
@@ -77,7 +77,7 @@ export class CharacterController {
     const roles = user.roles;
     const command = CreateCharacterDto.toCommand(dto, userId, roles);
     const entity = await this.commandBus.execute<CreateCharacterCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Patch(':id')
@@ -90,7 +90,7 @@ export class CharacterController {
     const roles = user.roles;
     const command = UpdateCharacterDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateCharacterCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Delete(':id')
@@ -117,7 +117,7 @@ export class CharacterController {
     const roles = user.roles;
     const command = AddXPDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Post(':id/level-up')
@@ -132,7 +132,7 @@ export class CharacterController {
     const force = dto.force || false;
     const command = new LevelUpCommand(id, force, userId, roles);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Patch(':id/stats/temporary')
@@ -146,6 +146,17 @@ export class CharacterController {
     const roles = user.roles;
     const command = UpdateTemporaryStatDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateTemporaryStatCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
+  }
+
+  /** The sheet with the access of the user (spec 072, contract 18). */
+  private async toDto(entity: Character, user: AuthenticatedUser): Promise<CharacterDto> {
+    return CharacterController.withAccess(entity, await this.characterAccess.access(entity, user.id, user.roles));
+  }
+
+  private static withAccess(entity: Character, access: EntityAccess): CharacterDto {
+    const dto = CharacterDto.fromEntity(entity);
+    if (access !== 'none') dto.access = access;
+    return dto;
   }
 }
