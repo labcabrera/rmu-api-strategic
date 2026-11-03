@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return -- HTTP bodies read as loose JSON */
 import request from 'supertest';
-import { startApp, type E2eApp, type UserName } from './support/app.js';
+import { startApp, USERS, type E2eApp, type UserName } from './support/app.js';
 import { createCharacter, createFaction, createGame } from './support/builders.js';
 import { maneuverCalls, tradingTables } from './support/fakes.js';
 
@@ -109,6 +109,28 @@ describe('item operations (e2e)', () => {
     const coins = await as('other').get(`/v1/items?q=characterId==${soldierId};itemTypeId==gold-coin`);
     expect((coins.body as Body).content[0]).toMatchObject({ amount: 10 });
     expect(await gold()).toBe(80);
+  });
+
+  it('lets the leader of the faction spend its gold, and not after leaving the game (spec 071)', async () => {
+    const lead = (leaderId: string | null) => as('owner').patch(`/v1/factions/${factionId}`, { leaderId });
+    expect((await lead(USERS.other.sub)).body).toMatchObject({ leaderId: USERS.other.sub });
+    expect((await as('other').patch(`/v1/characters/${soldierId}/transfer-faction-gold`, { amount: 5 })).status).toBe(200);
+    const bought = await as('other').post('/v1/items/purchases', { buyer: holder('faction', faction.id()), itemTypeId: 'sword' });
+    expect(bought.status, JSON.stringify(bought.body)).toBe(201);
+    // add-gold stays with the masters
+    expect((await as('other').post(`/v1/factions/${factionId}/add-gold`, { gold: 10 })).status).toBe(403);
+    expect((await as('other').patch(`/v1/factions/${factionId}`, { name: 'Mine' })).status).toBe(403);
+    const spent = await gold();
+
+    await request(e2e.server).delete(`/v1/strategic-games/${gameId}/members/me`).set('Authorization', e2e.auth('other')).expect(200);
+    const after = await as('other').post('/v1/items/purchases', { buyer: holder('faction', faction.id()), itemTypeId: 'sword' });
+    expect(after.status).toBe(403);
+    expect(await gold()).toBe(spent);
+    // Only a player of the game leads a faction
+    const notPlayer = await lead(USERS.other.sub);
+    expect(notPlayer.status).toBe(400);
+    expect(notPlayer.body).toMatchObject({ code: 'leader-not-a-player' });
+    expect((await lead(null)).body).toMatchObject({ leaderId: null });
   });
 
   it('rejects a purchase the faction cannot afford without charging anything', async () => {

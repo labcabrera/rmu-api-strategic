@@ -1,5 +1,6 @@
 import { GameOptions } from '../../../domain/value-objects/game-options.vo.js';
 import { GamePowerLevel } from '../../../domain/value-objects/game-power-level.vo.js';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 import { AuthenticatedCommand } from '../../../../shared/application/cqrs/authenticated-command.js';
 
 export class CreateGameCommand extends AuthenticatedCommand {
@@ -14,6 +15,8 @@ export class CreateGameCommand extends AuthenticatedCommand {
     userId: string,
     roles: string[],
     public readonly startDate?: string,
+    /** Spec 071: private by default; a public game takes join requests. */
+    public readonly accessType: AccessType = 'private',
   ) {
     super(userId, roles);
   }

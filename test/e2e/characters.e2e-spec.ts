@@ -3,7 +3,7 @@ import { RACE_CLIENT, type RaceClientPort } from '../../src/modules/characters/a
 import { CULTURE_CLIENT, type CultureClientPort } from '../../src/modules/characters/application/ports/culture-client.port.js';
 import { BadGatewayError, GatewayTimeoutError } from '../../src/modules/shared/domain/errors/errors.js';
 import { ids, startApp, type E2eApp, type UserName } from './support/app.js';
-import { characterBody, createCharacter, createItem, gameWithFaction } from './support/builders.js';
+import { characterBody, createCharacter, createItem, gameWithFaction, joinAsPlayer } from './support/builders.js';
 
 // Character bodies are large: they are built from the core fakes (race, profession, skills) in support/fakes.ts.
 describe('characters (e2e)', () => {
@@ -101,7 +101,11 @@ describe('characters (e2e)', () => {
 
     it('rejects a token without groups, and lets a player create their character in the game of another user [F-strategic-15]', async () => {
       expect((await as('noRole').post('/v1/characters', characterBody(gameId, factionId))).status).toBe(403);
-      // Games are created private: a player joins the game of the game master with a character of their own
+      // Spec 071: only the players of the game create characters in it.
+      const outsider = await as('other').post('/v1/characters', characterBody(gameId, factionId));
+      expect(outsider.status).toBe(403);
+      expect((outsider.body as { code: string }).code).toBe('not-a-player');
+      await joinAsPlayer(e2e, gameId, 'other');
       const created = await as('other').post('/v1/characters', characterBody(gameId, factionId));
       expect(created.status).toBe(201);
       expect(created.body).toMatchObject({ owner: 'e2e-other', gameId });

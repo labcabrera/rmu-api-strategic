@@ -8,6 +8,8 @@ import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggreg
 
 export class Faction extends BaseAggregateRoot<FactionProps> {
   public importId: string | undefined = undefined;
+  /** Spec 071, decision 9: the player who spends the gold of the faction, chosen by a master. */
+  public leaderId: string | null = null;
 
   private constructor(
     id: string,
@@ -59,7 +61,16 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       props.updatedAt,
     );
     faction.importId = props.importId;
+    faction.leaderId = props.leaderId ?? null;
     return faction;
+  }
+
+  /** Spec 071: the handler checks that the leader is a player of the game; null removes it. */
+  setLeader(leaderId: string | null) {
+    if (this.leaderId === leaderId) return;
+    this.leaderId = leaderId;
+    this.updatedAt = new Date();
+    this.apply(new FactionUpdatedEvent(this));
   }
 
   update(props: UpdateFactionProps) {
@@ -113,6 +124,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       imageUrl: this.imageUrl,
       owner: this.owner,
       npcs: this.npcs.map(npc => ({ ...npc })),
+      leaderId: this.leaderId,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       ...(this.importId ? { importId: this.importId } : {}),

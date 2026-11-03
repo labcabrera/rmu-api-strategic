@@ -1,7 +1,8 @@
 import type { TreasureTablesClientPort } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
 import type { TreasureTables } from '../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
 import type { Dice } from '../../../src/modules/treasure/domain/services/dice.js';
-import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { RealmAccessLevel, RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { UsersClientPort } from '../../../src/modules/games/application/ports/users-client.port.js';
 import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
 import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
 import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
@@ -575,9 +576,34 @@ export const TREASURE_TABLES = {
 /** Rolls the fake dice answer: queued values first, then 50 (within the range asked). */
 export const diceQueue: number[] = [];
 
+/**
+ * What core answers to `GET /realms/:id/access/:userId` (spec 071), keyed `realmId:userId`; `read` when not set.
+ * Tests change it and `E2eApp.clear()` empties it.
+ */
+export const realmAccess = new Map<string, RealmAccessLevel>();
+
+/** The accepted friendships users answers (spec 071), as `a:b` with either order; owner and other are friends. */
+export const friendships = new Set<string>();
+export const DEFAULT_FRIENDSHIPS = ['e2e-owner:e2e-other'];
+
+export function resetSocialFakes(): void {
+  realmAccess.clear();
+  friendships.clear();
+  DEFAULT_FRIENDSHIPS.forEach(pair => friendships.add(pair));
+}
+resetSocialFakes();
+
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
-  const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)) };
+  const realmClient: RealmClientPort = {
+    getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)),
+    getUserAccess: (realmId, userId) => Promise.resolve(realmAccess.get(`${realmId}:${userId}`) ?? 'read'),
+  };
+  const usersClient: UsersClientPort = {
+    findAcceptedFriend: (a, b) =>
+      Promise.resolve(friendships.has(`${a}:${b}`) || friendships.has(`${b}:${a}`) ? { userId: b, userName: `name-${b}` } : null),
+    findUserName: userId => Promise.resolve(`name-${userId}`),
+  };
   const npcClient: NpcClientPort = { getNpcById: id => Promise.resolve(NPCS.find(npc => npc.id === id)) };
   const itemClient: ItemClientPort = {
     getItemById: id => Promise.resolve(ITEM_TYPES[id]),
@@ -675,6 +701,7 @@ export function apiFakes() {
   const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
   const dice: Dice = { roll: (min, max) => Math.min(max, Math.max(min, diceQueue.shift() ?? 50)) };
   return {
+    usersClient,
     treasureTablesClient,
     dice,
     alchemyTablesClient,

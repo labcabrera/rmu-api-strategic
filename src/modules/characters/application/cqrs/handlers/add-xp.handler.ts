@@ -20,12 +20,11 @@ export class AddXPHandler implements ICommandHandler<AddXPCommand, Character> {
   ) {}
 
   async execute(command: AddXPCommand): Promise<Character> {
-    //TODO check admin role
     const characterId = command.characterId;
     const character = await this.characterRepository.findById(command.characterId);
     if (!character) throw new NotFoundError('Character', characterId);
-    // Its owner, the owner of its game or an admin (F-strategic-15).
-    await this.characterAccess.checkChange(character, command.userId, command.roles);
+    // Giving experience is for the masters of its game and admins (spec 071, decision 14).
+    await this.characterAccess.checkManage(character, command.userId, command.roles);
     const items = await this.itemRepository.findByCharacterId(character.id);
     character.experience.xp += command.xp;
     this.characterProcessorService.process(character, items);

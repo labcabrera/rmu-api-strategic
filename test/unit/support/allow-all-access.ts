@@ -6,5 +6,7 @@ export const allowAllCharacterAccess = {
   canChange: () => Promise.resolve(true),
   checkRead: () => Promise.resolve(),
   checkCreate: () => undefined,
+  checkCreateIn: () => Promise.resolve(),
+  checkManage: () => Promise.resolve(),
   readFilter: () => Promise.resolve({ type: 'empty' }),
 } as unknown as CharacterAccess;

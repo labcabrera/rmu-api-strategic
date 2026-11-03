@@ -14,6 +14,8 @@ export class UpdateFactionCommand extends AuthenticatedCommand {
     public readonly expectedVersion?: number,
     /** Spec 055: the whole list of NPCs; undefined leaves it as it is. */
     public readonly npcs?: FactionNpcInput[],
+    /** Spec 071: the leader of the faction, null to remove it; undefined leaves it as it is. */
+    public readonly leaderId?: string | null,
   ) {
     super(userId, roles);
   }

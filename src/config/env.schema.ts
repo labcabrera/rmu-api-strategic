@@ -9,6 +9,8 @@ export const envSchema = Joi.object({
   RMU_API_SPELLS_URI: Joi.string().required(),
   // Workspace spec 055: the NPCs of the factions are checked against rmu-api-npcs.
   RMU_API_NPCS_URI: Joi.string().required(),
+  // Spec 071: friendships and user names for the members of a game
+  RMU_API_USERS_URI: Joi.string().required(),
   RMU_IAM_URI: Joi.string().uri().default('http://localhost/sso'),
   RMU_IAM_REALM: Joi.string().default('rmu'),
   RMU_IAM_JWK_URI: Joi.string().uri().required(),
