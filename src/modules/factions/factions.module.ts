@@ -17,10 +17,12 @@ import { DeleteFactionsByGameHandler } from './application/cqrs/handlers/delete-
 import { KafkaFactionGameEventConsumer } from './interfaces/messaging/kafka.game-event-consumer.js';
 
 import { FACTION_REPOSITORY } from './application/ports/faction-repository.port.js';
-import { FACTION_MEMBERSHIP } from './application/ports/faction-membership.port.js';
 import { FactionAccess } from './application/services/faction-access.service.js';
-import { MongoFactionMembershipAdapter } from './infrastructure/db/mongo.faction-membership.adapter.js';
-import { CharacterModel, CharacterSchema } from '../characters/infrastructure/persistence/models/character.model.js';
+import {
+  AddFactionPlayerHandler,
+  RemoveFactionPlayerHandler,
+  SyncFactionPlayersHandler,
+} from './application/cqrs/handlers/faction-players.handlers.js';
 import { NPC_CLIENT } from './application/ports/npc-client.port.js';
 import { FactionNpcsResolver } from './application/services/faction-npcs.resolver.js';
 import { ApiNpcClientAdapter } from './infrastructure/api-clients/api.npc-client.adapter.js';
@@ -28,10 +30,7 @@ import { ApiNpcClientAdapter } from './infrastructure/api-clients/api.npc-client
   imports: [
     TerminusModule,
     CqrsModule,
-    MongooseModule.forFeature([
-      { name: FactionModel.name, schema: FactionSchema },
-      { name: CharacterModel.name, schema: CharacterSchema },
-    ]),
+    MongooseModule.forFeature([{ name: FactionModel.name, schema: FactionSchema }]),
     SharedModule,
     GamesModule,
   ],
@@ -44,9 +43,11 @@ import { ApiNpcClientAdapter } from './infrastructure/api-clients/api.npc-client
     DeleteFactionCommandHandler,
     DeleteFactionsByGameHandler,
     AddFactionGoldCommandHandler,
+    AddFactionPlayerHandler,
+    RemoveFactionPlayerHandler,
+    SyncFactionPlayersHandler,
     FactionNpcsResolver,
     FactionAccess,
-    { provide: FACTION_MEMBERSHIP, useClass: MongoFactionMembershipAdapter },
     { provide: NPC_CLIENT, useClass: ApiNpcClientAdapter },
     {
       provide: FACTION_REPOSITORY,

@@ -3,7 +3,7 @@ import { RACE_CLIENT, type RaceClientPort } from '../../src/modules/characters/a
 import { CULTURE_CLIENT, type CultureClientPort } from '../../src/modules/characters/application/ports/culture-client.port.js';
 import { BadGatewayError, GatewayTimeoutError } from '../../src/modules/shared/domain/errors/errors.js';
 import { ids, startApp, type E2eApp, type UserName } from './support/app.js';
-import { characterBody, createCharacter, createItem, gameWithFaction, joinAsPlayer } from './support/builders.js';
+import { characterBody, createCharacter, createItem, gameWithFaction, joinAsPlayer, joinFaction } from './support/builders.js';
 
 // Character bodies are large: they are built from the core fakes (race, profession, skills) in support/fakes.ts.
 describe('characters (e2e)', () => {
@@ -106,6 +106,11 @@ describe('characters (e2e)', () => {
       expect(outsider.status).toBe(403);
       expect((outsider.body as { code: string }).code).toBe('not-a-player');
       await joinAsPlayer(e2e, gameId, 'other');
+      // Spec 072, decision 7: and only the players of the faction (or the masters) in it.
+      const notInFaction = await as('other').post('/v1/characters', characterBody(gameId, factionId));
+      expect(notInFaction.status).toBe(403);
+      expect((notInFaction.body as { code: string }).code).toBe('not-a-faction-player');
+      await joinFaction(e2e, factionId, 'other');
       const created = await as('other').post('/v1/characters', characterBody(gameId, factionId));
       expect(created.status).toBe(201);
       expect(created.body).toMatchObject({ owner: 'e2e-other', gameId });
@@ -163,9 +168,10 @@ describe('characters (e2e)', () => {
       const tactical = await as('other').get(`/v1/characters?q=gameId==${gameId}&page=0&size=1000`);
       expect(ids(tactical.body).sort()).toEqual([mine.id, theirs.id].sort());
       expect((await as('owner').get(`/v1/characters/${theirs.id}`)).status).toBe(200);
-      // Reading is not changing: the player changes neither the game nor the character of another player
+      // Reading is not changing: the player changes neither the game nor the name of the faction (spec 072: the
+      // players of a faction change its characters, also those of other users)
       expect((await as('other').patch(`/v1/strategic-games/${gameId}`, { name: 'Hijacked' })).status).toBe(403);
-      expect((await as('other').patch(`/v1/characters/${mine.id}`, { name: 'Hijacked' })).status).toBe(403);
+      expect((await as('other').patch(`/v1/characters/${mine.id}`, { name: 'Shared' })).status).toBe(200);
       expect((await as('other').patch(`/v1/factions/${factionId}`, { name: 'Hijacked' })).status).toBe(403);
     });
 

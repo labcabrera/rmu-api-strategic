@@ -20,8 +20,8 @@ export interface HolderContext {
 
 /**
  * Who may act on the items and gold of a holder (workspace spec 023, decision 9):
- * - a character: its owner, the owner of the game or an admin (CharacterAccess);
- * - a faction (its armory and gold): the masters of the game, an admin, or its leader while a player (spec 071).
+ * - a character: the players of its faction, the masters or an admin (CharacterAccess, spec 072);
+ * - a faction (its armory and gold): its players, the masters or an admin (spec 072, decision 6).
  * A player may also give an item of their character to its faction or to another character of the same faction.
  */
 @Injectable()
@@ -55,7 +55,7 @@ export class HolderAccess {
 
   async canManage(context: HolderContext, userId: string, roles: string[]): Promise<boolean> {
     if (context.character) return this.characterAccess.canChange(context.character, userId, roles);
-    return this.factionAccess.canSpend(context.faction, userId, roles);
+    return this.factionAccess.canWrite(context.faction, userId, roles);
   }
 
   async checkManage(context: HolderContext, userId: string, roles: string[]): Promise<void> {

@@ -24,9 +24,9 @@ export const MAX_GAME_JOIN_REQUESTS = 50;
  * What a user can do with a game (spec 071), from less to more:
  * - none: nothing;
  * - cover: the card of a public game (name, descriptions, image, realm, status, power level);
- * - spectator: the game, the covers of its factions and the summaries of its characters;
- * - player: also the full sheets and factions they are a member of, and their own characters;
- * - master: change everything but deleting the game, its visibility and its co-masters;
+ * - spectator: the game and everything of it (spec 072, decision 3), without changing anything;
+ * - player: the same, and they change the factions they are a player of and what hangs from them (spec 072);
+ * - master: change everything but deleting the game, its visibility and its masters;
  * - owner: everything (the owner of the game, admins and the service account).
  */
 export const GAME_ACCESS_LEVELS = ['none', 'cover', 'spectator', 'player', 'master', 'owner'] as const;

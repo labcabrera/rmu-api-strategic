@@ -43,9 +43,9 @@ export class FactionModel {
   @Prop({ type: [FactionNpcModel], default: [] })
   npcs: FactionNpcModel[];
 
-  /** Spec 071: the player who spends the gold of the faction. */
-  @Prop({ type: String, required: false, default: null })
-  leaderId?: string | null;
+  /** Spec 072: the players of the game who change the faction. Missing in older documents, which read as []. */
+  @Prop({ type: [String], default: [] })
+  players?: string[];
 
   @Prop({ required: true })
   createdAt: Date;

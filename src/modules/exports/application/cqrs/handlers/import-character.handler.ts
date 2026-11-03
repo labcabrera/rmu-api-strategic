@@ -23,7 +23,7 @@ export class ImportCharacterHandler implements ICommandHandler<ImportCharacterCo
     if (!faction) throw new NotFoundError('Faction', command.factionId, 'err-faction-not-found');
     const game = await this.gameAccess.findGame(faction.gameId);
     if (!game) throw new NotFoundError('Game', faction.gameId, 'err-game-not-found');
-    await this.characterAccess.checkCreateIn(game, command.userId, command.roles);
+    await this.characterAccess.checkCreateIn(game, faction, command.userId, command.roles);
     const prepared = await this.imports.prepare(
       command.file,
       { target: 'character', game, faction, characterRef: command.characterRef },
