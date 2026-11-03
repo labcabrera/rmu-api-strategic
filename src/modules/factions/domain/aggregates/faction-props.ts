@@ -12,12 +12,14 @@ export interface FactionProps {
   owner: string;
   /** Workspace spec 055: missing in older documents, which read as []. */
   npcs: FactionNpc[];
+  /** Spec 071, decision 9: a player of the game who spends the gold of the faction; missing in older documents. */
+  leaderId?: string | null;
   createdAt: Date;
   updatedAt: Date | undefined;
   /** Spec 024: the import that created it, to undo a failed import. */
   importId?: string;
 }
 
-export type CreateFactionProps = Omit<FactionProps, 'id' | 'createdAt' | 'updatedAt' | 'npcs'> & { npcs?: FactionNpc[] };
+export type CreateFactionProps = Omit<FactionProps, 'id' | 'createdAt' | 'updatedAt' | 'npcs' | 'leaderId'> & { npcs?: FactionNpc[] };
 
 export type UpdateFactionProps = Partial<Omit<FactionProps, 'id' | 'gameId' | 'management' | 'owner' | 'createdAt' | 'updatedAt'>>;

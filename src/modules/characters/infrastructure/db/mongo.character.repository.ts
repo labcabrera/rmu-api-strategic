@@ -38,6 +38,12 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
     return docs.map(doc => String(doc._id));
   }
 
+  async findIdsByFactionIds(factionIds: string[]): Promise<string[]> {
+    if (factionIds.length === 0) return [];
+    const docs = await this.model.find({ 'faction.id': { $in: factionIds } }, { _id: 1 }).lean<{ _id: string }[]>();
+    return docs.map(doc => String(doc._id));
+  }
+
   async findByRaceId(raceId: string): Promise<Character[]> {
     const characters = await this.model.find({ 'info.race.id': raceId });
     return characters.map(doc => this.toEntity(doc));

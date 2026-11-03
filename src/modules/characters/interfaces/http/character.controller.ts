@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { CharacterSummaryDto } from './dto/character-summary.dto.js';
+import { CharacterAccess } from '../../application/services/character-access.service.js';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
@@ -32,6 +34,7 @@ export class CharacterController {
   constructor(
     private commandBus: CommandBus,
     private queryBus: QueryBus,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   @Get(':id')
@@ -43,7 +46,7 @@ export class CharacterController {
     const roles = user.roles;
     const query = new GetCharacterQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
-    return CharacterDto.fromEntity(entity);
+    return CharacterSummaryDto.forView(entity, await this.characterAccess.view(entity, userId, roles));
   }
 
   @Get('')
@@ -56,8 +59,11 @@ export class CharacterController {
     const roles = user.roles;
     const query = new GetCharactersQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
-    const mapped = page.content.map(character => CharacterDto.fromEntity(character));
-    return new Page<CharacterDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
+    const viewer = this.characterAccess.viewer(userId, roles);
+    const mapped = await Promise.all(
+      page.content.map(async character => CharacterSummaryDto.forView(character, await viewer.character(character))),
+    );
+    return new Page<CharacterDto | CharacterSummaryDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
   @Post('')

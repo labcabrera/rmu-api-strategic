@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsOptional, IsString, IsInt, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsOptional, IsString, IsInt, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { UpdateFactionCommand } from '../../../application/cqrs/commands/update-faction.command.js';
 import { MAX_FACTION_NPCS } from '../../../domain/value-objects/faction-npc.vo.js';
 import { FactionNpcInputDto } from './faction-npc.dto.js';
@@ -41,6 +41,12 @@ export class UpdateFactionDto {
   @IsOptional()
   npcs?: FactionNpcInputDto[];
 
+  @ApiPropertyOptional({ type: String, nullable: true, description: 'Spec 071: a player of the game who spends its gold; null removes it' })
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @IsOptional()
+  leaderId?: string | null;
+
   @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
   @Type(() => Number)
   @IsInt()
@@ -59,6 +65,7 @@ export class UpdateFactionDto {
       roles,
       dto.version,
       dto.npcs?.map(npc => ({ id: npc.id, npcId: npc.npcId, name: npc.name, count: npc.count, notes: npc.notes })),
+      dto.leaderId,
     );
   }
 }

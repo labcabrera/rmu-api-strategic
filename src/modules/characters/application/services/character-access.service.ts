@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { Game } from '../../../games/domain/aggregates/game.js';
 import { GameAccess } from '../../../games/application/services/game-access.service.js';
 import { GameRealmService } from '../../../games/application/services/game-realm.service.js';
+import { type CharacterView, FactionAccess, type StrategicViewer } from '../../../factions/application/services/faction-access.service.js';
 import { QueryCriteria } from '../../../shared/application/criteria/query-criteria.js';
 import { ForbiddenError, ValidationError } from '../../../shared/domain/errors/errors.js';
 import { Character } from '../../domain/aggregates/character.js';
 
 /**
  * Who may read and change a character (spec 021, decision 2; F-strategic-15; spec 071):
- * - read: its owner (also after leaving the game), or the members of its strategic game and admins;
+ * - read: the sheet for its owner (also after leaving the game), the masters, admins, other APIs and the members of
+ *   its faction; the summary for the other members of the game (decision 11; StrategicViewer);
  * - change and delete: its owner while they are a player of the game, its masters or an admin. rmu-api-tactical
  *   applies the outcome of a tactical game with the token of the user who runs it (a master of the strategic game),
  *   so the masters must be able to change the characters of the players;
@@ -21,7 +23,16 @@ export class CharacterAccess {
   constructor(
     private readonly gameAccess: GameAccess,
     private readonly gameRealm: GameRealmService,
+    private readonly factionAccess: FactionAccess,
   ) {}
+
+  viewer(userId: string, roles: string[]): StrategicViewer {
+    return this.factionAccess.viewer(userId, roles);
+  }
+
+  view(character: Character, userId: string, roles: string[]): Promise<CharacterView> {
+    return this.viewer(userId, roles).character(character);
+  }
 
   async checkChange(character: Character, userId: string, roles: string[]): Promise<void> {
     if (await this.canChange(character, userId, roles)) return;
@@ -43,9 +54,17 @@ export class CharacterAccess {
     throw new ForbiddenError('Only the game master can change this of the character');
   }
 
+  /** The whole sheet and what hangs from it (healing log, spells, items). */
   async checkRead(character: Character, userId: string, roles: string[]): Promise<void> {
-    if (GameAccess.readsAll(roles) || character.owner === userId) return;
-    await this.gameAccess.checkRead(await this.gameAccess.findGame(character.gameId), userId, roles, 'this character');
+    if ((await this.view(character, userId, roles)) === 'full') return;
+    throw new ForbiddenError('You do not have permission to read this character');
+  }
+
+  /** At least its summary (GET by id). */
+  async checkReadSummary(character: Character, userId: string, roles: string[]): Promise<CharacterView> {
+    const view = await this.view(character, userId, roles);
+    if (view === 'none') throw new ForbiddenError('You do not have permission to read this character');
+    return view;
   }
 
   /** A new character: rmu-user or rmu-admin. */

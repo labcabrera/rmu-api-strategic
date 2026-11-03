@@ -5,7 +5,7 @@ import { Faction } from '../../../domain/aggregates/faction.js';
 import type { Game } from '../../../../games/domain/aggregates/game.js';
 import { type FactionRepository, FACTION_REPOSITORY } from '../../ports/faction-repository.port.js';
 import { UpdateFactionCommand } from '../commands/update-faction.command.js';
-import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
+import { NotFoundError, ValidationError } from '../../../../shared/domain/errors/errors.js';
 import { FactionNpcsResolver } from '../../services/faction-npcs.resolver.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
 
@@ -36,11 +36,22 @@ export class UpdateFactionHandler implements ICommandHandler<UpdateFactionComman
       imageUrl: command.imageUrl,
       npcs,
     });
+    if (command.leaderId !== undefined) faction.setLeader(this.checkLeader(game, command.leaderId));
     // Spec 021, decision 9: a PATCH without changes neither writes nor publishes.
     if (!faction.hasChanges()) return faction;
     const updated = await this.factionRepository.update(faction);
     await this.events.publishChanges('faction', faction);
     return updated;
+  }
+
+  /** Spec 071, decision 9: the leader is a player (or co-master) of the game. */
+  private checkLeader(game: Game | null, leaderId: string | null): string | null {
+    if (leaderId === null) return null;
+    const role = game?.roleOf(leaderId);
+    if (role !== 'player' && role !== 'master') {
+      throw new ValidationError('The leader of a faction must be a player of the game', 'leader-not-a-player');
+    }
+    return leaderId;
   }
 
   private resolveNpcs(command: UpdateFactionCommand, faction: Faction, game: Game | null) {

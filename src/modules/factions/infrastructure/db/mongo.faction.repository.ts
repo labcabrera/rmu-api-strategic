@@ -38,6 +38,7 @@ export class MongoFactionRepository extends MongoBaseRepository<Faction, Faction
       imageUrl: doc.imageUrl,
       owner: doc.owner,
       npcs: (doc.npcs ?? []).map(npc => ({ id: npc.id, npcId: npc.npcId, name: npc.name, count: npc.count, notes: npc.notes ?? null })),
+      leaderId: doc.leaderId ?? null,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       importId: doc.importId,

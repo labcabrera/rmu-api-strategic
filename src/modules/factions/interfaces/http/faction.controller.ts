@@ -8,7 +8,8 @@ import { Faction } from '../../domain/aggregates/faction.js';
 import { GetFactionsQuery } from '../../application/cqrs/queries/get-factions.query.js';
 import { CreateFactionDto } from './dto/create-faction.dto.js';
 import { CreateFactionCommand } from '../../application/cqrs/commands/create-faction.command.js';
-import { FactionDto, FactionPageDto } from './dto/faction.dto.js';
+import { FactionCoverDto, FactionDto, FactionPageDto } from './dto/faction.dto.js';
+import { FactionAccess } from '../../application/services/faction-access.service.js';
 import { UpdateFactionCommand } from '../../application/cqrs/commands/update-faction.command.js';
 import { UpdateFactionDto } from './dto/update-faction.dto.js';
 import { DeleteFactionCommand } from '../../application/cqrs/commands/delete-faction.command.js';
@@ -27,6 +28,7 @@ export class FactionController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly factionAccess: FactionAccess,
   ) {}
 
   @Get(':id')
@@ -36,7 +38,7 @@ export class FactionController {
   async findById(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const query = new GetFactionQuery(id, user.id, user.roles);
     const entity = await this.queryBus.execute<GetFactionQuery, Faction>(query);
-    return FactionDto.fromEntity(entity);
+    return FactionDto.forView(entity, await this.factionAccess.viewer(user.id, user.roles).faction(entity));
   }
 
   @Get('')
@@ -46,8 +48,9 @@ export class FactionController {
   async find(@Query() dto: PagedQueryDto, @CurrentUser() user: AuthenticatedUser) {
     const query = new GetFactionsQuery(dto.q, dto.page, dto.size, user.id, user.roles);
     const page = await this.queryBus.execute<GetFactionsQuery, Page<Faction>>(query);
-    const mapped = page.content.map(faction => FactionDto.fromEntity(faction));
-    return new Page<FactionDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
+    const viewer = this.factionAccess.viewer(user.id, user.roles);
+    const mapped = await Promise.all(page.content.map(async faction => FactionDto.forView(faction, await viewer.faction(faction))));
+    return new Page<FactionDto | FactionCoverDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
   @Post('')

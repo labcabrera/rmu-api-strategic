@@ -100,6 +100,13 @@ export class GameAccess {
     );
   }
 
+  /** The ids of the games the user masters: owned or as a co-master. */
+  async masterGameIds(userId: string): Promise<string[]> {
+    return this.gameRepository.findIds(
+      QueryCriteria.anyOf([QueryCriteria.eq('owner', userId), QueryCriteria.elemMatch('members', { userId, role: 'master' })]),
+    );
+  }
+
   /**
    * The filter of a listing of children of games (`gameId` in the games the user is a member of), or empty for an
    * admin. `alsoOwned` adds what the user owns in a game they cannot read (an expelled player keeps their characters).
