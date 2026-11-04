@@ -99,6 +99,43 @@ describe('AttackProcessor', () => {
     expect(attack.sizeAdjustment).toBe(-2);
   });
 
+  describe('size on the whole scale (spec 075)', () => {
+    const attackSize = (raceSize: string, weaponMode: ItemWeaponMode, wielderSize?: string) =>
+      generateAttacks(buildCharacter(raceSize, { mainHand: 'item-001', offHand: null }), [
+        buildWeapon('item-001', 'broadsword', [weaponMode], wielderSize),
+      ])[0];
+
+    it('gives +2 to the attacks of a large race', () => {
+      expect(attackSize('large', mode('one-hand', 0)).sizeAdjustment).toBe(2);
+    });
+
+    it('gives -2 to the attacks of a tiny race', () => {
+      expect(attackSize('tiny', mode('one-hand', 0)).sizeAdjustment).toBe(-2);
+    });
+
+    it('adds the +1 of a two-handed mode to a big race', () => {
+      const attack = attackSize('big', mode('two-hands', 1));
+      expect(attack.twoHanded).toBe(true);
+      expect(attack.sizeAdjustment).toBe(2);
+    });
+
+    it('uses the size of a large weapon wielded by a medium race', () => {
+      const attack = attackSize('medium', mode('one-hand', 0), 'large');
+      expect(attack.wrongSize).toBe(true);
+      expect(attack.boModifiers.wrongSize).toBe(-20);
+      expect(attack.sizeAdjustment).toBe(2);
+    });
+
+    it('covers the creature sizes up to leviathan', () => {
+      expect(attackSize('minuscule', mode('one-hand', 0)).sizeAdjustment).toBe(-4);
+      expect(attackSize('leviathan', mode('one-hand', 0)).sizeAdjustment).toBe(8);
+    });
+
+    it('rejects an unknown size id', () => {
+      expect(() => attackSize('colossal', mode('one-hand', 0))).toThrow('Unsupported size colossal');
+    });
+  });
+
   it('counts the times St enters the skill bonus of each attack (spec 040)', () => {
     const melee = buildWeapon('item-001', 'broadsword', [mode('one-hand', 0)]);
     const [meleeAttack] = generateAttacks(buildCharacter('medium', { mainHand: 'item-001', offHand: null }), [melee]);
