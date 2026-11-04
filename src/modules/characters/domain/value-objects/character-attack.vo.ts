@@ -1,6 +1,7 @@
 import { CharacterAttackRange } from './character-attack-range.vo.js';
 
-export type WeaponCategory = 'dagger' | 'light' | 'natural' | 'standard';
+// 'unarmed': the attacks of the unarmed skills (workspace spec 076, A8)
+export type WeaponCategory = 'dagger' | 'light' | 'natural' | 'standard' | 'unarmed';
 
 export class CharacterAttack {
   constructor(

@@ -3,6 +3,7 @@ import { AttackProcessor } from '../../../../src/modules/characters/domain/servi
 import { Item } from '../../../../src/modules/items/domain/aggregates/item.js';
 import { ItemWeapon } from '../../../../src/modules/items/domain/value-objects/item-weapon.vo.js';
 import { ItemWeaponMode } from '../../../../src/modules/items/domain/value-objects/item-weapon-mode.vo.js';
+import { buildCharacter as fixtureCharacter, skill as fixtureSkill } from './traits/character.fixture.js';
 
 const SKILL_BONUS = 30;
 
@@ -152,5 +153,65 @@ describe('AttackProcessor', () => {
     (character as unknown as { findSkill: () => null }).findSkill = () => null;
     const [attack] = generateAttacks(character, [melee]);
     expect(attack.strengthWeight).toBe(0);
+  });
+});
+
+describe('AttackProcessor: unarmed attacks (workspace spec 076, A8)', () => {
+  const unarmed = (skillId: string, specialization: string | null, ranks: number, totalBonus: number) => {
+    const result = fixtureSkill(skillId, specialization, ranks);
+    result.totalBonus = totalBonus;
+    return result;
+  };
+
+  it('generates one attack per specialization with ranks, with its table, the race size and the default fumble', () => {
+    const character = fixtureCharacter({
+      sizeId: 'small',
+      skills: [
+        unarmed('unarmed-st', 'strikes', 3, 25),
+        unarmed('unarmed-ag', 'wrestling', 1, 12),
+        unarmed('unarmed-ag', 'sweeps-throws', 0, -25),
+        unarmed('unarmed-st', 'bite', 2, 8),
+      ],
+    });
+    new AttackProcessor().process(character, []);
+    expect(character.attacks.map(a => [a.attackName, a.attackTable, a.skillId, a.bo])).toEqual([
+      ['unarmed-st-strikes', 'unarmed-strikes', 'unarmed-st@strikes', 25],
+      ['unarmed-ag-wrestling', 'grapple', 'unarmed-ag@wrestling', 12],
+      ['unarmed-st-bite', 'bite', 'unarmed-st@bite', 8],
+    ]);
+    const [strikes] = character.attacks;
+    expect(strikes).toMatchObject({
+      weaponCategory: 'unarmed',
+      type: 'melee',
+      sizeAdjustment: -1,
+      fumbleTable: 'unarmed',
+      fumble: 3,
+      weaponFumble: 3,
+      meleeRange: 0.9,
+      ranges: null,
+      defaultAttack: true,
+    });
+  });
+
+  it('keeps them next to the equipped weapons, which stay the default attacks', () => {
+    const item = buildWeapon('item-001', 'broadsword', [mode('one-hand', 0)]);
+    (item as { weapon: ItemWeapon }).weapon = new ItemWeapon('melee-weapon@blade', 3, [mode('one-hand', 0)]);
+    const character = fixtureCharacter({
+      skills: [fixtureSkill('melee-weapon', 'blade', 2), unarmed('unarmed-st', 'strikes', 1, 10)],
+      slots: { mainHand: 'item-001', offHand: null },
+    });
+    new AttackProcessor().process(character, [item]);
+    expect(character.attacks.map(a => [a.weaponCategory, a.defaultAttack])).toEqual([
+      ['standard', true],
+      ['unarmed', false],
+    ]);
+  });
+
+  it('generates them for a character without equipment slots', () => {
+    const character = fixtureCharacter({ skills: [unarmed('unarmed-st', 'strikes', 1, 10)] });
+    character.equipment = undefined as unknown as Character['equipment'];
+    new AttackProcessor().process(character, []);
+    expect(character.attacks).toHaveLength(1);
+    expect(character.attacks[0].boModifiers).toEqual({ skill: 10 });
   });
 });

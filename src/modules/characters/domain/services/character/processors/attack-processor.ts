@@ -19,20 +19,64 @@ const SHIELD_FUMBLE_TABLE = 'melee-one-hand';
 const WRONG_SIZE_PENALTY = -20;
 const SHIELD_SKILL_ID = 'shield';
 
+// Workspace spec 076, A8: unarmed attacks, one for each specialization of the unarmed skills with ranks
+export const UNARMED_SKILL_IDS = ['unarmed-st', 'unarmed-ag'];
+// Attack table of each specialization (report characters-creation.md §6); the rest use their own id
+const UNARMED_ATTACK_TABLES: Record<string, string> = {
+  strikes: 'unarmed-strikes',
+  'sweeps-throws': 'unarmed-sweeps',
+  wrestling: 'grapple',
+};
+// Strategic does not read the attack tables: the fumble and the reach of the attack are the defaults of the spec
+const UNARMED_FUMBLE = 3;
+const UNARMED_FUMBLE_TABLE = 'unarmed';
+
 @Injectable()
 export class AttackProcessor {
   private readonly logger = new Logger(AttackProcessor.name);
 
   process(character: Character, items: Item[]): void {
-    if (!character.equipment || !character.equipment.slots) {
-      this.logger.warn(`Character ${character.id} has no equipment slots defined, skipping attack processing`);
-      //TODO process unarmed attack
-      return;
-    }
     const attacks: CharacterAttack[] = [];
-    this.calculateAttackBonusSlot(character, attacks, 'mainHand', items);
-    this.calculateAttackBonusSlot(character, attacks, 'offHand', items);
+    if (!character.equipment || !character.equipment.slots) {
+      this.logger.warn(`Character ${character.id} has no equipment slots defined, only unarmed attacks are processed`);
+    } else {
+      this.calculateAttackBonusSlot(character, attacks, 'mainHand', items);
+      this.calculateAttackBonusSlot(character, attacks, 'offHand', items);
+    }
+    // Always, even with weapons: the character may choose to fight unarmed
+    attacks.push(...this.getUnarmedAttacks(character, attacks.length === 0));
     character.attacks = attacks;
+  }
+
+  /**
+   * One attack for each specialization of `unarmed-st` and `unarmed-ag` with at least one rank (workspace spec 076,
+   * A8). The skill id of the attack is `skill@specialization`, as the weapon attacks. Natural Weaponry is not handled.
+   */
+  private getUnarmedAttacks(character: Character, defaultAttack: boolean): CharacterAttack[] {
+    return (character.skills || [])
+      .filter(skill => UNARMED_SKILL_IDS.includes(skill.skillId) && !!skill.specialization && skill.ranks >= 1)
+      .map(skill => {
+        const specialization = skill.specialization!;
+        const skillId = `${skill.skillId}@${specialization}`;
+        return CharacterAttack.fromProps({
+          attackName: `${skill.skillId}-${specialization}`,
+          attackTable: UNARMED_ATTACK_TABLES[specialization] ?? specialization,
+          sizeAdjustment: this.getSizeAdjustment(character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId),
+          fumbleTable: UNARMED_FUMBLE_TABLE,
+          fumble: this.getFumble(character, UNARMED_FUMBLE, skill, skillId),
+          weaponFumble: UNARMED_FUMBLE,
+          type: 'melee',
+          defaultAttack,
+          meleeRange: Math.round((character.info.height / 2) * 100) / 100,
+          ranges: null,
+          boModifiers: this.getBoModifiers(skill, character, 'mainHand', 'melee'),
+          twoHanded: false,
+          weaponCategory: 'unarmed',
+          wrongSize: false,
+          skillId,
+          strengthWeight: this.getStrengthWeight(skill),
+        });
+      });
   }
 
   private calculateAttackBonusSlot(character: Character, attacks: CharacterAttack[], slot: EquipmentSlot, items: Item[]): void {
