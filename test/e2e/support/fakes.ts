@@ -63,6 +63,9 @@ export const SKILLS: SkillResponse[] = [
   { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
   // Spec 050: a skill whose specializations are enumerations of core
   { id: 'language-spoken', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
+  { id: 'language-written', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
+  // Workspace spec 076: an unarmed skill, whose specializations give unarmed attacks
+  { id: 'unarmed-st', categoryId: 'combat', bonus: ['st'], specialization: 'unarmed-st-attack' },
   // Workspace spec 032: a fighting style skill, without stat bonus
   { id: 'combat-styles', categoryId: 'combat-expertise', bonus: [], specialization: 'combat-style' },
   ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
@@ -82,7 +85,15 @@ export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
 export const PROFESSION: Profession = {
   id: 'fighter',
   professionalSkills: [],
-  skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8], 'combat-expertise': [1, 1] },
+  skillCosts: {
+    physical: [2, 6],
+    awareness: [2, 4],
+    athletic: [2, 5],
+    combat1: [2, 5],
+    combat4: [4, 8],
+    'combat-expertise': [1, 1],
+    lore: [1, 3],
+  },
 };
 
 /** Made-up fighting styles with the shape of rmu-api-core (spec 032), not the rulebook ones. */
@@ -199,7 +210,20 @@ export const RACE = {
 export const ENUMERATIONS: { category: string; realmId: string | null; key: string }[] = [
   { category: 'language', realmId: null, key: 'common-tongue' },
   { category: 'language', realmId: REALM.id, key: 'north-tongue' },
+  { category: 'unarmed-st-attack', realmId: null, key: 'strikes' },
 ];
+
+/** Workspace spec 076: the talent that grants language ranks, with an invented cost. */
+export const MULTILINGUAL_TRAIT = {
+  id: 'multilingual',
+  name: 'E2E multilingual',
+  isTalent: true,
+  specialization: null,
+  isTierBased: false,
+  maxTier: null,
+  adquisitionCost: 10,
+  tierCost: null,
+} as unknown as TraitResponse;
 
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
 
@@ -629,7 +653,8 @@ export function apiFakes() {
     getSpellsByListId: id => Promise.resolve(SPELLS.filter(spell => spell.spellListId === id)),
   };
   const traitClient: TraitClientPort = {
-    getTraitById: (id: string) => Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
+    getTraitById: (id: string) =>
+      id === MULTILINGUAL_TRAIT.id ? Promise.resolve(MULTILINGUAL_TRAIT) : Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
   };
   const cultureClient: CultureClientPort = {
     getCultureById: id =>
