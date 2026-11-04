@@ -11,6 +11,15 @@ export interface TraitPayment {
   level: number;
 }
 
+/** Ranks a talent grants to a skill (workspace spec 076, A7: Multilingual), to undo them when it is deleted. */
+export interface TraitGrantedRanks {
+  skillId: string;
+  specialization: string | null;
+  ranks: number;
+  // The skill did not exist and was created for the talent: it is removed with the talent when it keeps no ranks
+  created: boolean;
+}
+
 export class CharacterTrait {
   constructor(
     public readonly traitId: string,
@@ -23,5 +32,6 @@ export class CharacterTrait {
     public readonly paidWith?: TraitPayment,
     // Spec 024: imported from a file whose trait the core catalog of this installation does not have. It has no effect
     public readonly missingReference?: boolean,
+    public readonly grantedRanks?: TraitGrantedRanks[],
   ) {}
 }

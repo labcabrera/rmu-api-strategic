@@ -34,8 +34,9 @@ export class LevelUpSkillHandler implements ICommandHandler<LevelUpSkillCommand,
 
     const { powerLevel, options } = await loadGameRules(this.gameRepository, character.gameId);
     character.levelUpSkill(command.skillId, command.specialization, {
-      allowThirdRank: options.allowThirdRank,
+      intenseTraining: options.intenseTraining,
       bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel,
+      pool: command.pool,
     });
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);

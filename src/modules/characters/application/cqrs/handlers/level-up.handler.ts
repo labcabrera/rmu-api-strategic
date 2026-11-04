@@ -8,6 +8,8 @@ import { LevelUpCommand } from '../commands/level-up.command.js';
 import { type CharacterRepository, CHARACTER_REPOSITORY } from '../../ports/character-repository.port.js';
 import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
 import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/application/ports/item-repository.port.js';
+import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
+import { loadGameRules } from '../../services/game-rules.js';
 
 @CommandHandler(LevelUpCommand)
 export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character> {
@@ -15,6 +17,7 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
     private readonly characterProcessorService: CharacterProcessorService,
     @Inject(CHARACTER_REPOSITORY) private readonly characterRepository: CharacterRepository,
     @Inject(ITEM_REPOSITORY) private readonly itemRepository: ItemRepository,
+    @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     private readonly characterAccess: CharacterAccess,
     private readonly characterWriter: CharacterWriter,
   ) {}
@@ -26,7 +29,8 @@ export class LevelUpHandler implements ICommandHandler<LevelUpCommand, Character
     }
     // Its owner, the owner of its game or an admin (F-strategic-15).
     await this.characterAccess.checkChange(character, command.userId, command.roles);
-    character.levelUp(command.force);
+    const { options } = await loadGameRules(this.gameRepository, character.gameId);
+    character.levelUp(command.force, { save: command.save, allowSavingDevPoints: options.allowSavingDevPoints });
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterWriter.save(character);

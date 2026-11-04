@@ -33,7 +33,10 @@ export class UpdateTemporaryStatHandler implements ICommandHandler<UpdateTempora
       throw new ValidationError(`Stat ${command.stat} not found for character ${command.characterId}`);
     }
     const { powerLevel } = await loadGameRules(this.gameRepository, character.gameId);
-    character.updateTemporaryStat(command.stat, command.value, { bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel });
+    character.updateTemporaryStat(command.stat, command.value, {
+      bonusDevPointsPerLevel: powerLevel.raceDevPointsPerLevel,
+      pool: command.pool,
+    });
     const items = await this.itemRepository.findByCharacterId(command.characterId);
     this.characterProcessorService.process(character, items);
     await this.characterWriter.save(character);

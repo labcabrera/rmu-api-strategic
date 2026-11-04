@@ -130,7 +130,7 @@ export class CharacterController {
     const userId = user.id;
     const roles = user.roles;
     const force = dto.force || false;
-    const command = new LevelUpCommand(id, force, userId, roles);
+    const command = new LevelUpCommand(id, force, userId, roles, dto.save || false);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
     return this.toDto(entity, user);
   }

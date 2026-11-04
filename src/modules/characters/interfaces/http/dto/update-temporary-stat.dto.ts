@@ -1,5 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsNumber, IsString, Max, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { DEV_POINTS_POOL_CHOICES, type DevPointsPoolChoice } from '../../../domain/services/dev-points/dev-points-spending.service.js';
+import { DEV_POINTS_POOL_DESCRIPTION } from './dev-points-pool.dto.js';
 import { UpdateTemporaryStatCommand } from '../../../application/cqrs/commands/update-temporary-stat.command.js';
 import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 
@@ -15,7 +17,12 @@ export class UpdateTemporaryStatDto {
   @Max(10, { message: 'Roll must be at most 10' })
   roll: number;
 
+  @ApiPropertyOptional({ enum: DEV_POINTS_POOL_CHOICES, default: 'auto', description: DEV_POINTS_POOL_DESCRIPTION })
+  @IsOptional()
+  @IsIn(DEV_POINTS_POOL_CHOICES)
+  pool?: DevPointsPoolChoice;
+
   static toCommand(characterId: string, dto: UpdateTemporaryStatDto, userId: string, roles: string[]) {
-    return new UpdateTemporaryStatCommand(characterId, dto.stat, dto.roll, userId, roles);
+    return new UpdateTemporaryStatCommand(characterId, dto.stat, dto.roll, userId, roles, dto.pool ?? 'auto');
   }
 }
