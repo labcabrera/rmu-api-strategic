@@ -1,5 +1,6 @@
 import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
+import type { TalentSkillRanksService } from '../../../../../src/modules/characters/application/services/talent-skill-ranks.service.js';
 import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler.js';
 import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command.js';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
@@ -66,6 +67,7 @@ const setup = (powerLevel: Partial<GamePowerLevel>) => {
     fakeEventPublisher().publisher,
     gameRepository as unknown as GameRepository,
     allowAllCharacterAccess,
+    { prepare: vi.fn().mockResolvedValue([]) } as unknown as TalentSkillRanksService,
   );
   return { character, handler };
 };
