@@ -11,6 +11,7 @@ import { CharacterAttackRange } from '../../../value-objects/character-attack-ra
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 import { matchesAttack, matchesWeaponType } from '../traits/trait-specialization-matcher.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
+import { getSizeSteps } from '../../../../../shared/domain/entities/character-size.js';
 
 const SHIELD_FUMBLE = 4;
 // Core Law has no fumble column for shield bashes: the one-handed melee one is used (workspace spec 034)
@@ -276,17 +277,14 @@ export class AttackProcessor {
     return 'standard';
   }
 
-  private getSizeAdjustment(sizeId: string): number {
-    switch (sizeId) {
-      case 'medium':
-        return 0;
-      case 'big':
-        return 1;
-      case 'small':
-        return -1;
-      default:
-        throw new DomainError('Unsupported size ' + sizeId);
+  // Steps from Medium on the whole size scale, minuscule (-4) to leviathan (+8) (workspace spec 075, decision 1).
+  // An unknown id is a data error, not a size: it fails instead of silently attacking as Medium
+  private getSizeAdjustment(sizeId: string | undefined): number {
+    const steps = getSizeSteps(sizeId);
+    if (steps === null) {
+      throw new DomainError('Unsupported size ' + sizeId);
     }
+    return steps;
   }
 
   private getWeaponSkillBonus(character: Character, weapon: ItemWeapon): CharacterSkill | null {
