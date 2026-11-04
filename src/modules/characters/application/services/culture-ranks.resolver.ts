@@ -81,7 +81,7 @@ const resolveAssignment = (
       'err-culture-language-not-offered',
     );
   }
-  return { skillId: skill.id, specialization, ranks: assignment.ranks };
+  return { skillId: skill.id, specialization, ranks: assignment.ranks, sources: [index] };
 };
 
 /**
@@ -113,6 +113,7 @@ export const resolveCultureRanks = (culture: Culture, assignments: CultureAssign
         skillId: skill.id,
         specialization: specializationKey(skill.specialization, entry.specialization),
         ranks: entry.ranks,
+        sources: [index],
       });
       return;
     }
@@ -141,11 +142,13 @@ export const resolveCultureRanks = (culture: Culture, assignments: CultureAssign
     });
   });
 
+  // Two entries that grant the same skill add up (spec 009, doubt 3; workspace spec 076, A6), keeping both sources
   const merged = new Map<string, CultureRanks>();
   resolved.forEach(r => {
     const key = skillKey(r.skillId, r.specialization);
     const current = merged.get(key);
-    merged.set(key, current ? { ...current, ranks: current.ranks + r.ranks } : { ...r });
+    const sources = [...new Set([...(current?.sources || []), ...(r.sources || [])])];
+    merged.set(key, current ? { ...current, ranks: current.ranks + r.ranks, sources } : { ...r, sources });
   });
   return Array.from(merged.values());
 };
