@@ -64,7 +64,7 @@ export class CreateGameDto {
     return new CreateGameCommand(
       dto.name,
       dto.realmId,
-      dto.options,
+      GameOptionsDto.toEntity(dto.options),
       dto.powerLevel,
       dto.shortDescription,
       dto.description,
