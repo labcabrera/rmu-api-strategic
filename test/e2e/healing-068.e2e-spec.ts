@@ -167,7 +167,7 @@ describe('healing in combat, fear and morale (e2e)', () => {
     const exported = await as('owner').get(`${base()}/export`);
     expect(exported.status).toBe(200);
     const file = exported.body as Body;
-    expect(file.formatVersion).toBe(12);
+    expect(file.formatVersion).toBe(13);
     expect(file.data.character.injuries[0].limits).toEqual({ pace: 'jog' });
     expect(file.data.character.temporaryModifiers).toEqual([
       {

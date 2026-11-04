@@ -177,6 +177,9 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       weaponDevelopment: [...xp.weaponDevelopment],
       bonusDevPointsSpentThisLevel: xp.bonusDevPointsSpentThisLevel ?? 0,
       flawDevPoints: xp.flawDevPoints ?? 0,
+      intenseTrainingSkill: xp.intenseTrainingSkill ? { ...xp.intenseTrainingSkill } : null,
+      savedDevPoints: xp.savedDevPoints ?? 0,
+      statGainPayments: (xp.statGainPayments || []).map(payment => ({ ...payment })),
     },
     statistics,
     skills: character.skills.map(skill => ({
@@ -188,6 +191,8 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       ranks: skill.ranks,
       ranksDeveloped: skill.ranksDeveloped,
       cultureRanks: skill.cultureRanks ?? 0,
+      talentRanks: skill.talentRanks ?? 0,
+      ...(skill.cultureSources?.length ? { cultureSources: [...skill.cultureSources] } : {}),
       devPointsSpent: { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 },
       knackBonus: orNull(skill.knackBonus),
       ...(skill.styleAbilities?.length ? { styleAbilities: skill.styleAbilities.map(a => ({ ...a })) } : {}),
@@ -202,6 +207,7 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
         cost: trait.cost ?? 0,
         specialization: orNull(trait.specialization),
         paidWith: trait.paidWith ? { ...trait.paidWith } : null,
+        ...(trait.grantedRanks?.length ? { grantedRanks: trait.grantedRanks.map(granted => ({ ...granted })) } : {}),
       })),
     hp: { current: character.hp.current },
     endurance: {

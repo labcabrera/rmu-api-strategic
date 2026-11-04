@@ -152,7 +152,7 @@ describe('treasure law goods (e2e)', () => {
       ok(await as('owner').post('/v1/items/purchases', { buyer: faction(), itemTypeId: 'e2e-gem', carats: 2.5 }), 201);
       ok(await as('owner').post('/v1/items/purchases', { buyer: faction(), itemTypeId: 'e2e-ring', jewelryClass: 'junk', value: 10 }), 201);
       const file = ok(await as('owner').get(`/v1/factions/${factionId}/export`));
-      expect(file.formatVersion).toBe(12);
+      expect(file.formatVersion).toBe(13);
       expect(file.data.armory).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ itemTypeId: 'e2e-gem', carats: 2.5, value: 5 }),
