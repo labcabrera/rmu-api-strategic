@@ -30,6 +30,12 @@ export class CharacterEquipmentDto {
   @ApiProperty({ type: CharacterLoadDto, description: 'Load breakdown (spec 077)' })
   load: CharacterLoadDto;
 
+  @ApiProperty({
+    description: 'Load penalty the dodge takes: without the allowance of Beast of Burden (spec 079, D2)',
+    example: -10,
+  })
+  dodgeEncumbrancePenalty: number;
+
   static fromEntity(entity: CharacterEquipment): CharacterEquipmentDto {
     const dto = new CharacterEquipmentDto();
     dto.slots = entity.slots || {};
@@ -42,6 +48,7 @@ export class CharacterEquipmentDto {
     dto.perceptionPenalty = entity.perceptionPenalty;
     dto.movementBaseDifficulty = entity.movementBaseDifficulty;
     dto.armorEncumbrance = entity.armorEncumbrance ?? 0;
+    dto.dodgeEncumbrancePenalty = entity.dodgeEncumbrancePenalty ?? entity.encumbrancePenalty;
     dto.load = entity.load ? { ...entity.load } : { worn: 0, carried: entity.weight ?? 0, percent: 0 };
     return dto;
   }

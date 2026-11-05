@@ -25,6 +25,9 @@ export class CharacterEnduranceDto {
   @ApiProperty({ description: 'Racial endurance bonus (with Body Development, the endurance bonus of a tactical game)', example: 0 })
   racialBonus: number;
 
+  @ApiProperty({ description: 'Bonus of Vigorous (+10/tier) and Feeble (-10/tier) to every Endurance roll (spec 079, D2)', example: 10 })
+  traitBonus: number;
+
   static fromEntity(endurance: CharacterEndurance): CharacterEnduranceDto {
     const dto = new CharacterEnduranceDto();
     dto.customBonus = endurance.customBonus;
@@ -33,6 +36,7 @@ export class CharacterEnduranceDto {
     dto.accumulator = endurance.accumulator;
     dto.fatiguePenalty = endurance.fatiguePenalty ?? 0;
     dto.racialBonus = endurance.racialBonus ?? 0;
+    dto.traitBonus = endurance.traitBonus ?? 0;
     return dto;
   }
 }

@@ -108,6 +108,10 @@ export class CharacterEndurance {
 
   @Prop({ required: true })
   fatiguePenalty: number;
+
+  // Workspace spec 079, D2
+  @Prop({ type: Number, required: false })
+  traitBonus?: number;
 }
 
 @Schema({ _id: false })

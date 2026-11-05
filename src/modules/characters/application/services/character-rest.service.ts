@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
 import { Character, type RestResult } from '../../domain/aggregates/character.js';
 import { HealingCalculator } from '../../domain/services/healing/healing-calculator.js';
-import { restPowerPeriods } from '../../domain/services/power/power-rules.js';
+import { restPeriodHours, restPowerPeriods } from '../../domain/services/power/power-rules.js';
+import { getEffectiveTraits } from '../../domain/services/character/traits/trait-effect-resolver.js';
 import { ROUNDS_PER_HOUR, ROUNDS_PER_UNIT } from '../../domain/value-objects/poison.vo.js';
 import { type HealingTablesClientPort, HEALING_TABLES_CLIENT } from '../ports/healing-tables-client.port.js';
 
@@ -75,12 +76,15 @@ export class CharacterRestService {
     const poisonRounds = totalHours * ROUNDS_PER_HOUR + minutes * ROUNDS_PER_UNIT.minute;
     // Workspace spec 077, D11: one point of fatigue per minute of the whole rest
     const fatigueMinutes = restHours * MINUTES_PER_HOUR + minutes;
+    // Workspace spec 079, D2: Efficient and Restless Sleeper change the length of the power point periods; the hits do
+    // not change
+    const periodHours = restPeriodHours(getEffectiveTraits(character.traits));
     return character.rest(
       hpAfter,
       counterDays,
       new Date().toISOString(),
       summary,
-      active ? elapsedDays * restPowerPeriods(ACTIVE_SLEEP_HOURS_PER_DAY, 0) : restPowerPeriods(hours, days),
+      active ? elapsedDays * restPowerPeriods(ACTIVE_SLEEP_HOURS_PER_DAY, 0, periodHours) : restPowerPeriods(hours, days, periodHours),
       poisonRounds,
       input.currentGameDay,
       fatigueMinutes,

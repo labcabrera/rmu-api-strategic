@@ -11,6 +11,10 @@ export class CharacterAttackRange {
 
   @Prop({ type: Number, required: true })
   bonus: number;
+
+  // Workspace spec 079, D1: the part of the bonus given by Deadeye
+  @Prop({ type: Number, required: false })
+  traitBonus?: number;
 }
 
 @Schema({ _id: false })

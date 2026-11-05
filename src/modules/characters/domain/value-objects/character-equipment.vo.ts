@@ -20,6 +20,11 @@ export class CharacterEquipment {
   public armorEncumbrance?: number;
   /** Workspace spec 077, decision B1.5; missing in documents not processed since. */
   public load?: CharacterLoad;
+  /**
+   * Workspace spec 079, D2: the load penalty without Beast of Burden, which the dodge takes (§9.6). Missing in documents
+   * not processed since: `encumbrancePenalty`.
+   */
+  public dodgeEncumbrancePenalty?: number;
 
   constructor(
     public slots: Record<EquipmentSlot, string | null>,

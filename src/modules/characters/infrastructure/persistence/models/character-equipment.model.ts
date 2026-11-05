@@ -40,4 +40,8 @@ export class CharacterEquipment {
 
   @Prop({ type: Object, required: false })
   load?: CharacterLoad;
+
+  // Workspace spec 079, D2
+  @Prop({ type: Number, required: false })
+  dodgeEncumbrancePenalty?: number;
 }
