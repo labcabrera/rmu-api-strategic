@@ -2475,6 +2475,175 @@
                                 }
                               }
                             ]
+                          },
+                          "acquiredBy": {
+                            "type": "array",
+                            "rules": [
+                              {
+                                "name": "max",
+                                "args": {
+                                  "limit": 100
+                                }
+                              }
+                            ],
+                            "items": [
+                              {
+                                "type": "object",
+                                "keys": {
+                                  "tier": {
+                                    "type": "number",
+                                    "flags": {
+                                      "presence": "required"
+                                    },
+                                    "rules": [
+                                      {
+                                        "name": "integer"
+                                      },
+                                      {
+                                        "name": "min",
+                                        "args": {
+                                          "limit": 1
+                                        }
+                                      },
+                                      {
+                                        "name": "max",
+                                        "args": {
+                                          "limit": 100
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "flags": {
+                                      "only": true,
+                                      "presence": "required"
+                                    },
+                                    "allow": [
+                                      "natural",
+                                      "training",
+                                      "milestone",
+                                      "profession",
+                                      "skill",
+                                      "race"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "string",
+                                    "rules": [
+                                      {
+                                        "name": "trim",
+                                        "args": {
+                                          "enabled": true
+                                        }
+                                      },
+                                      {
+                                        "name": "min",
+                                        "args": {
+                                          "limit": 1
+                                        }
+                                      },
+                                      {
+                                        "name": "max",
+                                        "args": {
+                                          "limit": 200
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "note": {
+                                    "type": "string",
+                                    "rules": [
+                                      {
+                                        "name": "max",
+                                        "args": {
+                                          "limit": 500
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "linkedTo": {
+                            "type": "object",
+                            "keys": {
+                              "traitId": {
+                                "type": "string",
+                                "flags": {
+                                  "presence": "required"
+                                },
+                                "rules": [
+                                  {
+                                    "name": "trim",
+                                    "args": {
+                                      "enabled": true
+                                    }
+                                  },
+                                  {
+                                    "name": "min",
+                                    "args": {
+                                      "limit": 1
+                                    }
+                                  },
+                                  {
+                                    "name": "max",
+                                    "args": {
+                                      "limit": 200
+                                    }
+                                  }
+                                ]
+                              },
+                              "specialization": {
+                                "type": "string",
+                                "rules": [
+                                  {
+                                    "name": "trim",
+                                    "args": {
+                                      "enabled": true
+                                    }
+                                  },
+                                  {
+                                    "name": "min",
+                                    "args": {
+                                      "limit": 1
+                                    }
+                                  },
+                                  {
+                                    "name": "max",
+                                    "args": {
+                                      "limit": 200
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "restricted": {
+                            "type": "object",
+                            "keys": {
+                              "note": {
+                                "type": "string",
+                                "flags": {
+                                  "presence": "required"
+                                },
+                                "rules": [
+                                  {
+                                    "name": "max",
+                                    "args": {
+                                      "limit": 500
+                                    }
+                                  }
+                                ],
+                                "allow": [
+                                  ""
+                                ]
+                              }
+                            }
+                          },
+                          "pendingApproval": {
+                            "type": "boolean"
                           }
                         }
                       }
@@ -2914,7 +3083,8 @@
                                   "fumble",
                                   "fatigue",
                                   "manual",
-                                  "poison"
+                                  "poison",
+                                  "hazard"
                                 ]
                               },
                               "tacticalGameId": {
@@ -3854,7 +4024,8 @@
                                   "fumble",
                                   "fatigue",
                                   "manual",
-                                  "poison"
+                                  "poison",
+                                  "hazard"
                                 ]
                               },
                               "tacticalGameId": {
@@ -4749,6 +4920,17 @@
                               "light",
                               "medium",
                               "heavy"
+                            ]
+                          },
+                          "fittedWeight": {
+                            "type": "number",
+                            "rules": [
+                              {
+                                "name": "min",
+                                "args": {
+                                  "limit": 0
+                                }
+                              }
                             ]
                           }
                         }
@@ -6857,6 +7039,17 @@
                               "light",
                               "medium",
                               "heavy"
+                            ]
+                          },
+                          "fittedWeight": {
+                            "type": "number",
+                            "rules": [
+                              {
+                                "name": "min",
+                                "args": {
+                                  "limit": 0
+                                }
+                              }
                             ]
                           }
                         }
@@ -9972,6 +10165,175 @@
                                         }
                                       }
                                     ]
+                                  },
+                                  "acquiredBy": {
+                                    "type": "array",
+                                    "rules": [
+                                      {
+                                        "name": "max",
+                                        "args": {
+                                          "limit": 100
+                                        }
+                                      }
+                                    ],
+                                    "items": [
+                                      {
+                                        "type": "object",
+                                        "keys": {
+                                          "tier": {
+                                            "type": "number",
+                                            "flags": {
+                                              "presence": "required"
+                                            },
+                                            "rules": [
+                                              {
+                                                "name": "integer"
+                                              },
+                                              {
+                                                "name": "min",
+                                                "args": {
+                                                  "limit": 1
+                                                }
+                                              },
+                                              {
+                                                "name": "max",
+                                                "args": {
+                                                  "limit": 100
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "type": {
+                                            "type": "string",
+                                            "flags": {
+                                              "only": true,
+                                              "presence": "required"
+                                            },
+                                            "allow": [
+                                              "natural",
+                                              "training",
+                                              "milestone",
+                                              "profession",
+                                              "skill",
+                                              "race"
+                                            ]
+                                          },
+                                          "value": {
+                                            "type": "string",
+                                            "rules": [
+                                              {
+                                                "name": "trim",
+                                                "args": {
+                                                  "enabled": true
+                                                }
+                                              },
+                                              {
+                                                "name": "min",
+                                                "args": {
+                                                  "limit": 1
+                                                }
+                                              },
+                                              {
+                                                "name": "max",
+                                                "args": {
+                                                  "limit": 200
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "note": {
+                                            "type": "string",
+                                            "rules": [
+                                              {
+                                                "name": "max",
+                                                "args": {
+                                                  "limit": 500
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "linkedTo": {
+                                    "type": "object",
+                                    "keys": {
+                                      "traitId": {
+                                        "type": "string",
+                                        "flags": {
+                                          "presence": "required"
+                                        },
+                                        "rules": [
+                                          {
+                                            "name": "trim",
+                                            "args": {
+                                              "enabled": true
+                                            }
+                                          },
+                                          {
+                                            "name": "min",
+                                            "args": {
+                                              "limit": 1
+                                            }
+                                          },
+                                          {
+                                            "name": "max",
+                                            "args": {
+                                              "limit": 200
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "specialization": {
+                                        "type": "string",
+                                        "rules": [
+                                          {
+                                            "name": "trim",
+                                            "args": {
+                                              "enabled": true
+                                            }
+                                          },
+                                          {
+                                            "name": "min",
+                                            "args": {
+                                              "limit": 1
+                                            }
+                                          },
+                                          {
+                                            "name": "max",
+                                            "args": {
+                                              "limit": 200
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "restricted": {
+                                    "type": "object",
+                                    "keys": {
+                                      "note": {
+                                        "type": "string",
+                                        "flags": {
+                                          "presence": "required"
+                                        },
+                                        "rules": [
+                                          {
+                                            "name": "max",
+                                            "args": {
+                                              "limit": 500
+                                            }
+                                          }
+                                        ],
+                                        "allow": [
+                                          ""
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "pendingApproval": {
+                                    "type": "boolean"
                                   }
                                 }
                               }
@@ -10411,7 +10773,8 @@
                                           "fumble",
                                           "fatigue",
                                           "manual",
-                                          "poison"
+                                          "poison",
+                                          "hazard"
                                         ]
                                       },
                                       "tacticalGameId": {
@@ -11351,7 +11714,8 @@
                                           "fumble",
                                           "fatigue",
                                           "manual",
-                                          "poison"
+                                          "poison",
+                                          "hazard"
                                         ]
                                       },
                                       "tacticalGameId": {
@@ -12246,6 +12610,17 @@
                                       "light",
                                       "medium",
                                       "heavy"
+                                    ]
+                                  },
+                                  "fittedWeight": {
+                                    "type": "number",
+                                    "rules": [
+                                      {
+                                        "name": "min",
+                                        "args": {
+                                          "limit": 0
+                                        }
+                                      }
                                     ]
                                   }
                                 }

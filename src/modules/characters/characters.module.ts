@@ -32,6 +32,7 @@ import { DeleteCharacterHandler } from './application/cqrs/handlers/delete-chara
 import { UpdateCharacterHandler } from './application/cqrs/handlers/update-character.handler.js';
 import { DeleteSkillHandler } from './application/cqrs/handlers/delete-skill.handler.js';
 import { EquipItemHandler } from './application/cqrs/handlers/equip-item.handler.js';
+import { RecalculateCharacterHandler } from './application/cqrs/handlers/recalculate-character.handler.js';
 import { FactionsModule } from '../factions/factions.module.js';
 import { LevelUpHandler } from './application/cqrs/handlers/level-up.handler.js';
 import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor.js';
@@ -160,6 +161,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateSkillHandler,
     DeleteSkillHandler,
     EquipItemHandler,
+    RecalculateCharacterHandler,
     UnequipItemHandler,
     UpdateItemCarriedStatusHandler,
     AddXPHandler,

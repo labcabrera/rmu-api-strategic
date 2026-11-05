@@ -69,6 +69,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       resolved.statGeneration,
       resolved.openRounds,
       resolved.allowSavingDevPoints,
+      resolved.talentPurchaseRules,
     );
   }
 

@@ -92,6 +92,17 @@ export class GameOptionsDto {
   @IsBoolean()
   openRounds?: boolean;
 
+  @ApiProperty({
+    description:
+      'Optional purchase rules of talents and flaws (workspace spec 077): prerequisites per tier, flaws that hinder, linked flaws and one loose flaw up to -20',
+    type: Boolean,
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  talentPurchaseRules?: boolean;
+
   /**
    * The options as the domain stores them: the deprecated allowThirdRank becomes intenseTraining (when it is not sent)
    * and is dropped, so that it is never stored again (workspace spec 076, plan 1.1).
@@ -119,6 +130,7 @@ export class GameOptionsDto {
     dto.bonusDevPointsCapAtCreation = resolved.bonusDevPointsCapAtCreation;
     dto.statGeneration = resolved.statGeneration;
     dto.openRounds = resolved.openRounds;
+    dto.talentPurchaseRules = resolved.talentPurchaseRules;
     return dto;
   }
 }

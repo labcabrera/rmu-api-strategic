@@ -17,7 +17,12 @@ import { randomUUID } from 'crypto';
 import { Game } from '../../../games/domain/aggregates/game.js';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events.js';
 import type { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo.js';
-import { CharacterTrait, type TraitGrantedRanks, type TraitPayment } from '../value-objects/character-trait.vo.js';
+import {
+  CharacterTrait,
+  type CharacterTraitPurchase,
+  type TraitGrantedRanks,
+  type TraitPayment,
+} from '../value-objects/character-trait.vo.js';
 import type { RaceTraitProps } from '../value-objects/race-trait-props.vo.js';
 import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
@@ -143,6 +148,9 @@ export interface RestResult {
   poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
   /** Workspace spec 068: the temporary modifiers that expired. */
   expiredModifiers?: string[];
+  /** Workspace spec 077, D11: the fatigue penalty before and after: one point per minute of rest */
+  fatigueBefore?: number;
+  fatigueAfter?: number;
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -400,6 +408,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     specialization: string | undefined,
     spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
     grantedRanks: GrantedSkillRanks[] = [],
+    purchase: CharacterTraitPurchase = {},
   ) {
     if (this.findCharacterTrait(traitId, specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
@@ -431,6 +440,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         { ...payment, level: this.experience.level },
         undefined,
         granted,
+        purchase,
       ),
     );
     this.apply(new CharacterUpdatedEvent(this.getProps()));
@@ -443,6 +453,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     tier: number,
     cost: number,
     spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+    purchase?: CharacterTraitPurchase,
   ) {
     const current = this.findCharacterTrait(traitId, specialization);
     if (!current) {
@@ -451,6 +462,41 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (!current.tier || tier <= current.tier) {
       throw new ValidationError(`Trait ${traitId} tier must be greater than the current tier ${current.tier}`);
     }
+    this.changeTraitTier(current, tier, cost, spending, purchase);
+  }
+
+  /**
+   * Workspace spec 077, C10: lowers the tier of a flaw, paying the cost difference (the points it granted and the
+   * new tier no longer grants) with the pools of the spending. Lowering it to 0 is deleting it.
+   */
+  reduceTrait(
+    traitId: string,
+    specialization: string | undefined,
+    tier: number,
+    cost: number,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+    purchase?: CharacterTraitPurchase,
+  ) {
+    const current = this.findCharacterTrait(traitId, specialization);
+    if (!current) {
+      throw new ValidationError('Trait not found');
+    }
+    if (current.isTalent) {
+      throw new ValidationError(`Trait ${traitId} is a talent: its tier cannot be lowered`, 'err-trait-tier-lower-talent');
+    }
+    if (!current.tier || tier < 1 || tier >= current.tier) {
+      throw new ValidationError(`Trait ${traitId} tier must be lower than the current tier ${current.tier}`, 'err-trait-tier-invalid');
+    }
+    this.changeTraitTier(current, tier, cost, spending, purchase);
+  }
+
+  private changeTraitTier(
+    current: CharacterTrait,
+    tier: number,
+    cost: number,
+    spending: TraitSpending,
+    purchase: CharacterTraitPurchase = CharacterTrait.purchaseOf(current),
+  ) {
     const previous = this.getTraitPayment(current);
     const payment = this.payTrait(cost - current.cost, spending);
     const level = this.experience.level;
@@ -461,19 +507,20 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       cappedBonus: (previous.level === level ? previous.cappedBonus : 0) + payment.cappedBonus,
       level,
     };
-    const improved = new CharacterTrait(
-      traitId,
+    const changed = new CharacterTrait(
+      current.traitId,
       current.traitName,
       current.isTalent,
       tier,
       cost,
-      specialization,
+      current.specialization,
       'character',
       paidWith,
       current.missingReference,
       current.grantedRanks,
+      purchase,
     );
-    this.traits = this.traits.map(t => (t === current ? improved : t));
+    this.traits = this.traits.map(t => (t === current ? changed : t));
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
@@ -484,6 +531,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         throw new ValidationError(`Trait ${traitId} comes from the race and cannot be deleted`, 'err-trait-from-race');
       }
       throw new ValidationError('Trait not found');
+    }
+    // Workspace spec 077, C11: the flaws taken with a talent go first
+    if (trait.isTalent && this.linkedFlaws(trait).length > 0) {
+      throw new ValidationError(`Trait ${traitId} has linked flaws: delete them first`, 'err-trait-has-linked-flaws');
     }
     const payment = this.getTraitPayment(trait);
     DevPointsSpendingService.refund(this.experience, payment, payment.level === this.experience.level);
@@ -533,6 +584,18 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         new CharacterTrait(t.traitId, t.traitName || t.traitId, t.isTalent, t.tier ?? undefined, 0, t.specialization ?? undefined, 'race'),
     );
     this.traits = [...characterTraits, ...raceSourced];
+  }
+
+  /** Workspace spec 077, C11: the flaws of the character taken with the given talent. */
+  linkedFlaws(talent: Pick<CharacterTrait, 'traitId' | 'specialization'>): CharacterTrait[] {
+    return this.traits.filter(
+      t =>
+        t.source !== 'race' &&
+        !t.isTalent &&
+        !!t.linkedTo &&
+        t.linkedTo.traitId === talent.traitId &&
+        (t.linkedTo.specialization || undefined) === (talent.specialization || undefined),
+    );
   }
 
   // Character-sourced trait (race traits excluded)
@@ -956,8 +1019,14 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     powerPeriods = 0,
     poisonRounds = 0,
     currentGameDay?: number,
+    fatigueMinutes = 0,
   ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
+    // Workspace spec 077, D11 (§5.5): each minute of rest takes away one point of fatigue. Hunger, thirst and altitude
+    // are for the game master
+    const fatigueBefore = Math.abs(this.endurance?.fatiguePenalty ?? 0);
+    const fatigueAfter = Math.max(0, fatigueBefore - Math.max(0, Math.floor(fatigueMinutes)));
+    this.setFatiguePenalty(fatigueAfter);
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
     if (this.power) {
@@ -987,6 +1056,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       resolvedConditions,
       powerBefore,
       powerAfter: this.power ? this.power.current : null,
+      fatigueBefore,
+      fatigueAfter,
     };
     if (poisonings.length > 0) result.poisonings = poisonings;
     if (currentGameDay !== undefined) {
@@ -996,6 +1067,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
+  }
+
+  /** Workspace spec 077: the fatigue penalty of the endurance, 0-50. */
+  private setFatiguePenalty(value: number): void {
+    if (!this.endurance) this.endurance = CharacterEndurance.empty();
+    this.endurance.fatiguePenalty = value;
   }
 
   /**
@@ -1303,6 +1380,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         injuries: this.injuries,
         conditions: this.conditions,
         temporaryModifiers: this.temporaryModifiers,
+        fatiguePenalty: this.endurance?.fatiguePenalty ?? 0,
       },
       outcome,
       this.deathThreshold,
@@ -1310,6 +1388,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       currentGameDay,
     );
     this.temporaryModifiers = state.temporaryModifiers ?? [];
+    if (summary.fatigueAfter !== undefined) this.setFatiguePenalty(summary.fatigueAfter);
     this.hp.current = state.hp.current;
     this.status = state.status;
     const previousIds = new Set(this.injuries.map(i => i.id));

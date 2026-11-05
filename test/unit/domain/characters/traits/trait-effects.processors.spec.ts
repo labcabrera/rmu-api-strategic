@@ -85,7 +85,6 @@ describe('Trait effects on the character sheet', () => {
         'physical-vulnerability',
         'magical-resistance',
         'magical-vulnerability',
-        'iron-will',
         'defensive-aura',
         'natural-armor',
         'increased-stride',
@@ -249,9 +248,9 @@ describe('Trait effects on the character sheet', () => {
       expect(resistance(character, 'essence').traitBonus).toBe(0);
     });
 
-    it('iron-will adds 5 per tier to the mentalism RR', () => {
+    it('iron-will has no sheet effect: tactical adds it against mental attacks (spec 077, C9)', () => {
       const character = process([trait('iron-will', 2)]);
-      expect(resistance(character, 'mentalism').traitBonus).toBe(10);
+      expect(resistance(character, 'mentalism').traitBonus).toBe(0);
       expect(resistance(character, 'fear').traitBonus).toBe(0);
     });
   });

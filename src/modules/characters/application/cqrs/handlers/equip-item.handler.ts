@@ -43,10 +43,13 @@ export class EquipItemHandler implements ICommandHandler<EquipItemCommand, Chara
 
     this.validateEquipmentData(character, item, command);
     this.equip(character, items, command);
+    // Workspace spec 077, B1.1: an equipped item is carried, also for the load computed now
+    const wasCarried = item.carried;
+    item.carried = true;
     this.characterProcessorService.process(character, items);
 
-    // An equipped item is carried; item.updated tells the consumers of the item (F-strategic-28)
-    if (!item.carried) {
+    // item.updated tells the consumers of the item (F-strategic-28)
+    if (!wasCarried) {
       const updated = await this.itemRepository.updateCarriedStatus(item.id, true);
       await this.events.publish('item', new ItemUpdatedEvent(updated.getProps()));
     }

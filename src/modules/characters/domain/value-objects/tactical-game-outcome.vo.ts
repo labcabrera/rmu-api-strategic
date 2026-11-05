@@ -6,7 +6,17 @@ import type { ItemModifier } from '../../../items/domain/value-objects/item-modi
 export type TacticalFate = 'dead' | 'permanent-unconscious';
 
 /** Where a change of hits of a tactical game comes from (spec 013, §1.1). */
-export type TacticalHpLogKind = 'attack' | 'critical' | 'fumble' | 'bleeding' | 'endurance' | 'treatment' | 'manual' | 'poison';
+export type TacticalHpLogKind =
+  | 'attack'
+  | 'critical'
+  | 'fumble'
+  | 'bleeding'
+  | 'endurance'
+  | 'treatment'
+  | 'manual'
+  | 'poison'
+  // Workspace spec 077, D1: falls and falling objects
+  | 'hazard';
 export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = [
   'attack',
   'critical',
@@ -16,6 +26,7 @@ export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = [
   'treatment',
   'manual',
   'poison',
+  'hazard',
 ];
 
 /** A change of the hits of an actor in a tactical game (spec 013, §1.1): negative is damage, positive healing. */
@@ -62,6 +73,11 @@ export interface TacticalCharacterOutcome {
   characterId: string;
   name: string;
   hp: { start: number; end: number; delta: number };
+  /**
+   * Workspace spec 077, D10: the fatigue penalty of the actor at the start and end of the game (points, 0-50) and its
+   * change, which strategic adds to `endurance.fatiguePenalty`. Missing in older outcomes: the fatigue is kept.
+   */
+  fatigue?: { start: number; end: number; delta: number };
   /** Every change of the hits in the game. Only its totals and size are kept, in the healing log. */
   hpLog?: TacticalHpLogEntry[];
   hpBySource?: TacticalHpBySource;

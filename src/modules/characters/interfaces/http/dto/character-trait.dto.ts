@@ -2,8 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   CharacterTrait,
   type CharacterTraitSource,
+  type TraitAcquisition,
   type TraitGrantedRanks,
+  type TraitLink,
   type TraitPayment,
+  type TraitRestriction,
 } from '../../../domain/value-objects/character-trait.vo.js';
 
 export class CharacterTraitDto {
@@ -39,6 +42,26 @@ export class CharacterTraitDto {
   })
   grantedRanks?: TraitGrantedRanks[];
 
+  @ApiProperty({
+    description: 'How each tier of the talent was acquired (workspace spec 077, game option talentPurchaseRules)',
+    required: false,
+    example: [{ tier: 1, type: 'skill', value: 'perception' }],
+  })
+  acquiredBy?: TraitAcquisition[];
+
+  @ApiProperty({ description: 'Talent a flaw was taken with (workspace spec 077)', required: false, example: { traitId: 'prodigy' } })
+  linkedTo?: TraitLink;
+
+  @ApiProperty({
+    description: 'Restricted trait (workspace spec 077): it costs half and its sheet effects are situational',
+    required: false,
+    example: { note: 'Only underground' },
+  })
+  restricted?: TraitRestriction;
+
+  @ApiProperty({ description: 'A flaw that waits for the approval of the game master (workspace spec 077)', required: false })
+  pendingApproval?: boolean;
+
   static fromEntity(entity: CharacterTrait): CharacterTraitDto {
     const dto = new CharacterTraitDto();
     dto.traitId = entity.traitId;
@@ -51,6 +74,10 @@ export class CharacterTraitDto {
     dto.paidWith = entity.paidWith;
     if (entity.missingReference) dto.missingReference = true;
     if (entity.grantedRanks?.length) dto.grantedRanks = entity.grantedRanks.map(g => ({ ...g }));
+    if (entity.acquiredBy?.length) dto.acquiredBy = entity.acquiredBy.map(a => ({ ...a }));
+    if (entity.linkedTo) dto.linkedTo = { ...entity.linkedTo };
+    if (entity.restricted) dto.restricted = { ...entity.restricted };
+    if (entity.pendingApproval) dto.pendingApproval = true;
     return dto;
   }
 }

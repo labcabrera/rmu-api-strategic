@@ -37,4 +37,8 @@ export class GameOptions {
 
   @Prop({ type: Boolean, required: false, default: false })
   allowSavingDevPoints: boolean;
+
+  // Workspace spec 077, C11
+  @Prop({ type: Boolean, required: false, default: false })
+  talentPurchaseRules: boolean;
 }

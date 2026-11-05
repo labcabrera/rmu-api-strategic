@@ -52,9 +52,13 @@ export class CharacterAccess {
 
   /** Changes the players may not make (add-xp, undoing a fighting style ability): the masters or an admin. */
   async checkManage(character: Character, userId: string, roles: string[]): Promise<void> {
-    if (GameAccess.isAdmin(roles)) return;
-    if (this.gameAccess.canManage(await this.gameAccess.findGame(character.gameId), userId, roles)) return;
+    if (await this.canManage(character, userId, roles)) return;
     throw new ForbiddenError('Only the game master can change this of the character');
+  }
+
+  async canManage(character: Character, userId: string, roles: string[]): Promise<boolean> {
+    if (GameAccess.isAdmin(roles)) return true;
+    return this.gameAccess.canManage(await this.gameAccess.findGame(character.gameId), userId, roles);
   }
 
   /** The sheet and what hangs from it (healing log, spells, items). */
