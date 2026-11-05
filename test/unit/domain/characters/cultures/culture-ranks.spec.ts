@@ -17,6 +17,7 @@ import { CharacterProcessorService } from '../../../../../src/modules/characters
 import { Character } from '../../../../../src/modules/characters/domain/aggregates/character.js';
 import { STAT_KEYS, type StatKey } from '../../../../../src/modules/characters/domain/value-objects/character-stat.vo.js';
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
+import { buildCharacter as buildCharacterWith, skill } from '../traits/character.fixture.js';
 import { UpstreamBadGatewayError } from '../../../../../src/modules/shared/infrastructure/http/http-client.js';
 
 // Invented catalog and culture: not book data
@@ -72,15 +73,37 @@ describe('resolveCultureRanks', () => {
   it('applies the fixed entries and the assignments', () => {
     const ranks = resolveCultureRanks(culture, validAssignments, catalog);
     expect(ranks).toEqual([
-      { skillId: 'perception', specialization: null, ranks: 2 },
-      { skillId: 'melee-weapon', specialization: 'sword', ranks: 2 },
-      { skillId: 'unarmed-st', specialization: 'strikes', ranks: 1 },
-      { skillId: 'carving', specialization: null, ranks: 2 },
-      { skillId: 'trading', specialization: null, ranks: 1 },
-      { skillId: 'language-spoken', specialization: 'north-tongue', ranks: 4 },
-      { skillId: 'language-written', specialization: 'north-tongue', ranks: 1 },
-      { skillId: 'region-lore', specialization: 'home-valley', ranks: 1 },
+      { skillId: 'perception', specialization: null, ranks: 2, sources: [0] },
+      { skillId: 'melee-weapon', specialization: 'sword', ranks: 2, sources: [1] },
+      { skillId: 'unarmed-st', specialization: 'strikes', ranks: 1, sources: [1] },
+      { skillId: 'carving', specialization: null, ranks: 2, sources: [2] },
+      { skillId: 'trading', specialization: null, ranks: 1, sources: [2] },
+      { skillId: 'language-spoken', specialization: 'north-tongue', ranks: 4, sources: [3] },
+      { skillId: 'language-written', specialization: 'north-tongue', ranks: 1, sources: [3] },
+      { skillId: 'region-lore', specialization: 'home-valley', ranks: 1, sources: [4] },
     ]);
+  });
+
+  it('adds up two entries that grant the same language, keeping both sources (workspace spec 076, A6)', () => {
+    const twoLanguageEntries: Culture = {
+      ...culture,
+      skillRanks: [
+        { type: 'languages', ranks: 3 },
+        { type: 'languages', ranks: 2 },
+      ],
+    };
+    const ranks = resolveCultureRanks(
+      twoLanguageEntries,
+      [
+        { entry: 0, skillId: 'language-spoken', specialization: 'south-tongue', ranks: 3 },
+        { entry: 1, skillId: 'language-spoken', specialization: 'South Tongue', ranks: 2 },
+      ],
+      catalog,
+    );
+    expect(ranks).toEqual([{ skillId: 'language-spoken', specialization: 'south-tongue', ranks: 5, sources: [0, 1] }]);
+    const character = buildCharacterWith({ skills: [skill('language-spoken', 'south-tongue')] });
+    character.applyCulture('culture-test', ranks);
+    expect(character.skills[0]).toMatchObject({ ranks: 5, cultureRanks: 5, cultureSources: [0, 1] });
   });
 
   it('rejects an entry with fewer or more ranks than it gives', () => {
@@ -163,7 +186,7 @@ describe('resolveCultureRanks', () => {
       ],
       catalog,
     );
-    expect(ranks).toEqual([{ skillId: 'language-spoken', specialization: 'north-tongue', ranks: 3 }]);
+    expect(ranks).toEqual([{ skillId: 'language-spoken', specialization: 'north-tongue', ranks: 3, sources: [0, 1] }]);
   });
 });
 

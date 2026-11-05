@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsNumber, IsOptional } from 'class-validator';
 import {
   GameOptions,
@@ -27,14 +27,33 @@ export class GameOptionsDto {
   letality: number;
 
   @ApiProperty({
-    description: 'Allows a third rank of the same skill in a single level, at the cost of the second one',
+    description: 'Intense training (workspace spec 076): one skill per level may take more than two ranks, all of them at the second cost',
     type: Boolean,
     required: false,
     default: false,
   })
   @IsOptional()
   @IsBoolean()
+  intenseTraining?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Deprecated alias of intenseTraining (workspace spec 076): accepted on input, never returned',
+    type: Boolean,
+    deprecated: true,
+  })
+  @IsOptional()
+  @IsBoolean()
   allowThirdRank?: boolean;
+
+  @ApiProperty({
+    description: 'The game master allows keeping unspent development points for the next level (workspace spec 076)',
+    type: Boolean,
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowSavingDevPoints?: boolean;
 
   @ApiProperty({
     type: String,
@@ -73,6 +92,20 @@ export class GameOptionsDto {
   @IsBoolean()
   openRounds?: boolean;
 
+  /**
+   * The options as the domain stores them: the deprecated allowThirdRank becomes intenseTraining (when it is not sent)
+   * and is dropped, so that it is never stored again (workspace spec 076, plan 1.1).
+   */
+  static toEntity(dto: GameOptionsDto): GameOptionsDto;
+  static toEntity(dto: GameOptionsDto | undefined): GameOptionsDto | undefined;
+  static toEntity(dto: GameOptionsDto | undefined): GameOptionsDto | undefined {
+    if (!dto) return dto;
+    const { allowThirdRank, ...options } = dto;
+    const result = Object.assign(new GameOptionsDto(), options);
+    if (result.intenseTraining === undefined && allowThirdRank !== undefined) result.intenseTraining = allowThirdRank;
+    return result;
+  }
+
   static fromEntity(entity: GameOptions): GameOptionsDto {
     const resolved = resolveOptions(entity);
     const dto = new GameOptionsDto();
@@ -80,7 +113,8 @@ export class GameOptionsDto {
     dto.fatigueMultiplier = entity.fatigueMultiplier;
     dto.boardScaleMultiplier = entity.boardScaleMultiplier;
     dto.letality = entity.letality;
-    dto.allowThirdRank = resolved.allowThirdRank;
+    dto.intenseTraining = resolved.intenseTraining;
+    dto.allowSavingDevPoints = resolved.allowSavingDevPoints;
     dto.talentPolicy = resolved.talentPolicy;
     dto.bonusDevPointsCapAtCreation = resolved.bonusDevPointsCapAtCreation;
     dto.statGeneration = resolved.statGeneration;

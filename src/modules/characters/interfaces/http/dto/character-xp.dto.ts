@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CharacterXP } from '../../../domain/value-objects/character-xp.vo.js';
+import { CharacterXP, type IntenseTrainingSkill, type StatGainPayment } from '../../../domain/value-objects/character-xp.vo.js';
 import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
 
 export class CharacterXPDto {
@@ -36,6 +36,23 @@ export class CharacterXPDto {
   @ApiProperty({ description: 'Order for development points', example: 2 })
   weaponDevelopment: WeaponDevelopmentType[];
 
+  @ApiProperty({
+    description: 'The skill trained intensely this level, the only one with more than two ranks (workspace spec 076)',
+    required: false,
+    nullable: true,
+    example: { skillId: 'riding', specialization: 'horse' },
+  })
+  intenseTrainingSkill: IntenseTrainingSkill | null;
+
+  @ApiProperty({ description: 'Normal points saved at the last level up, included in availableDevPoints (workspace spec 076)', example: 0 })
+  savedDevPoints: number;
+
+  @ApiProperty({
+    description: 'Extra stat gain rolls paid with development points in the last two levels, by pool (workspace spec 076)',
+    example: [{ stat: 'ag', normal: 4, bonus: 0, level: 2 }],
+  })
+  statGainPayments: StatGainPayment[];
+
   static fromEntity(entity: CharacterXP): CharacterXPDto {
     const dto = new CharacterXPDto();
     dto.level = entity.level;
@@ -49,6 +66,9 @@ export class CharacterXPDto {
     dto.availableStatLevelUp = entity.availableStatLevelUp ?? 0;
     dto.developedStatLevelUp = entity.developedStatLevelUp ?? 0;
     dto.weaponDevelopment = entity.weaponDevelopment;
+    dto.intenseTrainingSkill = entity.intenseTrainingSkill ?? null;
+    dto.savedDevPoints = entity.savedDevPoints ?? 0;
+    dto.statGainPayments = (entity.statGainPayments || []).map(p => ({ ...p }));
     return dto;
   }
 }

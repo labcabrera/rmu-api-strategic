@@ -230,6 +230,21 @@ const character = Joi.object({
       .required(),
     bonusDevPointsSpentThisLevel: num().required(),
     flawDevPoints: num().required(),
+    intenseTrainingSkill: nullable(Joi.object({ skillId: id().required(), specialization: nullable(name()).required() })).required(),
+    savedDevPoints: num().min(0).required(),
+    statGainPayments: Joi.array()
+      .items(
+        Joi.object({
+          stat: Joi.string()
+            .valid(...STAT_KEYS)
+            .required(),
+          normal: num().required(),
+          bonus: num().required(),
+          level: int().min(0).required(),
+        }),
+      )
+      .max(100)
+      .required(),
   }).required(),
   statistics: Joi.object(
     Object.fromEntries(
@@ -254,6 +269,8 @@ const character = Joi.object({
         ranks: int().min(0).max(1000).required(),
         ranksDeveloped: int().min(0).max(10).required(),
         cultureRanks: int().min(0).max(1000).required(),
+        talentRanks: int().min(0).max(1000).required(),
+        cultureSources: Joi.array().items(int().min(0).max(100)).max(100),
         devPointsSpent: Joi.object({ normal: num().required(), bonus: num().required() }).required(),
         knackBonus: nullable(num()).required(),
         styleAbilities: Joi.array()
@@ -283,6 +300,16 @@ const character = Joi.object({
             level: int().min(0).required(),
           }),
         ).required(),
+        grantedRanks: Joi.array()
+          .items(
+            Joi.object({
+              skillId: id().required(),
+              specialization: nullable(name()).required(),
+              ranks: int().min(1).max(1000).required(),
+              created: Joi.boolean().required(),
+            }),
+          )
+          .max(10),
       }),
     )
     .max(500)

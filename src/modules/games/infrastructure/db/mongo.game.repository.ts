@@ -62,11 +62,13 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       options.fatigueMultiplier,
       options.boardScaleMultiplier,
       options.letality,
-      resolved.allowThirdRank,
+      // Documents stored before workspace spec 076 have allowThirdRank instead of intenseTraining
+      options.intenseTraining ?? options.allowThirdRank ?? resolved.intenseTraining,
       resolved.talentPolicy,
       resolved.bonusDevPointsCapAtCreation,
       resolved.statGeneration,
       resolved.openRounds,
+      resolved.allowSavingDevPoints,
     );
   }
 

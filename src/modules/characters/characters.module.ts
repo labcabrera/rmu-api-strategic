@@ -108,6 +108,7 @@ import { SKILL_CATEGORY_CLIENT } from './application/ports/skill-category-client
 import { ENUMERATION_CLIENT } from './application/ports/enumeration-client.port.js';
 import { ApiEnumerationClientAdapter } from './infrastructure/api-clients/api.enumeration-client.adapter.js';
 import { SpecializationCatalogService } from './application/services/specialization-catalog.service.js';
+import { TalentSkillRanksService } from './application/services/talent-skill-ranks.service.js';
 import { SKILL_CLIENT } from './application/ports/skill-client.port.js';
 import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
 @Module({
@@ -194,6 +195,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     KnownSpellsReader,
     SpellListSkillResolver,
     SpecializationCatalogService,
+    TalentSkillRanksService,
     ResolveConditionHandler,
     GetHealingLogHandler,
     GetTreatmentDifficultyHandler,

@@ -11,6 +11,12 @@ import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/applicat
 import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
 import { type GameRules, loadGameRules } from '../../services/game-rules.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import {
+  DEV_POINTS_INSUFFICIENT,
+  type DevPointsPoolChoice,
+  poolsFor,
+} from '../../../domain/services/dev-points/dev-points-spending.service.js';
+import { TalentSkillRanksService } from '../../services/talent-skill-ranks.service.js';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
@@ -22,6 +28,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     private readonly characterAccess: CharacterAccess,
+    private readonly talentSkillRanks: TalentSkillRanksService,
   ) {}
 
   async execute(command: AddTraitCommand): Promise<Character> {
@@ -42,11 +49,12 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     // Adding a tier based trait the character already has with a higher tier improves it, paying the difference
     const current = character.findCharacterTrait(command.traitId, command.specialization);
     const isImprovement = !!current && trait.isTierBased && !!current.tier && !!command.tier && command.tier > current.tier;
-    const spending = this.getSpending(character, rules, isImprovement ? cost - current.cost : cost, isImprovement);
+    const spending = this.getSpending(character, rules, isImprovement ? cost - current.cost : cost, isImprovement, command.pool);
     if (isImprovement) {
       character.improveTrait(command.traitId, command.specialization, command.tier, cost, spending);
     } else {
-      character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization, spending);
+      const grantedRanks = await this.talentSkillRanks.prepare(character, command.traitId, command.languageRanks);
+      character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization, spending, grantedRanks);
     }
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
@@ -85,8 +93,15 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
    *   bonusDevPointsCapAtCreation is set.
    * - 'race-points-at-creation': at creation only bonus points; afterwards only improvements of the talents already owned.
    * - 'flaw-points-at-creation': at creation only the points returned by flaws, which flaws feed instead of the normal pool.
+   * The pool the player chooses (workspace spec 076, A3) only applies when the policy fixes none.
    */
-  private getSpending(character: Character, rules: GameRules, cost: number, isImprovement: boolean): TraitSpending {
+  private getSpending(
+    character: Character,
+    rules: GameRules,
+    cost: number,
+    isImprovement: boolean,
+    pool: DevPointsPoolChoice = 'auto',
+  ): TraitSpending {
     const creation = character.isInCreation();
     const { talentPolicy, bonusDevPointsCapAtCreation } = rules.options;
     const spend = {
@@ -124,7 +139,14 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
           ),
       };
     }
-    return { spend, flawPool };
+    if (pool === 'normal') {
+      return {
+        spend: { ...spend, pools: poolsFor(pool) },
+        flawPool,
+        onInsufficient: () => new ValidationError('Insufficient normal development points to acquire the trait', DEV_POINTS_INSUFFICIENT),
+      };
+    }
+    return { spend: { ...spend, pools: poolsFor(pool) }, flawPool };
   }
 
   // Flaws have a negative cost and no limit

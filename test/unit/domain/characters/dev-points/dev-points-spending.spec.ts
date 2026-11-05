@@ -69,7 +69,7 @@ describe('DevPointsSpendingService', () => {
 });
 
 describe('Character development points across levels', () => {
-  const skillRules = { bonusDevPointsPerLevel: 25, allowThirdRank: false };
+  const skillRules = { bonusDevPointsPerLevel: 25, intenseTraining: false };
 
   const spendAll = (character: ReturnType<typeof buildCharacter>, skillIds: string[]) => {
     skillIds.forEach(id => {

@@ -15,8 +15,13 @@ export class GameOptions {
   @Prop({ required: true })
   letality: number;
 
-  @Prop({ type: Boolean, required: false, default: false })
-  allowThirdRank: boolean;
+  // No default: a missing value falls back to the legacy allowThirdRank when the document is read (workspace spec 076)
+  @Prop({ type: Boolean, required: false })
+  intenseTraining?: boolean;
+
+  // Legacy name of intenseTraining, only read from documents stored before workspace spec 076 (migration 076)
+  @Prop({ type: Boolean, required: false })
+  allowThirdRank?: boolean;
 
   @Prop({ type: String, required: false, default: 'free' })
   talentPolicy: TalentPolicy;
@@ -29,4 +34,7 @@ export class GameOptions {
 
   @Prop({ type: Boolean, required: false, default: true })
   openRounds: boolean;
+
+  @Prop({ type: Boolean, required: false, default: false })
+  allowSavingDevPoints: boolean;
 }

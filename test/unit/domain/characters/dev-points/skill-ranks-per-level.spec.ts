@@ -1,7 +1,7 @@
 import { ValidationError } from '../../../../../src/modules/shared/domain/errors/errors.js';
 import { buildCharacter, skill } from '../traits/character.fixture.js';
 
-const rules = (allowThirdRank: boolean) => ({ bonusDevPointsPerLevel: 25, allowThirdRank });
+const rules = (intenseTraining: boolean) => ({ bonusDevPointsPerLevel: 25, intenseTraining });
 
 const errorCode = (fn: () => void): string | undefined => {
   try {
@@ -21,15 +21,6 @@ describe('Skill ranks per level', () => {
     expect(errorCode(() => character.levelUpSkill('perception', null, rules(false)))).toBe('err-skill-max-ranks-per-level');
     expect(s.ranks).toBe(2);
     expect(character.experience.availableDevPoints).toBe(54);
-  });
-
-  it('allows a third rank with allowThirdRank, at the cost of the second one, and never a fourth', () => {
-    const s = skill('perception');
-    const character = buildCharacter({ skills: [s], level: 1 });
-    [1, 2, 3].forEach(() => character.levelUpSkill('perception', null, rules(true)));
-    expect(s.ranks).toBe(3);
-    expect(character.experience.availableDevPoints).toBe(60 - 2 - 4 - 4);
-    expect(errorCode(() => character.levelUpSkill('perception', null, rules(true)))).toBe('err-skill-max-ranks-per-level');
   });
 
   it('does not count culture ranks towards the limit', () => {

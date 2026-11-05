@@ -41,6 +41,17 @@ export class CharacterSkillDto {
   @ApiProperty({ description: 'Ranks granted by the culture at creation', example: 1 })
   cultureRanks: number;
 
+  @ApiProperty({
+    type: [Number],
+    required: false,
+    description: 'Culture entries (indexes) the culture ranks come from: two entries may grant the same language (spec 076)',
+    example: [3, 4],
+  })
+  cultureSources?: number[];
+
+  @ApiProperty({ description: 'Ranks granted by a talent such as Multilingual (workspace spec 076): they cost no points', example: 0 })
+  talentRanks: number;
+
   @ApiProperty({ description: 'Development points spent on this skill in the current level, by pool', example: { normal: 4, bonus: 0 } })
   devPointsSpent: SkillDevPointsSpent;
 
@@ -98,6 +109,8 @@ export class CharacterSkillDto {
     dto.ranks = skill.ranks;
     dto.ranksDeveloped = skill.ranksDeveloped;
     dto.cultureRanks = skill.cultureRanks ?? 0;
+    if (skill.cultureSources?.length) dto.cultureSources = [...skill.cultureSources];
+    dto.talentRanks = skill.talentRanks ?? 0;
     dto.devPointsSpent = { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 };
     dto.statBonus = skill.statBonus;
     dto.racialBonus = skill.racialBonus;

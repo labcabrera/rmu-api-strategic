@@ -69,7 +69,7 @@ export class UpdateGameDto {
     return new UpdateGameCommand(
       gameId,
       dto.name,
-      dto.options,
+      GameOptionsDto.toEntity(dto.options),
       dto.powerLevel,
       dto.shortDescription,
       dto.description,

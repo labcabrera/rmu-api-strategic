@@ -14,4 +14,16 @@ export class LevelUpQueryDto {
   @IsOptional()
   @Transform(toStrictBoolean)
   force: boolean | undefined;
+
+  @ApiPropertyOptional({
+    description:
+      'Keeps the unspent normal development points for the next level (workspace spec 076). Needs the game option allowSavingDevPoints',
+    example: false,
+    type: Boolean,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  @Transform(toStrictBoolean)
+  save: boolean | undefined;
 }

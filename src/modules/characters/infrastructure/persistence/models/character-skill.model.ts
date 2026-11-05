@@ -53,6 +53,14 @@ export class CharacterSkill {
   @Prop({ type: Number, required: false, default: 0 })
   cultureRanks: number;
 
+  // Workspace spec 076, A7: ranks granted by a talent
+  @Prop({ type: Number, required: false, default: 0 })
+  talentRanks: number;
+
+  // Workspace spec 076, A6: culture entries of the culture ranks
+  @Prop({ type: [Number], required: false, default: undefined })
+  cultureSources?: number[];
+
   @Prop({ type: Object, required: false, default: () => ({ normal: 0, bonus: 0 }) })
   devPointsSpent: SkillDevPointsSpent;
 

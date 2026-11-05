@@ -124,7 +124,23 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Adds the temporary modifiers of the characters, and allows the limits and tourniquets of the injuries',
     up: (doc: ExportDocument): ExportDocument => mapCharacters(doc, character => ({ temporaryModifiers: [], ...character })),
   },
+  {
+    // Workspace spec 076: the intense training mark, the saved points and the stat gain payments of the experience,
+    // and the talent ranks of the skills (Multilingual); the culture sources and the granted ranks are optional
+    from: 12,
+    description: 'Adds the intense training, saved points and stat gain payments of the experience, and the talent ranks of the skills',
+    up: (doc: ExportDocument): ExportDocument => mapCharacters(doc, withDevelopment076),
+  },
 ];
+
+const withDevelopment076 = (character: CharacterDocument): CharacterDocument => {
+  const { experience, skills } = character as { experience?: Record<string, unknown>; skills?: Record<string, unknown>[] };
+  return {
+    ...character,
+    ...(experience ? { experience: { intenseTrainingSkill: null, savedDevPoints: 0, statGainPayments: [], ...experience } } : {}),
+    ...(skills ? { skills: skills.map(skill => ({ talentRanks: 0, ...skill })) } : {}),
+  };
+};
 
 /** Applies `fn` to every character of a file: data.character of a character file, data.characters[].character of a faction. */
 function mapCharacters(doc: ExportDocument, fn: (character: CharacterDocument) => CharacterDocument): ExportDocument {

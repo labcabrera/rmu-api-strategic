@@ -36,7 +36,7 @@ export class CharacterAttackDto {
   @ApiProperty({
     type: String,
     description: 'Weapon category used by multiple attack rules',
-    enum: ['dagger', 'light', 'natural', 'standard'],
+    enum: ['dagger', 'light', 'natural', 'standard', 'unarmed'],
     example: 'standard',
   })
   weaponCategory: WeaponCategory;
