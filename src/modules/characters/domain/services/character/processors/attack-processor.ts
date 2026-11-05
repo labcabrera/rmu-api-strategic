@@ -12,6 +12,8 @@ import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolve
 import { matchesAttack, matchesWeaponType } from '../traits/trait-specialization-matcher.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
 import { getSizeSteps } from '../../../../../shared/domain/entities/character-size.js';
+// Workspace spec 077, C13: the attacks use the size of the race changed by Increased or Decreased Size
+import { effectiveSizeId } from '../../traits/effective-size.js';
 
 const SHIELD_FUMBLE = 4;
 // Core Law has no fumble column for shield bashes: the one-handed melee one is used (workspace spec 034)
@@ -61,7 +63,7 @@ export class AttackProcessor {
         return CharacterAttack.fromProps({
           attackName: `${skill.skillId}-${specialization}`,
           attackTable: UNARMED_ATTACK_TABLES[specialization] ?? specialization,
-          sizeAdjustment: this.getSizeAdjustment(character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId),
+          sizeAdjustment: this.getSizeAdjustment(effectiveSizeId(character)) + this.getTraitSizeAdjustment(character, skillId),
           fumbleTable: UNARMED_FUMBLE_TABLE,
           fumble: this.getFumble(character, UNARMED_FUMBLE, skill, skillId),
           weaponFumble: UNARMED_FUMBLE,
@@ -103,12 +105,12 @@ export class AttackProcessor {
         const fumble = this.getFumble(character, item.weapon.fumble, skill, skillId);
         // A weapon made for another size uses its own size for the attack and gets a BO penalty
         const wielderSize = item.weapon.wielderSize;
-        const wrongSize = !!wielderSize && wielderSize !== character.info.sizeId;
+        const wrongSize = !!wielderSize && wielderSize !== effectiveSizeId(character);
         if (wrongSize) {
           boModifiers['wrongSize'] = WRONG_SIZE_PENALTY;
         }
         const baseSizeAdjustment =
-          this.getSizeAdjustment(wrongSize ? wielderSize : character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId);
+          this.getSizeAdjustment(wrongSize ? wielderSize : effectiveSizeId(character)) + this.getTraitSizeAdjustment(character, skillId);
         const rangeTraitBonus = this.getTraitRangeBonus(character, skillId);
         this.getAvailableModes(character, item.weapon).forEach(mode => {
           // Workspace spec 041, decision 5: the OB modifier of the mode, such as an improvised weapon penalty

@@ -225,6 +225,48 @@ export const MULTILINGUAL_TRAIT = {
   tierCost: null,
 } as unknown as TraitResponse;
 
+/** Workspace spec 077: invented talents and flaws with invented costs, prerequisites and possible flaws. */
+export const PURCHASE_TRAITS: TraitResponse[] = [
+  {
+    id: 'e2e-knack',
+    name: 'E2E knack',
+    category: 'e2e',
+    isTalent: true,
+    specialization: 'skill',
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: 5,
+    tierCost: 5,
+    description: '',
+    prerequisites: [{ type: 'skill' }, { type: 'milestone' }],
+    possibleFlaws: ['e2e-weakness'],
+  },
+  {
+    id: 'e2e-weakness',
+    name: 'E2E weakness',
+    category: 'e2e',
+    isTalent: false,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: -5,
+    tierCost: -5,
+    description: '',
+  },
+  {
+    id: 'increased-size',
+    name: 'E2E increased size',
+    category: 'e2e',
+    isTalent: true,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 2,
+    adquisitionCost: 10,
+    tierCost: 10,
+    description: '',
+  },
+];
+
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
 
 function armorType(id: string, armor: Partial<NonNullable<ItemResponse['armor']>>): ItemResponse {
@@ -653,8 +695,10 @@ export function apiFakes() {
     getSpellsByListId: id => Promise.resolve(SPELLS.filter(spell => spell.spellListId === id)),
   };
   const traitClient: TraitClientPort = {
-    getTraitById: (id: string) =>
-      id === MULTILINGUAL_TRAIT.id ? Promise.resolve(MULTILINGUAL_TRAIT) : Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
+    getTraitById: (id: string) => {
+      const found = [MULTILINGUAL_TRAIT, ...PURCHASE_TRAITS].find(trait => trait.id === id);
+      return found ? Promise.resolve(found) : Promise.reject<TraitResponse>(new NotFoundError('Trait', id));
+    },
   };
   const cultureClient: CultureClientPort = {
     getCultureById: id =>

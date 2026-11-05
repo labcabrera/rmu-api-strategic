@@ -180,6 +180,7 @@ function buildCharacter(data: CharacterExport, id: string, itemIds: Map<ExportRe
           trait.paidWith ?? undefined,
           target.missingTraits.has(trait.traitId) || undefined,
           trait.grantedRanks?.map(granted => ({ ...granted })),
+          structuredClone(CharacterTrait.purchaseOf(trait)),
         ),
     ),
     status: data.status,

@@ -5,6 +5,7 @@ import type { EquipmentSlot } from '../../../characters/domain/value-objects/cha
 import { STAT_KEYS, type StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import type { Faction } from '../../../factions/domain/aggregates/faction.js';
 import type { Item } from '../../../items/domain/aggregates/item.js';
+import { CharacterTrait } from '../../../characters/domain/value-objects/character-trait.vo.js';
 import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.vo.js';
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
@@ -209,6 +210,7 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
         specialization: orNull(trait.specialization),
         paidWith: trait.paidWith ? { ...trait.paidWith } : null,
         ...(trait.grantedRanks?.length ? { grantedRanks: trait.grantedRanks.map(granted => ({ ...granted })) } : {}),
+        ...structuredClone(CharacterTrait.purchaseOf(trait)),
       })),
     hp: { current: character.hp.current },
     endurance: {

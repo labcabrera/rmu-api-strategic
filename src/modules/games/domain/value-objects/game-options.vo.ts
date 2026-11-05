@@ -13,6 +13,7 @@ export const DEFAULT_TALENT_POLICY: TalentPolicy = 'free';
 export const DEFAULT_BONUS_DEV_POINTS_CAP_AT_CREATION = false;
 export const DEFAULT_STAT_GENERATION: StatGeneration = 'roll';
 export const DEFAULT_OPEN_ROUNDS = true;
+export const DEFAULT_TALENT_PURCHASE_RULES = false;
 
 export class GameOptions {
   constructor(
@@ -31,6 +32,9 @@ export class GameOptions {
     public readonly openRounds?: boolean,
     // Workspace spec 076, A5: the game master allows keeping unspent normal development points for the next level
     public readonly allowSavingDevPoints?: boolean,
+    // Workspace spec 077, C11: the optional purchase rules of the Character Companion (prerequisites per tier, flaws
+    // that hinder, linked flaws and the limit of loose flaws) are checked when talents and flaws are bought
+    public readonly talentPurchaseRules?: boolean,
   ) {}
 }
 
@@ -47,4 +51,5 @@ export const resolveOptions = (options: Partial<GameOptions> | null | undefined)
   statGeneration: options?.statGeneration ?? DEFAULT_STAT_GENERATION,
   openRounds: options?.openRounds ?? DEFAULT_OPEN_ROUNDS,
   allowSavingDevPoints: options?.allowSavingDevPoints ?? DEFAULT_ALLOW_SAVING_DEV_POINTS,
+  talentPurchaseRules: options?.talentPurchaseRules ?? DEFAULT_TALENT_PURCHASE_RULES,
 });

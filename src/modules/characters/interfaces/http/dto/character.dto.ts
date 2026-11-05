@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CharacterDefenseDto } from './character-defense.dto.js';
 import { CharacterEnduranceDto } from './character-endurance.dto.js';
+import { effectiveSizeId } from '../../../domain/services/traits/effective-size.js';
 import { CharacterEquipmentDto } from './character-equipment.dto.js';
 import { CharacterHPDto } from './character-hp.dto.js';
 import { CharacterInitiativeDto } from './character-initiative.dto.js';
@@ -127,7 +128,7 @@ export class CharacterDto {
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };
     dto.name = entity.name;
-    dto.info = CharacterInfoDto.fromEntity(entity.info);
+    dto.info = CharacterInfoDto.fromEntity(entity.info, effectiveSizeId(entity));
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
     dto.statistics = statistics;

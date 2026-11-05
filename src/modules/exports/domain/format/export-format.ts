@@ -4,7 +4,13 @@ import type { CharacterRealm } from '../../../characters/domain/value-objects/ch
 import type { CharacterGender } from '../../../characters/domain/value-objects/character-roleplay-info.vo.js';
 import type { StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import type { CharacterStatus } from '../../../characters/domain/value-objects/character-status.vo.js';
-import type { TraitGrantedRanks, TraitPayment } from '../../../characters/domain/value-objects/character-trait.vo.js';
+import type {
+  TraitAcquisition,
+  TraitGrantedRanks,
+  TraitLink,
+  TraitPayment,
+  TraitRestriction,
+} from '../../../characters/domain/value-objects/character-trait.vo.js';
 import type { IntenseTrainingSkill, StatGainPayment } from '../../../characters/domain/value-objects/character-xp.vo.js';
 import type { ProfessionalBonusType } from '../../../characters/domain/value-objects/professional-bonus-type.vo.js';
 import type { WeaponDevelopmentType } from '../../../characters/domain/value-objects/weapon-development-type.vo.js';
@@ -143,6 +149,11 @@ export interface CharacterExportTrait {
   paidWith: TraitPayment | null;
   /** Workspace spec 076: skill ranks granted by the talent (Multilingual); missing for the other traits. */
   grantedRanks?: TraitGrantedRanks[];
+  /** Workspace spec 077 (format 13, unreleased until then): purchase data, all optional. */
+  acquiredBy?: TraitAcquisition[];
+  linkedTo?: TraitLink;
+  restricted?: TraitRestriction;
+  pendingApproval?: boolean;
 }
 
 export interface CharacterExportEndurance {

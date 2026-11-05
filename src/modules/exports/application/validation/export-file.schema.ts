@@ -2,6 +2,7 @@ import Joi from 'joi';
 import { REALM_STAT_TOKEN } from '../../../characters/domain/value-objects/character-realm.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../characters/domain/value-objects/character-condition.vo.js';
 import { STAT_KEYS } from '../../../characters/domain/value-objects/character-stat.vo.js';
+import { TRAIT_ACQUISITION_TYPES } from '../../../characters/domain/value-objects/character-trait.vo.js';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -42,6 +43,8 @@ import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPOR
 
 const ID = 200;
 const NAME = 200;
+// Workspace spec 077: notes of the purchase of a trait
+const NOTE_MAX = 500;
 const TEXT = 20_000;
 
 const id = () => Joi.string().trim().min(1).max(ID);
@@ -310,6 +313,22 @@ const character = Joi.object({
             }),
           )
           .max(10),
+        // Workspace spec 077: purchase data of the trait
+        acquiredBy: Joi.array()
+          .items(
+            Joi.object({
+              tier: int().min(1).max(100).required(),
+              type: Joi.string()
+                .valid(...TRAIT_ACQUISITION_TYPES)
+                .required(),
+              value: name(),
+              note: Joi.string().max(NOTE_MAX),
+            }),
+          )
+          .max(100),
+        linkedTo: Joi.object({ traitId: id().required(), specialization: name() }),
+        restricted: Joi.object({ note: Joi.string().max(NOTE_MAX).allow('').required() }),
+        pendingApproval: Joi.boolean(),
       }),
     )
     .max(500)

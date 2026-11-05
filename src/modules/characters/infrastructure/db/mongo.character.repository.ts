@@ -158,6 +158,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
           t.paidWith ?? undefined,
           t.missingReference || undefined,
           t.grantedRanks?.length ? t.grantedRanks.map(g => ({ ...g, specialization: g.specialization ?? null })) : undefined,
+          CharacterTrait.purchaseOf(t),
         ),
     );
   }

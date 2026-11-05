@@ -1,20 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { CHARACTER_SIZES } from '../../../../../shared/domain/entities/character-size.js';
 import { Character } from '../../../aggregates/character.js';
+import { effectiveSizeId } from '../../traits/effective-size.js';
 
-// Hit multiplier by character size. Mirrors the character sizes table of rmu-api-core (CHARACTER_SIZES.hitMultiplier),
-// which is a code constant there and is not exposed by the race client
-export const SIZE_HIT_MULTIPLIERS: Record<string, number> = {
-  minuscule: 0.25,
-  diminutive: 0.5,
-  tiny: 0.67,
-  small: 0.75,
-  medium: 1,
-  big: 1.5,
-  large: 2,
-  huge: 3,
-  gigantic: 4,
-  enormous: 5,
-};
+// Hit multiplier by character size: the character sizes table of rmu-api-core (CHARACTER_SIZES.hitMultiplier), a code
+// constant there that the race client does not expose. Workspace spec 077: the whole scale of spec 075
+export const SIZE_HIT_MULTIPLIERS: Record<string, number> = Object.fromEntries(CHARACTER_SIZES.map(size => [size.id, size.hitMultiplier]));
 
 export const getSizeHitMultiplier = (sizeId: string | undefined): number => (sizeId && SIZE_HIT_MULTIPLIERS[sizeId]) || 1;
 
@@ -28,8 +19,10 @@ export class HPProcessor {
     if (!skill) {
       return;
     }
-    // Body development total already includes the race base hits
-    const max = Math.round(skill.totalBonus * getSizeHitMultiplier(character.info?.sizeId));
+    // Body development total already includes the race base hits. Workspace spec 077, C13: the hit multiplier is the
+    // one of the size changed by Increased or Decreased Size
+    const sizeId = character.info ? effectiveSizeId({ info: character.info, traits: character.traits }) : undefined;
+    const max = Math.round(skill.totalBonus * getSizeHitMultiplier(sizeId));
     const initialized = character.hp.current != 0 || character.hp.max != 0;
     if (!initialized) {
       character.hp.max = max;

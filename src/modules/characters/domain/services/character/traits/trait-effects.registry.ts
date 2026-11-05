@@ -69,7 +69,8 @@ export const TRAIT_EFFECTS: Record<string, TraitEffect[]> = {
   'physical-vulnerability': [{ target: 'resistance', value: -5, ids: ['physical'] }],
   'magical-resistance': [{ target: 'resistance', value: 5, specialization: 'realm' }],
   'magical-vulnerability': [{ target: 'resistance', value: -5, specialization: 'realm' }],
-  'iron-will': [{ target: 'resistance', value: 5, ids: ['mentalism'] }],
+  // Iron Will is not here (workspace spec 077, C9): it is +5 per tier against mental attack spells of any realm, which
+  // rmu-api-tactical adds to the RR; the sheet shows it as situational
   'defensive-aura': [{ target: 'defense', value: 5, key: 'defensive-aura' }],
   'natural-armor': [{ target: 'natural-armor', value: 1 }],
   'increased-stride': [{ target: 'movement', value: 2 }],

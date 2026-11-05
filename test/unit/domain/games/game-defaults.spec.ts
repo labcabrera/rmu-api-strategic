@@ -41,6 +41,7 @@ describe('Game defaults', () => {
       bonusDevPointsCapAtCreation: false,
       statGeneration: 'roll',
       openRounds: true,
+      talentPurchaseRules: false,
     });
     expect(GameOptionsDto.fromEntity(legacyOptions)).toMatchObject({ talentPolicy: 'free', statGeneration: 'roll', openRounds: true });
   });
