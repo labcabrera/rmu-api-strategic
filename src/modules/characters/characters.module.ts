@@ -80,6 +80,7 @@ import { RemoveTemporaryModifierHandler } from './application/cqrs/handlers/remo
 import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler.js';
 import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler.js';
 import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler.js';
+import { AmputateLimbHandler, StrenuousFailureHandler } from './application/cqrs/handlers/health-079.handlers.js';
 import { RollInjuryRecoveryHandler } from './application/cqrs/handlers/roll-injury-recovery.handler.js';
 import { RollPermanentInjuryHandler } from './application/cqrs/handlers/roll-permanent-injury.handler.js';
 import { RestCharacterHandler } from './application/cqrs/handlers/rest-character.handler.js';
@@ -188,6 +189,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     AddInjuryHandler,
     UpdateInjuryHandler,
     TreatInjuryHandler,
+    AmputateLimbHandler,
+    StrenuousFailureHandler,
     RollInjuryRecoveryHandler,
     RollPermanentInjuryHandler,
     RestCharacterHandler,

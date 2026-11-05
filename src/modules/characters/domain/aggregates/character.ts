@@ -69,6 +69,7 @@ import { restPowerRecovery } from '../services/power/power-rules.js';
 import { PoisonStages, type Random } from '../services/healing/poison-stages.js';
 import type { PoisonRrResult } from '../services/healing/poison-rr.js';
 import type { AntidoteData, InjuryPoison, PoisonData, PoisonSeverityRow } from '../value-objects/poison.vo.js';
+import { type LostLimb, newLostLimbs, sameLimb } from '../value-objects/lost-limb.vo.js';
 
 // A character without the skill: no ranks (Core Law table 3-0b)
 export const UNRANKED_SKILL_BONUS = UNRANKED_RANK_BONUS;
@@ -161,10 +162,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   public appliedTacticalGames: string[] = [];
   /** Workspace spec 068: lasting morale and fear modifiers, with their day of expiry */
   public temporaryModifiers: CharacterTemporaryModifier[] = [];
+  /** Workspace spec 079, C1: limbs lost for good */
+  public lostLimbs: LostLimb[] = [];
   public importId: string | undefined = undefined;
   private pendingHealingLog: HealingLogEntry[] = [];
   /** Injuries received since the aggregate was loaded, to stamp them with the day of the campaign (spec 065) */
   private newInjuryIds = new Set<string>();
+  /** Workspace spec 079, C6: conditions and lost limbs added since the load, stamped with the day of the campaign */
+  private newConditionIds = new Set<string>();
+  private stampLostLimbs = false;
 
   private constructor(
     id: string,
@@ -281,6 +287,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     character.conditions = props.conditions || [];
     character.appliedTacticalGames = props.appliedTacticalGames || [];
     character.temporaryModifiers = props.temporaryModifiers || [];
+    character.lostLimbs = props.lostLimbs || [];
     character.importId = props.importId;
     return character;
   }
@@ -974,6 +981,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (HealingCalculator.isRecoveryRolled(injury)) {
       throw new ConflictError(`Injury ${injuryId} already has a recovery roll for its latest treatment`, 'err-injury-recovery-rolled');
     }
+    // Workspace spec 079, C2: after a failed strenuous activity the wound is treated again before a new roll
+    if (HealingCalculator.needsNewTreatment(injury)) {
+      throw new ConflictError(
+        `Injury ${injuryId} reopened by a strenuous activity: treat it again before its recovery roll`,
+        'err-injury-treatment-required',
+      );
+    }
     const updated: Injury = { ...injury, recovery, status: 'recovering', permanent: undefined, updatedAt: recovery.startedAt };
     this.replaceInjury(updated);
     this.recordHealing('recovery-roll', { ...recovery, permanentCheckRequired }, { injuryId });
@@ -1008,6 +1022,80 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return updated;
   }
 
+  // Workspace spec 079, C1 and C2
+
+  /**
+   * §13.1 Amputation: the limb is lost for good and the stump heals as its own injuries. Whatever the result the limb is
+   * gone; what a failure adds (a critical, system shock) is for the game master and stays in the healing log.
+   */
+  amputate(limb: Omit<LostLimb, 'at' | 'cause'>, injuries: Injury[], summary: Record<string, unknown>, now: string): LostLimb {
+    if (this.lostLimbs.some(each => sameLimb(each, limb))) {
+      throw new ConflictError(`The ${limb.side} ${limb.location} is already lost`, 'err-limb-already-lost');
+    }
+    const lost: LostLimb = { ...limb, at: now, cause: 'amputation' };
+    this.lostLimbs = [...this.lostLimbs, lost];
+    this.stampLostLimbs = true;
+    injuries.forEach(injury => {
+      this.injuries.push(injury);
+      this.newInjuryIds.add(injury.id);
+    });
+    // The injury that cost the limb stops bleeding: the stump is closed
+    if (limb.injuryId) {
+      const source = this.injuries.find(each => each.id === limb.injuryId);
+      if (source && source.status !== 'healed') {
+        this.replaceInjury({
+          ...source,
+          bleeding: source.bleeding ? 0 : source.bleeding,
+          ...(source.bleeding ? { bleedingControl: 'cauterized' as const } : {}),
+          tourniquet: null,
+          updatedAt: now,
+        });
+      }
+    }
+    this.recordHealing(
+      'amputation',
+      { ...summary, location: limb.location, side: limb.side, injuriesAdded: injuries.map(each => each.id) },
+      limb.injuryId ? { injuryId: limb.injuryId } : {},
+    );
+    this.touch();
+    return lost;
+  }
+
+  /**
+   * §13.1: a strenuous activity (a maneuver) failed while a treated injury recovered. The injury is active again and its
+   * recovery is gone: it needs a new treatment before the next recovery roll. An absolute failure doubles the penalty
+   * left, which is the base of the new recovery. `severity` is the one of the new penalty.
+   */
+  strenuousFailure(injuryId: string, absolute: boolean, severityOf: (penalty: number) => Injury['severity']): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (injury.status === 'permanent') {
+      throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
+    }
+    const latest = HealingCalculator.latestTreatment(injury);
+    if (!latest || HealingCalculator.isUntreated(injury)) {
+      throw new ValidationError(`Injury ${injuryId} has no successful treatment to undo`, 'err-injury-not-treated');
+    }
+    const now = new Date().toISOString();
+    const penalty = Math.min(0, injury.penalty || 0) * (absolute ? 2 : 1) || 0;
+    const rest: Injury = { ...injury };
+    delete rest.recovery;
+    delete rest.permanent;
+    const updated: Injury = {
+      ...rest,
+      status: 'active',
+      penalty,
+      initialPenalty: penalty,
+      severity: absolute ? severityOf(penalty) : injury.severity,
+      strenuousFailure: { at: now, absolute, treatmentId: latest.id, ...(absolute ? { previousPenalty: injury.penalty } : {}) },
+      updatedAt: now,
+    };
+    this.replaceInjury(updated);
+    this.recordHealing('strenuous-failure', { absolute, penaltyBefore: injury.penalty, penalty }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
   /** Passes time resting: hits per rest period and days off the injury counters. */
   /** `poisonRounds`: the time of the rest in rounds, for the poisonings (workspace spec 042, decision 13). */
   /** `currentGameDay`: the day of the campaign after the rest, to drop the expired modifiers (workspace spec 068). */
@@ -1020,6 +1108,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     poisonRounds = 0,
     currentGameDay?: number,
     fatigueMinutes = 0,
+    /** Workspace spec 079, C2: an active rest (travel, work) freezes the untreated injuries */
+    options: { freezeUntreated?: boolean } = {},
   ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
     // Workspace spec 077, D11 (§5.5): each minute of rest takes away one point of fatigue. Hunger, thirst and altitude
@@ -1035,8 +1125,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
     this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
     // A poisoning in progress follows its stages, not a recovery.
+    const frozen = (injury: Injury) =>
+      (injury.poison && !injury.poison.finished) || (options.freezeUntreated && !!injury.recovery?.untreated);
     const progress: InjuryProgress[] = this.injuries.map(injury =>
-      injury.poison && !injury.poison.finished ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
+      frozen(injury) ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
     );
     this.injuries = progress.map(p => p.injury);
     const resolvedConditions = this.resolveUnconsciousIfConscious(now);
@@ -1288,13 +1380,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
 
   private addPoisonCondition(status: 'unconscious' | 'dead', injury: Injury, now: string): void {
     if (this.conditions.some(c => !c.resolvedAt && c.status === status && c.source.injuryId === injury.id)) return;
+    const id = randomUUID();
     this.conditions.push({
-      id: randomUUID(),
+      id,
       status,
       source: { kind: 'poison', injuryId: injury.id },
       description: injury.poison?.name,
       createdAt: now,
     });
+    this.newConditionIds.add(id);
     if (status === 'dead') this.status = 'dead';
   }
 
@@ -1395,11 +1489,19 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     state.injuries.filter(i => !previousIds.has(i.id)).forEach(i => this.newInjuryIds.add(i.id));
     this.injuries = state.injuries;
     this.conditions = state.conditions;
+    // Workspace spec 079, C1: the limbs lost in the game (a confirmed limb-loss alert or an amputation)
+    const lostLimbsAdded = newLostLimbs(this.lostLimbs, outcome.lostLimbs ?? []).map(limb => ({
+      ...limb,
+      tacticalGameId: limb.tacticalGameId ?? outcome.tacticalGameId,
+      gameDay: currentGameDay,
+    }));
+    this.lostLimbs = [...this.lostLimbs, ...lostLimbsAdded];
     this.appliedTacticalGames = [...this.appliedTacticalGames, outcome.tacticalGameId];
     this.recordHealing(
       'tactical-outcome',
       {
         ...summary,
+        ...(lostLimbsAdded.length > 0 ? { lostLimbsAdded: lostLimbsAdded.map(({ location, side }) => ({ location, side })) } : {}),
         tacticalGameName: outcome.tacticalGameName,
         actorId: outcome.actorId,
         // Spec 013, §1.1: the hits log stays out of the character, its totals go to the healing log.
@@ -1429,6 +1531,17 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
    */
   stampGameDay(gameDay: number): void {
     this.pendingHealingLog = this.pendingHealingLog.map(entry => (entry.gameDay === undefined ? { ...entry, gameDay } : entry));
+    // Workspace spec 079, C6: the day of a death (and of the other conditions) and of a lost limb
+    if (this.newConditionIds.size > 0) {
+      this.conditions = this.conditions.map(condition =>
+        this.newConditionIds.has(condition.id) && condition.gameDay === undefined ? { ...condition, gameDay } : condition,
+      );
+      this.newConditionIds.clear();
+    }
+    if (this.stampLostLimbs) {
+      this.lostLimbs = this.lostLimbs.map(limb => (limb.gameDay === undefined ? { ...limb, gameDay } : limb));
+      this.stampLostLimbs = false;
+    }
     if (this.newInjuryIds.size === 0) return;
     this.injuries = this.injuries.map(injury =>
       this.newInjuryIds.has(injury.id) && injury.gameDay === undefined ? { ...injury, gameDay } : injury,
@@ -1469,6 +1582,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       conditions: this.conditions,
       appliedTacticalGames: this.appliedTacticalGames,
       temporaryModifiers: this.temporaryModifiers,
+      lostLimbs: this.lostLimbs,
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,

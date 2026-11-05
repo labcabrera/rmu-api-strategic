@@ -29,7 +29,26 @@ export class RestDto {
   @IsOptional()
   fullRest?: boolean;
 
+  @ApiPropertyOptional({
+    description:
+      'Active (spec 079): the character travels or works. Hits, power and fatigue only recover in 8 sleep hours per whole day, ' +
+      'untreated injuries do not improve and fullRest is ignored',
+    example: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
+
   static toCommand(characterId: string, dto: RestDto, userId: string, roles: string[]): RestCharacterCommand {
-    return new RestCharacterCommand(characterId, dto.hours ?? 0, dto.days ?? 0, dto.fullRest ?? false, userId, roles, dto.minutes ?? 0);
+    return new RestCharacterCommand(
+      characterId,
+      dto.hours ?? 0,
+      dto.days ?? 0,
+      dto.fullRest ?? false,
+      userId,
+      roles,
+      dto.minutes ?? 0,
+      dto.active ?? false,
+    );
   }
 }

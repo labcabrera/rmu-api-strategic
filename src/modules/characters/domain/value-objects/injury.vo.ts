@@ -175,6 +175,19 @@ export interface InjuryRecovery {
   untreated?: boolean;
 }
 
+/**
+ * Workspace spec 079, C2 (§13.1): a strenuous activity failed while the injury recovered. It is active again and needs
+ * a new treatment before its next recovery roll; an absolute failure doubled its penalty.
+ */
+export interface InjuryStrenuousFailure {
+  at: string;
+  absolute: boolean;
+  /** The latest treatment when it failed: a recovery roll needs a newer one */
+  treatmentId?: string;
+  /** Penalty before an absolute failure doubled it */
+  previousPenalty?: number;
+}
+
 export interface InjuryPermanent {
   penalty: number;
   roll?: number;
@@ -216,4 +229,6 @@ export interface Injury {
   reopenOn?: InjuryReopenOn | null;
   /** Workspace spec 068: a tourniquet on the wound (tactical rounds) */
   tourniquet?: InjuryTourniquet | null;
+  /** Workspace spec 079, C2: the last strenuous activity failed while it recovered */
+  strenuousFailure?: InjuryStrenuousFailure | null;
 }

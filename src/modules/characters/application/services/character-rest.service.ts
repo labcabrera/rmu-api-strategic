@@ -17,7 +17,16 @@ export interface RestInput {
   minutes?: number;
   /** Workspace spec 068: day of the campaign after the rest; the temporary modifiers expired by then are dropped */
   currentGameDay?: number;
+  /**
+   * Workspace spec 079, C2 (§13.1): the character travels or works instead of resting. Hits, power points and fatigue
+   * only recover in the sleep hours (8 a day, whole days only), the untreated injuries do not improve and the treated
+   * ones count each day once (never as complete rest).
+   */
+  active?: boolean;
 }
+
+/** §13.1: an active character only rests while it sleeps, 8 hours a day. */
+export const ACTIVE_SLEEP_HOURS_PER_DAY = 8;
 
 /**
  * A rest of a character: hits, injury counters, power points and poisonings (specs 013, 029 and 042). Shared by the
@@ -49,23 +58,33 @@ export class CharacterRestService {
     const calc = calculator ?? (await this.calculator());
     // Whole days count for the injury counters; every hour counts for the hits
     const elapsedDays = days + Math.floor(hours / HOURS_PER_DAY);
-    const counterDays = calc.restDays(elapsedDays, input.fullRest);
+    const active = !!input.active;
+    const counterDays = calc.restDays(elapsedDays, input.fullRest && !active);
     const totalHours = hours + days * HOURS_PER_DAY;
-    const hpAfter = calc.restHp(character.hp.max, character.hp.current, totalHours);
-    const summary = { ...(minutes ? { minutes } : {}), hours, restDays: days, fullRest: input.fullRest };
+    // Workspace spec 079, C2: an active character only rests in its sleep hours
+    const restHours = active ? elapsedDays * ACTIVE_SLEEP_HOURS_PER_DAY : totalHours;
+    const hpAfter = calc.restHp(character.hp.max, character.hp.current, restHours);
+    const summary = {
+      ...(minutes ? { minutes } : {}),
+      hours,
+      restDays: days,
+      fullRest: input.fullRest && !active,
+      ...(active ? { active: true, sleepHours: restHours } : {}),
+    };
     // Workspace spec 042: every hour of the rest advances the poisonings (and, spec 077, every minute).
     const poisonRounds = totalHours * ROUNDS_PER_HOUR + minutes * ROUNDS_PER_UNIT.minute;
     // Workspace spec 077, D11: one point of fatigue per minute of the whole rest
-    const fatigueMinutes = totalHours * MINUTES_PER_HOUR + minutes;
+    const fatigueMinutes = restHours * MINUTES_PER_HOUR + minutes;
     return character.rest(
       hpAfter,
       counterDays,
       new Date().toISOString(),
       summary,
-      restPowerPeriods(hours, days),
+      active ? elapsedDays * restPowerPeriods(ACTIVE_SLEEP_HOURS_PER_DAY, 0) : restPowerPeriods(hours, days),
       poisonRounds,
       input.currentGameDay,
       fatigueMinutes,
+      { freezeUntreated: active },
     );
   }
 }

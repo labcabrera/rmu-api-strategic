@@ -44,6 +44,13 @@ import type { HealingLogEntry, HealingLogKind } from '../../../domain/value-obje
 import type { HealthSummary } from '../../../domain/value-objects/health-summary.vo.js';
 import type { Pace } from '../../../domain/value-objects/character-movement.vo.js';
 import {
+  LOST_LIMB_CAUSES,
+  LOST_LIMB_LOCATIONS,
+  type LostLimb,
+  type LostLimbCause,
+  type LostLimbLocation,
+} from '../../../domain/value-objects/lost-limb.vo.js';
+import {
   TEMPORARY_MODIFIER_KINDS,
   TEMPORARY_MODIFIER_SOURCES,
   type CharacterTemporaryModifier,
@@ -144,6 +151,40 @@ export class InjuryTourniquetDto {
   tightSince: number;
   @ApiProperty({ type: Number, nullable: true })
   loosenedAt: number | null;
+}
+
+/** Workspace spec 079, C2: a strenuous activity failed while the injury recovered. */
+export class InjuryStrenuousFailureDto {
+  @ApiProperty()
+  at: string;
+  @ApiProperty({ description: 'An absolute failure doubled the penalty' })
+  absolute: boolean;
+  @ApiPropertyOptional({ description: 'Latest treatment when it failed: the next recovery roll needs a newer one' })
+  treatmentId?: string;
+  @ApiPropertyOptional({ description: 'Penalty before an absolute failure doubled it' })
+  previousPenalty?: number;
+}
+
+/** Workspace spec 079, C1: a limb the character lost for good. */
+export class LostLimbDto {
+  @ApiProperty({ type: String, enum: LOST_LIMB_LOCATIONS })
+  location: LostLimbLocation;
+  @ApiProperty({ type: String, enum: ['left', 'right'] })
+  side: BodySide;
+  @ApiProperty()
+  at: string;
+  @ApiPropertyOptional({ type: String, enum: LOST_LIMB_CAUSES })
+  cause?: LostLimbCause;
+  @ApiPropertyOptional({ description: 'Day of the campaign (spec 065)' })
+  gameDay?: number;
+  @ApiPropertyOptional()
+  tacticalGameId?: string;
+  @ApiPropertyOptional()
+  injuryId?: string;
+
+  static fromEntity(entity: LostLimb): LostLimbDto {
+    return Object.assign(new LostLimbDto(), entity);
+  }
 }
 
 /** Workspace spec 068: a lasting morale or fear modifier and the day of the campaign it expires. */
@@ -253,6 +294,8 @@ export class InjuryDto {
   reopenOn?: InjuryReopenOn | null;
   @ApiPropertyOptional({ type: InjuryTourniquetDto, nullable: true, description: 'Tourniquet on the wound (spec 068)' })
   tourniquet?: InjuryTourniquetDto | null;
+  @ApiPropertyOptional({ type: InjuryStrenuousFailureDto, nullable: true, description: 'Failed strenuous activity (spec 079)' })
+  strenuousFailure?: InjuryStrenuousFailureDto | null;
 
   static fromEntity(entity: Injury): InjuryDto {
     return Object.assign(new InjuryDto(), entity, { treatments: [...(entity.treatments || [])] });
@@ -272,6 +315,8 @@ export class CharacterConditionDto {
   createdAt: string;
   @ApiPropertyOptional()
   resolvedAt?: string;
+  @ApiPropertyOptional({ description: 'Day of the campaign when it began: the day of a death (spec 079)' })
+  gameDay?: number;
 
   static fromEntity(entity: CharacterCondition): CharacterConditionDto {
     return Object.assign(new CharacterConditionDto(), entity);
@@ -296,7 +341,10 @@ export class HealingLogEntryDto {
   id: string;
   @ApiProperty()
   at: string;
-  @ApiProperty({ type: String, enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual', 'herb'] })
+  @ApiProperty({
+    type: String,
+    enum: ['tactical-outcome', 'treatment', 'recovery-roll', 'permanent-roll', 'rest', 'manual', 'herb', 'amputation', 'strenuous-failure'],
+  })
   kind: HealingLogKind;
   @ApiPropertyOptional()
   injuryId?: string;

@@ -23,7 +23,7 @@ describe('export file schema (spec 024, decisions 2 and 11)', () => {
     ).toEqual(snapshot);
   });
 
-  it.each(['v13/character.rmu.json', 'v13/faction.rmu.json'])('accepts the example file %s exactly as the exporter wrote it', path => {
+  it.each(['v14/character.rmu.json', 'v14/faction.rmu.json'])('accepts the example file %s exactly as the exporter wrote it', path => {
     const file = fixture(path);
     const { value, issues } = validateExportFile(file);
     expect(issues).toEqual([]);
@@ -31,7 +31,7 @@ describe('export file schema (spec 024, decisions 2 and 11)', () => {
   });
 
   it('validates the NPCs of a faction file (workspace spec 055)', () => {
-    const file = fixture('v13/faction.rmu.json');
+    const file = fixture('v14/faction.rmu.json');
     file.data.faction.npcs = [{ npcId: 'wolf', name: 'Wolves', count: 3, notes: null }];
     expect(validateExportFile(file).issues).toEqual([]);
     file.data.faction.npcs = [
@@ -46,7 +46,7 @@ describe('export file schema (spec 024, decisions 2 and 11)', () => {
   });
 
   it('reports every failure with its JSON path and drops unknown fields', () => {
-    const file = fixture('v13/character.rmu.json');
+    const file = fixture('v14/character.rmu.json');
     file.data.character.injuries[0].type = 'paper-cut';
     file.data.items[0].amount = -1;
     file.data.character.statistics.st.temporary = 'high';
@@ -55,7 +55,7 @@ describe('export file schema (spec 024, decisions 2 and 11)', () => {
     expect(issues.map(issue => issue.path)).toEqual(
       expect.arrayContaining(['data.character.injuries[0].type', 'data.items[0].amount', 'data.character.statistics.st.temporary']),
     );
-    const clean = fixture('v13/character.rmu.json');
+    const clean = fixture('v14/character.rmu.json');
     clean.data.character.extra = 'ignored';
     expect((validateExportFile(clean).value as any).data.character).not.toHaveProperty('extra');
   });

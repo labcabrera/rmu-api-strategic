@@ -21,6 +21,7 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
       hours: command.hours,
       days: command.days,
       fullRest: command.fullRest,
+      active: command.active,
       currentGameDay,
     });
     return this.store.save(character);

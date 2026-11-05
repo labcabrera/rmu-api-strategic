@@ -88,6 +88,8 @@ export class TacticalOutcomeMerger {
         treatments,
         // Workspace spec 068: a tactical before it sends no limits, so the strategic ones stay
         ...(incoming.limits === undefined && existing.limits !== undefined ? { limits: existing.limits } : {}),
+        // Workspace spec 079, C2: tactical does not know the strenuous failures, so the strategic one stays
+        ...(incoming.strenuousFailure === undefined && existing.strenuousFailure ? { strenuousFailure: existing.strenuousFailure } : {}),
         createdAt: existing.createdAt || incoming.createdAt,
         updatedAt: now,
       });
@@ -128,14 +130,22 @@ export class TacticalOutcomeMerger {
       resolved.push(id);
     }
     const source: InjurySource = { kind: 'manual', tacticalGameId: outcome.tacticalGameId, tacticalGameName: outcome.tacticalGameName };
+    // Workspace spec 079, C6: a death keeps the day of the campaign it happened on
+    const deathDay = (condition: CharacterCondition): Partial<CharacterCondition> =>
+      condition.status === 'dead' && condition.gameDay === undefined ? { gameDay: currentGameDay } : {};
     for (const condition of outcome.conditions || []) {
-      addCondition({ ...condition, source: { ...source, ...(condition.source || {}) }, createdAt: condition.createdAt || now });
+      addCondition({
+        ...condition,
+        source: { ...source, ...(condition.source || {}) },
+        createdAt: condition.createdAt || now,
+        ...deathDay(condition),
+      });
     }
     let status = current.status;
     if (outcome.fate === 'dead' || (outcome.conditions || []).some(c => c.status === 'dead')) {
       status = 'dead';
       if (!conditions.some(c => !c.resolvedAt && c.status === 'dead')) {
-        addCondition({ id: randomUUID(), status: 'dead', source, createdAt: now });
+        addCondition({ id: randomUUID(), status: 'dead', source, createdAt: now, gameDay: currentGameDay });
       }
     }
     if (outcome.fate === 'permanent-unconscious') {

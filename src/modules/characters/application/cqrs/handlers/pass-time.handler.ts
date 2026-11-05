@@ -85,7 +85,7 @@ export class PassTimeHandler implements ICommandHandler<PassTimeCommand, PassTim
         try {
           const result = await this.restService.apply(
             character,
-            { days, hours, fullRest: activity === 'full-rest', currentGameDay: toDay },
+            { days, hours, fullRest: activity === 'full-rest', active: activity === 'active', currentGameDay: toDay },
             calculator,
           );
           if (!command.dryRun) await this.store.save(character);

@@ -1,8 +1,11 @@
 /** Time log of a campaign (workspace spec 065): one entry per step of time or correction of the calendar. */
 export type GameTimeLogType = 'pass-time' | 'adjust';
 
-/** What a character does while the time passes (decision 4). */
-export const PASS_TIME_ACTIVITIES = ['full-rest', 'rest', 'excluded'] as const;
+/**
+ * What a character does while the time passes (decision 4). Workspace spec 079, C2: `active`, travel or work, rests only
+ * in its sleep hours and its untreated injuries do not improve.
+ */
+export const PASS_TIME_ACTIVITIES = ['full-rest', 'rest', 'active', 'excluded'] as const;
 export type PassTimeActivity = (typeof PASS_TIME_ACTIVITIES)[number];
 export const DEFAULT_PASS_TIME_ACTIVITY: PassTimeActivity = 'rest';
 

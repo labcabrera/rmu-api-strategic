@@ -1,3 +1,4 @@
+import type { LostLimb } from '../../../domain/value-objects/lost-limb.vo.js';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import {
@@ -109,6 +110,10 @@ export class CharacterModel {
   // Workspace spec 068: plain subdocuments with the TemporaryModifier shape
   @Prop({ type: [Object], required: false, default: [] })
   temporaryModifiers: CharacterTemporaryModifier[];
+
+  // Workspace spec 079, C1: plain subdocuments with the LostLimb shape
+  @Prop({ type: [Object], required: false, default: [] })
+  lostLimbs: LostLimb[];
 
   @Prop({ type: String, required: false })
   description: string | undefined;

@@ -1,5 +1,6 @@
-/** `herb`: a dose of a healing herb (workspace spec 062). */
-export type HealingLogKind = 'tactical-outcome' | 'treatment' | 'recovery-roll' | 'permanent-roll' | 'rest' | 'manual' | 'herb';
+/** `herb`: a dose of a healing herb (workspace spec 062). `amputation` (workspace spec 079, C1). */
+export type HealingLogKind =
+  'tactical-outcome' | 'treatment' | 'recovery-roll' | 'permanent-roll' | 'rest' | 'manual' | 'herb' | 'amputation' | 'strenuous-failure';
 
 export interface HealingLogEntry {
   id: string;

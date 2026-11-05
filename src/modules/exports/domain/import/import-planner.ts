@@ -192,6 +192,8 @@ function buildCharacter(data: CharacterExport, id: string, itemIds: Map<ExportRe
       tacticalGameId: null,
       expiresGameDay: remainingDays === null ? null : (target.currentGameDay ?? 1) + remainingDays,
     })),
+    // Workspace spec 079 (format 14): the day of the campaign is not known in the new one
+    lostLimbs: (data.lostLimbs ?? []).map(limb => ({ ...limb })),
     description: data.description ?? undefined,
     imageUrl: data.imageUrl ?? undefined,
     owner: target.owner,
