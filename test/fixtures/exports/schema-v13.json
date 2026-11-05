@@ -4750,6 +4750,17 @@
                               "medium",
                               "heavy"
                             ]
+                          },
+                          "fittedWeight": {
+                            "type": "number",
+                            "rules": [
+                              {
+                                "name": "min",
+                                "args": {
+                                  "limit": 0
+                                }
+                              }
+                            ]
                           }
                         }
                       },
@@ -6857,6 +6868,17 @@
                               "light",
                               "medium",
                               "heavy"
+                            ]
+                          },
+                          "fittedWeight": {
+                            "type": "number",
+                            "rules": [
+                              {
+                                "name": "min",
+                                "args": {
+                                  "limit": 0
+                                }
+                              }
                             ]
                           }
                         }
@@ -12246,6 +12268,17 @@
                                       "light",
                                       "medium",
                                       "heavy"
+                                    ]
+                                  },
+                                  "fittedWeight": {
+                                    "type": "number",
+                                    "rules": [
+                                      {
+                                        "name": "min",
+                                        "args": {
+                                          "limit": 0
+                                        }
+                                      }
                                     ]
                                   }
                                 }

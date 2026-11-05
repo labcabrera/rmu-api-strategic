@@ -9,6 +9,7 @@ import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-ho
 import type { ItemMaterial } from '../../domain/value-objects/item-material.vo.js';
 import type { ItemModifier, ItemModifierTarget } from '../../domain/value-objects/item-modifier.vo.js';
 import { ItemWeapon } from '../../domain/value-objects/item-weapon.vo.js';
+import { DEFAULT_FITTED_WEIGHT, ItemArmor } from '../../domain/value-objects/item-armor.vo.js';
 import { type ItemInstanceSpec, type ItemSize, ItemUnitValue, type UnitValueType } from '../../domain/services/item-unit-value.js';
 import { MagicItemMappings } from '../../domain/services/magic-item-mapping.js';
 import type { MagicItemFeature } from '../../domain/value-objects/item-catalog-info.vo.js';
@@ -126,7 +127,7 @@ export class ItemFactory {
       category: itemType.category,
       carried: options.carried ?? false,
       weapon: this.weapon(itemType, itemType.weapon ? (instance.size ?? options.wielderSize) : options.wielderSize),
-      armor: itemType.armor,
+      armor: this.armor(itemType, options.character),
       shield: itemType.shield,
       modifiers: [...this.catalogModifiers(itemType), ...(magic?.modifiers ?? []), ...(options.modifiers ?? [])],
       amount: stackable ? (options.amount ?? 1) : null,
@@ -211,6 +212,13 @@ export class ItemFactory {
       return Math.round(((itemType.armor.enc * character.info.weight) / 100) * 100) / 100;
     }
     return itemType.info.weight || 0;
+  }
+
+  /** Workspace spec 077, B1.3: a piece is made for the body weight of its holder, or for the 185 lb of the tables. */
+  private armor(itemType: ItemResponse, character: Character | null): ItemArmor | null {
+    if (!itemType.armor) return null;
+    const fittedWeight = character?.info.weight && character.info.weight > 0 ? character.info.weight : DEFAULT_FITTED_WEIGHT;
+    return { ...itemType.armor, fittedWeight };
   }
 
   private weapon(itemType: ItemResponse, wielderSize: string | null | undefined): ItemWeapon | null {

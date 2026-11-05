@@ -92,6 +92,7 @@ const armorToExport = (armor: ItemArmor): ItemArmor => ({
   baseDifficulty: armor.baseDifficulty,
   ...(armor.coverage?.length ? { coverage: [...armor.coverage] } : {}),
   ...(armor.class ? { class: armor.class } : {}),
+  ...(armor.fittedWeight ? { fittedWeight: armor.fittedWeight } : {}),
 });
 
 const infoToExport = (info: ItemInfo): ItemInfo => ({

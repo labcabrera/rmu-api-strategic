@@ -15,6 +15,7 @@ import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command.js'
 import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command.js';
 import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command.js';
 import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command.js';
+import { RecalculateCharacterCommand } from '../../application/cqrs/commands/recalculate-character.command.js';
 import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command.js';
 import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query.js';
 import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query.js';
@@ -117,6 +118,20 @@ export class CharacterController {
     const roles = user.roles;
     const command = AddXPDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
+    return this.toDto(entity, user);
+  }
+
+  @Post(':id/recalculate')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'recalculateCharacter',
+    summary: 'Run the character processor again and store the sheet (admin only, workspace spec 077)',
+  })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiErrors({ 403: 'Not an admin', 404: 'Character not found' })
+  async recalculate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const command = new RecalculateCharacterCommand(id, user.id, user.roles);
+    const entity = await this.commandBus.execute<RecalculateCharacterCommand, Character>(command);
     return this.toDto(entity, user);
   }
 

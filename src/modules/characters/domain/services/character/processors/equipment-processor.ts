@@ -1,4 +1,5 @@
-import type { EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
+import type { CharacterLoad, EquipmentSlot } from '../../../value-objects/character-equipment.vo.js';
+import { ItemArmor } from '../../../../../items/domain/value-objects/item-armor.vo.js';
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.js';
 import { Item } from '../../../../../items/domain/aggregates/item.js';
@@ -17,10 +18,10 @@ export class EquipmentProcessor {
     }
     this.cleanUp(character, items);
 
-    // Spec 023: a stack weighs each of its units
-    const tmpCarriedWeight = items.filter(item => item.carried).reduce((sum, item) => sum + item.info.weight * item.units, 0);
-    const carriedWeight = Math.round(tmpCarriedWeight * 100) / 100;
-    character.equipment.weight = carriedWeight;
+    const equipped = new Set(Object.values(character.equipment.slots).filter((id): id is string => !!id));
+    const load = this.load(character, items, equipped);
+    character.equipment.weight = Math.round((load.worn + load.carried) * 100) / 100;
+    character.equipment.load = load;
 
     const slots = character.equipment.slots || {};
     const armorIds = [] as string[];
@@ -31,14 +32,14 @@ export class EquipmentProcessor {
 
     const armors = items.filter(item => armorIds.includes(item.id));
 
-    let enc = 0;
+    let armorEncumbrance = 0;
     let maneuverPenalty = 0;
     let perceptionPenalty = 0;
     let rangedPenalty = 0;
     let difficultyIndex = 0;
     armors.forEach(armorItems => {
-      //TODO change name
-      enc += armorItems.armor!.enc || 0;
+      // Workspace spec 077, B1.2: a piece that no longer protects its area does not hinder the casting
+      if (!ItemModifiers.isUnprotected(ItemModifiers.condition(armorItems.modifiers))) armorEncumbrance += armorItems.armor!.enc || 0;
       maneuverPenalty += armorItems.armor!.maneuverPenalty || 0;
       // Spec 019, decision 10: the breakage damage of armor is an armor maneuver penalty.
       maneuverPenalty += ItemModifiers.condition(armorItems.modifiers).breakagePenalty;
@@ -49,8 +50,7 @@ export class EquipmentProcessor {
     // round maneuverPenalty to 0 decimals
     maneuverPenalty = Math.round(maneuverPenalty);
     const armorManeuverSkillBonus = this.getArmorManeuverSkillBonus(character);
-    character.equipment.weight = carriedWeight;
-    character.equipment.encumbrancePenalty = enc;
+    character.equipment.armorEncumbrance = armorEncumbrance;
     character.equipment.baseManeuverPenalty = maneuverPenalty;
     character.equipment.maneuverPenalty = Math.min(0, maneuverPenalty + armorManeuverSkillBonus);
     character.equipment.perceptionPenalty = perceptionPenalty;
@@ -59,15 +59,42 @@ export class EquipmentProcessor {
     this.processEncumbrancePenalty(character);
   }
 
+  /**
+   * Workspace spec 077, decision B1.1: the load counts what the character carries and what it has equipped in any
+   * slot, carried or not. A worn armor piece weighs `weight × body weight / fittedWeight` (B1.3); a stack weighs each
+   * of its units (spec 023). With no body weight the percent is 0 (B1.4).
+   */
+  private load(character: Character, items: Item[], equipped: Set<string>): CharacterLoad {
+    const bodyWeight = Math.max(0, character.info.weight || 0);
+    let worn = 0;
+    let carried = 0;
+    for (const item of items) {
+      const weight = (item.info?.weight || 0) * item.units;
+      if (equipped.has(item.id)) {
+        const fitted = item.armor ? ItemArmor.fittedWeightOf(item.armor) : 0;
+        worn += item.armor && bodyWeight > 0 ? (weight * bodyWeight) / fitted : weight;
+      } else if (item.carried) {
+        carried += weight;
+      }
+    }
+    worn = Math.round(worn * 100) / 100;
+    carried = Math.round(carried * 100) / 100;
+    const percent = bodyWeight > 0 ? Math.floor(((worn + carried) / bodyWeight) * 100 + 1e-9) : 0;
+    return { worn, carried, percent };
+  }
+
+  /**
+   * §5.4: the penalty is the load beyond the allowance (15% + 2 × Strength bonus), never a bonus. Workspace spec 077,
+   * B1.4: the allowance is never below 0.
+   */
   private processEncumbrancePenalty(character: Character) {
-    const carriedWeight = character.equipment.weight || 0;
-    const characterWeight = character.info.weight || 0;
-    const loadPercent = (carriedWeight / characterWeight) * 100;
+    const characterWeight = Math.max(0, character.info.weight || 0);
+    const percent = character.equipment.load?.percent ?? 0;
     const st = character.statistics.st.totalBonus || 0;
-    const wa = 15 + 2 * st;
-    const penalty = -Math.floor(loadPercent - wa);
+    const wa = Math.max(0, 15 + 2 * st);
+    character.equipment.weightPercent = percent;
     character.equipment.weightAllowance = Math.floor(((wa * characterWeight) / 100) * 100) / 100;
-    character.equipment.encumbrancePenalty = Math.min(0, penalty);
+    character.equipment.encumbrancePenalty = Math.min(0, -Math.floor(percent - wa));
   }
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {

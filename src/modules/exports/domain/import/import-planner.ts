@@ -65,13 +65,15 @@ export function planImport(entries: CharacterEntry[], armory: ItemExport[], targ
   const characterIds = new Map(entries.map(entry => [entry.ref, randomUUID()]));
   const itemIds = new Map([...entries.flatMap(entry => entry.items), ...armory].map(item => [item.ref, randomUUID()]));
 
-  const toItem = (item: ItemExport, holder: { characterId: string | null; factionId: string | null }) =>
-    buildItem(item, itemIds.get(item.ref)!, holder, characterIds, target);
+  const toItem = (item: ItemExport, holder: { characterId: string | null; factionId: string | null }, equipped = false) =>
+    buildItem(item, itemIds.get(item.ref)!, holder, characterIds, target, equipped);
 
   const characters = entries.map(entry => {
     const id = characterIds.get(entry.ref)!;
     const character = buildCharacter(entry.character, id, itemIds, target);
-    const items = entry.items.map(item => toItem(item, { characterId: id, factionId: null }));
+    // Workspace spec 077, B1.1: an item in a slot is carried, whatever the file says
+    const equipped = new Set(Object.values(entry.character.equipment.slots).filter(ref => !!ref));
+    const items = entry.items.map(item => toItem(item, { characterId: id, factionId: null }, equipped.has(item.ref)));
     return { entry, character, items };
   });
   return { characters, armory: armory.map(item => toItem(item, { characterId: null, factionId: target.faction.id })) };
@@ -238,6 +240,7 @@ function buildItem(
   holder: { characterId: string | null; factionId: string | null },
   characterIds: Map<ExportRef, string>,
   target: ImportTarget,
+  equipped = false,
 ): Item {
   const modifiers: ItemModifier[] = data.modifiers.map(modifier => {
     const source = modifierSource(modifier, characterIds, target);
@@ -260,7 +263,7 @@ function buildItem(
     itemTypeId: data.itemTypeId,
     name: data.name,
     category: data.category,
-    carried: data.carried,
+    carried: data.carried || equipped,
     weapon: data.weapon,
     armor: data.armor,
     shield: data.shield,

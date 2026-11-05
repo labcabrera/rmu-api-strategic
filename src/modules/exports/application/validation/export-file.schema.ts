@@ -409,6 +409,8 @@ const item = Joi.object({
       baseDifficulty: id().required(),
       coverage: Joi.array().items(id()).max(4),
       class: Joi.string().valid('light', 'medium', 'heavy'),
+      // Workspace spec 077, B1.3
+      fittedWeight: num().min(0),
     }),
   ).required(),
   shield: nullable(Joi.object({ db: num().required(), blockCount: num().required() })).required(),

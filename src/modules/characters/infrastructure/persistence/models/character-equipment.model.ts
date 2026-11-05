@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
+import type { CharacterLoad, EquipmentSlot } from '../../../domain/value-objects/character-equipment.vo.js';
 import type { Difficulty } from '../../../domain/value-objects/difficulty.vo.js';
 
 @Schema({ _id: false })
@@ -33,4 +33,11 @@ export class CharacterEquipment {
 
   @Prop({ type: String, required: true })
   movementBaseDifficulty: Difficulty;
+
+  // Workspace spec 077, B1.2 and B1.5
+  @Prop({ type: Number, required: false })
+  armorEncumbrance?: number;
+
+  @Prop({ type: Object, required: false })
+  load?: CharacterLoad;
 }
