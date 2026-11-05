@@ -3083,7 +3083,8 @@
                                   "fumble",
                                   "fatigue",
                                   "manual",
-                                  "poison"
+                                  "poison",
+                                  "hazard"
                                 ]
                               },
                               "tacticalGameId": {
@@ -4023,7 +4024,8 @@
                                   "fumble",
                                   "fatigue",
                                   "manual",
-                                  "poison"
+                                  "poison",
+                                  "hazard"
                                 ]
                               },
                               "tacticalGameId": {
@@ -10771,7 +10773,8 @@
                                           "fumble",
                                           "fatigue",
                                           "manual",
-                                          "poison"
+                                          "poison",
+                                          "hazard"
                                         ]
                                       },
                                       "tacticalGameId": {
@@ -11711,7 +11714,8 @@
                                           "fumble",
                                           "fatigue",
                                           "manual",
-                                          "poison"
+                                          "poison",
+                                          "hazard"
                                         ]
                                       },
                                       "tacticalGameId": {

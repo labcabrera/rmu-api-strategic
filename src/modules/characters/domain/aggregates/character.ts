@@ -148,6 +148,9 @@ export interface RestResult {
   poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
   /** Workspace spec 068: the temporary modifiers that expired. */
   expiredModifiers?: string[];
+  /** Workspace spec 077, D11: the fatigue penalty before and after: one point per minute of rest */
+  fatigueBefore?: number;
+  fatigueAfter?: number;
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -1016,8 +1019,14 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     powerPeriods = 0,
     poisonRounds = 0,
     currentGameDay?: number,
+    fatigueMinutes = 0,
   ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
+    // Workspace spec 077, D11 (§5.5): each minute of rest takes away one point of fatigue. Hunger, thirst and altitude
+    // are for the game master
+    const fatigueBefore = Math.abs(this.endurance?.fatiguePenalty ?? 0);
+    const fatigueAfter = Math.max(0, fatigueBefore - Math.max(0, Math.floor(fatigueMinutes)));
+    this.setFatiguePenalty(fatigueAfter);
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
     if (this.power) {
@@ -1047,6 +1056,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       resolvedConditions,
       powerBefore,
       powerAfter: this.power ? this.power.current : null,
+      fatigueBefore,
+      fatigueAfter,
     };
     if (poisonings.length > 0) result.poisonings = poisonings;
     if (currentGameDay !== undefined) {
@@ -1056,6 +1067,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
+  }
+
+  /** Workspace spec 077: the fatigue penalty of the endurance, 0-50. */
+  private setFatiguePenalty(value: number): void {
+    if (!this.endurance) this.endurance = CharacterEndurance.empty();
+    this.endurance.fatiguePenalty = value;
   }
 
   /**
@@ -1363,6 +1380,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         injuries: this.injuries,
         conditions: this.conditions,
         temporaryModifiers: this.temporaryModifiers,
+        fatiguePenalty: this.endurance?.fatiguePenalty ?? 0,
       },
       outcome,
       this.deathThreshold,
@@ -1370,6 +1388,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       currentGameDay,
     );
     this.temporaryModifiers = state.temporaryModifiers ?? [];
+    if (summary.fatigueAfter !== undefined) this.setFatiguePenalty(summary.fatigueAfter);
     this.hp.current = state.hp.current;
     this.status = state.status;
     const previousIds = new Set(this.injuries.map(i => i.id));

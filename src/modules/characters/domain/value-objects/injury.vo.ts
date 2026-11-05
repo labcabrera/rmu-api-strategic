@@ -11,7 +11,8 @@ export type BleedingControl = 'pressure' | 'stitches' | 'tourniquet' | 'cauteriz
 export type InjuryFlag = 'permanent-risk' | 'limb-loss' | 'blinding' | 'paralysis';
 export type InjuryStatus = 'active' | 'recovering' | 'permanent' | 'healed';
 /** `poison`: the conditions a poisoning puts on the character (workspace spec 042). */
-export type InjurySourceKind = 'critical' | 'fumble' | 'fatigue' | 'manual' | 'poison';
+// Workspace spec 077, D1: 'hazard', a fall or a falling object of a tactical game
+export type InjurySourceKind = 'critical' | 'fumble' | 'fatigue' | 'manual' | 'poison' | 'hazard';
 export type TreatmentProcedure =
   'pressure' | 'stitches' | 'tourniquet' | 'cauterize' | 'dress' | 'splint' | 'cast' | 'salve' | 'surgery' | 'magic' | 'herbs';
 export type TreatmentResult = 'absolute-failure' | 'failure' | 'partial-success' | 'success' | 'absolute-success';
@@ -34,7 +35,7 @@ export const BODY_SIDES: BodySide[] = ['left', 'right'];
 export const BLEEDING_CONTROLS: BleedingControl[] = ['pressure', 'stitches', 'tourniquet', 'cauterized', 'magic'];
 export const INJURY_FLAGS: InjuryFlag[] = ['permanent-risk', 'limb-loss', 'blinding', 'paralysis'];
 export const INJURY_STATUSES: InjuryStatus[] = ['active', 'recovering', 'permanent', 'healed'];
-export const INJURY_SOURCE_KINDS: InjurySourceKind[] = ['critical', 'fumble', 'fatigue', 'manual', 'poison'];
+export const INJURY_SOURCE_KINDS: InjurySourceKind[] = ['critical', 'fumble', 'fatigue', 'manual', 'poison', 'hazard'];
 export const TREATMENT_PROCEDURES: TreatmentProcedure[] = [
   'pressure',
   'stitches',

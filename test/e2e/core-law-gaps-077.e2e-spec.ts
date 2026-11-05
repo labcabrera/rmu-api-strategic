@@ -122,4 +122,41 @@ describe('Core Law gaps (e2e, spec 077)', () => {
       expect((sheet.hp as Body).max).toBe(Math.round(((before.hp as Body).max as number) * 1.5));
     });
   });
+
+  describe('fatigue (D10, D11)', () => {
+    const outcome = (characterId: string, tacticalGameId: string, delta: number) => ({
+      tacticalGameId,
+      actorId: 'actor-001',
+      characterId,
+      name: 'E2E character',
+      hp: { start: 10, end: 10, delta: 0 },
+      fatigue: { start: 0, end: delta, delta },
+      injuries: [],
+      injuriesAdded: [],
+      injuriesUpdated: [],
+      injuriesHealed: [],
+      conditions: [],
+    });
+
+    it('adds the fatigue of a tactical game and recovers one point per minute of rest', async () => {
+      const { character } = await setup();
+      const fatigueOf = (body: unknown) => ((body as Body).endurance as Body).fatiguePenalty as number;
+      expect(fatigueOf(character)).toBe(0);
+      expect((character.endurance as Body).racialBonus).toBe(0);
+
+      const first = await as('service').post(`/v1/characters/${character.id}/tactical-outcomes`, outcome(character.id, 'tactical-1', 35));
+      expect(first.status, JSON.stringify(first.body)).toBe(200);
+      expect(fatigueOf(first.body)).toBe(35);
+      const second = await as('service').post(`/v1/characters/${character.id}/tactical-outcomes`, outcome(character.id, 'tactical-2', 30));
+      expect(fatigueOf(second.body)).toBe(50);
+
+      expect((await as('owner').post(`/v1/characters/${character.id}/rest`, {})).body).toMatchObject({ code: 'err-rest-time-required' });
+      const rested = await as('owner').post(`/v1/characters/${character.id}/rest`, { minutes: 45 });
+      expect(rested.status, JSON.stringify(rested.body)).toBe(200);
+      expect(fatigueOf(rested.body)).toBe(5);
+      const log = await as('owner').get(`/v1/characters/${character.id}/healing-log`);
+      const entries = ((log.body as Body).content ?? log.body) as Body[];
+      expect(entries.find(entry => entry.kind === 'rest')?.summary).toMatchObject({ minutes: 45, fatigueBefore: 50, fatigueAfter: 5 });
+    });
+  });
 });

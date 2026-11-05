@@ -143,6 +143,21 @@ export class TacticalOutcomeHpDto {
   delta: number;
 }
 
+/** Workspace spec 077, D10: the fatigue penalty of the actor (points, 0-50) at the start and end of the game. */
+export class TacticalOutcomeFatigueDto {
+  @ApiProperty({ example: 20 })
+  @IsNumber()
+  start: number;
+
+  @ApiProperty({ example: 35 })
+  @IsNumber()
+  end: number;
+
+  @ApiProperty({ description: 'end - start, added to endurance.fatiguePenalty (0-50)', example: 15 })
+  @IsNumber()
+  delta: number;
+}
+
 /** One element of TacticalGameOutcome.characters (rmu-api-tactical) plus the tactical game. */
 export class TacticalOutcomeDto {
   @ApiProperty({ description: 'Tactical game identifier (idempotency key)', example: 'tactical-game-001' })
@@ -174,6 +189,12 @@ export class TacticalOutcomeDto {
   @ValidateNested()
   @Type(() => TacticalOutcomeHpDto)
   hp: TacticalOutcomeHpDto;
+
+  @ApiPropertyOptional({ type: TacticalOutcomeFatigueDto, description: 'Fatigue of the game (spec 077); missing: the fatigue is kept' })
+  @ValidateNested()
+  @Type(() => TacticalOutcomeFatigueDto)
+  @IsOptional()
+  fatigue?: TacticalOutcomeFatigueDto;
 
   @ApiPropertyOptional({
     description: 'Every change of the hits in the game (spec 013, §1.1); not stored on the character',
@@ -253,6 +274,7 @@ export class TacticalOutcomeDto {
         characterId: dto.characterId,
         name: dto.name,
         hp: { start: dto.hp.start, end: dto.hp.end, delta: dto.hp.delta },
+        ...(dto.fatigue ? { fatigue: { start: dto.fatigue.start, end: dto.fatigue.end, delta: dto.fatigue.delta } } : {}),
         ...TacticalOutcomeDto.toHpLog(dto),
         injuries: (dto.injuries || []).map(injury => TacticalOutcomeDto.toInjury(injury)),
         injuriesAdded: (dto.injuriesAdded || []).map(String),
