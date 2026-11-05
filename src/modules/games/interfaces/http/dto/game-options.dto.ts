@@ -3,8 +3,10 @@ import { IsBoolean, IsIn, IsNumber, IsOptional } from 'class-validator';
 import {
   GameOptions,
   resolveOptions,
+  STARTING_WEALTHS,
   STAT_GENERATIONS,
   TALENT_POLICIES,
+  type StartingWealth,
   type StatGeneration,
   type TalentPolicy,
 } from '../../../domain/value-objects/game-options.vo.js';
@@ -103,6 +105,18 @@ export class GameOptionsDto {
   @IsBoolean()
   talentPurchaseRules?: boolean;
 
+  @ApiProperty({
+    type: String,
+    description:
+      "Starting wealth of the new characters (workspace spec 079, Core Law table 6-0b): 'none' (default) or a wealth category; the character gets its silver pieces per level as gold coins",
+    enum: STARTING_WEALTHS,
+    required: false,
+    default: 'none',
+  })
+  @IsOptional()
+  @IsIn(STARTING_WEALTHS)
+  startingWealth?: StartingWealth;
+
   /**
    * The options as the domain stores them: the deprecated allowThirdRank becomes intenseTraining (when it is not sent)
    * and is dropped, so that it is never stored again (workspace spec 076, plan 1.1).
@@ -131,6 +145,7 @@ export class GameOptionsDto {
     dto.statGeneration = resolved.statGeneration;
     dto.openRounds = resolved.openRounds;
     dto.talentPurchaseRules = resolved.talentPurchaseRules;
+    dto.startingWealth = resolved.startingWealth;
     return dto;
   }
 }

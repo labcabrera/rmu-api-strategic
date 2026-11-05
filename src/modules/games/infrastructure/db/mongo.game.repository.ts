@@ -48,6 +48,8 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       resolved.statPoints,
       resolved.knackCount,
       resolved.knackBonus,
+      resolved.preset,
+      resolved.ppRecoveryPercent,
     );
   }
 
@@ -70,6 +72,7 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       resolved.openRounds,
       resolved.allowSavingDevPoints,
       resolved.talentPurchaseRules,
+      resolved.startingWealth,
     );
   }
 

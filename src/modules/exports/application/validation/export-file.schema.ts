@@ -457,7 +457,8 @@ const item = Joi.object({
     strength: nullable(num()).required(),
     stackable: Joi.boolean().required(),
   }).required(),
-  amount: nullable(num().greater(0)).required(),
+  // Workspace spec 079 (backlog G): a gold coin stack spent to 0 is kept by the app, so the file can hold it
+  amount: nullable(num().min(0)).required(),
   description: nullable(text()).required(),
   catalog: nullable(
     Joi.object({

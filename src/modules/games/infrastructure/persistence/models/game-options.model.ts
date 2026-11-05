@@ -1,5 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-import type { StatGeneration, TalentPolicy } from '../../../domain/value-objects/game-options.vo.js';
+import type { StartingWealth, StatGeneration, TalentPolicy } from '../../../domain/value-objects/game-options.vo.js';
 
 @Schema({ _id: false })
 export class GameOptions {
@@ -41,4 +41,8 @@ export class GameOptions {
   // Workspace spec 077, C11
   @Prop({ type: Boolean, required: false, default: false })
   talentPurchaseRules: boolean;
+
+  // Workspace spec 079, E
+  @Prop({ type: String, required: false, default: 'none' })
+  startingWealth: StartingWealth;
 }

@@ -24,6 +24,8 @@ export interface RestInput {
    * ones count each day once (never as complete rest).
    */
   active?: boolean;
+  /** Workspace spec 079, E: percent of the power points per rest period, from the power level of the game (10 without it) */
+  ppRecoveryPercent?: number;
 }
 
 /** §13.1: an active character only rests while it sleeps, 8 hours a day. */
@@ -88,7 +90,7 @@ export class CharacterRestService {
       poisonRounds,
       input.currentGameDay,
       fatigueMinutes,
-      { freezeUntreated: active },
+      { freezeUntreated: active, ppRecoveryPercent: input.ppRecoveryPercent },
     );
   }
 }

@@ -1,4 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import type { GamePowerLevelPreset } from '../../../domain/value-objects/game-power-level.vo.js';
 
 @Schema({ _id: false })
 export class GamePowerLevel {
@@ -37,4 +38,12 @@ export class GamePowerLevel {
 
   @Prop({ type: Number, required: false, default: 5 })
   knackBonus: number;
+
+  // Workspace spec 079, E: the preset the values came from (informative)
+  @Prop({ type: String, required: false })
+  preset?: GamePowerLevelPreset | null;
+
+  // Workspace spec 079, E: no default, a missing value falls back to the preset or 10 when the document is read
+  @Prop({ type: Number, required: false })
+  ppRecoveryPercent?: number;
 }

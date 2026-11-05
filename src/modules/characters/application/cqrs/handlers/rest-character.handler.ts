@@ -14,8 +14,9 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
   async execute(command: RestCharacterCommand): Promise<Character> {
     CharacterRestService.checkTime(command.hours, command.days, command.minutes);
     const character = await this.store.load(command.characterId, command.userId, command.roles);
-    // A rest of one character does not move the calendar: the modifiers expired by the current day are dropped
-    const currentGameDay = await this.store.currentGameDay(character);
+    // A rest of one character does not move the calendar: the modifiers expired by the current day are dropped.
+    // Workspace spec 079, E: the power points come back as the power level of the game says
+    const { currentGameDay, ppRecoveryPercent } = await this.store.restRules(character);
     await this.restService.apply(character, {
       minutes: command.minutes,
       hours: command.hours,
@@ -23,6 +24,7 @@ export class RestCharacterHandler implements ICommandHandler<RestCharacterComman
       fullRest: command.fullRest,
       active: command.active,
       currentGameDay,
+      ppRecoveryPercent,
     });
     return this.store.save(character);
   }

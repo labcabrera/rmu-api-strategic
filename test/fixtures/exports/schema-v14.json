@@ -5134,7 +5134,7 @@
                         },
                         "rules": [
                           {
-                            "name": "greater",
+                            "name": "min",
                             "args": {
                               "limit": 0
                             }
@@ -7253,7 +7253,7 @@
                         },
                         "rules": [
                           {
-                            "name": "greater",
+                            "name": "min",
                             "args": {
                               "limit": 0
                             }
@@ -12947,7 +12947,7 @@
                                 },
                                 "rules": [
                                   {
-                                    "name": "greater",
+                                    "name": "min",
                                     "args": {
                                       "limit": 0
                                     }

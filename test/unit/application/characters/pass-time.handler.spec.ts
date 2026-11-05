@@ -12,6 +12,7 @@ import type { GameRepository } from '../../../../src/modules/games/application/p
 import type { GameTimeLogRepository } from '../../../../src/modules/games/application/ports/game-time-log-repository.port.js';
 import { GameAccess } from '../../../../src/modules/games/application/services/game-access.service.js';
 import { Game } from '../../../../src/modules/games/domain/aggregates/game.js';
+import type { GamePowerLevel } from '../../../../src/modules/games/domain/value-objects/game-power-level.vo.js';
 import { GameCalendar } from '../../../../src/modules/games/domain/value-objects/game-calendar.vo.js';
 import type { GameTimeLogEntry, PassTimeActivity } from '../../../../src/modules/games/domain/value-objects/game-time-log-entry.vo.js';
 import { ConflictError } from '../../../../src/modules/shared/domain/errors/errors.js';
@@ -29,8 +30,8 @@ const character = (id: string, hp = 10): Character => {
   return result;
 };
 
-const setup = (characters: Character[], calendar = new GameCalendar('Spring', 0, 0)) => {
-  const game = Game.fromProps(gameProps({ calendar })).restoreVersion(3);
+const setup = (characters: Character[], calendar = new GameCalendar('Spring', 0, 0), powerLevel: Partial<GamePowerLevel> = {}) => {
+  const game = Game.fromProps(gameProps({ calendar, powerLevel: powerLevel as GamePowerLevel })).restoreVersion(3);
   const stored = { game };
   const updateGame = vi.fn((g: Game) => {
     stored.game = g;
@@ -201,5 +202,18 @@ describe('PassTimeHandler (spec 065)', () => {
     expect(result.characters[0]).toMatchObject({ characterId: 'failing', error: { code: 'version-conflict' } });
     expect(result.characters[1].result).toBeDefined();
     expect(logEntries[0].characters[0].error?.code).toBe('version-conflict');
+  });
+
+  it('recovers the power points with the percent of the power level of the game (spec 079, E)', async () => {
+    const magician = character('magician');
+    magician.power = { max: 20, current: 0 };
+    const regular = character('regular');
+    regular.power = { max: 20, current: 0 };
+    await setup([regular]).handler.execute(command({ hours: 8 }));
+    // 4 periods of 10%
+    expect(regular.power.current).toBe(8);
+    await setup([magician], undefined, { ppRecoveryPercent: 25 }).handler.execute(command({ hours: 8 }));
+    // Epic: 4 periods of 25%
+    expect(magician.power.current).toBe(20);
   });
 });

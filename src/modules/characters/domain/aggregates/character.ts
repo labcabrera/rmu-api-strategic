@@ -1108,8 +1108,11 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     poisonRounds = 0,
     currentGameDay?: number,
     fatigueMinutes = 0,
-    /** Workspace spec 079, C2: an active rest (travel, work) freezes the untreated injuries */
-    options: { freezeUntreated?: boolean } = {},
+    /**
+     * Workspace spec 079, C2: an active rest (travel, work) freezes the untreated injuries. E: `ppRecoveryPercent`, the
+     * percent of the power points per period of the power level of the game (10 without it)
+     */
+    options: { freezeUntreated?: boolean; ppRecoveryPercent?: number } = {},
   ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
     // Workspace spec 077, D11 (§5.5): each minute of rest takes away one point of fatigue. Hunger, thirst and altitude
@@ -1120,7 +1123,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
     if (this.power) {
-      const recovered = restPowerRecovery(this.power.max, powerPeriods);
+      const recovered = restPowerRecovery(this.power.max, powerPeriods, options.ppRecoveryPercent);
       this.power = { ...this.power, current: Math.max(this.power.current, Math.min(this.power.max, this.power.current + recovered)) };
     }
     this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));

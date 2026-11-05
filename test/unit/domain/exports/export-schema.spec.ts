@@ -45,6 +45,12 @@ describe('export file schema (spec 024, decisions 2 and 11)', () => {
     expect(validateExportFile(file).issues.map(issue => issue.path)).toEqual(['data.faction.npcs']);
   });
 
+  it('accepts a stack of 0 units, like a gold coin stack spent to the last coin (spec 079, backlog G)', () => {
+    const file = fixture('v14/character.rmu.json');
+    file.data.items[0].amount = 0;
+    expect(validateExportFile(file).issues).toEqual([]);
+  });
+
   it('reports every failure with its JSON path and drops unknown fields', () => {
     const file = fixture('v14/character.rmu.json');
     file.data.character.injuries[0].type = 'paper-cut';

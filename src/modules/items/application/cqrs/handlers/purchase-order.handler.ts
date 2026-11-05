@@ -44,7 +44,7 @@ export class PurchaseOrderHandler implements ICommandHandler<PurchaseOrderComman
     }
     await this.holderAccess.checkManage(buyer, userId, roles);
     const faction = this.holderAccess.factionOf(buyer);
-    const order = await this.pricing.order(command.lines, { ...options, character: buyer.character, check: true });
+    const order = await this.pricing.order(command.lines, { ...options, character: buyer.character, gameId: buyer.gameId, check: true });
 
     // Only the game master spends the gold of the faction
     const payer = options.payer ?? 'split';
