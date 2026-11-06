@@ -27,7 +27,7 @@ const SUCCESSES: TreatmentResult[] = ['success', 'absolute-success'];
  */
 const healerPenalty = (healer: Character): number => healer.healthSummary.injuryPenalty || 0;
 
-interface ResolvedHealer {
+export interface ResolvedHealer {
   healer: InjuryHealer;
   herbalismBonus: number | undefined;
 }
@@ -140,37 +140,12 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
   }
 
   private async resolveHealer(patient: Character, command: TreatInjuryCommand): Promise<ResolvedHealer> {
-    if (command.healerCharacterId) {
-      const healer = await this.findHealer(patient, command.healerCharacterId);
-      const penalty = healerPenalty(healer);
-      return {
-        healer: {
-          characterId: healer.id,
-          name: healer.name,
-          bonus: healer.getSkillBonus(MEDICINE_SKILL, null),
-          ...(penalty ? { penalty } : {}),
-        },
-        herbalismBonus: healer.getSkillBonus(HERBALISM_SKILL, null) + penalty,
-      };
-    }
-    if (command.healer) {
-      return {
-        healer: { name: command.healer.name, external: true, bonus: command.healer.bonus || 0 },
-        herbalismBonus: command.healer.herbalismBonus,
-      };
-    }
-    throw new ValidationError('The treatment requires a healer character or an external healer', 'err-healer-required');
+    return resolveTreatmentHealer(this.store, patient, command);
   }
 
   /** Healer of the same strategic game (the patient can treat itself). */
   private async findHealer(patient: Character, healerCharacterId: string): Promise<Character> {
-    if (healerCharacterId === patient.id) return patient;
-    const healer = await this.store.findCharacter(healerCharacterId);
-    if (!healer) throw new NotFoundError('Healer character', healerCharacterId, 'err-healer-not-found');
-    if (healer.gameId !== patient.gameId) {
-      throw new ValidationError(`Healer ${healerCharacterId} is not in the game of the patient`, 'err-healer-not-in-game');
-    }
-    return healer;
+    return findGameHealer(this.store, patient, healerCharacterId);
   }
 
   /** Herbalism roll with the medical table: a success adds the herbalism bonus to the Medicine roll. */
@@ -189,4 +164,46 @@ export class TreatInjuryHandler implements ICommandHandler<TreatInjuryCommand, C
     const result = await this.maneuverClient.absolute(herbalism.roll + bonus, MEDICAL_MANEUVER_TABLE);
     return SUCCESSES.includes(result.result);
   }
+}
+
+/**
+ * The healer of a medical maneuver (spec 022): a character of the game of the patient (its Medicine and its own injury
+ * penalties) or an external one. Shared by the treatments and the amputations (workspace spec 079).
+ */
+export async function resolveTreatmentHealer(
+  store: CharacterHealthStore,
+  patient: Character,
+  request: { healerCharacterId?: string; healer?: { name: string; bonus: number; herbalismBonus?: number } },
+): Promise<ResolvedHealer> {
+  if (request.healerCharacterId) {
+    const healer = await findGameHealer(store, patient, request.healerCharacterId);
+    const penalty = healerPenalty(healer);
+    return {
+      healer: {
+        characterId: healer.id,
+        name: healer.name,
+        bonus: healer.getSkillBonus(MEDICINE_SKILL, null),
+        ...(penalty ? { penalty } : {}),
+      },
+      herbalismBonus: healer.getSkillBonus(HERBALISM_SKILL, null) + penalty,
+    };
+  }
+  if (request.healer) {
+    return {
+      healer: { name: request.healer.name, external: true, bonus: request.healer.bonus || 0 },
+      herbalismBonus: request.healer.herbalismBonus,
+    };
+  }
+  throw new ValidationError('The treatment requires a healer character or an external healer', 'err-healer-required');
+}
+
+/** Healer of the same strategic game (the patient can treat itself). */
+async function findGameHealer(store: CharacterHealthStore, patient: Character, healerCharacterId: string): Promise<Character> {
+  if (healerCharacterId === patient.id) return patient;
+  const healer = await store.findCharacter(healerCharacterId);
+  if (!healer) throw new NotFoundError('Healer character', healerCharacterId, 'err-healer-not-found');
+  if (healer.gameId !== patient.gameId) {
+    throw new ValidationError(`Healer ${healerCharacterId} is not in the game of the patient`, 'err-healer-not-in-game');
+  }
+  return healer;
 }

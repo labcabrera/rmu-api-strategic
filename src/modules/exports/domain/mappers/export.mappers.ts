@@ -236,8 +236,19 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       delete recovery.days;
       return { ...injury, recovery };
     }),
-    conditions: plain(character.conditions || []),
+    // Workspace spec 079: the day of a death belongs to its campaign and does not travel
+    conditions: plain(character.conditions || []).map(condition => {
+      const copy = { ...condition };
+      delete copy.gameDay;
+      return copy;
+    }),
     temporaryModifiers: temporaryModifiersToExport(character, currentGameDay),
+    lostLimbs: (character.lostLimbs || []).map(limb => ({
+      location: limb.location,
+      side: limb.side,
+      at: limb.at,
+      ...(limb.cause ? { cause: limb.cause } : {}),
+    })),
     description: orNull(character.description),
     imageUrl: orNull(character.imageUrl),
   };

@@ -6,6 +6,7 @@ import { Item } from '../../../../../items/domain/aggregates/item.js';
 import { CharacterEquipment } from '../../../value-objects/character-equipment.vo.js';
 import { DIFFICULTIES } from '../../../value-objects/difficulty.vo.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
+import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 
 @Injectable()
 export class EquipmentProcessor {
@@ -85,16 +86,31 @@ export class EquipmentProcessor {
 
   /**
    * §5.4: the penalty is the load beyond the allowance (15% + 2 × Strength bonus), never a bonus. Workspace spec 077,
-   * B1.4: the allowance is never below 0.
+   * B1.4: the allowance is never below 0. Workspace spec 079, D2: Overweight adds 10% per tier to the load and Beast of
+   * Burden 10% per tier to the allowance (the same figures as the maximum pace); the dodge keeps the penalty without
+   * Beast of Burden (`dodgeEncumbrancePenalty`).
    */
   private processEncumbrancePenalty(character: Character) {
     const characterWeight = Math.max(0, character.info.weight || 0);
     const percent = character.equipment.load?.percent ?? 0;
     const st = character.statistics.st.totalBonus || 0;
     const wa = Math.max(0, 15 + 2 * st);
+    const extraLoad = EquipmentProcessor.traitLoadPercent(character);
+    const extraAllowance = EquipmentProcessor.traitAllowancePercent(character);
     character.equipment.weightPercent = percent;
-    character.equipment.weightAllowance = Math.floor(((wa * characterWeight) / 100) * 100) / 100;
-    character.equipment.encumbrancePenalty = Math.min(0, -Math.floor(percent - wa));
+    character.equipment.weightAllowance = Math.floor((((wa + extraAllowance) * characterWeight) / 100) * 100) / 100;
+    character.equipment.encumbrancePenalty = Math.min(0, -Math.floor(percent + extraLoad - wa - extraAllowance));
+    character.equipment.dodgeEncumbrancePenalty = Math.min(0, -Math.floor(percent + extraLoad - wa));
+  }
+
+  /** Workspace spec 079, D2: % of the body weight the traits add to the load (Overweight). */
+  static traitLoadPercent(character: Pick<Character, 'traits'>): number {
+    return sumTraitEffects(getTraitEffects(character.traits, 'encumbrance'));
+  }
+
+  /** Workspace spec 079, D2: % of the body weight the traits carry without penalty (Beast of Burden). */
+  static traitAllowancePercent(character: Pick<Character, 'traits'>): number {
+    return Math.max(0, sumTraitEffects(getTraitEffects(character.traits, 'load-allowance')));
   }
 
   private getArmorManeuverSkillBonus(character: Partial<Character>) {

@@ -227,6 +227,13 @@ export class HealingCalculator {
     return injury.recovery.treatmentId === HealingCalculator.latestTreatment(injury)?.id;
   }
 
+  /** Workspace spec 079, C2: a strenuous failure undid the latest treatment, and a recovery roll needs a newer one. */
+  static needsNewTreatment(injury: Injury): boolean {
+    const failure = injury.strenuousFailure;
+    if (!failure?.treatmentId) return false;
+    return failure.treatmentId === HealingCalculator.latestTreatment(injury)?.id;
+  }
+
   /**
    * Medium injuries check even doubles of the unmodified roll, severe injuries any doubles. An untreated injury always
    * becomes permanent, light ones too (spec 022, D3): its permanent roll is always required.

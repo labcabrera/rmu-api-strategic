@@ -13,7 +13,7 @@ export class PassTimeCharacterDto {
   @IsString()
   characterId: string;
 
-  @ApiProperty({ enum: PASS_TIME_ACTIVITIES, description: 'full-rest, rest (default) or excluded' })
+  @ApiProperty({ enum: PASS_TIME_ACTIVITIES, description: 'full-rest, rest (default), active (travel or work, spec 079) or excluded' })
   @IsIn(PASS_TIME_ACTIVITIES)
   activity: PassTimeActivity;
 }

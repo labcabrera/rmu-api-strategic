@@ -1,3 +1,4 @@
+import type { LostLimb } from './lost-limb.vo.js';
 import type { CharacterCondition } from './character-condition.vo.js';
 import type { Injury } from './injury.vo.js';
 import type { TemporaryModifier } from './temporary-modifier.vo.js';
@@ -96,6 +97,8 @@ export interface TacticalCharacterOutcome {
   itemsConsumed?: TacticalItemConsumed[];
   /** Workspace spec 068: the temporary modifiers created in the game; missing in older outcomes */
   temporaryModifiers?: TemporaryModifier[];
+  /** Workspace spec 079, C1: every limb the actor has lost at the end (the ones it brought too); missing in older outcomes */
+  lostLimbs?: LostLimb[];
 }
 
 /** Workspace spec 068: units of an item of the character spent in a tactical game. */

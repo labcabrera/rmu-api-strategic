@@ -14,7 +14,8 @@ import type {
 import type { IntenseTrainingSkill, StatGainPayment } from '../../../characters/domain/value-objects/character-xp.vo.js';
 import type { ProfessionalBonusType } from '../../../characters/domain/value-objects/professional-bonus-type.vo.js';
 import type { WeaponDevelopmentType } from '../../../characters/domain/value-objects/weapon-development-type.vo.js';
-import type { Injury } from '../../../characters/domain/value-objects/injury.vo.js';
+import type { BodySide, Injury } from '../../../characters/domain/value-objects/injury.vo.js';
+import type { LostLimbCause, LostLimbLocation } from '../../../characters/domain/value-objects/lost-limb.vo.js';
 import type { TemporaryModifier } from '../../../characters/domain/value-objects/temporary-modifier.vo.js';
 import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.vo.js';
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
@@ -40,7 +41,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 13;
+export const CURRENT_FORMAT_VERSION = 14;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -178,6 +179,14 @@ export interface CharacterExportResistance {
 export type CharacterExportTemporaryModifier = Omit<TemporaryModifier, 'tacticalGameId'> & { remainingDays: number | null };
 
 /** A character without ids, owner, game or derived values (decision 3). */
+/** Workspace spec 079 (format 14): a lost limb of the character. */
+export interface CharacterExportLostLimb {
+  location: LostLimbLocation;
+  side: BodySide;
+  at: string;
+  cause?: LostLimbCause;
+}
+
 export interface CharacterExport {
   name: string;
   info: CharacterExportInfo;
@@ -198,6 +207,8 @@ export interface CharacterExport {
   conditions: CharacterCondition[];
   /** Workspace spec 068 (format 12) */
   temporaryModifiers: CharacterExportTemporaryModifier[];
+  /** Workspace spec 079 (format 14): limbs lost for good (the day of the campaign does not travel) */
+  lostLimbs: CharacterExportLostLimb[];
   description: string | null;
   imageUrl: string | null;
 }

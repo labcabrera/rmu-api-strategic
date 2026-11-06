@@ -33,6 +33,7 @@ import {
 } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, JEWELRY_CLASSES } from '../../../items/domain/services/item-unit-value.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
+import { LOST_LIMB_CAUSES, LOST_LIMB_LOCATIONS } from '../../../characters/domain/value-objects/lost-limb.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
 
 /**
@@ -168,6 +169,22 @@ const injury = Joi.object({
   ),
   reopenOn: nullable(Joi.string().valid(...INJURY_REOPEN_ON)),
   tourniquet: nullable(Joi.object({ tightSince: int().required(), loosenedAt: nullable(int()).required() })),
+  // Workspace spec 079 (format 14)
+  strenuousFailure: nullable(
+    Joi.object({ at: date().required(), absolute: Joi.boolean().required(), treatmentId: id(), previousPenalty: num().max(0) }),
+  ),
+});
+
+/** Workspace spec 079 (format 14): a lost limb. */
+const lostLimb = Joi.object({
+  location: Joi.string()
+    .valid(...LOST_LIMB_LOCATIONS)
+    .required(),
+  side: Joi.string()
+    .valid(...BODY_SIDES)
+    .required(),
+  at: date().required(),
+  cause: Joi.string().valid(...LOST_LIMB_CAUSES),
 });
 
 /** Workspace spec 068 (format 12): a temporary morale or fear modifier with the days it has left. */
@@ -354,6 +371,7 @@ const character = Joi.object({
   injuries: Joi.array().items(injury).max(500).required(),
   conditions: Joi.array().items(condition).max(500).required(),
   temporaryModifiers: Joi.array().items(temporaryModifier).max(100).required(),
+  lostLimbs: Joi.array().items(lostLimb).max(4).required(),
   description: nullable(text()).required(),
   imageUrl: nullable(Joi.string().max(2000)).required(),
 });
@@ -439,7 +457,8 @@ const item = Joi.object({
     strength: nullable(num()).required(),
     stackable: Joi.boolean().required(),
   }).required(),
-  amount: nullable(num().greater(0)).required(),
+  // Workspace spec 079 (backlog G): a gold coin stack spent to 0 is kept by the app, so the file can hold it
+  amount: nullable(num().min(0)).required(),
   description: nullable(text()).required(),
   catalog: nullable(
     Joi.object({

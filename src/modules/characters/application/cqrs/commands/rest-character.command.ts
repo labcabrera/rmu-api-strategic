@@ -10,6 +10,8 @@ export class RestCharacterCommand extends AuthenticatedCommand {
     roles: string[],
     // Workspace spec 077, D11
     public readonly minutes = 0,
+    // Workspace spec 079, C2: travel or work instead of resting
+    public readonly active = false,
   ) {
     super(userId, roles);
   }

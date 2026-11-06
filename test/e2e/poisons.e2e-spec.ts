@@ -62,7 +62,7 @@ describe('poisons (e2e)', () => {
     const rested = await as('owner').post(`${base()}/rest`, { hours: 1 });
     expect(rested.status, JSON.stringify(rested.body)).toBe(200);
     injury = rested.body.injuries.find((one: Body) => one.id === injuryId);
-    expect(injury).toMatchObject({ penalty: -15, status: 'active', poison: { elapsedRounds: 360 } });
+    expect(injury).toMatchObject({ penalty: -15, status: 'active', poison: { elapsedRounds: 720 } });
     // A poisoning in progress has no recovery roll
     const recovery = await as('owner').post(`${base()}/injuries/${injuryId}/recovery`, { roll: 50 });
     expect(recovery.status).toBe(400);

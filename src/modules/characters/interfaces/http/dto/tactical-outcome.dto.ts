@@ -17,7 +17,21 @@ import { ApplyTacticalOutcomeCommand } from '../../../application/cqrs/commands/
 import type { CharacterCondition } from '../../../domain/value-objects/character-condition.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../domain/value-objects/character-condition.vo.js';
 import type { Injury, InjuryLimits, InjurySource, InjuryTourniquet } from '../../../domain/value-objects/injury.vo.js';
-import { INJURY_REOPEN_ON, INJURY_SEVERITIES, INJURY_STATUSES, INJURY_TYPES, PACES } from '../../../domain/value-objects/injury.vo.js';
+import {
+  BODY_SIDES,
+  type BodySide,
+  INJURY_REOPEN_ON,
+  INJURY_SEVERITIES,
+  INJURY_STATUSES,
+  INJURY_TYPES,
+  PACES,
+} from '../../../domain/value-objects/injury.vo.js';
+import {
+  LOST_LIMB_CAUSES,
+  LOST_LIMB_LOCATIONS,
+  type LostLimbCause,
+  type LostLimbLocation,
+} from '../../../domain/value-objects/lost-limb.vo.js';
 import {
   TEMPORARY_MODIFIER_KINDS,
   TEMPORARY_MODIFIER_SOURCES,
@@ -158,6 +172,32 @@ export class TacticalOutcomeFatigueDto {
   delta: number;
 }
 
+/** Workspace spec 079, C1: a limb the actor lost (by a confirmed limb-loss alert or an amputation). */
+export class TacticalLostLimbDto {
+  @ApiProperty({ type: String, enum: LOST_LIMB_LOCATIONS })
+  @IsIn(LOST_LIMB_LOCATIONS)
+  location: LostLimbLocation;
+
+  @ApiProperty({ type: String, enum: BODY_SIDES })
+  @IsIn(BODY_SIDES)
+  side: BodySide;
+
+  @ApiProperty({ example: '2026-11-05T10:00:00.000Z' })
+  @IsString()
+  @IsNotEmpty()
+  at: string;
+
+  @ApiPropertyOptional({ type: String, enum: LOST_LIMB_CAUSES })
+  @IsIn(LOST_LIMB_CAUSES)
+  @IsOptional()
+  cause?: LostLimbCause;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  injuryId?: string;
+}
+
 /** One element of TacticalGameOutcome.characters (rmu-api-tactical) plus the tactical game. */
 export class TacticalOutcomeDto {
   @ApiProperty({ description: 'Tactical game identifier (idempotency key)', example: 'tactical-game-001' })
@@ -264,6 +304,13 @@ export class TacticalOutcomeDto {
   @IsOptional()
   temporaryModifiers?: TacticalTemporaryModifierDto[];
 
+  @ApiPropertyOptional({ description: 'Every limb the actor has lost at the end of the game (spec 079)', type: [TacticalLostLimbDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TacticalLostLimbDto)
+  @IsOptional()
+  lostLimbs?: TacticalLostLimbDto[];
+
   static toCommand(characterId: string, dto: TacticalOutcomeDto, userId: string, roles: string[]): ApplyTacticalOutcomeCommand {
     return new ApplyTacticalOutcomeCommand(
       characterId,
@@ -287,6 +334,17 @@ export class TacticalOutcomeDto {
         ...(dto.itemsConsumed ? { itemsConsumed: dto.itemsConsumed.map(({ itemId, amount }) => ({ itemId, amount })) } : {}),
         ...(dto.temporaryModifiers
           ? { temporaryModifiers: dto.temporaryModifiers.map(modifier => TacticalOutcomeDto.toTemporaryModifier(modifier, dto)) }
+          : {}),
+        ...(dto.lostLimbs
+          ? {
+              lostLimbs: dto.lostLimbs.map(({ location, side, at, cause, injuryId }) => ({
+                location,
+                side,
+                at,
+                ...(cause ? { cause } : {}),
+                ...(injuryId ? { injuryId } : {}),
+              })),
+            }
           : {}),
       },
       userId,

@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { Game } from '../../../../games/domain/aggregates/game.js';
+import { resolvePowerLevel } from '../../../../games/domain/value-objects/game-power-level.vo.js';
 import { MAX_PASS_DAYS } from '../../../../games/domain/value-objects/game-calendar.vo.js';
 import {
   DEFAULT_PASS_TIME_ACTIVITY,
@@ -76,6 +77,8 @@ export class PassTimeHandler implements ICommandHandler<PassTimeCommand, PassTim
     }
 
     const calculator = await this.restService.calculator();
+    // Workspace spec 079, E: the power points come back as the power level of the game says
+    const ppRecoveryPercent = resolvePowerLevel(game.powerLevel).ppRecoveryPercent;
     const results: GameTimeLogCharacter[] = [];
     for (const character of characters) {
       if (character.status === 'dead') continue;
@@ -85,7 +88,7 @@ export class PassTimeHandler implements ICommandHandler<PassTimeCommand, PassTim
         try {
           const result = await this.restService.apply(
             character,
-            { days, hours, fullRest: activity === 'full-rest', currentGameDay: toDay },
+            { days, hours, fullRest: activity === 'full-rest', active: activity === 'active', currentGameDay: toDay, ppRecoveryPercent },
             calculator,
           );
           if (!command.dryRun) await this.store.save(character);

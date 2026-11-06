@@ -44,7 +44,7 @@ export class QuotePriceHandler implements IQueryHandler<QuotePriceQuery, PriceQu
       if (!options.itemTypeId) throw new ValidationError('itemTypeId is required', 'err-item-type-required');
       const itemType = await this.itemFactory.itemType(options.itemTypeId);
       // Workspace spec 062: a jewel without a base value is quoted at the middle of its range
-      const powerMultiplier = await this.pricing.powerMultiplier(options.powerLevel);
+      const powerMultiplier = await this.pricing.powerMultiplier(options.powerLevel, holder?.gameId);
       const { unitBase } = PurchasePricing.unitBase(itemType, options.instance, () => 0.5, null, powerMultiplier);
       const base = options.unitPrice ?? unitBase;
       return { price: PriceCalculator.purchase(base, options.amount ?? 1, { factor, trading: trading?.result }), rules };

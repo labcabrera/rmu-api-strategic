@@ -12,6 +12,7 @@ import type { PriceBreakdown } from '../services/price-calculator.js';
  * master), `recharge` (of a charged item), `gem-cut`, `gem-set` and `gem-unset`.
  */
 /** Workspace spec 068 adds `consumed`: units of an item spent in a tactical game (herbs, potions). */
+/** Workspace spec 079 (E) adds `starting-wealth`: the gold coins of a new character (Core Law table 6-0b). */
 export type ItemLedgerKind =
   | 'purchase'
   | 'sale'
@@ -30,7 +31,8 @@ export type ItemLedgerKind =
   | 'gem-cut'
   | 'gem-set'
   | 'gem-unset'
-  | 'consumed';
+  | 'consumed'
+  | 'starting-wealth';
 export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'purchase',
   'sale',
@@ -50,6 +52,7 @@ export const ITEM_LEDGER_KINDS: ItemLedgerKind[] = [
   'gem-set',
   'gem-unset',
   'consumed',
+  'starting-wealth',
 ];
 
 /** Gold that moved in an operation: negative when the holder paid it, positive when it received it. */

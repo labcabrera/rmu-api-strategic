@@ -7,6 +7,22 @@ export const TALENT_POLICIES: TalentPolicy[] = ['free', 'race-points-at-creation
 export type StatGeneration = 'roll' | 'point-buy';
 export const STAT_GENERATIONS: StatGeneration[] = ['roll', 'point-buy'];
 
+/**
+ * Workspace spec 079, E (Core Law table 6-0b): wealth category of the new characters of the game, or `none` (default):
+ * a character created in the game gets the silver pieces of its category per level as gold coins.
+ */
+export const STARTING_WEALTH_SP_PER_LEVEL = {
+  none: 0,
+  'very-poor': 2,
+  poor: 10,
+  modest: 20,
+  rich: 30,
+  'very-rich': 50,
+} as const;
+export type StartingWealth = keyof typeof STARTING_WEALTH_SP_PER_LEVEL;
+export const STARTING_WEALTHS = Object.keys(STARTING_WEALTH_SP_PER_LEVEL) as StartingWealth[];
+export const DEFAULT_STARTING_WEALTH: StartingWealth = 'none';
+
 export const DEFAULT_INTENSE_TRAINING = false;
 export const DEFAULT_ALLOW_SAVING_DEV_POINTS = false;
 export const DEFAULT_TALENT_POLICY: TalentPolicy = 'free';
@@ -35,6 +51,8 @@ export class GameOptions {
     // Workspace spec 077, C11: the optional purchase rules of the Character Companion (prerequisites per tier, flaws
     // that hinder, linked flaws and the limit of loose flaws) are checked when talents and flaws are bought
     public readonly talentPurchaseRules?: boolean,
+    // Workspace spec 079, E: wealth category of the new characters (table 6-0b)
+    public readonly startingWealth?: StartingWealth,
   ) {}
 }
 
@@ -52,4 +70,5 @@ export const resolveOptions = (options: Partial<GameOptions> | null | undefined)
   openRounds: options?.openRounds ?? DEFAULT_OPEN_ROUNDS,
   allowSavingDevPoints: options?.allowSavingDevPoints ?? DEFAULT_ALLOW_SAVING_DEV_POINTS,
   talentPurchaseRules: options?.talentPurchaseRules ?? DEFAULT_TALENT_PURCHASE_RULES,
+  startingWealth: options?.startingWealth ?? DEFAULT_STARTING_WEALTH,
 });

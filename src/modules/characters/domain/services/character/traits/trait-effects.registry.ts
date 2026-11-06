@@ -14,6 +14,10 @@ export type TraitEffectTarget =
   | 'movement'
   | 'movement-multiplier'
   | 'encumbrance'
+  // Workspace spec 079, D2: % of the body weight carried without penalty (Beast of Burden)
+  | 'load-allowance'
+  // Workspace spec 079, D2: bonus to every Endurance roll (Vigorous, Feeble)
+  | 'endurance'
   | 'attack-bo'
   | 'attack-range'
   | 'attack-range-percent'
@@ -117,6 +121,12 @@ export const TRAIT_EFFECTS: Record<string, TraitEffect[]> = {
   ],
   visualization: [{ target: 'skill', value: 5, categories: ['technical'], ids: ['engineering'] }],
 
+  // Workspace spec 079, D2 (Core Law ch. 4): Endurance and load
+  vigorous: [{ target: 'endurance', value: 10 }],
+  feeble: [{ target: 'endurance', value: -10 }],
+  // The dodge keeps the whole load penalty (equipment.dodgeEncumbrancePenalty)
+  'beast-of-burden': [{ target: 'load-allowance', value: 10 }],
+
   // Character Companion epic talents
   'blessed-by-a-war-god': [{ target: 'stat', value: 10, ids: ['st', 'qu', 'ag', 'co'], fixed: true }],
   'dense-musculature': [
@@ -142,6 +152,7 @@ export const TRAIT_EFFECTS: Record<string, TraitEffect[]> = {
   ],
   nearsighted: [{ target: 'attack-range-percent', value: -20 }],
   oblivious: [{ target: 'skill', value: -15, ids: ['perception', 'social-awareness', 'tracking'], fixed: true }],
+  // Workspace spec 079, D2: the same extra % counts in the load penalty and in the maximum pace
   overweight: [{ target: 'encumbrance', value: 10 }],
   panicky: [{ target: 'resistance', value: -10, ids: ['fear'], fixed: true }],
   slow: [{ target: 'movement', value: -5 }],

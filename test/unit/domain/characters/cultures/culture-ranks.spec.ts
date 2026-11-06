@@ -254,6 +254,7 @@ describe('CreateCharacterHandler', () => {
       allowAllCharacterAccess,
       { resolve: (skillId: string) => Promise.resolve(skillId) } as never,
       specializationCatalog as never,
+      { apply: vi.fn().mockResolvedValue(null) } as never,
     );
     const create = (cultureChoice?: CreateCharacterCulture, stats = statistics()) =>
       handler.execute(

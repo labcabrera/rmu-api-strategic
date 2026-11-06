@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Character } from '../../../aggregates/character.js';
 import { getTraitEffects, multiplyTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
+import { EquipmentProcessor } from './equipment-processor.js';
 
 // Slow: never below 5'/round (workspace spec 039)
 const MIN_BASE_MOVEMENT_RATE = 5;
@@ -29,9 +30,10 @@ export class MovementProcessor {
   private setMaxPace(character: Character): void {
     const characterWeight = character.info.weight;
     const equipmentWeight = character.equipment.weight || 0;
-    // Overweight counts as 10% encumbrance per tier (workspace spec 039)
-    const traitEncumbrance = sumTraitEffects(getTraitEffects(character.traits, 'encumbrance'));
-    const percent = (characterWeight === 0 ? 0 : (equipmentWeight / characterWeight) * 100) + traitEncumbrance;
+    // Overweight counts as 10% encumbrance per tier (workspace spec 039); Beast of Burden carries 10% per tier without
+    // penalty (workspace spec 079, D2), the same figures as the load penalty
+    const traitEncumbrance = EquipmentProcessor.traitLoadPercent(character) - EquipmentProcessor.traitAllowancePercent(character);
+    const percent = Math.max(0, (characterWeight === 0 ? 0 : (equipmentWeight / characterWeight) * 100) + traitEncumbrance);
     if (percent <= 15) {
       character.movement.maxPace = 'dash';
     } else if (percent <= 30) {

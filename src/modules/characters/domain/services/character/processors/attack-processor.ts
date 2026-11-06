@@ -119,14 +119,16 @@ export class AttackProcessor {
           const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
           const rangeFactor = this.getTraitRangeFactor(character, mode);
           const ranges = mode.ranges
-            ? mode.ranges.map(
-                r =>
-                  new CharacterAttackRange(
-                    this.scaleRange(r.from, rangeFactor),
-                    this.scaleRange(r.to, rangeFactor),
-                    this.getRangeBonus(r.bonus, rangeTraitBonus),
-                  ),
-              )
+            ? mode.ranges.map(r => {
+                const bonus = this.getRangeBonus(r.bonus, rangeTraitBonus);
+                // Workspace spec 079, D1: Deadeye's share, which rmu-api-tactical shows apart
+                return new CharacterAttackRange(
+                  this.scaleRange(r.from, rangeFactor),
+                  this.scaleRange(r.to, rangeFactor),
+                  bonus,
+                  bonus - r.bonus,
+                );
+              })
             : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,

@@ -131,6 +131,13 @@ export const UPCASTERS: Upcaster[] = [
     description: 'Adds the intense training, saved points and stat gain payments of the experience, and the talent ranks of the skills',
     up: (doc: ExportDocument): ExportDocument => mapCharacters(doc, withDevelopment076),
   },
+  {
+    // Workspace spec 079: the lost limbs of the characters (older files have none); the strenuous failure of the
+    // injuries is optional
+    from: 13,
+    description: 'Adds the lost limbs of the characters, and allows the strenuous failures of the injuries',
+    up: (doc: ExportDocument): ExportDocument => mapCharacters(doc, character => ({ lostLimbs: [], ...character })),
+  },
 ];
 
 const withDevelopment076 = (character: CharacterDocument): CharacterDocument => {

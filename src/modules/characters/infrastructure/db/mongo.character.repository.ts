@@ -80,6 +80,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       conditions: doc.conditions || [],
       appliedTacticalGames: doc.appliedTacticalGames || [],
       temporaryModifiers: doc.temporaryModifiers || [],
+      lostLimbs: doc.lostLimbs || [],
       description: doc.description,
       imageUrl: doc.imageUrl,
       owner: doc.owner,

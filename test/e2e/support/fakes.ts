@@ -265,6 +265,19 @@ export const PURCHASE_TRAITS: TraitResponse[] = [
     tierCost: 10,
     description: '',
   },
+  // Workspace spec 079, D2: sheet effects of these ids (invented costs)
+  ...['vigorous', 'beast-of-burden', 'efficient-sleeper'].map(id => ({
+    id,
+    name: `E2E ${id}`,
+    category: 'e2e',
+    isTalent: true,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: 5,
+    tierCost: 5,
+    description: '',
+  })),
 ];
 
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;

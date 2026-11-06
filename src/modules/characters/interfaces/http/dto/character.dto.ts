@@ -20,7 +20,7 @@ import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-ent
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
-import { CharacterConditionDto, HealthSummaryDto, InjuryDto, TemporaryModifierDto } from './character-health.dto.js';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto, LostLimbDto, TemporaryModifierDto } from './character-health.dto.js';
 
 export class CharacterDto {
   @ApiProperty({
@@ -108,6 +108,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Lasting morale and fear modifiers (spec 068)', type: [TemporaryModifierDto] })
   temporaryModifiers: TemporaryModifierDto[];
 
+  @ApiProperty({ description: 'Limbs lost for good (spec 079): a lost arm is useless, a lost leg crawls', type: [LostLimbDto] })
+  lostLimbs: LostLimbDto[];
+
   @ApiProperty({ type: String, description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
@@ -149,6 +152,7 @@ export class CharacterDto {
     dto.healthSummary = HealthSummaryDto.fromEntity(entity.healthSummary);
     dto.appliedTacticalGames = [...(entity.appliedTacticalGames || [])];
     dto.temporaryModifiers = (entity.temporaryModifiers || []).map(modifier => TemporaryModifierDto.fromEntity(modifier));
+    dto.lostLimbs = (entity.lostLimbs || []).map(limb => LostLimbDto.fromEntity(limb));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;

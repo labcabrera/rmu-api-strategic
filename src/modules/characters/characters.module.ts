@@ -1,6 +1,9 @@
 import { CharacterRestService } from './application/services/character-rest.service.js';
 import { PassTimeHandler } from './application/cqrs/handlers/pass-time.handler.js';
 import { GameTimeController } from './interfaces/http/game-time.controller.js';
+import { GameExperienceController } from './interfaces/http/game-experience.controller.js';
+import { AwardGroupXpHandler } from './application/cqrs/handlers/award-group-xp.handler.js';
+import { StartingWealthService } from './application/services/starting-wealth.service.js';
 import { CharacterWriter } from './application/services/character-writer.service.js';
 import { CharacterAccess } from './application/services/character-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
@@ -80,6 +83,7 @@ import { RemoveTemporaryModifierHandler } from './application/cqrs/handlers/remo
 import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler.js';
 import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler.js';
 import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler.js';
+import { AmputateLimbHandler, StrenuousFailureHandler } from './application/cqrs/handlers/health-079.handlers.js';
 import { RollInjuryRecoveryHandler } from './application/cqrs/handlers/roll-injury-recovery.handler.js';
 import { RollPermanentInjuryHandler } from './application/cqrs/handlers/roll-permanent-injury.handler.js';
 import { RestCharacterHandler } from './application/cqrs/handlers/rest-character.handler.js';
@@ -137,6 +141,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     KafkaCharacterEventConsumer,
     KafkaCharacterGameEventConsumer,
     GameTimeController,
+    GameExperienceController,
   ],
   providers: [
     DeleteCharactersByGameHandler,
@@ -165,6 +170,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UnequipItemHandler,
     UpdateItemCarriedStatusHandler,
     AddXPHandler,
+    AwardGroupXpHandler,
+    StartingWealthService,
     LevelUpHandler,
     LevelUpSkillHandler,
     LevelDownSkillHandler,
@@ -188,6 +195,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     AddInjuryHandler,
     UpdateInjuryHandler,
     TreatInjuryHandler,
+    AmputateLimbHandler,
+    StrenuousFailureHandler,
     RollInjuryRecoveryHandler,
     RollPermanentInjuryHandler,
     RestCharacterHandler,

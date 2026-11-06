@@ -7,11 +7,15 @@ export class CharacterAttackRangeDto {
   to: number;
   bonus: number;
 
+  @ApiProperty({ description: 'Part of the bonus given by the traits, Deadeye (spec 079, D1)', example: 10 })
+  traitBonus: number;
+
   static fromEntity(entity: CharacterAttackRange): CharacterAttackRangeDto {
     const dto = new CharacterAttackRangeDto();
     dto.from = entity.from;
     dto.to = entity.to;
     dto.bonus = entity.bonus;
+    dto.traitBonus = entity.traitBonus ?? 0;
     return dto;
   }
 }
