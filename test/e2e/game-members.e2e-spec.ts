@@ -1,4 +1,6 @@
+import type { KafkaContext } from '@nestjs/microservices';
 import request from 'supertest';
+import { KafkaUserEventConsumer } from '../../src/modules/games/interfaces/messaging/kafka.user-event-consumer.js';
 import { startApp, USERS, type E2eApp, type UserName } from './support/app.js';
 import { characterBody, createCharacter, createGame, gameBody, gameWithFaction } from './support/builders.js';
 import { friendships, REALM, realmAccess } from './support/fakes.js';
@@ -200,5 +202,30 @@ describe('game members (e2e)', () => {
     expect((await as('service').get(`/v1/strategic-games/${game.id}/members`)).body).toMatchObject({ members: [] });
     expect((await as('service').get(`/v1/strategic-games/${game.id}`)).body).toMatchObject({ access: 'spectator' });
     expect(((await as('owner').get(`/v1/strategic-games/${game.id}`)).body as Body).realmReadable).toBe(true);
+  });
+  it('follows the new name of a user in the members and the join requests, once', async () => {
+    const game = await createGame(e2e);
+    await as('owner').put(`/v1/strategic-games/${game.id}/members/${USERS.other.sub}`, { role: 'player' }).expect(200);
+    await as('owner').patch(`/v1/strategic-games/${game.id}`, { accessType: 'public' }).expect(200);
+    await as('carol').post(`/v1/strategic-games/${game.id}/join-requests`, {}).expect(201);
+    const consumer = e2e.app.get(KafkaUserEventConsumer);
+    const context = { getTopic: () => 'internal.rmu-users.user.updated.v1' } as unknown as KafkaContext;
+    const version = async () => ((await as('owner').get(`/v1/strategic-games/${game.id}`)).body as { version: number }).version;
+    const before = await version();
+
+    await consumer.handleUserUpdated({ data: { id: USERS.other.sub, name: 'Nueva Otra' } }, context);
+    await consumer.handleUserUpdated({ data: { id: carol.sub, name: 'Nueva Carol' } }, context);
+
+    const members = (await as('owner').get(`/v1/strategic-games/${game.id}/members`)).body as {
+      members: MemberBody[];
+      joinRequests: MemberBody[];
+    };
+    expect(members.members).toEqual([expect.objectContaining({ userId: USERS.other.sub, userName: 'Nueva Otra' })]);
+    expect(members.joinRequests).toEqual([expect.objectContaining({ userId: carol.sub, userName: 'Nueva Carol' })]);
+    expect(await version()).toBe(before + 2);
+
+    // Redelivered, or another change of the user: nothing to write.
+    await consumer.handleUserUpdated({ data: { id: carol.sub, name: 'Nueva Carol' } }, context);
+    expect(await version()).toBe(before + 2);
   });
 });

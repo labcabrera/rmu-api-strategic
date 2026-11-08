@@ -18,6 +18,16 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
     super(model, rsqlParser);
   }
 
+  async renameUser(userId: string, name: string): Promise<void> {
+    for (const field of ['members', 'joinRequests']) {
+      await this.model.updateMany(
+        { [field]: { $elemMatch: { userId, userName: { $ne: name } } } },
+        { $set: { [`${field}.$[entry].userName`]: name }, $inc: { version: 1 } },
+        { arrayFilters: [{ 'entry.userId': userId }] },
+      );
+    }
+  }
+
   async findByRealm(realmId: string): Promise<Game[]> {
     const docs = await this.model.find({ realmId }).sort({ name: 1 });
     return docs.map(doc => this.toEntity(doc));
