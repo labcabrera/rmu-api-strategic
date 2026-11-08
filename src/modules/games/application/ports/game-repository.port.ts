@@ -5,6 +5,9 @@ import type { BaseRepository } from '../../../shared/application/ports/base-repo
 export interface GameRepository extends BaseRepository<Game> {
   findByRealm(realmId: string): Promise<Game[]>;
 
+  /** Writes the new name of a user in the games where they are a member or asked to join. */
+  renameUser(userId: string, name: string): Promise<void>;
+
   /** The ids of the games that match the criteria (the games a user can read, for the listings of their children). */
   findIds(criteria: QueryCriteria): Promise<string[]>;
 }

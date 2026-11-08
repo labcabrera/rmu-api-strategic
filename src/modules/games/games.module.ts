@@ -19,6 +19,8 @@ import { GetGameHandler } from './application/cqrs/handlers/get-game.handler.js'
 import { GetGamesHandler } from './application/cqrs/handlers/get-games.handler.js';
 import { UpdateGameHandler } from './application/cqrs/handlers/update-game.handler.js';
 import { KafkaRealmEventConsumer } from './interfaces/messaging/kafka.realm-event-consumer.js';
+import { KafkaUserEventConsumer } from './interfaces/messaging/kafka.user-event-consumer.js';
+import { RenameGameUserHandler } from './application/cqrs/handlers/rename-game-user.handler.js';
 import { GameGuardAdapter } from './infrastructure/security/game-guard.adapter.js';
 
 import {
@@ -45,7 +47,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     ]),
     SharedModule,
   ],
-  controllers: [GameController, KafkaRealmEventConsumer],
+  controllers: [GameController, KafkaRealmEventConsumer, KafkaUserEventConsumer],
   providers: [
     GetGameHandler,
     GetGamesHandler,
@@ -54,6 +56,7 @@ import { REALM_CLIENT } from './application/ports/realm-client.port.js';
     UpdateGameHandler,
     DeleteGameHandler,
     DeleteGamesByRealmHandler,
+    RenameGameUserHandler,
     SetGameMemberHandler,
     RemoveGameMemberHandler,
     RequestJoinGameHandler,
