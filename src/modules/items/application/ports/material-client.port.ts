@@ -1,4 +1,4 @@
-/** A superior material of rmu-api-core (GET /v1/materials/:id, workspace spec 043). */
+/** A superior material of rmu-api-items (GET /v1/materials/:id, workspace spec 043). */
 export interface MaterialResponse {
   id: string;
   group: string;
