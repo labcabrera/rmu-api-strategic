@@ -2,7 +2,6 @@
 import request from 'supertest';
 import { startApp, type E2eApp, type UserName } from './support/app.js';
 import { createFaction, createGame } from './support/builders.js';
-import { diceQueue } from './support/fakes.js';
 
 type Body = Record<string, any>;
 
@@ -40,7 +39,6 @@ describe('magic items and treasure (e2e)', () => {
 
   beforeEach(async () => {
     await e2e.clear();
-    diceQueue.length = 0;
     gameId = (await createGame(e2e)).id;
     factionId = (await createFaction(e2e, gameId, 'owner', { name: 'Realm', management: { availableGold: 1000 } })).id;
   });
@@ -160,7 +158,24 @@ describe('magic items and treasure (e2e)', () => {
   });
 
   it('rolls a treasure from the codes and awards the chosen lines to a faction', async () => {
-    const roll = ok(await as('owner').post('/v1/treasure/rolls', { codes: 'c, n, x, special lair, -', magic: ['normal'] }));
+    const request = { codes: 'c, n, x, special lair, -', magic: ['normal'] };
+    const first = ok(await as('owner').post('/v1/treasure/rolls', request));
+    expect(first.pending).toEqual({ table: '7-1b', min: 1, max: 100, modifier: 0 });
+    expect((first.lines as Body[]).every(line => line.kind === 'note')).toBe(true);
+
+    // The client rolls: it sends every die so far until the API stops asking
+    const dice: number[] = [];
+    let roll = first;
+    while (roll.pending) {
+      const { min, max } = roll.pending as { min: number; max: number };
+      dice.push(Math.min(max, Math.max(min, 50)));
+      expect(dice.length).toBeLessThan(100);
+      roll = ok(await as('owner').post('/v1/treasure/rolls', { ...request, dice }));
+    }
+    expect((await as('owner').post('/v1/treasure/rolls', { ...request, dice: [...dice, 50] })).body.code).toBe(
+      'err-treasure-too-many-dice',
+    );
+    expect((await as('owner').post('/v1/treasure/rolls', { ...request, dice: [101] })).body.code).toBe('err-treasure-die-out-of-range');
     expect(roll.codes).toEqual({ wealth: ['normal'], lifestyle: ['normal'], magic: ['normal', 'normal'] });
     expect(roll.warnings).toEqual(['treasure-special-code: special lair']);
     const lines = roll.lines as Body[];

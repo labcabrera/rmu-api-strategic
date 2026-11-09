@@ -10,7 +10,7 @@ import {
   type TreasureQuality,
   type TreasureTables,
 } from '../../../items/domain/value-objects/treasure-tables.vo.js';
-import type { Dice } from './dice.js';
+import { type Dice, TreasureRollPending, type TreasurePendingRoll } from './dice.js';
 
 /** Silver in a gold piece: the tables of 7.1 are in silver (decision 11), strategic stores gold. */
 const SP_PER_GP = 10;
@@ -80,6 +80,8 @@ export interface TreasureRoll {
   codes: TreasureCodes;
   lines: TreasureLine[];
   warnings: string[];
+  /** The next die to roll (workspace spec 094); `lines` then holds only the lines finished so far. */
+  pending?: TreasurePendingRoll;
 }
 
 /** What the generator reads outside the tables: the catalog of items and the spells of a list. */
@@ -133,7 +135,7 @@ export function parseTreasureCodes(
 
 /**
  * Random treasure of Treasure Law 7.1 (workspace spec 067, decisions 10-15): a pure service over the tables of core,
- * the catalog and injectable dice. Every roll is a closed d100 and goes with its line; nothing is stored.
+ * the catalog and dice rolled by the client (spec 094). Every roll is a closed d100 and goes with its line; nothing is stored.
  */
 export class TreasureGenerator {
   private lines: TreasureLine[] = [];
@@ -148,14 +150,19 @@ export class TreasureGenerator {
   async generate(input: TreasureInput): Promise<TreasureRoll> {
     this.lines = (input.notes ?? []).map(text => ({ kind: 'note', text, dice: [] }));
     this.warnings = [...(input.warnings ?? [])];
-    for (const quality of input.codes.wealth) await this.wealth(quality, input.wealthModifier);
-    for (const quality of input.codes.lifestyle) this.lifestyle(quality);
-    for (const quality of input.codes.magic) await this.magic(quality);
+    try {
+      for (const quality of input.codes.wealth) await this.wealth(quality, input.wealthModifier);
+      for (const quality of input.codes.lifestyle) this.lifestyle(quality);
+      for (const quality of input.codes.magic) await this.magic(quality);
+    } catch (error) {
+      if (!(error instanceof TreasureRollPending)) throw error;
+      return { codes: input.codes, lines: this.lines, warnings: this.warnings, pending: error.pending };
+    }
     return { codes: input.codes, lines: this.lines, warnings: this.warnings };
   }
 
   private d100(table: string, modifier = 0, describe: (total: number) => string = total => String(total)): TreasureDie & { value: number } {
-    const roll = this.dice.roll(1, 100);
+    const roll = this.dice.roll(1, 100, { table, modifier });
     const total = roll + modifier;
     return { table, roll, modifier, total, result: describe(total), value: total };
   }
@@ -167,7 +174,7 @@ export class TreasureGenerator {
   /** A number in a range, with its die when the range is not a single value. */
   private between(table: string, min: number, max: number, dice: TreasureDie[]): number {
     if (min >= max) return min;
-    const value = this.dice.roll(min, max);
+    const value = this.dice.roll(min, max, { table });
     dice.push(this.die(table, value, 0, value, String(value)));
     return value;
   }
@@ -316,7 +323,7 @@ export class TreasureGenerator {
       dice.push(this.die('7-1h', typeRoll.roll, 0, typeRoll.total, typeRow?.table ?? '-'));
       if (!typeRow) return this.unresolved('treasure-no-row: 7-1h', dice);
       const table: MagicTable = typeRow.table;
-      const itemRoll = this.dice.roll(1, 100);
+      const itemRoll = this.dice.roll(1, 100, { table: `magic-${table}`, modifier });
       const raw = itemRoll + modifier;
       if (raw < 1) {
         dice.push(this.die(`magic-${table}`, itemRoll, modifier, raw, 'treasure-no-item'));
@@ -410,8 +417,8 @@ export class TreasureGenerator {
 
     let amount: number | null = type.info.stackable ? 1 : null;
     if (missile) {
-      const first = this.dice.roll(1, 10);
-      const second = this.dice.roll(1, 10);
+      const first = this.dice.roll(1, 10, { table: '2d10' });
+      const second = this.dice.roll(1, 10, { table: '2d10' });
       dice.push(this.die('2d10', first + second, 0, first + second, `${first} + ${second}`));
       if (type.info.stackable) amount = first + second;
       else this.warnings.push(`treasure-missiles-not-stackable: ${type.id}`);
@@ -474,7 +481,7 @@ export class TreasureGenerator {
     if (!listCode) {
       let realm: string | undefined;
       if (spec.realms?.length) {
-        realm = spec.realms.length === 1 ? spec.realms[0] : spec.realms[this.dice.roll(1, spec.realms.length) - 1];
+        realm = spec.realms.length === 1 ? spec.realms[0] : spec.realms[this.dice.roll(1, spec.realms.length, { table: 'realm' }) - 1];
         dice.push(this.die('realm', 0, 0, 0, realm));
       } else {
         const realmRoll = this.d100('7-1r');
@@ -488,13 +495,13 @@ export class TreasureGenerator {
       if (!listCode) return null;
     }
     if (spec.names?.length) {
-      const pick = spec.names.length === 1 ? 1 : this.dice.roll(1, spec.names.length);
+      const pick = spec.names.length === 1 ? 1 : this.dice.roll(1, spec.names.length, { table: 'spell' });
       if (spec.names.length > 1) dice.push(this.die('spell', pick, 0, pick, spec.names[pick - 1]));
       return { name: spec.names[pick - 1], level, list: listCode };
     }
     const spells = await this.catalog.spells(listCode, level);
     if (spells.length === 0) return null;
-    const pick = spells.length === 1 ? 1 : this.dice.roll(1, spells.length);
+    const pick = spells.length === 1 ? 1 : this.dice.roll(1, spells.length, { table: 'spell' });
     if (spells.length > 1) dice.push(this.die('spell', pick, 0, pick, spells[pick - 1].name));
     return { name: spells[pick - 1].name, level, list: listCode };
   }

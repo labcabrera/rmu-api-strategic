@@ -1,6 +1,5 @@
 import type { TreasureTablesClientPort } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
 import type { TreasureTables } from '../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
-import type { Dice } from '../../../src/modules/treasure/domain/services/dice.js';
 import type { RealmAccessLevel, RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
 import type { UsersClientPort } from '../../../src/modules/games/application/ports/users-client.port.js';
 import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
@@ -595,8 +594,8 @@ export const tradingTables: { value: TradingTables | null } = { value: null };
 const everyQuality = <T>(value: T) => ({ 'very-poor': value, poor: value, normal: value, rich: value, 'very-rich': value });
 
 /**
- * Invented treasure tables of rmu-api-core (workspace spec 067): every roll of the fake dice (50 unless a test queues
- * others) gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
+ * Invented treasure tables of rmu-api-core (workspace spec 067): a roll of 50 on every die
+ * gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
  */
 export const TREASURE_TABLES = {
   codes: { wealth: { c: 'normal' }, lifestyle: { n: 'normal' }, magic: { x: 'normal' } },
@@ -651,9 +650,6 @@ export const TREASURE_TABLES = {
     charged: [],
   },
 } as unknown as TreasureTables;
-
-/** Rolls the fake dice answer: queued values first, then 50 (within the range asked). */
-export const diceQueue: number[] = [];
 
 /**
  * What core answers to `GET /realms/:id/access/:userId` (spec 071), keyed `realmId:userId`; `read` when not set.
@@ -781,11 +777,9 @@ export function apiFakes() {
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
   const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
-  const dice: Dice = { roll: (min, max) => Math.min(max, Math.max(min, diceQueue.shift() ?? 50)) };
   return {
     usersClient,
     treasureTablesClient,
-    dice,
     alchemyTablesClient,
     npcClient,
     enumerationClient,

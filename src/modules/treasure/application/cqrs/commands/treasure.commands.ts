@@ -14,6 +14,8 @@ export interface TreasureRollRequest {
   gameId?: string | null;
   /** Adds the 7-1c modifier `power-<level>` of the tables when they have it. */
   powerLevel?: PowerLevel | null;
+  /** The dice rolled by the client so far, in order (workspace spec 094). */
+  dice?: number[];
 }
 
 /** `POST /v1/treasure/rolls`: rolls a treasure, stores nothing. */
