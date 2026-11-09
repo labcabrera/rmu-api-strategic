@@ -7,7 +7,7 @@ import type { TradingTables } from '../../domain/value-objects/trading-tables.vo
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-/** Trading tables of rmu-api-core (workspace spec 048), read with the service token and kept for a while. */
+/** Trading tables of rmu-api-items (workspace specs 048 and 095), read with the service token and kept for a while. */
 @Injectable()
 export class ApiTradingTablesClientAdapter implements TradingTablesClientPort {
   private cache: { value: TradingTables | null; expiresAt: number } | null = null;
@@ -20,7 +20,7 @@ export class ApiTradingTablesClientAdapter implements TradingTablesClientPort {
 
   async getTradingTables(): Promise<TradingTables | null> {
     if (this.cache && Date.now() < this.cache.expiresAt) return this.cache.value;
-    const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/trading-tables`;
+    const uri = `${this.configService.get('RMU_API_ITEMS_URI') as string}/trading-tables`;
     let value: TradingTables | null;
     try {
       const data = await this.httpClient.get<Partial<TradingTables>>(uri, { token: await this.tokenService.getToken() });
