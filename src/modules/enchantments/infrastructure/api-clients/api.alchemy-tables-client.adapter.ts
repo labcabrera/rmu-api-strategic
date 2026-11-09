@@ -7,7 +7,7 @@ import type { AlchemyTables } from '../../domain/value-objects/alchemy.vo.js';
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-/** Alchemy tables of rmu-api-core (workspace spec 064), read with the service token and kept in process for a while. */
+/** Alchemy tables of rmu-api-spells (workspace specs 064 and 096), read with the service token and kept in process for a while. */
 @Injectable()
 export class ApiAlchemyTablesClientAdapter implements AlchemyTablesClientPort {
   private cache: { value: AlchemyTables | null; expiresAt: number } | null = null;
@@ -20,7 +20,7 @@ export class ApiAlchemyTablesClientAdapter implements AlchemyTablesClientPort {
 
   async getAlchemyTables(): Promise<AlchemyTables | null> {
     if (this.cache && Date.now() < this.cache.expiresAt) return this.cache.value;
-    const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/alchemy-tables`;
+    const uri = `${this.configService.get('RMU_API_SPELLS_URI') as string}/alchemy-tables`;
     let value: AlchemyTables | null;
     try {
       const data = await this.httpClient.get<Partial<AlchemyTables>>(uri, { token: await this.tokenService.getToken() });
