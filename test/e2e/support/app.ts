@@ -26,7 +26,6 @@ import { ALCHEMY_TABLES_CLIENT } from '../../../src/modules/enchantments/applica
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
 import { TREASURE_TABLES_CLIENT } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
-import { DICE } from '../../../src/modules/treasure/domain/services/dice.js';
 import { apiFakes, InMemoryEventPublisher, resetSocialFakes } from './fakes.js';
 import { USERS_CLIENT } from '../../../src/modules/games/application/ports/users-client.port.js';
 import { AUDIENCE, ISSUER, LocalJwks } from './jwks.js';
@@ -137,8 +136,6 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.alchemyTablesClient)
     .overrideProvider(TREASURE_TABLES_CLIENT)
     .useValue(fakes.treasureTablesClient)
-    .overrideProvider(DICE)
-    .useValue(fakes.dice)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);

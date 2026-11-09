@@ -1,6 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { POWER_LEVELS, type PowerLevel } from '../../../../enchantments/domain/value-objects/alchemy.vo.js';
 import { ItemDto } from '../../../../items/interfaces/http/dto/item.dto.js';
 import { ItemHolderDto } from '../../../../items/interfaces/http/dto/item-operations.dto.js';
@@ -14,6 +26,7 @@ import { MAX_AWARD_LINES } from '../../../application/cqrs/handlers/treasure.han
 import type { TreasureDie, TreasureLine } from '../../../domain/services/treasure-generator.js';
 
 const LINE_KINDS = ['gold', 'item', 'note'] as const;
+const MAX_TREASURE_DICE = 500;
 
 export class TreasureRollRequestDto {
   @ApiProperty({ required: false, nullable: true, type: String, description: 'Codes of the book, e.g. "c, n, x"', example: 'c, n, x' })
@@ -58,6 +71,18 @@ export class TreasureRollRequestDto {
   @IsOptional()
   powerLevel?: PowerLevel;
 
+  @ApiProperty({
+    required: false,
+    type: [Number],
+    description: 'The dice rolled by the client so far, in order. The answer has `pending` while another one is needed',
+    example: [45, 12],
+  })
+  @IsArray()
+  @ArrayMaxSize(MAX_TREASURE_DICE)
+  @IsInt({ each: true })
+  @IsOptional()
+  dice?: number[];
+
   static toQuery(dto: TreasureRollRequestDto, userId: string, roles: string[]): RollTreasureQuery {
     return new RollTreasureQuery(
       {
@@ -68,6 +93,7 @@ export class TreasureRollRequestDto {
         wealthModifier: dto.wealthModifier ?? 0,
         gameId: dto.gameId ?? null,
         powerLevel: dto.powerLevel ?? null,
+        dice: dto.dice ?? [],
       },
       userId,
       roles,

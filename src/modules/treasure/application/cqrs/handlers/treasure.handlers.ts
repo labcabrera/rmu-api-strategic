@@ -16,7 +16,7 @@ import { roundGold } from '../../../../items/domain/services/price-calculator.js
 import type { ItemSize } from '../../../../items/domain/services/item-unit-value.js';
 import type { TreasureTables } from '../../../../items/domain/value-objects/treasure-tables.vo.js';
 import { ValidationError } from '../../../../shared/domain/errors/errors.js';
-import { DICE, type Dice } from '../../../domain/services/dice.js';
+import { ProvidedDice } from '../../../domain/services/dice.js';
 import {
   parseTreasureCodes,
   type TreasureCatalog,
@@ -39,7 +39,6 @@ export class RollTreasureHandler implements IQueryHandler<RollTreasureQuery, Tre
     @Inject(TREASURE_TABLES_CLIENT) private readonly treasureTables: TreasureTablesClientPort,
     @Inject(ITEM_CLIENT) private readonly itemClient: ItemClientPort,
     @Inject(SPELL_LIST_CLIENT) private readonly spellListClient: SpellListClientPort,
-    @Inject(DICE) private readonly dice: Dice,
   ) {}
 
   async execute(query: RollTreasureQuery): Promise<TreasureRoll> {
@@ -52,13 +51,16 @@ export class RollTreasureHandler implements IQueryHandler<RollTreasureQuery, Tre
       lifestyle: [...parsed.codes.lifestyle, ...(request.lifestyle ?? [])],
       magic: [...parsed.codes.magic, ...(request.magic ?? [])],
     };
-    const generator = new TreasureGenerator(tables, this.catalog(), this.dice);
-    return generator.generate({
+    const dice = new ProvidedDice(request.dice ?? []);
+    const generator = new TreasureGenerator(tables, this.catalog(), dice);
+    const roll = await generator.generate({
       codes,
       wealthModifier: RollTreasureHandler.wealthModifier(request.wealthModifier, request.powerLevel, tables),
       notes: parsed.notes,
       warnings: parsed.warnings,
     });
+    if (dice.unused > 0) throw new ValidationError(`${dice.unused} dice left over`, 'err-treasure-too-many-dice');
+    return roll;
   }
 
   static wealthModifier(modifier: number | undefined, powerLevel: string | null | undefined, tables: TreasureTables): number {
