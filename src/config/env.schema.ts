@@ -11,12 +11,14 @@ export const envSchema = Joi.object({
   RMU_API_NPCS_URI: Joi.string().required(),
   // Spec 071: friendships and user names for the members of a game
   RMU_API_USERS_URI: Joi.string().required(),
+  // Workspace spec 102: deleting a game deletes the images of its chronicle (DELETE /images?scope=strategic-game:<id>)
+  RMU_API_MEDIA_URI: Joi.string().required(),
   RMU_IAM_URI: Joi.string().uri().default('http://localhost/sso'),
   RMU_IAM_REALM: Joi.string().default('rmu'),
   RMU_IAM_JWK_URI: Joi.string().uri().required(),
   RMU_IAM_ISSUER_URI: Joi.string().uri().required(),
   RMU_IAM_AUDIENCE: Joi.string().required(),
-  // The service token used to call core, items, spells and npcs (TokenService, client credentials).
+  // The service token used to call core, items, spells, npcs, users and media (TokenService, client credentials).
   RMU_IAM_TOKEN_URI: Joi.string().uri().required(),
   RMU_IAM_CLIENT_ID: Joi.string().required(),
   RMU_IAM_CLIENT_SECRET: Joi.string().required(),

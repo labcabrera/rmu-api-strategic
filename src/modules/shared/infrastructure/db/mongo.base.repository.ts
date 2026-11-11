@@ -20,6 +20,9 @@ export abstract class MongoBaseRepository<E extends BaseAggregateRoot<{ id: stri
   /** Old fields that every update removes from the stored document. */
   protected readonly removedFields: readonly string[] = [];
 
+  /** Fields that update() leaves alone, because a dedicated write of the subclass changes them (spec 102: `order`). */
+  protected readonly fieldsWrittenApart: readonly string[] = [];
+
   constructor(
     protected model: Model<D>,
     protected rsqlParser: RsqlParser,
@@ -72,7 +75,7 @@ export abstract class MongoBaseRepository<E extends BaseAggregateRoot<{ id: stri
 
   async update(entity: E): Promise<E> {
     const { id, ...rest } = entity.getProps();
-    const entries = Object.entries(rest);
+    const entries = Object.entries(rest).filter(([key]) => !this.fieldsWrittenApart.includes(key));
     // An undefined field was cleared: $unset removes it instead of leaving the old value.
     const $set = Object.fromEntries(entries.filter(([, value]) => value !== undefined));
     const cleared = [...entries.filter(([, value]) => value === undefined).map(([key]) => key), ...this.removedFields];

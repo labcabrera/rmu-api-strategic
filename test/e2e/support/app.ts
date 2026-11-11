@@ -26,6 +26,7 @@ import { ALCHEMY_TABLES_CLIENT } from '../../../src/modules/enchantments/applica
 import { DOMAIN_EVENT_PUBLISHER } from '../../../src/modules/shared/application/ports/domain-event-publisher.port.js';
 import { KafkaProducerService } from '../../../src/modules/shared/infrastructure/messaging/kafka-producer.service.js';
 import { TREASURE_TABLES_CLIENT } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
+import { MEDIA_CLIENT } from '../../../src/modules/chronicle/application/ports/media-client.port.js';
 import { apiFakes, InMemoryEventPublisher, resetSocialFakes } from './fakes.js';
 import { USERS_CLIENT } from '../../../src/modules/games/application/ports/users-client.port.js';
 import { AUDIENCE, ISSUER, LocalJwks } from './jwks.js';
@@ -59,7 +60,7 @@ export type E2eApp = {
 
 /**
  * Boots the whole AppModule as main.ts does (configureHttp) against an in-memory Mongo and a local JWKS. The ports of
- * the APIs strategic calls (core, items, spells and npcs) answer from in-memory fakes, the domain events are kept in memory and the
+ * the APIs strategic calls (core, items, spells, npcs, users and media) answer from in-memory fakes, the domain events are kept in memory and the
  * Kafka producer is replaced. AppModule is imported after setting the environment, because ConfigModule.forRoot()
  * reads it when the module is evaluated.
  */
@@ -74,6 +75,7 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     RMU_API_SPELLS_URI: 'http://127.0.0.1:1/v1',
     RMU_API_NPCS_URI: 'http://127.0.0.1:1/v1',
     RMU_API_USERS_URI: 'http://127.0.0.1:1/v1',
+    RMU_API_MEDIA_URI: 'http://127.0.0.1:1/v1',
     RMU_IAM_JWK_URI: jwks.uri,
     RMU_IAM_ISSUER_URI: ISSUER,
     RMU_IAM_AUDIENCE: AUDIENCE,
@@ -136,6 +138,8 @@ export async function startApp(env: Record<string, string> = {}, beforeInit?: (a
     .useValue(fakes.alchemyTablesClient)
     .overrideProvider(TREASURE_TABLES_CLIENT)
     .useValue(fakes.treasureTablesClient)
+    .overrideProvider(MEDIA_CLIENT)
+    .useValue(fakes.mediaClient)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: ['error'] });
   configureHttp(app);
