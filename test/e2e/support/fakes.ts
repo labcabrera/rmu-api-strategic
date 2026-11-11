@@ -36,6 +36,7 @@ import type { EnumerationClientPort } from '../../../src/modules/characters/appl
 import type { AlchemyTablesClientPort } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
 import type { AlchemyTables } from '../../../src/modules/enchantments/domain/value-objects/alchemy.vo.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
+import type { MediaClientPort } from '../../../src/modules/chronicle/application/ports/media-client.port.js';
 import { SPEC_068_TABLES, TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
 // Invented catalog data (not book data): the minimum the strategic API reads from core and items.
@@ -661,7 +662,15 @@ export const realmAccess = new Map<string, RealmAccessLevel>();
 export const friendships = new Set<string>();
 export const DEFAULT_FRIENDSHIPS = ['e2e-owner:e2e-other'];
 
+/**
+ * rmu-api-media (workspace spec 102): the scopes strategic asked to delete, and whether the next calls fail (as an
+ * unavailable media would). `E2eApp.clear()` resets it.
+ */
+export const mediaCalls: { deletedScopes: string[]; fail: boolean } = { deletedScopes: [], fail: false };
+
 export function resetSocialFakes(): void {
+  mediaCalls.deletedScopes.length = 0;
+  mediaCalls.fail = false;
   realmAccess.clear();
   friendships.clear();
   DEFAULT_FRIENDSHIPS.forEach(pair => friendships.add(pair));
@@ -777,7 +786,15 @@ export function apiFakes() {
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
   const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
+  const mediaClient: MediaClientPort = {
+    deleteImagesByScope: scope => {
+      if (mediaCalls.fail) return Promise.reject(new UpstreamBadGatewayError('rmu-api-media/v1/images is not available', 503));
+      mediaCalls.deletedScopes.push(scope);
+      return Promise.resolve(2);
+    },
+  };
   return {
+    mediaClient,
     usersClient,
     treasureTablesClient,
     alchemyTablesClient,

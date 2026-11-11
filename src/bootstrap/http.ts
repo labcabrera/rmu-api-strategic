@@ -13,15 +13,40 @@ export const splitList = (value: string | undefined): string[] =>
     .filter(item => item.length > 0);
 
 const IMPORT_ROUTES = /^\/v1\/(factions|strategic-games)\/[^/]+\/(character|faction)-imports\/?$/;
+/** Workspace spec 102: a chapter of the chronicle holds up to 200000 characters of Markdown, above the 100 KB of the global parser. */
+const CHRONICLE_ROUTES = /^\/v1\/chronicle-chapters(\/[^/]+)?\/?$/;
+export const CHRONICLE_BODY_MAX_BYTES = 1024 * 1024;
+
+/** The codes of the errors of a body parser. */
+interface BodyErrorCodes {
+  tooLarge: string;
+  invalid: string;
+  tooLargeMessage: (limit: number) => string;
+  invalidMessage: string;
+}
+
+const IMPORT_ERRORS: BodyErrorCodes = {
+  tooLarge: 'export-too-large',
+  invalid: 'export-invalid-file',
+  tooLargeMessage: limit => `The file is larger than ${limit} bytes`,
+  invalidMessage: 'The file is not valid JSON',
+};
+
+const CHRONICLE_ERRORS: BodyErrorCodes = {
+  tooLarge: 'payload-too-large',
+  invalid: 'validation',
+  tooLargeMessage: limit => `The body is larger than ${limit} bytes`,
+  invalidMessage: 'The body is not valid JSON',
+};
 
 type ParsedRequest = Request & { _body?: boolean };
 
 /**
- * Reads the JSON body of the import routes with its own limit: a larger body is a 413 `export-too-large`, and a body
- * that is not JSON a 400 `export-invalid-file`, both in the error format of the API. It marks the request as parsed,
+ * Reads the JSON body of some routes with their own limit: a larger body is a 413 (`export-too-large` for the import
+ * routes), and a body that is not JSON a 400 (`export-invalid-file`), both in the error format of the API. It marks the request as parsed,
  * as body-parser does, so the global parser skips it.
  */
-function importBodyParser(limit: number) {
+function jsonBodyParser(limit: number, codes: BodyErrorCodes) {
   return (req: ParsedRequest, res: Response, next: NextFunction) => {
     if (req._body || !(req.headers['content-type'] ?? '').includes('json')) {
       next();
@@ -41,7 +66,7 @@ function importBodyParser(limit: number) {
         done = true;
         req.removeAllListeners('data');
         req.resume();
-        fail(413, 'PayloadTooLargeError', 'export-too-large', `The file is larger than ${limit} bytes`, { maxBytes: limit });
+        fail(413, 'PayloadTooLargeError', codes.tooLarge, codes.tooLargeMessage(limit), { maxBytes: limit });
         return;
       }
       chunks.push(chunk);
@@ -53,7 +78,7 @@ function importBodyParser(limit: number) {
       try {
         req.body = text.length > 0 ? (JSON.parse(text) as unknown) : {};
       } catch {
-        fail(400, 'ValidationError', 'export-invalid-file', 'The file is not valid JSON');
+        fail(400, 'ValidationError', codes.invalid, codes.invalidMessage);
         return;
       }
       req._body = true;
@@ -87,7 +112,8 @@ export function configureHttp(app: NestExpressApplication) {
   app.enableShutdownHooks();
   // Export files of spec 024 go above the 100 KB of the global JSON parser. Mounted before it, this parser reads the
   // import routes first, and the global one then leaves the parsed body alone.
-  app.use(IMPORT_ROUTES, importBodyParser(config.get<number>('RMU_STRATEGIC_IMPORT_MAX_BYTES') ?? 5 * 1024 * 1024));
+  app.use(IMPORT_ROUTES, jsonBodyParser(config.get<number>('RMU_STRATEGIC_IMPORT_MAX_BYTES') ?? 5 * 1024 * 1024, IMPORT_ERRORS));
+  app.use(CHRONICLE_ROUTES, jsonBodyParser(CHRONICLE_BODY_MAX_BYTES, CHRONICLE_ERRORS));
   // Unknown body fields are dropped, not rejected (whitelist without forbidNonWhitelisted).
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
