@@ -35,6 +35,7 @@ import { isUpstreamHttpError } from '../../../../shared/infrastructure/http/http
 import { SpecializationCatalogService } from '../../services/specialization-catalog.service.js';
 import { specializationKey } from '../../../domain/services/skills/specialization-keys.js';
 import type { CreateCharacterSkill } from '../commands/create-character.command.js';
+import { StartingWealthService } from '../../services/starting-wealth.service.js';
 
 @CommandHandler(CreateCharacterCommand)
 export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCommand, Character> {
@@ -55,6 +56,7 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     private readonly characterAccess: CharacterAccess,
     private readonly spellListSkillResolver: SpellListSkillResolver,
     private readonly specializationCatalog: SpecializationCatalogService,
+    private readonly startingWealth: StartingWealthService,
   ) {}
 
   async execute(command: CreateCharacterCommand): Promise<Character> {
@@ -62,13 +64,13 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     this.characterAccess.checkCreate(command.roles);
     const game = await this.gameRepository.findById(command.gameId);
     if (!game) throw new ValidationError(`Game with id ${command.gameId} not found`);
-
     const faction = await this.factionRepository.findById(command.faction);
     if (!faction) throw new ValidationError(`Faction with id ${command.faction} not found`);
 
     if (faction.gameId != game.id) {
       throw new ValidationError(`Faction ${command.faction} does not belong to game ${command.gameId}`);
     }
+    await this.characterAccess.checkCreateIn(game, faction, command.userId, command.roles);
 
     this.validateStatistics(game, command.statistics);
 
@@ -126,7 +128,8 @@ export class CreateCharacterHandler implements ICommandHandler<CreateCharacterCo
     character.finishCreation();
     const created = await this.characterRepository.save(character);
     await this.events.publish('character', new CharacterCreatedEvent(created.getProps()));
-    return character;
+    // Workspace spec 079, E: the starting money of the game (table 6-0b), once the character exists
+    return (await this.startingWealth.apply(created, game, faction, command.userId)) ?? character;
   }
 
   // Temporary not above potential, values in 1..100 and, with point-buy generation, the stat points budget

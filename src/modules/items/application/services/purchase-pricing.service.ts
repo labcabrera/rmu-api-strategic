@@ -81,6 +81,8 @@ export class PurchasePricing {
       trading?: TradingRequest;
       powerLevel?: PowerLevel;
       character: Character | null;
+      /** Workspace spec 079, E: the game of the buyer, whose preset is the power level when none is given */
+      gameId?: string | null;
       check: boolean;
     },
   ): Promise<PricedOrder> {
@@ -94,7 +96,7 @@ export class PurchasePricing {
         : await this.trading.evaluate('purchase', options.trading, options.character)
       : undefined;
     const trading = negotiated?.result;
-    const powerMultiplier = await this.powerLevels.multiplier(options.powerLevel);
+    const powerMultiplier = await this.powerLevels.multiplier(options.powerLevel, options.gameId);
     const priced: PricedOrderLine[] = [];
     for (const line of lines) {
       const itemType = await this.itemFactory.itemType(line.itemTypeId);
@@ -137,8 +139,8 @@ export class PurchasePricing {
   }
 
   /** Workspace spec 067: the multiplier of a power level (1 for the Superior level of the book). */
-  powerMultiplier(powerLevel: PowerLevel | null | undefined): Promise<number> {
-    return this.powerLevels.multiplier(powerLevel);
+  powerMultiplier(powerLevel: PowerLevel | null | undefined, gameId?: string | null): Promise<number> {
+    return this.powerLevels.multiplier(powerLevel, gameId);
   }
 
   /** The factor of the market conditions; they need the trading tables of core. */

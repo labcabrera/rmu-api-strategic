@@ -21,9 +21,12 @@ export class TreasureController {
 
   @Post('rolls')
   @HttpCode(200)
-  @ApiOperation({ operationId: 'rollTreasure', summary: 'Roll a random treasure from its codes or qualities; nothing is stored' })
-  @ApiOkResponse({ description: 'Codes, lines with their dice and warnings' })
-  @ApiErrors({ 400: 'Invalid data or no treasure tables in core' })
+  @ApiOperation({
+    operationId: 'rollTreasure',
+    summary: 'Work out a random treasure from its codes or qualities and the dice rolled by the client; nothing is stored',
+  })
+  @ApiOkResponse({ description: 'Codes, lines with their dice and warnings, or the next die to roll in `pending`' })
+  @ApiErrors({ 400: 'Invalid data, a die out of range, dice left over or no treasure tables in core' })
   async roll(@Body() dto: TreasureRollRequestDto, @CurrentUser() user: AuthenticatedUser): Promise<TreasureRoll> {
     return this.queryBus.execute<object, TreasureRoll>(TreasureRollRequestDto.toQuery(dto, user.id, user.roles));
   }

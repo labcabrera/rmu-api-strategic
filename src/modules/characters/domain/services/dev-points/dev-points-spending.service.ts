@@ -3,6 +3,28 @@ import { CharacterXP } from '../../value-objects/character-xp.vo.js';
 
 export type DevPointsPool = 'normal' | 'bonus' | 'flaw';
 
+/**
+ * Pool the player chooses to pay an operation with (workspace spec 076, A3):
+ * - auto: normal points first, then bonus points;
+ * - bonus: bonus points first, up to the per level limit, then normal points;
+ * - normal: only normal points.
+ */
+export type DevPointsPoolChoice = 'auto' | 'normal' | 'bonus';
+export const DEV_POINTS_POOL_CHOICES: DevPointsPoolChoice[] = ['auto', 'normal', 'bonus'];
+
+export const DEV_POINTS_INSUFFICIENT = 'err-dev-points-insufficient';
+
+export const poolsFor = (choice: DevPointsPoolChoice | undefined): DevPointsPool[] => {
+  switch (choice) {
+    case 'bonus':
+      return ['bonus', 'normal'];
+    case 'normal':
+      return ['normal'];
+    default:
+      return ['normal', 'bonus'];
+  }
+};
+
 // Points taken from each pool. Negative values are points granted (flaws)
 export interface DevPointsPayment {
   normal: number;
@@ -58,7 +80,7 @@ export class DevPointsSpendingService {
       remaining -= taken;
     }
     if (remaining > 0) {
-      throw onInsufficient ? onInsufficient() : new ValidationError('Insufficient development points');
+      throw onInsufficient ? onInsufficient() : new ValidationError('Insufficient development points', DEV_POINTS_INSUFFICIENT);
     }
     xp.availableDevPoints = (xp.availableDevPoints || 0) - payment.normal;
     xp.availableBonusDevPoints = (xp.availableBonusDevPoints || 0) - payment.bonus;

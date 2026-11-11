@@ -16,6 +16,8 @@ export class MongoQueryCriteriaMapper {
         return { $or: criteria.criteria.map(item => this.toFilterQuery(item)) };
       case 'allOf':
         return { $and: criteria.criteria.map(item => this.toFilterQuery(item)) };
+      case 'elemMatch':
+        return { [criteria.field]: { $elemMatch: criteria.values } };
     }
   }
 

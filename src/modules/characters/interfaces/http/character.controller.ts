@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Logger, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { CharacterAccess } from '../../application/services/character-access.service.js';
+import type { EntityAccess } from '../../../factions/application/services/faction-access.service.js';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/infrastructure/security/jwt-auth.guard.js';
@@ -13,6 +15,7 @@ import { AddXPCommand } from '../../application/cqrs/commands/add-xp.command.js'
 import { CreateCharacterCommand } from '../../application/cqrs/commands/create-character.command.js';
 import { DeleteCharacterCommand } from '../../application/cqrs/commands/delete-character.command.js';
 import { LevelUpCommand } from '../../application/cqrs/commands/level-up.command.js';
+import { RecalculateCharacterCommand } from '../../application/cqrs/commands/recalculate-character.command.js';
 import { UpdateCharacterCommand } from '../../application/cqrs/commands/update-character.command.js';
 import { GetCharacterQuery } from '../../application/cqrs/queries/get-character.query.js';
 import { GetCharactersQuery } from '../../application/cqrs/queries/get-characters.query.js';
@@ -32,6 +35,7 @@ export class CharacterController {
   constructor(
     private commandBus: CommandBus,
     private queryBus: QueryBus,
+    private readonly characterAccess: CharacterAccess,
   ) {}
 
   @Get(':id')
@@ -43,7 +47,7 @@ export class CharacterController {
     const roles = user.roles;
     const query = new GetCharacterQuery(id, userId, roles);
     const entity = await this.queryBus.execute<GetCharacterQuery, Character>(query);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Get('')
@@ -56,7 +60,10 @@ export class CharacterController {
     const roles = user.roles;
     const query = new GetCharactersQuery(dto.q, dto.page, dto.size, userId, roles);
     const page = await this.queryBus.execute<GetCharactersQuery, Page<Character>>(query);
-    const mapped = page.content.map(character => CharacterDto.fromEntity(character));
+    const viewer = this.characterAccess.viewer(userId, roles);
+    const mapped = await Promise.all(
+      page.content.map(async character => CharacterController.withAccess(character, await viewer.character(character))),
+    );
     return new Page<CharacterDto>(mapped, page.pagination.page, page.pagination.size, page.pagination.totalElements);
   }
 
@@ -71,7 +78,7 @@ export class CharacterController {
     const roles = user.roles;
     const command = CreateCharacterDto.toCommand(dto, userId, roles);
     const entity = await this.commandBus.execute<CreateCharacterCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Patch(':id')
@@ -84,7 +91,7 @@ export class CharacterController {
     const roles = user.roles;
     const command = UpdateCharacterDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateCharacterCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Delete(':id')
@@ -111,7 +118,21 @@ export class CharacterController {
     const roles = user.roles;
     const command = AddXPDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<AddXPCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
+  }
+
+  @Post(':id/recalculate')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'recalculateCharacter',
+    summary: 'Run the character processor again and store the sheet (admin only, workspace spec 077)',
+  })
+  @ApiOkResponse({ type: CharacterDto, description: 'Success' })
+  @ApiErrors({ 403: 'Not an admin', 404: 'Character not found' })
+  async recalculate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const command = new RecalculateCharacterCommand(id, user.id, user.roles);
+    const entity = await this.commandBus.execute<RecalculateCharacterCommand, Character>(command);
+    return this.toDto(entity, user);
   }
 
   @Post(':id/level-up')
@@ -124,9 +145,9 @@ export class CharacterController {
     const userId = user.id;
     const roles = user.roles;
     const force = dto.force || false;
-    const command = new LevelUpCommand(id, force, userId, roles);
+    const command = new LevelUpCommand(id, force, userId, roles, dto.save || false);
     const entity = await this.commandBus.execute<LevelUpCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
   }
 
   @Patch(':id/stats/temporary')
@@ -140,6 +161,17 @@ export class CharacterController {
     const roles = user.roles;
     const command = UpdateTemporaryStatDto.toCommand(id, dto, userId, roles);
     const entity = await this.commandBus.execute<UpdateTemporaryStatCommand, Character>(command);
-    return CharacterDto.fromEntity(entity);
+    return this.toDto(entity, user);
+  }
+
+  /** The sheet with the access of the user (spec 072, contract 18). */
+  private async toDto(entity: Character, user: AuthenticatedUser): Promise<CharacterDto> {
+    return CharacterController.withAccess(entity, await this.characterAccess.access(entity, user.id, user.roles));
+  }
+
+  private static withAccess(entity: Character, access: EntityAccess): CharacterDto {
+    const dto = CharacterDto.fromEntity(entity);
+    if (access !== 'none') dto.access = access;
+    return dto;
   }
 }

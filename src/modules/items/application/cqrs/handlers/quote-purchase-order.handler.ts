@@ -24,7 +24,12 @@ export class QuotePurchaseOrderHandler implements IQueryHandler<QuotePurchaseOrd
 
   async execute(query: QuotePurchaseOrderQuery): Promise<PurchaseOrderQuote> {
     const buyer = query.buyer ? await this.holderAccess.load(query.buyer) : null;
-    const order = await this.pricing.order(query.lines, { ...query.options, character: buyer?.character ?? null, check: false });
+    const order = await this.pricing.order(query.lines, {
+      ...query.options,
+      character: buyer?.character ?? null,
+      gameId: buyer?.gameId,
+      check: false,
+    });
     return {
       lines: order.lines.map(line => ({
         itemTypeId: line.itemType.id,

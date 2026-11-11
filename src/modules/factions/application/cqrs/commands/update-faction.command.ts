@@ -14,6 +14,8 @@ export class UpdateFactionCommand extends AuthenticatedCommand {
     public readonly expectedVersion?: number,
     /** Spec 055: the whole list of NPCs; undefined leaves it as it is. */
     public readonly npcs?: FactionNpcInput[],
+    /** Spec 072: the whole list of players of the faction (masters only); undefined leaves it as it is. */
+    public readonly players?: string[],
   ) {
     super(userId, roles);
   }

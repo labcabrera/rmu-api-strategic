@@ -2,6 +2,7 @@ import Joi from 'joi';
 import { REALM_STAT_TOKEN } from '../../../characters/domain/value-objects/character-realm.vo.js';
 import { CHARACTER_CONDITION_STATUSES } from '../../../characters/domain/value-objects/character-condition.vo.js';
 import { STAT_KEYS } from '../../../characters/domain/value-objects/character-stat.vo.js';
+import { TRAIT_ACQUISITION_TYPES } from '../../../characters/domain/value-objects/character-trait.vo.js';
 import {
   BLEEDING_CONTROLS,
   BODY_LOCATIONS,
@@ -32,6 +33,7 @@ import {
 } from '../../../items/domain/value-objects/item-enchantment.vo.js';
 import { ITEM_SIZES, JEWELRY_CLASSES } from '../../../items/domain/services/item-unit-value.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, MAX_FACTION_NPCS } from '../../../factions/domain/value-objects/faction-npc.vo.js';
+import { LOST_LIMB_CAUSES, LOST_LIMB_LOCATIONS } from '../../../characters/domain/value-objects/lost-limb.vo.js';
 import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPORT_ITEMS } from '../../domain/format/export-format.js';
 
 /**
@@ -42,6 +44,8 @@ import { CURRENT_FORMAT_VERSION, EXPORT_FORMAT, MAX_IMPORT_CHARACTERS, MAX_IMPOR
 
 const ID = 200;
 const NAME = 200;
+// Workspace spec 077: notes of the purchase of a trait
+const NOTE_MAX = 500;
 const TEXT = 20_000;
 
 const id = () => Joi.string().trim().min(1).max(ID);
@@ -165,6 +169,22 @@ const injury = Joi.object({
   ),
   reopenOn: nullable(Joi.string().valid(...INJURY_REOPEN_ON)),
   tourniquet: nullable(Joi.object({ tightSince: int().required(), loosenedAt: nullable(int()).required() })),
+  // Workspace spec 079 (format 14)
+  strenuousFailure: nullable(
+    Joi.object({ at: date().required(), absolute: Joi.boolean().required(), treatmentId: id(), previousPenalty: num().max(0) }),
+  ),
+});
+
+/** Workspace spec 079 (format 14): a lost limb. */
+const lostLimb = Joi.object({
+  location: Joi.string()
+    .valid(...LOST_LIMB_LOCATIONS)
+    .required(),
+  side: Joi.string()
+    .valid(...BODY_SIDES)
+    .required(),
+  at: date().required(),
+  cause: Joi.string().valid(...LOST_LIMB_CAUSES),
 });
 
 /** Workspace spec 068 (format 12): a temporary morale or fear modifier with the days it has left. */
@@ -230,6 +250,21 @@ const character = Joi.object({
       .required(),
     bonusDevPointsSpentThisLevel: num().required(),
     flawDevPoints: num().required(),
+    intenseTrainingSkill: nullable(Joi.object({ skillId: id().required(), specialization: nullable(name()).required() })).required(),
+    savedDevPoints: num().min(0).required(),
+    statGainPayments: Joi.array()
+      .items(
+        Joi.object({
+          stat: Joi.string()
+            .valid(...STAT_KEYS)
+            .required(),
+          normal: num().required(),
+          bonus: num().required(),
+          level: int().min(0).required(),
+        }),
+      )
+      .max(100)
+      .required(),
   }).required(),
   statistics: Joi.object(
     Object.fromEntries(
@@ -254,6 +289,8 @@ const character = Joi.object({
         ranks: int().min(0).max(1000).required(),
         ranksDeveloped: int().min(0).max(10).required(),
         cultureRanks: int().min(0).max(1000).required(),
+        talentRanks: int().min(0).max(1000).required(),
+        cultureSources: Joi.array().items(int().min(0).max(100)).max(100),
         devPointsSpent: Joi.object({ normal: num().required(), bonus: num().required() }).required(),
         knackBonus: nullable(num()).required(),
         styleAbilities: Joi.array()
@@ -283,6 +320,32 @@ const character = Joi.object({
             level: int().min(0).required(),
           }),
         ).required(),
+        grantedRanks: Joi.array()
+          .items(
+            Joi.object({
+              skillId: id().required(),
+              specialization: nullable(name()).required(),
+              ranks: int().min(1).max(1000).required(),
+              created: Joi.boolean().required(),
+            }),
+          )
+          .max(10),
+        // Workspace spec 077: purchase data of the trait
+        acquiredBy: Joi.array()
+          .items(
+            Joi.object({
+              tier: int().min(1).max(100).required(),
+              type: Joi.string()
+                .valid(...TRAIT_ACQUISITION_TYPES)
+                .required(),
+              value: name(),
+              note: Joi.string().max(NOTE_MAX),
+            }),
+          )
+          .max(100),
+        linkedTo: Joi.object({ traitId: id().required(), specialization: name() }),
+        restricted: Joi.object({ note: Joi.string().max(NOTE_MAX).allow('').required() }),
+        pendingApproval: Joi.boolean(),
       }),
     )
     .max(500)
@@ -308,6 +371,7 @@ const character = Joi.object({
   injuries: Joi.array().items(injury).max(500).required(),
   conditions: Joi.array().items(condition).max(500).required(),
   temporaryModifiers: Joi.array().items(temporaryModifier).max(100).required(),
+  lostLimbs: Joi.array().items(lostLimb).max(4).required(),
   description: nullable(text()).required(),
   imageUrl: nullable(Joi.string().max(2000)).required(),
 });
@@ -382,6 +446,8 @@ const item = Joi.object({
       baseDifficulty: id().required(),
       coverage: Joi.array().items(id()).max(4),
       class: Joi.string().valid('light', 'medium', 'heavy'),
+      // Workspace spec 077, B1.3
+      fittedWeight: num().min(0),
     }),
   ).required(),
   shield: nullable(Joi.object({ db: num().required(), blockCount: num().required() })).required(),
@@ -391,7 +457,8 @@ const item = Joi.object({
     strength: nullable(num()).required(),
     stackable: Joi.boolean().required(),
   }).required(),
-  amount: nullable(num().greater(0)).required(),
+  // Workspace spec 079 (backlog G): a gold coin stack spent to 0 is kept by the app, so the file can hold it
+  amount: nullable(num().min(0)).required(),
   description: nullable(text()).required(),
   catalog: nullable(
     Joi.object({

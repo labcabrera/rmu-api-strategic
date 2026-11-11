@@ -1,6 +1,9 @@
 import { CharacterRestService } from './application/services/character-rest.service.js';
 import { PassTimeHandler } from './application/cqrs/handlers/pass-time.handler.js';
 import { GameTimeController } from './interfaces/http/game-time.controller.js';
+import { GameExperienceController } from './interfaces/http/game-experience.controller.js';
+import { AwardGroupXpHandler } from './application/cqrs/handlers/award-group-xp.handler.js';
+import { StartingWealthService } from './application/services/starting-wealth.service.js';
 import { CharacterWriter } from './application/services/character-writer.service.js';
 import { CharacterAccess } from './application/services/character-access.service.js';
 import { Module, forwardRef } from '@nestjs/common';
@@ -32,6 +35,7 @@ import { DeleteCharacterHandler } from './application/cqrs/handlers/delete-chara
 import { UpdateCharacterHandler } from './application/cqrs/handlers/update-character.handler.js';
 import { DeleteSkillHandler } from './application/cqrs/handlers/delete-skill.handler.js';
 import { EquipItemHandler } from './application/cqrs/handlers/equip-item.handler.js';
+import { RecalculateCharacterHandler } from './application/cqrs/handlers/recalculate-character.handler.js';
 import { FactionsModule } from '../factions/factions.module.js';
 import { LevelUpHandler } from './application/cqrs/handlers/level-up.handler.js';
 import { ResistancesProcessor } from './domain/services/character/processors/resistances-processor.js';
@@ -79,6 +83,7 @@ import { RemoveTemporaryModifierHandler } from './application/cqrs/handlers/remo
 import { AddInjuryHandler } from './application/cqrs/handlers/add-injury.handler.js';
 import { UpdateInjuryHandler } from './application/cqrs/handlers/update-injury.handler.js';
 import { TreatInjuryHandler } from './application/cqrs/handlers/treat-injury.handler.js';
+import { AmputateLimbHandler, StrenuousFailureHandler } from './application/cqrs/handlers/health-079.handlers.js';
 import { RollInjuryRecoveryHandler } from './application/cqrs/handlers/roll-injury-recovery.handler.js';
 import { RollPermanentInjuryHandler } from './application/cqrs/handlers/roll-permanent-injury.handler.js';
 import { RestCharacterHandler } from './application/cqrs/handlers/rest-character.handler.js';
@@ -108,6 +113,7 @@ import { SKILL_CATEGORY_CLIENT } from './application/ports/skill-category-client
 import { ENUMERATION_CLIENT } from './application/ports/enumeration-client.port.js';
 import { ApiEnumerationClientAdapter } from './infrastructure/api-clients/api.enumeration-client.adapter.js';
 import { SpecializationCatalogService } from './application/services/specialization-catalog.service.js';
+import { TalentSkillRanksService } from './application/services/talent-skill-ranks.service.js';
 import { SKILL_CLIENT } from './application/ports/skill-client.port.js';
 import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
 @Module({
@@ -135,6 +141,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     KafkaCharacterEventConsumer,
     KafkaCharacterGameEventConsumer,
     GameTimeController,
+    GameExperienceController,
   ],
   providers: [
     DeleteCharactersByGameHandler,
@@ -159,9 +166,12 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     UpdateSkillHandler,
     DeleteSkillHandler,
     EquipItemHandler,
+    RecalculateCharacterHandler,
     UnequipItemHandler,
     UpdateItemCarriedStatusHandler,
     AddXPHandler,
+    AwardGroupXpHandler,
+    StartingWealthService,
     LevelUpHandler,
     LevelUpSkillHandler,
     LevelDownSkillHandler,
@@ -185,6 +195,8 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     AddInjuryHandler,
     UpdateInjuryHandler,
     TreatInjuryHandler,
+    AmputateLimbHandler,
+    StrenuousFailureHandler,
     RollInjuryRecoveryHandler,
     RollPermanentInjuryHandler,
     RestCharacterHandler,
@@ -194,6 +206,7 @@ import { TRAIT_CLIENT } from './application/ports/trait-client.port.js';
     KnownSpellsReader,
     SpellListSkillResolver,
     SpecializationCatalogService,
+    TalentSkillRanksService,
     ResolveConditionHandler,
     GetHealingLogHandler,
     GetTreatmentDifficultyHandler,

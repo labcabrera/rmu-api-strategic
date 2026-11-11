@@ -43,6 +43,10 @@ export class FactionModel {
   @Prop({ type: [FactionNpcModel], default: [] })
   npcs: FactionNpcModel[];
 
+  /** Spec 072: the players of the game who change the faction. Missing in older documents, which read as []. */
+  @Prop({ type: [String], default: [] })
+  players?: string[];
+
   @Prop({ required: true })
   createdAt: Date;
 

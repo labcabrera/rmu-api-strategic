@@ -4,7 +4,7 @@ import { HttpClient, isUpstreamHttpError } from '../../../shared/infrastructure/
 import { TokenService } from '../../../shared/infrastructure/security/token.service.js';
 import type { MaterialClientPort, MaterialResponse } from '../../application/ports/material-client.port.js';
 
-/** Superior materials of rmu-api-core (workspace spec 043). */
+/** Superior materials of rmu-api-items (workspace specs 043 and 096). */
 @Injectable()
 export class ApiMaterialClientAdapter implements MaterialClientPort {
   constructor(
@@ -15,7 +15,7 @@ export class ApiMaterialClientAdapter implements MaterialClientPort {
 
   async getMaterial(id: string): Promise<MaterialResponse | undefined> {
     const token = await this.tokenService.getToken();
-    const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/materials/${encodeURIComponent(id)}`;
+    const uri = `${this.configService.get('RMU_API_ITEMS_URI') as string}/materials/${encodeURIComponent(id)}`;
     try {
       return await this.httpClient.get<MaterialResponse>(uri, { token });
     } catch (err) {

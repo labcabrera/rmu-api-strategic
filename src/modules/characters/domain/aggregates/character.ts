@@ -17,7 +17,12 @@ import { randomUUID } from 'crypto';
 import { Game } from '../../../games/domain/aggregates/game.js';
 import { CharacterCreatedEvent, CharacterUpdatedEvent } from '../events/character.events.js';
 import type { WeaponDevelopmentType } from '../value-objects/weapon-development-type.vo.js';
-import { CharacterTrait, type TraitPayment } from '../value-objects/character-trait.vo.js';
+import {
+  CharacterTrait,
+  type CharacterTraitPurchase,
+  type TraitGrantedRanks,
+  type TraitPayment,
+} from '../value-objects/character-trait.vo.js';
 import type { RaceTraitProps } from '../value-objects/race-trait-props.vo.js';
 import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
 import { ValidationError } from '../../../shared/domain/errors/errors.js';
@@ -26,11 +31,20 @@ import type { CharacterProps } from './character-props.js';
 import { SkillBonus } from '../value-objects/skill-bonus.vo.js';
 import { DEFAULT_RACE_DEV_POINTS_PER_LEVEL, resolvePowerLevel } from '../../../games/domain/value-objects/game-power-level.vo.js';
 import {
+  DEV_POINTS_INSUFFICIENT,
   type DevPointsPayment,
+  type DevPointsPoolChoice,
   DevPointsSpendingService,
   type DevPointsSpendOptions,
   emptyPayment,
+  poolsFor,
 } from '../services/dev-points/dev-points-spending.service.js';
+import {
+  intenseTrainingLimit,
+  isIntenseTrainingSkill,
+  isLoreOrLanguage,
+  MAX_RANKS_PER_LEVEL,
+} from '../services/skills/intense-training.js';
 import { getStatGainRollRange, STAT_GAIN_DEV_POINTS_COST } from '../services/stats/stat-rules.js';
 import { ConflictError, NotFoundError } from '../../../shared/domain/errors/errors.js';
 import type { CharacterCondition } from '../value-objects/character-condition.vo.js';
@@ -55,20 +69,34 @@ import { restPowerRecovery } from '../services/power/power-rules.js';
 import { PoisonStages, type Random } from '../services/healing/poison-stages.js';
 import type { PoisonRrResult } from '../services/healing/poison-rr.js';
 import type { AntidoteData, InjuryPoison, PoisonData, PoisonSeverityRow } from '../value-objects/poison.vo.js';
+import { type LostLimb, newLostLimbs, sameLimb } from '../value-objects/lost-limb.vo.js';
 
 // A character without the skill: no ranks (Core Law table 3-0b)
 export const UNRANKED_SKILL_BONUS = UNRANKED_RANK_BONUS;
-export const MAX_RANKS_PER_LEVEL = 2;
-export const MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK = 3;
+export { MAX_RANKS_PER_LEVEL };
 
 // Game values that drive development point spending
 export interface DevPointsRules {
   bonusDevPointsPerLevel: number;
+  // Workspace spec 076, A3: the pool the player pays with; 'auto' by default
+  pool?: DevPointsPoolChoice;
 }
 
 export interface SkillDevelopmentRules extends DevPointsRules {
-  allowThirdRank: boolean;
+  // Workspace spec 076, A1: game option intenseTraining
+  intenseTraining: boolean;
 }
+
+/** Options of a level up (workspace spec 076, A5). */
+export interface LevelUpOptions {
+  // Keep the unspent normal points for the next level
+  save?: boolean;
+  // Game option allowSavingDevPoints: the permission of the game master
+  allowSavingDevPoints?: boolean;
+}
+
+/** Ranks a talent grants to a skill the character already has (workspace spec 076, A7). */
+export type GrantedSkillRanks = Omit<TraitGrantedRanks, 'created'> & { created?: boolean };
 
 // How a trait is paid: the spending options for talents and the pool that receives the points of flaws
 export interface TraitSpending {
@@ -81,6 +109,8 @@ export interface CultureRanks {
   skillId: string;
   specialization: string | null;
   ranks: number;
+  // Workspace spec 076, A6: indexes of the culture entries the ranks come from
+  sources?: number[];
 }
 
 const DEFAULT_DEV_POINTS_RULES: DevPointsRules = { bonusDevPointsPerLevel: DEFAULT_RACE_DEV_POINTS_PER_LEVEL };
@@ -119,6 +149,9 @@ export interface RestResult {
   poisonings?: { injuryId: string; elapsedRounds: number; penalty: number; status: string }[];
   /** Workspace spec 068: the temporary modifiers that expired. */
   expiredModifiers?: string[];
+  /** Workspace spec 077, D11: the fatigue penalty before and after: one point per minute of rest */
+  fatigueBefore?: number;
+  fatigueAfter?: number;
 }
 
 export const BODY_DEVELOPMENT_SKILL = 'body-development';
@@ -129,10 +162,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
   public appliedTacticalGames: string[] = [];
   /** Workspace spec 068: lasting morale and fear modifiers, with their day of expiry */
   public temporaryModifiers: CharacterTemporaryModifier[] = [];
+  /** Workspace spec 079, C1: limbs lost for good */
+  public lostLimbs: LostLimb[] = [];
   public importId: string | undefined = undefined;
   private pendingHealingLog: HealingLogEntry[] = [];
   /** Injuries received since the aggregate was loaded, to stamp them with the day of the campaign (spec 065) */
   private newInjuryIds = new Set<string>();
+  /** Workspace spec 079, C6: conditions and lost limbs added since the load, stamped with the day of the campaign */
+  private newConditionIds = new Set<string>();
+  private stampLostLimbs = false;
 
   private constructor(
     id: string,
@@ -249,6 +287,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     character.conditions = props.conditions || [];
     character.appliedTacticalGames = props.appliedTacticalGames || [];
     character.temporaryModifiers = props.temporaryModifiers || [];
+    character.lostLimbs = props.lostLimbs || [];
     character.importId = props.importId;
     return character;
   }
@@ -375,16 +414,41 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     cost: number,
     specialization: string | undefined,
     spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+    grantedRanks: GrantedSkillRanks[] = [],
+    purchase: CharacterTraitPurchase = {},
   ) {
     if (this.findCharacterTrait(traitId, specialization)) {
       throw new ValidationError('Trait with the same specialization already exists');
     }
+    const skills = grantedRanks.map(granted => {
+      const skill = this.findSkill(granted.skillId, granted.specialization);
+      if (!skill) throw new ValidationError(`Skill ${granted.skillId} not found for the ranks of trait ${traitId}`);
+      if (!Number.isInteger(granted.ranks) || granted.ranks < 1) throw new ValidationError(`Invalid skill ranks ${granted.ranks}`);
+      return skill;
+    });
     const payment = this.payTrait(cost, spending);
+    // Workspace spec 076, A7: the ranks of the talent cost no points and are not developed ranks
+    skills.forEach((skill, index) => {
+      skill.talentRanks = (skill.talentRanks || 0) + grantedRanks[index].ranks;
+      skill.ranks += grantedRanks[index].ranks;
+    });
+    const granted = grantedRanks.length
+      ? grantedRanks.map(g => ({ skillId: g.skillId, specialization: g.specialization ?? null, ranks: g.ranks, created: !!g.created }))
+      : undefined;
     this.traits.push(
-      new CharacterTrait(traitId, traitName, isTalent, tier, cost, specialization, 'character', {
-        ...payment,
-        level: this.experience.level,
-      }),
+      new CharacterTrait(
+        traitId,
+        traitName,
+        isTalent,
+        tier,
+        cost,
+        specialization,
+        'character',
+        { ...payment, level: this.experience.level },
+        undefined,
+        granted,
+        purchase,
+      ),
     );
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
@@ -396,6 +460,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     tier: number,
     cost: number,
     spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+    purchase?: CharacterTraitPurchase,
   ) {
     const current = this.findCharacterTrait(traitId, specialization);
     if (!current) {
@@ -404,6 +469,41 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (!current.tier || tier <= current.tier) {
       throw new ValidationError(`Trait ${traitId} tier must be greater than the current tier ${current.tier}`);
     }
+    this.changeTraitTier(current, tier, cost, spending, purchase);
+  }
+
+  /**
+   * Workspace spec 077, C10: lowers the tier of a flaw, paying the cost difference (the points it granted and the
+   * new tier no longer grants) with the pools of the spending. Lowering it to 0 is deleting it.
+   */
+  reduceTrait(
+    traitId: string,
+    specialization: string | undefined,
+    tier: number,
+    cost: number,
+    spending: TraitSpending = DEFAULT_TRAIT_SPENDING,
+    purchase?: CharacterTraitPurchase,
+  ) {
+    const current = this.findCharacterTrait(traitId, specialization);
+    if (!current) {
+      throw new ValidationError('Trait not found');
+    }
+    if (current.isTalent) {
+      throw new ValidationError(`Trait ${traitId} is a talent: its tier cannot be lowered`, 'err-trait-tier-lower-talent');
+    }
+    if (!current.tier || tier < 1 || tier >= current.tier) {
+      throw new ValidationError(`Trait ${traitId} tier must be lower than the current tier ${current.tier}`, 'err-trait-tier-invalid');
+    }
+    this.changeTraitTier(current, tier, cost, spending, purchase);
+  }
+
+  private changeTraitTier(
+    current: CharacterTrait,
+    tier: number,
+    cost: number,
+    spending: TraitSpending,
+    purchase: CharacterTraitPurchase = CharacterTrait.purchaseOf(current),
+  ) {
     const previous = this.getTraitPayment(current);
     const payment = this.payTrait(cost - current.cost, spending);
     const level = this.experience.level;
@@ -414,8 +514,20 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       cappedBonus: (previous.level === level ? previous.cappedBonus : 0) + payment.cappedBonus,
       level,
     };
-    const improved = new CharacterTrait(traitId, current.traitName, current.isTalent, tier, cost, specialization, 'character', paidWith);
-    this.traits = this.traits.map(t => (t === current ? improved : t));
+    const changed = new CharacterTrait(
+      current.traitId,
+      current.traitName,
+      current.isTalent,
+      tier,
+      cost,
+      current.specialization,
+      'character',
+      paidWith,
+      current.missingReference,
+      current.grantedRanks,
+      purchase,
+    );
+    this.traits = this.traits.map(t => (t === current ? changed : t));
     this.apply(new CharacterUpdatedEvent(this.getProps()));
   }
 
@@ -427,10 +539,27 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       }
       throw new ValidationError('Trait not found');
     }
+    // Workspace spec 077, C11: the flaws taken with a talent go first
+    if (trait.isTalent && this.linkedFlaws(trait).length > 0) {
+      throw new ValidationError(`Trait ${traitId} has linked flaws: delete them first`, 'err-trait-has-linked-flaws');
+    }
     const payment = this.getTraitPayment(trait);
     DevPointsSpendingService.refund(this.experience, payment, payment.level === this.experience.level);
+    this.removeGrantedRanks(trait.grantedRanks || []);
     this.traits = this.traits.filter(t => t !== trait);
     this.apply(new CharacterUpdatedEvent(this.getProps()));
+  }
+
+  // Workspace spec 076, A7: a skill created for the talent that keeps no ranks of its own goes with it
+  private removeGrantedRanks(grantedRanks: TraitGrantedRanks[]): void {
+    grantedRanks.forEach(granted => {
+      const skill = this.findSkill(granted.skillId, granted.specialization);
+      if (!skill) return;
+      const ranks = Math.min(granted.ranks, skill.talentRanks || 0);
+      skill.talentRanks = (skill.talentRanks || 0) - ranks;
+      skill.ranks = Math.max(0, skill.ranks - ranks);
+      if (granted.created && skill.ranks === 0) this.removeSkill(skill.skillId, skill.specialization);
+    });
   }
 
   private payTrait(cost: number, spending: TraitSpending): DevPointsPayment {
@@ -444,7 +573,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       this.experience,
       cost,
       spending.spend,
-      spending.onInsufficient ?? (() => new ValidationError('Insufficient development points to acquire the trait')),
+      spending.onInsufficient ??
+        (() => new ValidationError('Insufficient development points to acquire the trait', DEV_POINTS_INSUFFICIENT)),
     );
   }
 
@@ -463,6 +593,18 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.traits = [...characterTraits, ...raceSourced];
   }
 
+  /** Workspace spec 077, C11: the flaws of the character taken with the given talent. */
+  linkedFlaws(talent: Pick<CharacterTrait, 'traitId' | 'specialization'>): CharacterTrait[] {
+    return this.traits.filter(
+      t =>
+        t.source !== 'race' &&
+        !t.isTalent &&
+        !!t.linkedTo &&
+        t.linkedTo.traitId === talent.traitId &&
+        (t.linkedTo.specialization || undefined) === (talent.specialization || undefined),
+    );
+  }
+
   // Character-sourced trait (race traits excluded)
   findCharacterTrait(traitId: string, specialization: string | undefined): CharacterTrait | undefined {
     return this.traits.find(t => t.source !== 'race' && this.sameTrait(t, traitId, specialization));
@@ -476,21 +618,50 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     const skill = this.findSkill(skillId, specialization);
     if (!skill) throw new ValidationError('Skill not found');
 
-    // Culture ranks are not developed ranks and do not count towards the limit
-    const maxRanks = rules.allowThirdRank ? MAX_RANKS_PER_LEVEL_WITH_THIRD_RANK : MAX_RANKS_PER_LEVEL;
-    if (skill.ranksDeveloped >= maxRanks) {
-      throw new ValidationError(
-        `Skill ${skillId} cannot be developed more than ${maxRanks} ranks in a level`,
-        'err-skill-max-ranks-per-level',
-      );
-    }
-    // The third rank costs the same as the second one
+    // Culture and talent ranks are not developed ranks and do not count towards the limit
+    const intenseTraining = skill.ranksDeveloped >= MAX_RANKS_PER_LEVEL;
+    if (intenseTraining) this.checkIntenseTraining(skill, rules);
+    // Every rank beyond the first one costs the second cost, the ranks of intense training too
     const cost = this.getRankCost(skill, skill.ranksDeveloped);
-    const payment = DevPointsSpendingService.spend(this.experience, cost, { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel });
+    const payment = DevPointsSpendingService.spend(this.experience, cost, {
+      bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel,
+      pools: poolsFor(rules.pool),
+    });
     const spent = skill.devPointsSpent ?? { normal: 0, bonus: 0 };
     skill.devPointsSpent = { normal: spent.normal + payment.normal, bonus: spent.bonus + payment.bonus };
     skill.ranks += 1;
     skill.ranksDeveloped += 1;
+    if (intenseTraining) this.experience.intenseTrainingSkill = { skillId: skill.skillId, specialization: skill.specialization ?? null };
+  }
+
+  /**
+   * Intense training (Core Law §3, workspace spec 076, A1): with the game option, one skill per level may take more
+   * than two ranks, unless it already has ranks equal to twice the level. Lore skills and languages are exempt from
+   * that limit, not from the one skill per level rule (P2).
+   */
+  private checkIntenseTraining(skill: CharacterSkill, rules: SkillDevelopmentRules): void {
+    if (!rules.intenseTraining) {
+      throw new ValidationError(
+        `Skill ${skill.skillId} cannot be developed more than ${MAX_RANKS_PER_LEVEL} ranks in a level`,
+        'err-skill-max-ranks-per-level',
+      );
+    }
+    const marked = this.experience.intenseTrainingSkill;
+    if (marked && !isIntenseTrainingSkill(marked, skill)) {
+      throw new ValidationError(
+        `Skill ${marked.skillId}${marked.specialization ? ` (${marked.specialization})` : ''} is already trained intensely this level`,
+        'err-skill-intense-training-taken',
+        { skillId: marked.skillId, specialization: marked.specialization ?? null },
+      );
+    }
+    const limit = intenseTrainingLimit(this.experience.level);
+    if (!isLoreOrLanguage(skill) && skill.ranks >= limit) {
+      throw new ValidationError(
+        `Skill ${skill.skillId} already has ${skill.ranks} ranks, intense training stops at twice the level (${limit})`,
+        'err-skill-intense-training-limit',
+        { ranks: skill.ranks, limit },
+      );
+    }
   }
 
   // Refunds the last developed rank: bonus points first, since they are spent after the normal ones
@@ -502,7 +673,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (skill.ranksDeveloped < 1) {
       throw new ValidationError('Skill cannot be downgraded below 0 ranks');
     }
-    if (skill.ranks - 1 < (skill.cultureRanks || 0)) {
+    if (skill.ranks - 1 < (skill.cultureRanks || 0) + (skill.talentRanks || 0)) {
       throw new ValidationError(`Skill ${skillId} cannot be downgraded below its culture ranks`, 'err-skill-below-culture-ranks');
     }
     const cost = this.getRankCost(skill, skill.ranksDeveloped - 1);
@@ -513,6 +684,10 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     skill.devPointsSpent = { normal: Math.max(0, spent.normal - normal), bonus: spent.bonus - bonus };
     skill.ranks -= 1;
     skill.ranksDeveloped -= 1;
+    // Back to two ranks, the skill is no longer trained intensely and another one may be
+    if (skill.ranksDeveloped <= MAX_RANKS_PER_LEVEL && isIntenseTrainingSkill(this.experience.intenseTrainingSkill, skill)) {
+      this.experience.intenseTrainingSkill = null;
+    }
   }
 
   // Applies the culture ranks at creation. The skills must already exist. No development points are spent
@@ -525,6 +700,9 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       }
       skill.cultureRanks = (skill.cultureRanks || 0) + entry.ranks;
       skill.ranks += entry.ranks;
+      if (entry.sources?.length) {
+        skill.cultureSources = [...new Set([...(skill.cultureSources || []), ...entry.sources])].sort((a, b) => a - b);
+      }
     });
   }
 
@@ -565,23 +743,48 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     }
   }
 
-  levelUp(force: boolean): void {
+  /**
+   * Levels the character up. From level 1 on, the unspent normal points block it unless they are lost (force) or, with
+   * the permission of the game master, saved for the next level (workspace spec 076, A5).
+   *
+   * Level 0 and level 1 are a single development level (workspace spec 076, A2): leaving level 0 keeps the ranks
+   * developed, the points spent on them, the bonus points spent and the skill trained intensely.
+   */
+  levelUp(force: boolean, options: LevelUpOptions = {}): void {
     const xp = this.experience;
     if (xp.level >= xp.availableLevel) {
       throw new ValidationError('Insufficient experience points to level up');
     }
-    // Level 0 grants no development points, so leaving it never requires spending them
-    if (xp.level > 0 && xp.availableDevPoints > 0 && !force) {
-      throw new ValidationError('Character has unused development points. To level up regardless of points, use the option force=true');
+    if (options.save && !options.allowSavingDevPoints) {
+      throw new ValidationError(
+        'The game does not allow saving development points for the next level',
+        'err-dev-points-saving-not-allowed',
+      );
     }
-    // Points returned by flaws at level 0 are kept for level 1
-    const carried = xp.level === 0 ? Math.max(0, xp.availableDevPoints || 0) : 0;
+    const fromCreation = xp.level === 0;
+    const unspent = Math.max(0, xp.availableDevPoints || 0);
+    // Level 0 grants no development points, so leaving it never requires spending them
+    if (!fromCreation && unspent > 0 && !force && !options.save) {
+      throw new ValidationError(
+        'Character has unused development points. To level up regardless of points, use the option force=true',
+        'err-level-up-unspent-dev-points',
+        { unspent },
+      );
+    }
+    // Points returned by flaws at level 0 are kept for level 1; later only the saved ones
+    const carried = fromCreation ? unspent : 0;
+    const saved = !fromCreation && options.save ? unspent : 0;
     xp.level += 1;
-    xp.availableDevPoints = xp.devPoints + carried;
-    // Unspent bonus points are kept, the per level limit starts again
-    xp.bonusDevPointsSpentThisLevel = 0;
+    xp.availableDevPoints = xp.devPoints + carried + saved;
+    // Saved points are normal points: they do not count towards the bonus points limit
+    xp.savedDevPoints = saved;
+    xp.statGainPayments = (xp.statGainPayments || []).filter(payment => payment.level >= xp.level - 1);
     xp.availableStatLevelUp = xp.level > 1 ? 2 : 0;
     xp.developedStatLevelUp = 0;
+    if (fromCreation) return;
+    // Unspent bonus points are kept, the per level limit starts again
+    xp.bonusDevPointsSpentThisLevel = 0;
+    xp.intenseTrainingSkill = null;
     this.skills.forEach(s => {
       s.ranksDeveloped = 0;
       s.devPointsSpent = { normal: 0, bonus: 0 };
@@ -618,13 +821,19 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (this.experience.availableStatLevelUp > 0) {
       this.experience.availableStatLevelUp -= 1;
     } else {
-      DevPointsSpendingService.spend(
+      const payment = DevPointsSpendingService.spend(
         this.experience,
         STAT_GAIN_DEV_POINTS_COST,
-        { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel },
-        () => new ValidationError('No available temporary stat level ups or development points to increase the stat'),
+        { bonusDevPointsPerLevel: rules.bonusDevPointsPerLevel, pools: poolsFor(rules.pool) },
+        () =>
+          new ValidationError('No available temporary stat level ups or development points to increase the stat', DEV_POINTS_INSUFFICIENT),
       );
       this.experience.developedStatLevelUp += 1;
+      // Workspace spec 076, A4: the pools of the extra roll stay on record
+      this.experience.statGainPayments = [
+        ...(this.experience.statGainPayments || []),
+        { stat, normal: payment.normal, bonus: payment.bonus, level: this.experience.level },
+      ];
     }
     c.temporary = Math.min(c.potential, c.temporary + roll);
   }
@@ -772,6 +981,13 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     if (HealingCalculator.isRecoveryRolled(injury)) {
       throw new ConflictError(`Injury ${injuryId} already has a recovery roll for its latest treatment`, 'err-injury-recovery-rolled');
     }
+    // Workspace spec 079, C2: after a failed strenuous activity the wound is treated again before a new roll
+    if (HealingCalculator.needsNewTreatment(injury)) {
+      throw new ConflictError(
+        `Injury ${injuryId} reopened by a strenuous activity: treat it again before its recovery roll`,
+        'err-injury-treatment-required',
+      );
+    }
     const updated: Injury = { ...injury, recovery, status: 'recovering', permanent: undefined, updatedAt: recovery.startedAt };
     this.replaceInjury(updated);
     this.recordHealing('recovery-roll', { ...recovery, permanentCheckRequired }, { injuryId });
@@ -806,6 +1022,80 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     return updated;
   }
 
+  // Workspace spec 079, C1 and C2
+
+  /**
+   * §13.1 Amputation: the limb is lost for good and the stump heals as its own injuries. Whatever the result the limb is
+   * gone; what a failure adds (a critical, system shock) is for the game master and stays in the healing log.
+   */
+  amputate(limb: Omit<LostLimb, 'at' | 'cause'>, injuries: Injury[], summary: Record<string, unknown>, now: string): LostLimb {
+    if (this.lostLimbs.some(each => sameLimb(each, limb))) {
+      throw new ConflictError(`The ${limb.side} ${limb.location} is already lost`, 'err-limb-already-lost');
+    }
+    const lost: LostLimb = { ...limb, at: now, cause: 'amputation' };
+    this.lostLimbs = [...this.lostLimbs, lost];
+    this.stampLostLimbs = true;
+    injuries.forEach(injury => {
+      this.injuries.push(injury);
+      this.newInjuryIds.add(injury.id);
+    });
+    // The injury that cost the limb stops bleeding: the stump is closed
+    if (limb.injuryId) {
+      const source = this.injuries.find(each => each.id === limb.injuryId);
+      if (source && source.status !== 'healed') {
+        this.replaceInjury({
+          ...source,
+          bleeding: source.bleeding ? 0 : source.bleeding,
+          ...(source.bleeding ? { bleedingControl: 'cauterized' as const } : {}),
+          tourniquet: null,
+          updatedAt: now,
+        });
+      }
+    }
+    this.recordHealing(
+      'amputation',
+      { ...summary, location: limb.location, side: limb.side, injuriesAdded: injuries.map(each => each.id) },
+      limb.injuryId ? { injuryId: limb.injuryId } : {},
+    );
+    this.touch();
+    return lost;
+  }
+
+  /**
+   * §13.1: a strenuous activity (a maneuver) failed while a treated injury recovered. The injury is active again and its
+   * recovery is gone: it needs a new treatment before the next recovery roll. An absolute failure doubles the penalty
+   * left, which is the base of the new recovery. `severity` is the one of the new penalty.
+   */
+  strenuousFailure(injuryId: string, absolute: boolean, severityOf: (penalty: number) => Injury['severity']): Injury {
+    const injury = this.findInjury(injuryId);
+    this.assertTreatable(injury);
+    if (injury.status === 'permanent') {
+      throw new ValidationError(`Injury ${injuryId} is permanent`, 'err-injury-permanent');
+    }
+    const latest = HealingCalculator.latestTreatment(injury);
+    if (!latest || HealingCalculator.isUntreated(injury)) {
+      throw new ValidationError(`Injury ${injuryId} has no successful treatment to undo`, 'err-injury-not-treated');
+    }
+    const now = new Date().toISOString();
+    const penalty = Math.min(0, injury.penalty || 0) * (absolute ? 2 : 1) || 0;
+    const rest: Injury = { ...injury };
+    delete rest.recovery;
+    delete rest.permanent;
+    const updated: Injury = {
+      ...rest,
+      status: 'active',
+      penalty,
+      initialPenalty: penalty,
+      severity: absolute ? severityOf(penalty) : injury.severity,
+      strenuousFailure: { at: now, absolute, treatmentId: latest.id, ...(absolute ? { previousPenalty: injury.penalty } : {}) },
+      updatedAt: now,
+    };
+    this.replaceInjury(updated);
+    this.recordHealing('strenuous-failure', { absolute, penaltyBefore: injury.penalty, penalty }, { injuryId });
+    this.touch();
+    return updated;
+  }
+
   /** Passes time resting: hits per rest period and days off the injury counters. */
   /** `poisonRounds`: the time of the rest in rounds, for the poisonings (workspace spec 042, decision 13). */
   /** `currentGameDay`: the day of the campaign after the rest, to drop the expired modifiers (workspace spec 068). */
@@ -817,18 +1107,31 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     powerPeriods = 0,
     poisonRounds = 0,
     currentGameDay?: number,
+    fatigueMinutes = 0,
+    /**
+     * Workspace spec 079, C2: an active rest (travel, work) freezes the untreated injuries. E: `ppRecoveryPercent`, the
+     * percent of the power points per period of the power level of the game (10 without it)
+     */
+    options: { freezeUntreated?: boolean; ppRecoveryPercent?: number } = {},
   ): RestResult {
     const poisonings = this.advancePoisonings(poisonRounds, now);
+    // Workspace spec 077, D11 (§5.5): each minute of rest takes away one point of fatigue. Hunger, thirst and altitude
+    // are for the game master
+    const fatigueBefore = Math.abs(this.endurance?.fatiguePenalty ?? 0);
+    const fatigueAfter = Math.max(0, fatigueBefore - Math.max(0, Math.floor(fatigueMinutes)));
+    this.setFatiguePenalty(fatigueAfter);
     const hpBefore = this.hp.current;
     const powerBefore = this.power ? this.power.current : null;
     if (this.power) {
-      const recovered = restPowerRecovery(this.power.max, powerPeriods);
+      const recovered = restPowerRecovery(this.power.max, powerPeriods, options.ppRecoveryPercent);
       this.power = { ...this.power, current: Math.max(this.power.current, Math.min(this.power.max, this.power.current + recovered)) };
     }
     this.hp.current = Math.max(hpBefore, Math.min(this.hp.max, hpAfter));
     // A poisoning in progress follows its stages, not a recovery.
+    const frozen = (injury: Injury) =>
+      (injury.poison && !injury.poison.finished) || (options.freezeUntreated && !!injury.recovery?.untreated);
     const progress: InjuryProgress[] = this.injuries.map(injury =>
-      injury.poison && !injury.poison.finished ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
+      frozen(injury) ? { injury, days: 0, finished: false } : HealingCalculator.advance(injury, days, now),
     );
     this.injuries = progress.map(p => p.injury);
     const resolvedConditions = this.resolveUnconsciousIfConscious(now);
@@ -848,6 +1151,8 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       resolvedConditions,
       powerBefore,
       powerAfter: this.power ? this.power.current : null,
+      fatigueBefore,
+      fatigueAfter,
     };
     if (poisonings.length > 0) result.poisonings = poisonings;
     if (currentGameDay !== undefined) {
@@ -857,6 +1162,12 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
     this.recordHealing('rest', { ...summary, ...result });
     this.touch();
     return result;
+  }
+
+  /** Workspace spec 077: the fatigue penalty of the endurance, 0-50. */
+  private setFatiguePenalty(value: number): void {
+    if (!this.endurance) this.endurance = CharacterEndurance.empty();
+    this.endurance.fatiguePenalty = value;
   }
 
   /**
@@ -1072,13 +1383,15 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
 
   private addPoisonCondition(status: 'unconscious' | 'dead', injury: Injury, now: string): void {
     if (this.conditions.some(c => !c.resolvedAt && c.status === status && c.source.injuryId === injury.id)) return;
+    const id = randomUUID();
     this.conditions.push({
-      id: randomUUID(),
+      id,
       status,
       source: { kind: 'poison', injuryId: injury.id },
       description: injury.poison?.name,
       createdAt: now,
     });
+    this.newConditionIds.add(id);
     if (status === 'dead') this.status = 'dead';
   }
 
@@ -1164,6 +1477,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
         injuries: this.injuries,
         conditions: this.conditions,
         temporaryModifiers: this.temporaryModifiers,
+        fatiguePenalty: this.endurance?.fatiguePenalty ?? 0,
       },
       outcome,
       this.deathThreshold,
@@ -1171,17 +1485,26 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       currentGameDay,
     );
     this.temporaryModifiers = state.temporaryModifiers ?? [];
+    if (summary.fatigueAfter !== undefined) this.setFatiguePenalty(summary.fatigueAfter);
     this.hp.current = state.hp.current;
     this.status = state.status;
     const previousIds = new Set(this.injuries.map(i => i.id));
     state.injuries.filter(i => !previousIds.has(i.id)).forEach(i => this.newInjuryIds.add(i.id));
     this.injuries = state.injuries;
     this.conditions = state.conditions;
+    // Workspace spec 079, C1: the limbs lost in the game (a confirmed limb-loss alert or an amputation)
+    const lostLimbsAdded = newLostLimbs(this.lostLimbs, outcome.lostLimbs ?? []).map(limb => ({
+      ...limb,
+      tacticalGameId: limb.tacticalGameId ?? outcome.tacticalGameId,
+      gameDay: currentGameDay,
+    }));
+    this.lostLimbs = [...this.lostLimbs, ...lostLimbsAdded];
     this.appliedTacticalGames = [...this.appliedTacticalGames, outcome.tacticalGameId];
     this.recordHealing(
       'tactical-outcome',
       {
         ...summary,
+        ...(lostLimbsAdded.length > 0 ? { lostLimbsAdded: lostLimbsAdded.map(({ location, side }) => ({ location, side })) } : {}),
         tacticalGameName: outcome.tacticalGameName,
         actorId: outcome.actorId,
         // Spec 013, §1.1: the hits log stays out of the character, its totals go to the healing log.
@@ -1211,6 +1534,17 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
    */
   stampGameDay(gameDay: number): void {
     this.pendingHealingLog = this.pendingHealingLog.map(entry => (entry.gameDay === undefined ? { ...entry, gameDay } : entry));
+    // Workspace spec 079, C6: the day of a death (and of the other conditions) and of a lost limb
+    if (this.newConditionIds.size > 0) {
+      this.conditions = this.conditions.map(condition =>
+        this.newConditionIds.has(condition.id) && condition.gameDay === undefined ? { ...condition, gameDay } : condition,
+      );
+      this.newConditionIds.clear();
+    }
+    if (this.stampLostLimbs) {
+      this.lostLimbs = this.lostLimbs.map(limb => (limb.gameDay === undefined ? { ...limb, gameDay } : limb));
+      this.stampLostLimbs = false;
+    }
     if (this.newInjuryIds.size === 0) return;
     this.injuries = this.injuries.map(injury =>
       this.newInjuryIds.has(injury.id) && injury.gameDay === undefined ? { ...injury, gameDay } : injury,
@@ -1251,6 +1585,7 @@ export class Character extends BaseAggregateRoot<CharacterProps> {
       conditions: this.conditions,
       appliedTacticalGames: this.appliedTacticalGames,
       temporaryModifiers: this.temporaryModifiers,
+      lostLimbs: this.lostLimbs,
       description: this.description,
       imageUrl: this.imageUrl,
       owner: this.owner,

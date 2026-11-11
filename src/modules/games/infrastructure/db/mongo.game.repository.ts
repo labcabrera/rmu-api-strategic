@@ -18,6 +18,16 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
     super(model, rsqlParser);
   }
 
+  async renameUser(userId: string, name: string): Promise<void> {
+    for (const field of ['members', 'joinRequests']) {
+      await this.model.updateMany(
+        { [field]: { $elemMatch: { userId, userName: { $ne: name } } } },
+        { $set: { [`${field}.$[entry].userName`]: name }, $inc: { version: 1 } },
+        { arrayFilters: [{ 'entry.userId': userId }] },
+      );
+    }
+  }
+
   async findByRealm(realmId: string): Promise<Game[]> {
     const docs = await this.model.find({ realmId }).sort({ name: 1 });
     return docs.map(doc => this.toEntity(doc));
@@ -48,6 +58,8 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       resolved.statPoints,
       resolved.knackCount,
       resolved.knackBonus,
+      resolved.preset,
+      resolved.ppRecoveryPercent,
     );
   }
 
@@ -62,11 +74,15 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       options.fatigueMultiplier,
       options.boardScaleMultiplier,
       options.letality,
-      resolved.allowThirdRank,
+      // Documents stored before workspace spec 076 have allowThirdRank instead of intenseTraining
+      options.intenseTraining ?? options.allowThirdRank ?? resolved.intenseTraining,
       resolved.talentPolicy,
       resolved.bonusDevPointsCapAtCreation,
       resolved.statGeneration,
       resolved.openRounds,
+      resolved.allowSavingDevPoints,
+      resolved.talentPurchaseRules,
+      resolved.startingWealth,
     );
   }
 
@@ -86,6 +102,13 @@ export class MongoGameRepository extends MongoBaseRepository<Game, GameDocument>
       imageUrl: doc.imageUrl,
       owner: doc.owner,
       accessType: doc.accessType,
+      members: (doc.members ?? []).map(m => ({ userId: m.userId, userName: m.userName, role: m.role, joinedAt: m.joinedAt })),
+      joinRequests: (doc.joinRequests ?? []).map(r => ({
+        userId: r.userId,
+        userName: r.userName,
+        message: r.message ?? null,
+        requestedAt: r.requestedAt,
+      })),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });

@@ -16,7 +16,7 @@ export class GetFactionQueryHandler implements IQueryHandler<GetFactionQuery, Fa
   async execute(query: GetFactionQuery): Promise<Faction> {
     const data = await this.factionRepository.findById(query.factionId);
     if (!data) throw new NotFoundError('Faction', query.factionId);
-    // A faction is read as its game (accessType of the game, its owner or an admin).
+    // A faction is read as its game: every member reads all of it (spec 072, decision 4).
     await this.gameAccess.checkRead(await this.gameAccess.findGame(data.gameId), query.userId, query.roles, 'this faction');
 
     return data;

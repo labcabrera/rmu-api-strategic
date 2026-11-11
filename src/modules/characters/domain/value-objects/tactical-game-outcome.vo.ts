@@ -1,3 +1,4 @@
+import type { LostLimb } from './lost-limb.vo.js';
 import type { CharacterCondition } from './character-condition.vo.js';
 import type { Injury } from './injury.vo.js';
 import type { TemporaryModifier } from './temporary-modifier.vo.js';
@@ -6,7 +7,17 @@ import type { ItemModifier } from '../../../items/domain/value-objects/item-modi
 export type TacticalFate = 'dead' | 'permanent-unconscious';
 
 /** Where a change of hits of a tactical game comes from (spec 013, §1.1). */
-export type TacticalHpLogKind = 'attack' | 'critical' | 'fumble' | 'bleeding' | 'endurance' | 'treatment' | 'manual' | 'poison';
+export type TacticalHpLogKind =
+  | 'attack'
+  | 'critical'
+  | 'fumble'
+  | 'bleeding'
+  | 'endurance'
+  | 'treatment'
+  | 'manual'
+  | 'poison'
+  // Workspace spec 077, D1: falls and falling objects
+  | 'hazard';
 export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = [
   'attack',
   'critical',
@@ -16,6 +27,7 @@ export const TACTICAL_HP_LOG_KINDS: TacticalHpLogKind[] = [
   'treatment',
   'manual',
   'poison',
+  'hazard',
 ];
 
 /** A change of the hits of an actor in a tactical game (spec 013, §1.1): negative is damage, positive healing. */
@@ -62,6 +74,11 @@ export interface TacticalCharacterOutcome {
   characterId: string;
   name: string;
   hp: { start: number; end: number; delta: number };
+  /**
+   * Workspace spec 077, D10: the fatigue penalty of the actor at the start and end of the game (points, 0-50) and its
+   * change, which strategic adds to `endurance.fatiguePenalty`. Missing in older outcomes: the fatigue is kept.
+   */
+  fatigue?: { start: number; end: number; delta: number };
   /** Every change of the hits in the game. Only its totals and size are kept, in the healing log. */
   hpLog?: TacticalHpLogEntry[];
   hpBySource?: TacticalHpBySource;
@@ -80,6 +97,8 @@ export interface TacticalCharacterOutcome {
   itemsConsumed?: TacticalItemConsumed[];
   /** Workspace spec 068: the temporary modifiers created in the game; missing in older outcomes */
   temporaryModifiers?: TemporaryModifier[];
+  /** Workspace spec 079, C1: every limb the actor has lost at the end (the ones it brought too); missing in older outcomes */
+  lostLimbs?: LostLimb[];
 }
 
 /** Workspace spec 068: units of an item of the character spent in a tactical game. */

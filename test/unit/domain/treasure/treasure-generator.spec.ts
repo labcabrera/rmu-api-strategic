@@ -1,6 +1,7 @@
 import type { ItemResponse } from '../../../../src/modules/items/application/ports/item-client.port.js';
 import type { TreasureTables } from '../../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
-import type { Dice } from '../../../../src/modules/treasure/domain/services/dice.js';
+import { type Dice, ProvidedDice } from '../../../../src/modules/treasure/domain/services/dice.js';
+import { ValidationError } from '../../../../src/modules/shared/domain/errors/errors.js';
 import {
   parseTreasureCodes,
   type TreasureCatalog,
@@ -219,6 +220,60 @@ const generate = (dice: number[], codes: Partial<{ wealth: string[]; lifestyle: 
     }),
   };
 };
+
+describe('dice rolled by the client (workspace spec 094)', () => {
+  const run = (values: number[], codes: Partial<{ wealth: string[]; lifestyle: string[]; magic: string[] }>, modifier = 0) => {
+    const dice = new ProvidedDice(values);
+    return {
+      dice,
+      result: new TreasureGenerator(TABLES, catalog, dice).generate({
+        codes: { wealth: [], lifestyle: [], magic: [], ...codes } as never,
+        wealthModifier: modifier,
+      }),
+    };
+  };
+
+  it('asks for the first die when none was sent, with the table and range', async () => {
+    const roll = await run([], { lifestyle: ['normal'] }).result;
+    expect(roll.pending).toEqual({ table: '7-1f', min: 1, max: 100, modifier: 0 });
+    expect(roll.lines).toEqual([]);
+  });
+
+  it('asks for the die after the last one sent, with the modifier of its table', async () => {
+    const first = await run([], { wealth: ['normal'] }, 7).result;
+    expect(first.pending?.table).toBe('7-1b');
+    const second = await run([1], { wealth: ['normal'] }, 7).result;
+    if (second.pending) expect(second.pending).toMatchObject({ table: '7-1c', modifier: 7 });
+  });
+
+  it('answers the same treasure as the same dice given in one go, without pending at the end', async () => {
+    const values: number[] = [];
+    let roll = await run(values, { lifestyle: ['normal'], magic: ['normal'] }).result;
+    while (roll.pending) {
+      values.push(roll.pending.min);
+      expect(values.length).toBeLessThan(100);
+      roll = await run(values, { lifestyle: ['normal'], magic: ['normal'] }).result;
+    }
+    expect(roll).not.toHaveProperty('pending');
+    const again = await new TreasureGenerator(TABLES, catalog, new FixedDice([...values])).generate({
+      codes: { wealth: [], lifestyle: ['normal'], magic: ['normal'] } as never,
+      wealthModifier: 0,
+    });
+    expect(again).toEqual(roll);
+  });
+
+  it('rejects a die out of the range asked', async () => {
+    await expect(run([101], { lifestyle: ['normal'] }).result).rejects.toBeInstanceOf(ValidationError);
+    await expect(run([0], { lifestyle: ['normal'] }).result).rejects.toMatchObject({ code: 'err-treasure-die-out-of-range' });
+  });
+
+  it('counts the dice left over and needs none for a single value', async () => {
+    const { dice, result } = run([10, 20], { lifestyle: ['normal'] });
+    await result;
+    expect(dice.unused).toBe(1);
+    expect(new ProvidedDice([]).roll(5, 5, { table: 'x' })).toBe(5);
+  });
+});
 
 describe('TreasureGenerator (workspace spec 067, decisions 10-15)', () => {
   it('reads the codes of the book: repeated codes, specials, "-", unknown codes and letters without commas', () => {

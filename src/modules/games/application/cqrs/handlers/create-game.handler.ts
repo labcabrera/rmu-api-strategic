@@ -4,8 +4,7 @@ import { Inject } from '@nestjs/common';
 import { Game } from '../../../domain/aggregates/game.js';
 import { CreateGameCommand } from '../commands/create-game.command.js';
 import { type GameRepository, GAME_REPOSITORY } from '../../ports/game-repository.port.js';
-import { type RealmClientPort, REALM_CLIENT } from '../../ports/realm-client.port.js';
-import { ValidationError } from '../../../../shared/domain/errors/errors.js';
+import { GameRealmService } from '../../services/game-realm.service.js';
 import { type GameGuardPort, GAME_GUARD } from '../../ports/game-guard.port.js';
 import type { CreateGameProps } from '../../../domain/aggregates/game-props.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
@@ -14,7 +13,7 @@ import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../s
 export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Game> {
   constructor(
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
-    @Inject(REALM_CLIENT) private readonly realmClient: RealmClientPort,
+    private readonly gameRealm: GameRealmService,
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(GAME_GUARD) private readonly gameGuard: GameGuardPort,
     private readonly eventPublisher: EventPublisher,
@@ -23,8 +22,8 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
   async execute(command: CreateGameCommand): Promise<Game> {
     this.gameGuard.checkCreate(command.roles);
 
-    const realm = await this.realmClient.getRealmById(command.realmId);
-    if (!realm) throw new ValidationError('Realm not found');
+    // Spec 071, decision 1: the realm must be one the user reads.
+    const realm = await this.gameRealm.checkReadable(command.realmId, command.userId, command.roles);
 
     const props = {
       name: command.name,
@@ -36,7 +35,7 @@ export class CreateGameHandler implements ICommandHandler<CreateGameCommand, Gam
       description: command.description,
       imageUrl: command.imageUrl,
       owner: command.userId,
-      accessType: 'private',
+      accessType: command.accessType,
       calendar: resolveCalendar({ startDate: command.startDate }),
     } as CreateGameProps;
 

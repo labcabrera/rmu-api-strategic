@@ -38,6 +38,12 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
     return docs.map(doc => String(doc._id));
   }
 
+  async findIdsByFactionIds(factionIds: string[]): Promise<string[]> {
+    if (factionIds.length === 0) return [];
+    const docs = await this.model.find({ 'faction.id': { $in: factionIds } }, { _id: 1 }).lean<{ _id: string }[]>();
+    return docs.map(doc => String(doc._id));
+  }
+
   async findByRaceId(raceId: string): Promise<Character[]> {
     const characters = await this.model.find({ 'info.race.id': raceId });
     return characters.map(doc => this.toEntity(doc));
@@ -74,6 +80,7 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       conditions: doc.conditions || [],
       appliedTacticalGames: doc.appliedTacticalGames || [],
       temporaryModifiers: doc.temporaryModifiers || [],
+      lostLimbs: doc.lostLimbs || [],
       description: doc.description,
       imageUrl: doc.imageUrl,
       owner: doc.owner,
@@ -99,6 +106,11 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
       e.weaponDevelopment,
       e.bonusDevPointsSpentThisLevel ?? 0,
       e.flawDevPoints ?? 0,
+      e.intenseTrainingSkill
+        ? { skillId: e.intenseTrainingSkill.skillId, specialization: e.intenseTrainingSkill.specialization ?? null }
+        : null,
+      e.savedDevPoints ?? 0,
+      (e.statGainPayments || []).map(p => ({ stat: p.stat, normal: p.normal ?? 0, bonus: p.bonus ?? 0, level: p.level })),
     );
   }
 
@@ -126,6 +138,8 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
         s.missingReference || undefined,
         s.styleAbilities?.length ? s.styleAbilities.map(a => ({ abilityId: a.abilityId, times: a.times, cost: a.cost })) : undefined,
         s.categoryId ?? undefined,
+        s.talentRanks ?? 0,
+        s.cultureSources?.length ? [...s.cultureSources] : undefined,
       );
     });
   }
@@ -144,6 +158,8 @@ export class MongoCharacterRepository extends MongoBaseRepository<Character, Cha
           t.source === 'race' ? 'race' : 'character',
           t.paidWith ?? undefined,
           t.missingReference || undefined,
+          t.grantedRanks?.length ? t.grantedRanks.map(g => ({ ...g, specialization: g.specialization ?? null })) : undefined,
+          CharacterTrait.purchaseOf(t),
         ),
     );
   }

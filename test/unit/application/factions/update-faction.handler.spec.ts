@@ -1,3 +1,4 @@
+import type { FactionAccess } from '../../../../src/modules/factions/application/services/faction-access.service.js';
 import { UpdateFactionCommand } from '../../../../src/modules/factions/application/cqrs/commands/update-faction.command.js';
 import { UpdateFactionHandler } from '../../../../src/modules/factions/application/cqrs/handlers/update-faction.handler.js';
 import type { FactionRepository } from '../../../../src/modules/factions/application/ports/faction-repository.port.js';
@@ -34,7 +35,14 @@ const setup = (game: Partial<Game> | null = { id: 'game-1', realmId: 'realm-1' }
   );
   const resolver = { resolve } as unknown as FactionNpcsResolver;
   const events = fakeEventPublisher();
-  return { handler: new UpdateFactionHandler(repository, events.publisher, gameAccess, resolver), resolve, update, events };
+  return {
+    handler: new UpdateFactionHandler(repository, events.publisher, gameAccess, resolver, {
+      checkWrite: () => Promise.resolve(),
+    } as unknown as FactionAccess),
+    resolve,
+    update,
+    events,
+  };
 };
 
 const command = (npcs?: { npcId: string; count: number }[]) =>

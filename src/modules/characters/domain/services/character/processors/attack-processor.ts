@@ -11,6 +11,9 @@ import { CharacterAttackRange } from '../../../value-objects/character-attack-ra
 import { getTraitEffects, sumTraitEffects } from '../traits/trait-effect-resolver.js';
 import { matchesAttack, matchesWeaponType } from '../traits/trait-specialization-matcher.js';
 import { ItemModifiers } from '../../../../../items/domain/value-objects/item-modifier.vo.js';
+import { getSizeSteps } from '../../../../../shared/domain/entities/character-size.js';
+// Workspace spec 077, C13: the attacks use the size of the race changed by Increased or Decreased Size
+import { effectiveSizeId } from '../../traits/effective-size.js';
 
 const SHIELD_FUMBLE = 4;
 // Core Law has no fumble column for shield bashes: the one-handed melee one is used (workspace spec 034)
@@ -18,20 +21,64 @@ const SHIELD_FUMBLE_TABLE = 'melee-one-hand';
 const WRONG_SIZE_PENALTY = -20;
 const SHIELD_SKILL_ID = 'shield';
 
+// Workspace spec 076, A8: unarmed attacks, one for each specialization of the unarmed skills with ranks
+export const UNARMED_SKILL_IDS = ['unarmed-st', 'unarmed-ag'];
+// Attack table of each specialization (report characters-creation.md §6); the rest use their own id
+const UNARMED_ATTACK_TABLES: Record<string, string> = {
+  strikes: 'unarmed-strikes',
+  'sweeps-throws': 'unarmed-sweeps',
+  wrestling: 'grapple',
+};
+// Strategic does not read the attack tables: the fumble and the reach of the attack are the defaults of the spec
+const UNARMED_FUMBLE = 3;
+const UNARMED_FUMBLE_TABLE = 'unarmed';
+
 @Injectable()
 export class AttackProcessor {
   private readonly logger = new Logger(AttackProcessor.name);
 
   process(character: Character, items: Item[]): void {
-    if (!character.equipment || !character.equipment.slots) {
-      this.logger.warn(`Character ${character.id} has no equipment slots defined, skipping attack processing`);
-      //TODO process unarmed attack
-      return;
-    }
     const attacks: CharacterAttack[] = [];
-    this.calculateAttackBonusSlot(character, attacks, 'mainHand', items);
-    this.calculateAttackBonusSlot(character, attacks, 'offHand', items);
+    if (!character.equipment || !character.equipment.slots) {
+      this.logger.warn(`Character ${character.id} has no equipment slots defined, only unarmed attacks are processed`);
+    } else {
+      this.calculateAttackBonusSlot(character, attacks, 'mainHand', items);
+      this.calculateAttackBonusSlot(character, attacks, 'offHand', items);
+    }
+    // Always, even with weapons: the character may choose to fight unarmed
+    attacks.push(...this.getUnarmedAttacks(character, attacks.length === 0));
     character.attacks = attacks;
+  }
+
+  /**
+   * One attack for each specialization of `unarmed-st` and `unarmed-ag` with at least one rank (workspace spec 076,
+   * A8). The skill id of the attack is `skill@specialization`, as the weapon attacks. Natural Weaponry is not handled.
+   */
+  private getUnarmedAttacks(character: Character, defaultAttack: boolean): CharacterAttack[] {
+    return (character.skills || [])
+      .filter(skill => UNARMED_SKILL_IDS.includes(skill.skillId) && !!skill.specialization && skill.ranks >= 1)
+      .map(skill => {
+        const specialization = skill.specialization!;
+        const skillId = `${skill.skillId}@${specialization}`;
+        return CharacterAttack.fromProps({
+          attackName: `${skill.skillId}-${specialization}`,
+          attackTable: UNARMED_ATTACK_TABLES[specialization] ?? specialization,
+          sizeAdjustment: this.getSizeAdjustment(effectiveSizeId(character)) + this.getTraitSizeAdjustment(character, skillId),
+          fumbleTable: UNARMED_FUMBLE_TABLE,
+          fumble: this.getFumble(character, UNARMED_FUMBLE, skill, skillId),
+          weaponFumble: UNARMED_FUMBLE,
+          type: 'melee',
+          defaultAttack,
+          meleeRange: Math.round((character.info.height / 2) * 100) / 100,
+          ranges: null,
+          boModifiers: this.getBoModifiers(skill, character, 'mainHand', 'melee'),
+          twoHanded: false,
+          weaponCategory: 'unarmed',
+          wrongSize: false,
+          skillId,
+          strengthWeight: this.getStrengthWeight(skill),
+        });
+      });
   }
 
   private calculateAttackBonusSlot(character: Character, attacks: CharacterAttack[], slot: EquipmentSlot, items: Item[]): void {
@@ -58,12 +105,12 @@ export class AttackProcessor {
         const fumble = this.getFumble(character, item.weapon.fumble, skill, skillId);
         // A weapon made for another size uses its own size for the attack and gets a BO penalty
         const wielderSize = item.weapon.wielderSize;
-        const wrongSize = !!wielderSize && wielderSize !== character.info.sizeId;
+        const wrongSize = !!wielderSize && wielderSize !== effectiveSizeId(character);
         if (wrongSize) {
           boModifiers['wrongSize'] = WRONG_SIZE_PENALTY;
         }
         const baseSizeAdjustment =
-          this.getSizeAdjustment(wrongSize ? wielderSize : character.info.sizeId) + this.getTraitSizeAdjustment(character, skillId);
+          this.getSizeAdjustment(wrongSize ? wielderSize : effectiveSizeId(character)) + this.getTraitSizeAdjustment(character, skillId);
         const rangeTraitBonus = this.getTraitRangeBonus(character, skillId);
         this.getAvailableModes(character, item.weapon).forEach(mode => {
           // Workspace spec 041, decision 5: the OB modifier of the mode, such as an improvised weapon penalty
@@ -72,14 +119,16 @@ export class AttackProcessor {
           const sizeAdjustment = baseSizeAdjustment + mode.sizeAdjustment;
           const rangeFactor = this.getTraitRangeFactor(character, mode);
           const ranges = mode.ranges
-            ? mode.ranges.map(
-                r =>
-                  new CharacterAttackRange(
-                    this.scaleRange(r.from, rangeFactor),
-                    this.scaleRange(r.to, rangeFactor),
-                    this.getRangeBonus(r.bonus, rangeTraitBonus),
-                  ),
-              )
+            ? mode.ranges.map(r => {
+                const bonus = this.getRangeBonus(r.bonus, rangeTraitBonus);
+                // Workspace spec 079, D1: Deadeye's share, which rmu-api-tactical shows apart
+                return new CharacterAttackRange(
+                  this.scaleRange(r.from, rangeFactor),
+                  this.scaleRange(r.to, rangeFactor),
+                  bonus,
+                  bonus - r.bonus,
+                );
+              })
             : null;
           const attack = CharacterAttack.fromProps({
             attackName: slot,
@@ -276,17 +325,14 @@ export class AttackProcessor {
     return 'standard';
   }
 
-  private getSizeAdjustment(sizeId: string): number {
-    switch (sizeId) {
-      case 'medium':
-        return 0;
-      case 'big':
-        return 1;
-      case 'small':
-        return -1;
-      default:
-        throw new DomainError('Unsupported size ' + sizeId);
+  // Steps from Medium on the whole size scale, minuscule (-4) to leviathan (+8) (workspace spec 075, decision 1).
+  // An unknown id is a data error, not a size: it fails instead of silently attacking as Medium
+  private getSizeAdjustment(sizeId: string | undefined): number {
+    const steps = getSizeSteps(sizeId);
+    if (steps === null) {
+      throw new DomainError('Unsupported size ' + sizeId);
     }
+    return steps;
   }
 
   private getWeaponSkillBonus(character: Character, weapon: ItemWeapon): CharacterSkill | null {

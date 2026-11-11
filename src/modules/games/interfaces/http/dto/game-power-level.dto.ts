@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
-import { GamePowerLevel, resolvePowerLevel } from '../../../domain/value-objects/game-power-level.vo.js';
+import { IsIn, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import {
+  GAME_POWER_LEVEL_PRESETS,
+  GamePowerLevel,
+  type GamePowerLevelPreset,
+  resolvePowerLevel,
+} from '../../../domain/value-objects/game-power-level.vo.js';
 
 export class GamePowerLevelDto {
   @ApiProperty({ description: 'Base development points', type: Number })
@@ -72,6 +77,28 @@ export class GamePowerLevelDto {
   @Min(0)
   knackBonus?: number;
 
+  @ApiProperty({
+    description: 'Power level preset the values came from (Core Law table 12-1, workspace spec 079); informative, the values stay editable',
+    enum: GAME_POWER_LEVEL_PRESETS,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsIn(GAME_POWER_LEVEL_PRESETS)
+  preset?: GamePowerLevelPreset | null;
+
+  @ApiProperty({
+    description: 'Percent of the power points recovered every rest period of 2 hours (workspace spec 079); 10 by default',
+    type: Number,
+    required: false,
+    default: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  ppRecoveryPercent?: number;
+
   static fromEntity(entity: GamePowerLevel): GamePowerLevelDto {
     const resolved = resolvePowerLevel(entity);
     const dto = new GamePowerLevelDto();
@@ -87,6 +114,8 @@ export class GamePowerLevelDto {
     dto.statPoints = resolved.statPoints;
     dto.knackCount = resolved.knackCount;
     dto.knackBonus = resolved.knackBonus;
+    dto.preset = resolved.preset;
+    dto.ppRecoveryPercent = resolved.ppRecoveryPercent;
     return dto;
   }
 }

@@ -5,6 +5,7 @@ import type { EquipmentSlot } from '../../../characters/domain/value-objects/cha
 import { STAT_KEYS, type StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import type { Faction } from '../../../factions/domain/aggregates/faction.js';
 import type { Item } from '../../../items/domain/aggregates/item.js';
+import { CharacterTrait } from '../../../characters/domain/value-objects/character-trait.vo.js';
 import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.vo.js';
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
 import type { ItemInfo } from '../../../items/domain/value-objects/item-info.vo.js';
@@ -92,6 +93,7 @@ const armorToExport = (armor: ItemArmor): ItemArmor => ({
   baseDifficulty: armor.baseDifficulty,
   ...(armor.coverage?.length ? { coverage: [...armor.coverage] } : {}),
   ...(armor.class ? { class: armor.class } : {}),
+  ...(armor.fittedWeight ? { fittedWeight: armor.fittedWeight } : {}),
 });
 
 const infoToExport = (info: ItemInfo): ItemInfo => ({
@@ -177,6 +179,9 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       weaponDevelopment: [...xp.weaponDevelopment],
       bonusDevPointsSpentThisLevel: xp.bonusDevPointsSpentThisLevel ?? 0,
       flawDevPoints: xp.flawDevPoints ?? 0,
+      intenseTrainingSkill: xp.intenseTrainingSkill ? { ...xp.intenseTrainingSkill } : null,
+      savedDevPoints: xp.savedDevPoints ?? 0,
+      statGainPayments: (xp.statGainPayments || []).map(payment => ({ ...payment })),
     },
     statistics,
     skills: character.skills.map(skill => ({
@@ -188,6 +193,8 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       ranks: skill.ranks,
       ranksDeveloped: skill.ranksDeveloped,
       cultureRanks: skill.cultureRanks ?? 0,
+      talentRanks: skill.talentRanks ?? 0,
+      ...(skill.cultureSources?.length ? { cultureSources: [...skill.cultureSources] } : {}),
       devPointsSpent: { normal: skill.devPointsSpent?.normal ?? 0, bonus: skill.devPointsSpent?.bonus ?? 0 },
       knackBonus: orNull(skill.knackBonus),
       ...(skill.styleAbilities?.length ? { styleAbilities: skill.styleAbilities.map(a => ({ ...a })) } : {}),
@@ -202,6 +209,8 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
         cost: trait.cost ?? 0,
         specialization: orNull(trait.specialization),
         paidWith: trait.paidWith ? { ...trait.paidWith } : null,
+        ...(trait.grantedRanks?.length ? { grantedRanks: trait.grantedRanks.map(granted => ({ ...granted })) } : {}),
+        ...structuredClone(CharacterTrait.purchaseOf(trait)),
       })),
     hp: { current: character.hp.current },
     endurance: {
@@ -227,8 +236,19 @@ export function characterToExport(character: Character, refs: ExportRefs, curren
       delete recovery.days;
       return { ...injury, recovery };
     }),
-    conditions: plain(character.conditions || []),
+    // Workspace spec 079: the day of a death belongs to its campaign and does not travel
+    conditions: plain(character.conditions || []).map(condition => {
+      const copy = { ...condition };
+      delete copy.gameDay;
+      return copy;
+    }),
     temporaryModifiers: temporaryModifiersToExport(character, currentGameDay),
+    lostLimbs: (character.lostLimbs || []).map(limb => ({
+      location: limb.location,
+      side: limb.side,
+      at: limb.at,
+      ...(limb.cause ? { cause: limb.cause } : {}),
+    })),
     description: orNull(character.description),
     imageUrl: orNull(character.imageUrl),
   };

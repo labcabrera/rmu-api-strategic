@@ -4,6 +4,7 @@ import { CharacterAccess } from '../../../characters/application/services/charac
 import { Character } from '../../../characters/domain/aggregates/character.js';
 import { type FactionRepository, FACTION_REPOSITORY } from '../../../factions/application/ports/faction-repository.port.js';
 import { Faction } from '../../../factions/domain/aggregates/faction.js';
+import { FactionAccess } from '../../../factions/application/services/faction-access.service.js';
 import { GameAccess } from '../../../games/application/services/game-access.service.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../shared/domain/errors/errors.js';
 import { type ItemHolder, ItemHolders } from '../../domain/value-objects/item-holder.vo.js';
@@ -19,8 +20,8 @@ export interface HolderContext {
 
 /**
  * Who may act on the items and gold of a holder (workspace spec 023, decision 9):
- * - a character: its owner, the owner of the game or an admin (CharacterAccess);
- * - a faction (its armory and gold): the owner of the game or an admin.
+ * - a character: the players of its faction, the masters or an admin (CharacterAccess, spec 072);
+ * - a faction (its armory and gold): its players, the masters or an admin (spec 072, decision 6).
  * A player may also give an item of their character to its faction or to another character of the same faction.
  */
 @Injectable()
@@ -30,6 +31,7 @@ export class HolderAccess {
     @Inject(FACTION_REPOSITORY) private readonly factionRepository: FactionRepository,
     private readonly characterAccess: CharacterAccess,
     private readonly gameAccess: GameAccess,
+    private readonly factionAccess: FactionAccess,
   ) {}
 
   async load(holder: ItemHolder): Promise<HolderContext> {
@@ -53,7 +55,7 @@ export class HolderAccess {
 
   async canManage(context: HolderContext, userId: string, roles: string[]): Promise<boolean> {
     if (context.character) return this.characterAccess.canChange(context.character, userId, roles);
-    return this.gameAccess.canManage(await this.gameAccess.findGame(context.gameId), userId, roles);
+    return this.factionAccess.canWrite(context.faction, userId, roles);
   }
 
   async checkManage(context: HolderContext, userId: string, roles: string[]): Promise<void> {

@@ -9,6 +9,9 @@ export interface CharacterRepository extends BaseRepository<Character> {
   /** The ids of the characters of a user (the items of their characters, in the item listings). */
   findIdsByOwner(owner: string): Promise<string[]>;
 
+  /** The ids of the characters of some factions (spec 071: the items a member of a faction reads). */
+  findIdsByFactionIds(factionIds: string[]): Promise<string[]>;
+
   deleteByGameId(gameId: string): Promise<void>;
 }
 

@@ -1,3 +1,5 @@
+import type { DevPointsPoolChoice } from '../../../domain/services/dev-points/dev-points-spending.service.js';
+
 export class LevelUpSkillCommand {
   constructor(
     public readonly characterId: string,
@@ -5,5 +7,6 @@ export class LevelUpSkillCommand {
     public readonly specialization: string | null,
     public readonly userId: string,
     public readonly roles: string[],
+    public readonly pool: DevPointsPoolChoice = 'auto',
   ) {}
 }

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsObject, IsOptional, IsString, ValidateNested, IsInt, Min } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, ValidateNested, IsInt, Min } from 'class-validator';
+import type { AccessType } from '../../../../shared/domain/entities/access-type.js';
 import { UpdateGameCommand } from '../../../application/cqrs/commands/update-game.command.js';
 import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
@@ -52,6 +53,11 @@ export class UpdateGameDto {
   @Type(() => UpdateGameCalendarDto)
   calendar?: UpdateGameCalendarDto;
 
+  @ApiPropertyOptional({ enum: ['public', 'private'], description: 'Visibility (spec 071): only the owner changes it' })
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  accessType?: AccessType;
+
   @ApiPropertyOptional({ description: 'Version the client read (from the GET); a different stored version is a 409', example: 3 })
   @Type(() => Number)
   @IsInt()
@@ -63,7 +69,7 @@ export class UpdateGameDto {
     return new UpdateGameCommand(
       gameId,
       dto.name,
-      dto.options,
+      GameOptionsDto.toEntity(dto.options),
       dto.powerLevel,
       dto.shortDescription,
       dto.description,
@@ -72,6 +78,7 @@ export class UpdateGameDto {
       roles,
       dto.version,
       dto.calendar,
+      dto.accessType,
     );
   }
 }

@@ -11,6 +11,7 @@ const skill = (specialization: string | null, overrides: Partial<CharacterExport
   ranks: 0,
   ranksDeveloped: 0,
   cultureRanks: 0,
+  talentRanks: 0,
   devPointsSpent: { normal: 0, bonus: 0 },
   knackBonus: null,
   ...overrides,

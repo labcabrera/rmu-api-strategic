@@ -30,4 +30,8 @@ export class ItemArmor {
 
   @Prop({ type: String, required: false })
   class?: ArmorClass | null;
+
+  // Workspace spec 077, B1.3: body weight (lb) the piece was made for
+  @Prop({ type: Number, required: false })
+  fittedWeight?: number | null;
 }

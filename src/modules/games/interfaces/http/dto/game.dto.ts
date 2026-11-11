@@ -6,6 +6,59 @@ import { GameOptionsDto } from './game-options.dto.js';
 import { GamePowerLevelDto } from './game-power-level.dto.js';
 import { GameCalendarDto } from './game-calendar.dto.js';
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
+import {
+  GAME_ACCESS_LEVELS,
+  GAME_MEMBER_ROLES,
+  type GameAccessLevel,
+  type GameJoinRequest,
+  type GameMember,
+  type GameMemberRole,
+  gameAccessAtLeast,
+} from '../../../domain/value-objects/game-member.vo.js';
+
+export class GameMemberDto {
+  @ApiProperty({ type: String })
+  userId: string;
+
+  @ApiProperty({ type: String })
+  userName: string;
+
+  @ApiProperty({ enum: GAME_MEMBER_ROLES })
+  role: GameMemberRole;
+
+  @ApiProperty({ type: Date })
+  joinedAt: Date;
+
+  static fromEntity(member: GameMember): GameMemberDto {
+    return Object.assign(new GameMemberDto(), { ...member });
+  }
+}
+
+export class GameJoinRequestDto {
+  @ApiProperty({ type: String })
+  userId: string;
+
+  @ApiProperty({ type: String })
+  userName: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  message: string | null;
+
+  @ApiProperty({ type: Date })
+  requestedAt: Date;
+
+  static fromEntity(request: GameJoinRequest): GameJoinRequestDto {
+    return Object.assign(new GameJoinRequestDto(), { ...request });
+  }
+}
+
+export class GameMembersDto {
+  @ApiProperty({ type: [GameMemberDto] })
+  members: GameMemberDto[];
+
+  @ApiProperty({ type: [GameJoinRequestDto], nullable: true, description: 'Only for the masters of the game (or the own request)' })
+  joinRequests: GameJoinRequestDto[] | null;
+}
 
 export class GameDto {
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
@@ -48,12 +101,25 @@ export class GameDto {
   owner: string;
 
   @ApiProperty({
-    description: 'Who can read the game, its factions and characters: its owner (private) or everyone',
+    description: 'Private: only its members read it. Public: anybody reads its cover and can ask to join (spec 071)',
     enum: ['public', 'private'],
   })
   accessType: AccessType;
 
-  static fromEntity(entity: Game): GameDto {
+  @ApiProperty({ description: 'What the user can do with the game (spec 071)', enum: GAME_ACCESS_LEVELS })
+  access: GameAccessLevel;
+
+  @ApiProperty({ description: 'Members of the game, for its members', type: [GameMemberDto], required: false })
+  members?: GameMemberDto[];
+
+  @ApiProperty({ description: 'Requests to join, for the masters', type: [GameJoinRequestDto], required: false })
+  joinRequests?: GameJoinRequestDto[];
+
+  @ApiProperty({ description: 'Whether the owner still reads the realm (only in the GET by id, for the masters)', required: false })
+  realmReadable?: boolean;
+
+  /** `access` decides what goes out: members for the members, join requests for the masters (spec 071). */
+  static fromEntity(entity: Game, access: GameAccessLevel = 'owner', realmReadable?: boolean): GameDto {
     const dto = new GameDto();
     dto.version = entity.version;
     dto.id = entity.id;
@@ -69,6 +135,10 @@ export class GameDto {
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;
     dto.accessType = entity.accessType;
+    dto.access = access;
+    if (gameAccessAtLeast(access, 'spectator')) dto.members = entity.members.map(member => GameMemberDto.fromEntity(member));
+    if (gameAccessAtLeast(access, 'master')) dto.joinRequests = entity.joinRequests.map(request => GameJoinRequestDto.fromEntity(request));
+    if (realmReadable !== undefined) dto.realmReadable = realmReadable;
     return dto;
   }
 }

@@ -23,6 +23,14 @@ export class ItemArmorDto {
   @ApiProperty({ description: 'Light, medium or heavy piece (spec 041)', type: String, required: false })
   class?: string;
 
+  @ApiProperty({
+    description: 'Body weight (lb) the piece was made for (spec 077): worn by another body it weighs weight × wearer weight / fittedWeight',
+    type: Number,
+    required: false,
+    example: 185,
+  })
+  fittedWeight?: number;
+
   static fromEntity(entity: ItemArmor): ItemArmorDto {
     const dto = new ItemArmorDto();
     dto.slot = entity.slot;
@@ -34,6 +42,7 @@ export class ItemArmorDto {
     dto.baseDifficulty = entity.baseDifficulty;
     if (entity.coverage?.length) dto.coverage = [...entity.coverage];
     if (entity.class) dto.class = entity.class;
+    if (entity.fittedWeight) dto.fittedWeight = entity.fittedWeight;
     return dto;
   }
 }

@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import type { WeaponDevelopmentType } from '../../../domain/value-objects/weapon-development-type.vo.js';
+import type { IntenseTrainingSkill, StatGainPayment } from '../../../domain/value-objects/character-xp.vo.js';
 
 @Schema({ _id: false })
 export class CharacterXP {
@@ -39,4 +40,14 @@ export class CharacterXP {
 
   @Prop({ required: true })
   weaponDevelopment: WeaponDevelopmentType[];
+
+  // Workspace spec 076
+  @Prop({ type: Object, required: false, default: null })
+  intenseTrainingSkill: IntenseTrainingSkill | null;
+
+  @Prop({ type: Number, required: false, default: 0 })
+  savedDevPoints: number;
+
+  @Prop({ type: [Object], required: false, default: [] })
+  statGainPayments: StatGainPayment[];
 }

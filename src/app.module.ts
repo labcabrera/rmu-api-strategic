@@ -11,6 +11,7 @@ import { FactionsModule } from './modules/factions/factions.module.js';
 import { ExportsModule } from './modules/exports/exports.module.js';
 import { EnchantmentsModule } from './modules/enchantments/enchantments.module.js';
 import { TreasureModule } from './modules/treasure/treasure.module.js';
+import { ChronicleModule } from './modules/chronicle/chronicle.module.js';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { TreasureModule } from './modules/treasure/treasure.module.js';
     ExportsModule,
     EnchantmentsModule,
     TreasureModule,
+    ChronicleModule,
   ],
 })
 export class AppModule {}

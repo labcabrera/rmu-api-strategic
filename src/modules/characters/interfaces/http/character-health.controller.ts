@@ -22,6 +22,8 @@ import { GetTreatmentDifficultyQuery } from '../../application/cqrs/queries/get-
 import type { TreatmentDifficulty } from '../../domain/services/healing/injury-treatment-rules.js';
 import { InjuryRollDto } from './dto/injury-roll.dto.js';
 import { RestDto } from './dto/rest.dto.js';
+import { AmputateLimbDto, AmputationResultDto, StrenuousFailureDto } from './dto/health-079.dto.js';
+import type { AmputationResult } from '../../application/cqrs/handlers/health-079.handlers.js';
 import { AntidoteResultDto, GiveAntidoteDto, PoisonCharacterDto, PoisonCharacterResultDto } from './dto/poisoning.dto.js';
 import type { GiveAntidoteResult, PoisonCharacterResult } from '../../application/cqrs/handlers/poisoning.handlers.js';
 import { HerbSearchResultDto, SearchHerbsDto, UseHerbDto, UseHerbResultDto } from './dto/herb.dto.js';
@@ -170,6 +172,42 @@ export class CharacterHealthController {
   @ApiOkResponse({ type: CharacterDto })
   async rest(@Param('id') id: string, @Body() dto: RestDto, @CurrentUser() user: AuthenticatedUser): Promise<CharacterDto> {
     const command = RestDto.toCommand(id, dto, user.id, user.roles);
+    return CharacterDto.fromEntity(await this.commandBus.execute<typeof command, Character>(command));
+  }
+
+  @Post(':id/amputations')
+  @HttpCode(200)
+  @ApiBody({ type: AmputateLimbDto })
+  @ApiOperation({
+    operationId: 'amputateLimb',
+    summary: 'Amputate an arm or a leg with a Medicine roll (spec 079): surgical (-50) or emergency (-30)',
+    description:
+      'The limb is lost whatever the result and the stump heals as -40 bone, muscle and skin injuries (plus a burn when ' +
+      'cauterized). A failure answers the critical the game master rolls (S, D, one result lower); an absolute failure, ' +
+      'system shock. 409 err-limb-already-lost.',
+  })
+  @ApiOkResponse({ type: AmputationResultDto })
+  async amputate(@Param('id') id: string, @Body() dto: AmputateLimbDto, @CurrentUser() user: AuthenticatedUser) {
+    const command = AmputateLimbDto.toCommand(id, dto, user.id, user.roles);
+    return AmputationResultDto.from(await this.commandBus.execute<typeof command, AmputationResult>(command));
+  }
+
+  @Post(':id/injuries/:injuryId/strenuous-failure')
+  @HttpCode(200)
+  @ApiBody({ type: StrenuousFailureDto })
+  @ApiOperation({
+    operationId: 'injuryStrenuousFailure',
+    summary: 'A strenuous activity failed while the injury recovered (spec 079): it is active again and needs a new treatment',
+    description: 'An absolute failure doubles the penalty left. 400 err-injury-not-treated when no successful treatment.',
+  })
+  @ApiOkResponse({ type: CharacterDto })
+  async strenuousFailure(
+    @Param('id') id: string,
+    @Param('injuryId') injuryId: string,
+    @Body() dto: StrenuousFailureDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<CharacterDto> {
+    const command = StrenuousFailureDto.toCommand(id, injuryId, dto, user.id, user.roles);
     return CharacterDto.fromEntity(await this.commandBus.execute<typeof command, Character>(command));
   }
 

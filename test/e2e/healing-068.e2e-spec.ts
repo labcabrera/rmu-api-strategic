@@ -28,9 +28,10 @@ describe('healing in combat, fear and morale (e2e)', () => {
     await e2e.clear();
     const { game, faction } = await gameWithFaction(e2e);
     gameId = game.id;
-    gameVersion = (game as unknown as { version: number }).version;
     // A character of a player (`other`) in the game of `owner`
     characterId = (await createCharacter(e2e, gameId, faction.id, 'other')).id;
+    // `other` joined the game, which changed its version (spec 071)
+    gameVersion = ((await as('owner').get(`/v1/strategic-games/${game.id}`)).body as { version: number }).version;
     maneuverCalls.results = [];
     maneuverCalls.totals = [];
   });
@@ -166,7 +167,7 @@ describe('healing in combat, fear and morale (e2e)', () => {
     const exported = await as('owner').get(`${base()}/export`);
     expect(exported.status).toBe(200);
     const file = exported.body as Body;
-    expect(file.formatVersion).toBe(12);
+    expect(file.formatVersion).toBe(14);
     expect(file.data.character.injuries[0].limits).toEqual({ pace: 'jog' });
     expect(file.data.character.temporaryModifiers).toEqual([
       {

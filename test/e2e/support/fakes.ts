@@ -1,7 +1,7 @@
 import type { TreasureTablesClientPort } from '../../../src/modules/items/application/ports/treasure-tables-client.port.js';
 import type { TreasureTables } from '../../../src/modules/items/domain/value-objects/treasure-tables.vo.js';
-import type { Dice } from '../../../src/modules/treasure/domain/services/dice.js';
-import type { RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { RealmAccessLevel, RealmClientPort, RealmResponse } from '../../../src/modules/games/application/ports/realm-client.port.js';
+import type { UsersClientPort } from '../../../src/modules/games/application/ports/users-client.port.js';
 import type { NpcClientPort, NpcResponse } from '../../../src/modules/factions/application/ports/npc-client.port.js';
 import type { MaterialClientPort, MaterialResponse } from '../../../src/modules/items/application/ports/material-client.port.js';
 import type { TradingTablesClientPort } from '../../../src/modules/items/application/ports/trading-tables-client.port.js';
@@ -36,6 +36,7 @@ import type { EnumerationClientPort } from '../../../src/modules/characters/appl
 import type { AlchemyTablesClientPort } from '../../../src/modules/enchantments/application/ports/alchemy-tables-client.port.js';
 import type { AlchemyTables } from '../../../src/modules/enchantments/domain/value-objects/alchemy.vo.js';
 import type { SpellListInfo } from '../../../src/modules/characters/domain/services/spells/spell-list-rules.js';
+import type { MediaClientPort } from '../../../src/modules/chronicle/application/ports/media-client.port.js';
 import { SPEC_068_TABLES, TABLES } from '../../unit/domain/characters/healing/healing.fixture.js';
 
 // Invented catalog data (not book data): the minimum the strategic API reads from core and items.
@@ -62,6 +63,9 @@ export const SKILLS: SkillResponse[] = [
   { id: 'power-development', categoryId: 'power-manipulation', bonus: ['co'], specialization: undefined },
   // Spec 050: a skill whose specializations are enumerations of core
   { id: 'language-spoken', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
+  { id: 'language-written', categoryId: 'lore', bonus: ['me'], specialization: 'language' },
+  // Workspace spec 076: an unarmed skill, whose specializations give unarmed attacks
+  { id: 'unarmed-st', categoryId: 'combat', bonus: ['st'], specialization: 'unarmed-st-attack' },
   // Workspace spec 032: a fighting style skill, without stat bonus
   { id: 'combat-styles', categoryId: 'combat-expertise', bonus: [], specialization: 'combat-style' },
   ...['base', 'open', 'closed', 'arcane', 'restricted'].map(type => ({
@@ -81,7 +85,15 @@ export const SKILL_CATEGORIES: SkillCategoryResponse[] = [
 export const PROFESSION: Profession = {
   id: 'fighter',
   professionalSkills: [],
-  skillCosts: { physical: [2, 6], awareness: [2, 4], athletic: [2, 5], combat1: [2, 5], combat4: [4, 8], 'combat-expertise': [1, 1] },
+  skillCosts: {
+    physical: [2, 6],
+    awareness: [2, 4],
+    athletic: [2, 5],
+    combat1: [2, 5],
+    combat4: [4, 8],
+    'combat-expertise': [1, 1],
+    lore: [1, 3],
+  },
 };
 
 /** Made-up fighting styles with the shape of rmu-api-core (spec 032), not the rulebook ones. */
@@ -198,6 +210,74 @@ export const RACE = {
 export const ENUMERATIONS: { category: string; realmId: string | null; key: string }[] = [
   { category: 'language', realmId: null, key: 'common-tongue' },
   { category: 'language', realmId: REALM.id, key: 'north-tongue' },
+  { category: 'unarmed-st-attack', realmId: null, key: 'strikes' },
+];
+
+/** Workspace spec 076: the talent that grants language ranks, with an invented cost. */
+export const MULTILINGUAL_TRAIT = {
+  id: 'multilingual',
+  name: 'E2E multilingual',
+  isTalent: true,
+  specialization: null,
+  isTierBased: false,
+  maxTier: null,
+  adquisitionCost: 10,
+  tierCost: null,
+} as unknown as TraitResponse;
+
+/** Workspace spec 077: invented talents and flaws with invented costs, prerequisites and possible flaws. */
+export const PURCHASE_TRAITS: TraitResponse[] = [
+  {
+    id: 'e2e-knack',
+    name: 'E2E knack',
+    category: 'e2e',
+    isTalent: true,
+    specialization: 'skill',
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: 5,
+    tierCost: 5,
+    description: '',
+    prerequisites: [{ type: 'skill' }, { type: 'milestone' }],
+    possibleFlaws: ['e2e-weakness'],
+  },
+  {
+    id: 'e2e-weakness',
+    name: 'E2E weakness',
+    category: 'e2e',
+    isTalent: false,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: -5,
+    tierCost: -5,
+    description: '',
+  },
+  {
+    id: 'increased-size',
+    name: 'E2E increased size',
+    category: 'e2e',
+    isTalent: true,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 2,
+    adquisitionCost: 10,
+    tierCost: 10,
+    description: '',
+  },
+  // Workspace spec 079, D2: sheet effects of these ids (invented costs)
+  ...['vigorous', 'beast-of-burden', 'efficient-sleeper'].map(id => ({
+    id,
+    name: `E2E ${id}`,
+    category: 'e2e',
+    isTalent: true,
+    specialization: null,
+    isTierBased: true,
+    maxTier: 3,
+    adquisitionCost: 5,
+    tierCost: 5,
+    description: '',
+  })),
 ];
 
 export const CULTURE = { id: 'culture-001', name: 'E2E culture', languages: [], skillRanks: [] } as unknown as Culture;
@@ -515,8 +595,8 @@ export const tradingTables: { value: TradingTables | null } = { value: null };
 const everyQuality = <T>(value: T) => ({ 'very-poor': value, poor: value, normal: value, rich: value, 'very-rich': value });
 
 /**
- * Invented treasure tables of rmu-api-core (workspace spec 067): every roll of the fake dice (50 unless a test queues
- * others) gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
+ * Invented treasure tables of rmu-api-core (workspace spec 067): a roll of 50 on every die
+ * gives one roll of 20 sp of coins, a gear note, and a +10 sword from the melee table.
  */
 export const TREASURE_TABLES = {
   codes: { wealth: { c: 'normal' }, lifestyle: { n: 'normal' }, magic: { x: 'normal' } },
@@ -572,12 +652,42 @@ export const TREASURE_TABLES = {
   },
 } as unknown as TreasureTables;
 
-/** Rolls the fake dice answer: queued values first, then 50 (within the range asked). */
-export const diceQueue: number[] = [];
+/**
+ * What core answers to `GET /realms/:id/access/:userId` (spec 071), keyed `realmId:userId`; `read` when not set.
+ * Tests change it and `E2eApp.clear()` empties it.
+ */
+export const realmAccess = new Map<string, RealmAccessLevel>();
+
+/** The accepted friendships users answers (spec 071), as `a:b` with either order; owner and other are friends. */
+export const friendships = new Set<string>();
+export const DEFAULT_FRIENDSHIPS = ['e2e-owner:e2e-other'];
+
+/**
+ * rmu-api-media (workspace spec 102): the scopes strategic asked to delete, and whether the next calls fail (as an
+ * unavailable media would). `E2eApp.clear()` resets it.
+ */
+export const mediaCalls: { deletedScopes: string[]; fail: boolean } = { deletedScopes: [], fail: false };
+
+export function resetSocialFakes(): void {
+  mediaCalls.deletedScopes.length = 0;
+  mediaCalls.fail = false;
+  realmAccess.clear();
+  friendships.clear();
+  DEFAULT_FRIENDSHIPS.forEach(pair => friendships.add(pair));
+}
+resetSocialFakes();
 
 /** Every outbound API port of strategic, answered from the data above. */
 export function apiFakes() {
-  const realmClient: RealmClientPort = { getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)) };
+  const realmClient: RealmClientPort = {
+    getRealmById: id => Promise.resolve(REALMS.find(realm => realm.id === id)),
+    getUserAccess: (realmId, userId) => Promise.resolve(realmAccess.get(`${realmId}:${userId}`) ?? 'read'),
+  };
+  const usersClient: UsersClientPort = {
+    findAcceptedFriend: (a, b) =>
+      Promise.resolve(friendships.has(`${a}:${b}`) || friendships.has(`${b}:${a}`) ? { userId: b, userName: `name-${b}` } : null),
+    findUserName: userId => Promise.resolve(`name-${userId}`),
+  };
   const npcClient: NpcClientPort = { getNpcById: id => Promise.resolve(NPCS.find(npc => npc.id === id)) };
   const itemClient: ItemClientPort = {
     getItemById: id => Promise.resolve(ITEM_TYPES[id]),
@@ -603,7 +713,10 @@ export function apiFakes() {
     getSpellsByListId: id => Promise.resolve(SPELLS.filter(spell => spell.spellListId === id)),
   };
   const traitClient: TraitClientPort = {
-    getTraitById: (id: string) => Promise.reject<TraitResponse>(new NotFoundError('Trait', id)),
+    getTraitById: (id: string) => {
+      const found = [MULTILINGUAL_TRAIT, ...PURCHASE_TRAITS].find(trait => trait.id === id);
+      return found ? Promise.resolve(found) : Promise.reject<TraitResponse>(new NotFoundError('Trait', id));
+    },
   };
   const cultureClient: CultureClientPort = {
     getCultureById: id =>
@@ -673,10 +786,17 @@ export function apiFakes() {
   const tradingTablesClient: TradingTablesClientPort = { getTradingTables: () => Promise.resolve(tradingTables.value) };
   const alchemyTablesClient: AlchemyTablesClientPort = { getAlchemyTables: () => Promise.resolve(ALCHEMY_TABLES) };
   const treasureTablesClient: TreasureTablesClientPort = { getTreasureTables: () => Promise.resolve(TREASURE_TABLES) };
-  const dice: Dice = { roll: (min, max) => Math.min(max, Math.max(min, diceQueue.shift() ?? 50)) };
+  const mediaClient: MediaClientPort = {
+    deleteImagesByScope: scope => {
+      if (mediaCalls.fail) return Promise.reject(new UpstreamBadGatewayError('rmu-api-media/v1/images is not available', 503));
+      mediaCalls.deletedScopes.push(scope);
+      return Promise.resolve(2);
+    },
+  };
   return {
+    mediaClient,
+    usersClient,
     treasureTablesClient,
-    dice,
     alchemyTablesClient,
     npcClient,
     enumerationClient,

@@ -28,6 +28,7 @@ export function normalizeSkillSpecializations(
       ranks: sum(current.ranks, skill.ranks),
       ranksDeveloped: sum(current.ranksDeveloped, skill.ranksDeveloped),
       cultureRanks: sum(current.cultureRanks, skill.cultureRanks),
+      talentRanks: sum(current.talentRanks, skill.talentRanks),
       devPointsSpent: {
         normal: sum(current.devPointsSpent?.normal, skill.devPointsSpent?.normal),
         bonus: sum(current.devPointsSpent?.bonus, skill.devPointsSpent?.bonus),

@@ -198,6 +198,50 @@ describe('export mappers (spec 024)', () => {
     expect(inFile.settings).toEqual([setting]);
   });
 
+  it('exports the development data of workspace spec 076 (format 13)', () => {
+    const language = skill('language-spoken', 'north-tongue', 7, 'lore');
+    language.talentRanks = 5;
+    language.cultureSources = [2, 3];
+    const character = buildCharacter({ skills: [language], level: 2 });
+    character.experience.intenseTrainingSkill = { skillId: 'language-spoken', specialization: 'north-tongue' };
+    character.experience.savedDevPoints = 4;
+    character.experience.statGainPayments = [{ stat: 'ag', normal: 4, bonus: 0, level: 2 }];
+    character.addTrait('multilingual', 'Multilingual', true, undefined, 0, undefined, undefined, [
+      { skillId: 'language-spoken', specialization: 'north-tongue', ranks: 1, created: false },
+    ]);
+    const entry = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined);
+    expect(entry.character.experience).toMatchObject({
+      intenseTrainingSkill: { skillId: 'language-spoken', specialization: 'north-tongue' },
+      savedDevPoints: 4,
+      statGainPayments: [{ stat: 'ag', normal: 4, bonus: 0, level: 2 }],
+    });
+    expect(entry.character.skills[0]).toMatchObject({ ranks: 8, talentRanks: 6, cultureSources: [2, 3] });
+    expect(entry.character.traits[0].grantedRanks).toEqual([
+      { skillId: 'language-spoken', specialization: 'north-tongue', ranks: 1, created: false },
+    ]);
+  });
+
+  it('exports the purchase data of the traits of workspace spec 077', () => {
+    const character = buildCharacter({});
+    character.addTrait('prodigy', 'Prodigy', true, 1, 3, 'perception', undefined, [], {
+      acquiredBy: [{ tier: 1, type: 'training', note: 'Guild' }],
+      restricted: { note: 'Only at night' },
+    });
+    character.addTrait('bad-temper', 'Bad temper', false, undefined, -5, undefined, undefined, [], {
+      linkedTo: { traitId: 'prodigy', specialization: 'perception' },
+      pendingApproval: true,
+    });
+    const entry = characterEntry(character, [], assignRefs(['character-001'], []), () => undefined);
+    expect(entry.character.traits[0]).toMatchObject({
+      acquiredBy: [{ tier: 1, type: 'training', note: 'Guild' }],
+      restricted: { note: 'Only at night' },
+    });
+    expect(entry.character.traits[1]).toMatchObject({
+      linkedTo: { traitId: 'prodigy', specialization: 'perception' },
+      pendingApproval: true,
+    });
+  });
+
   it('fills the fields that items stored before specs 019 and 023 lack', () => {
     const old = item({ id: 'old-1', modifiers: undefined, catalog: undefined, value: undefined, unrepairable: undefined });
     const exported = itemToExport(old, assignRefs([], ['old-1']), () => undefined);

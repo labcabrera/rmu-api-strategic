@@ -35,11 +35,13 @@ describe('Game defaults', () => {
 
   it('fills the new options of old games', () => {
     expect(resolveOptions(legacyOptions)).toMatchObject({
-      allowThirdRank: false,
+      intenseTraining: false,
+      allowSavingDevPoints: false,
       talentPolicy: 'free',
       bonusDevPointsCapAtCreation: false,
       statGeneration: 'roll',
       openRounds: true,
+      talentPurchaseRules: false,
     });
     expect(GameOptionsDto.fromEntity(legacyOptions)).toMatchObject({ talentPolicy: 'free', statGeneration: 'roll', openRounds: true });
   });
@@ -51,7 +53,7 @@ describe('Game defaults', () => {
 
   it('accepts a missing power level or options', () => {
     expect(resolvePowerLevel(undefined).baseDevPoints).toBe(60);
-    expect(resolveOptions(null).allowThirdRank).toBe(false);
+    expect(resolveOptions(null).intenseTraining).toBe(false);
     expect(resolveOptions(undefined).openRounds).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import { allowAllCharacterAccess } from '../../../support/allow-all-access.js';
 import { fakeEventPublisher } from '../../../support/fake-event-publisher.js';
+import type { TalentSkillRanksService } from '../../../../../src/modules/characters/application/services/talent-skill-ranks.service.js';
 import { AddTraitHandler } from '../../../../../src/modules/characters/application/cqrs/handlers/add-trait.handler.js';
 import { AddTraitCommand } from '../../../../../src/modules/characters/application/cqrs/commands/add-trait.command.js';
 import { CharacterProcessorService } from '../../../../../src/modules/characters/domain/services/character-processor.service.js';
@@ -63,6 +64,7 @@ const setup = (
       findById: vi.fn().mockResolvedValue({ id: 'game-001', powerLevel: { baseDevPoints: 60, ...powerLevel }, options }),
     } as unknown as GameRepository,
     allowAllCharacterAccess,
+    { prepare: vi.fn().mockResolvedValue([]) } as unknown as TalentSkillRanksService,
   );
   const add = (traitId: string, tier?: number, specialization?: string) =>
     handler.execute(new AddTraitCommand('character-001', traitId, tier, specialization, 'user-001', []));

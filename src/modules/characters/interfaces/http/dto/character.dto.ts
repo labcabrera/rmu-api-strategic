@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CharacterDefenseDto } from './character-defense.dto.js';
 import { CharacterEnduranceDto } from './character-endurance.dto.js';
+import { effectiveSizeId } from '../../../domain/services/traits/effective-size.js';
 import { CharacterEquipmentDto } from './character-equipment.dto.js';
 import { CharacterHPDto } from './character-hp.dto.js';
 import { CharacterInitiativeDto } from './character-initiative.dto.js';
@@ -19,9 +20,16 @@ import { NamedEntityDto } from '../../../../shared/interfaces/http/dto/named-ent
 import { PaginationDto } from '../../../../shared/interfaces/http/dto/page.dto.js';
 import { STAT_KEYS, type StatKey } from '../../../domain/value-objects/character-stat.vo.js';
 import type { CharacterStatus } from '../../../domain/value-objects/character-status.vo.js';
-import { CharacterConditionDto, HealthSummaryDto, InjuryDto, TemporaryModifierDto } from './character-health.dto.js';
+import { CharacterConditionDto, HealthSummaryDto, InjuryDto, LostLimbDto, TemporaryModifierDto } from './character-health.dto.js';
 
 export class CharacterDto {
+  @ApiProperty({
+    enum: ['manage', 'write', 'read'],
+    required: false,
+    description: 'Spec 072: what the user can do with the character (manage: masters; write: players of its faction)',
+  })
+  access?: 'manage' | 'write' | 'read';
+
   @ApiProperty({ description: 'Version of optimistic concurrency: send it back in the PATCH to detect a concurrent change', example: 0 })
   version: number;
 
@@ -100,6 +108,9 @@ export class CharacterDto {
   @ApiProperty({ description: 'Lasting morale and fear modifiers (spec 068)', type: [TemporaryModifierDto] })
   temporaryModifiers: TemporaryModifierDto[];
 
+  @ApiProperty({ description: 'Limbs lost for good (spec 079): a lost arm is useless, a lost leg crawls', type: [LostLimbDto] })
+  lostLimbs: LostLimbDto[];
+
   @ApiProperty({ type: String, description: 'Character description', example: 'The Dark Lord of Mordor' })
   description: string | undefined;
 
@@ -120,7 +131,7 @@ export class CharacterDto {
     dto.gameId = entity.gameId;
     dto.faction = { id: entity.faction.id, name: entity.faction.name };
     dto.name = entity.name;
-    dto.info = CharacterInfoDto.fromEntity(entity.info);
+    dto.info = CharacterInfoDto.fromEntity(entity.info, effectiveSizeId(entity));
     dto.roleplay = CharacterRoleplayInfoDto.fromEntity(entity.roleplay);
     dto.experience = CharacterXPDto.fromEntity(entity.experience);
     dto.statistics = statistics;
@@ -141,6 +152,7 @@ export class CharacterDto {
     dto.healthSummary = HealthSummaryDto.fromEntity(entity.healthSummary);
     dto.appliedTacticalGames = [...(entity.appliedTacticalGames || [])];
     dto.temporaryModifiers = (entity.temporaryModifiers || []).map(modifier => TemporaryModifierDto.fromEntity(modifier));
+    dto.lostLimbs = (entity.lostLimbs || []).map(limb => LostLimbDto.fromEntity(limb));
     dto.description = entity.description;
     dto.imageUrl = entity.imageUrl;
     dto.owner = entity.owner;

@@ -11,6 +11,14 @@ import { type ItemRepository, ITEM_REPOSITORY } from '../../../../items/applicat
 import { type GameRepository, GAME_REPOSITORY } from '../../../../games/application/ports/game-repository.port.js';
 import { type GameRules, loadGameRules } from '../../services/game-rules.js';
 import { DOMAIN_EVENT_PUBLISHER, type DomainEventPublisher } from '../../../../shared/application/ports/domain-event-publisher.port.js';
+import {
+  DEV_POINTS_INSUFFICIENT,
+  type DevPointsPoolChoice,
+  poolsFor,
+} from '../../../domain/services/dev-points/dev-points-spending.service.js';
+import { TalentSkillRanksService } from '../../services/talent-skill-ranks.service.js';
+import { CharacterTrait, type CharacterTraitPurchase, type TraitRestriction } from '../../../domain/value-objects/character-trait.vo.js';
+import { MASTER_PREREQUISITES, TalentPurchasePolicy } from '../../../domain/services/traits/talent-purchase-policy.js';
 
 @CommandHandler(AddTraitCommand)
 export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Character> {
@@ -22,6 +30,7 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     @Inject(DOMAIN_EVENT_PUBLISHER) private readonly events: DomainEventPublisher,
     @Inject(GAME_REPOSITORY) private readonly gameRepository: GameRepository,
     private readonly characterAccess: CharacterAccess,
+    private readonly talentSkillRanks: TalentSkillRanksService,
   ) {}
 
   async execute(command: AddTraitCommand): Promise<Character> {
@@ -35,24 +44,97 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
     if (!trait) throw new NotFoundError('Trait', command.traitId);
 
     this.validateCommand(command, trait);
-    const isTalent = trait.isTalent;
-    const cost = this.calculateCost(trait, command.tier);
-    const rules = await loadGameRules(this.gameRepository, character.gameId);
-    this.validateMaxCost(rules, command.traitId, cost);
-    // Adding a tier based trait the character already has with a higher tier improves it, paying the difference
     const current = character.findCharacterTrait(command.traitId, command.specialization);
-    const isImprovement = !!current && trait.isTierBased && !!current.tier && !!command.tier && command.tier > current.tier;
-    const spending = this.getSpending(character, rules, isImprovement ? cost - current.cost : cost, isImprovement);
-    if (isImprovement) {
-      character.improveTrait(command.traitId, command.specialization, command.tier, cost, spending);
+    // Workspace spec 077, C12: only the game master restricts a trait; a tier change keeps the restriction it has
+    if (command.purchase.restricted) await this.characterAccess.checkManage(character, command.userId, command.roles);
+    const restricted = command.purchase.restricted ?? current?.restricted;
+    const isTalent = trait.isTalent;
+    const cost = AddTraitHandler.restrictedCost(this.calculateCost(trait, command.tier), isTalent, !!restricted);
+    const rules = await loadGameRules(this.gameRepository, character.gameId);
+    // Table 4-0 on the cost actually paid (a restricted trait costs half)
+    this.validateMaxCost(rules, command.traitId, cost);
+    // Adding a tier based trait the character already has with another tier changes it, paying the difference
+    const tierChange = !!current && trait.isTierBased && !!current.tier && !!command.tier && command.tier !== current.tier;
+    const lowering = tierChange && command.tier < current.tier;
+    if (lowering && isTalent) {
+      throw new ValidationError(`Trait ${command.traitId} is a talent: its tier cannot be lowered`, 'err-trait-tier-lower-talent');
+    }
+    // Workspace spec 077, C10: worsening a flaw is for the game master
+    if (tierChange && !lowering && !isTalent) await this.characterAccess.checkManage(character, command.userId, command.roles);
+    const purchase = await this.purchase(character, trait, current, command, cost, rules, restricted);
+    const spending = this.getSpending(character, rules, tierChange ? cost - current.cost : cost, tierChange, command.pool);
+    if (lowering) {
+      character.reduceTrait(command.traitId, command.specialization, command.tier, cost, spending, purchase);
+    } else if (tierChange) {
+      character.improveTrait(command.traitId, command.specialization, command.tier, cost, spending, purchase);
     } else {
-      character.addTrait(command.traitId, trait.name, isTalent, command.tier, cost, command.specialization, spending);
+      const grantedRanks = await this.talentSkillRanks.prepare(character, command.traitId, command.languageRanks);
+      character.addTrait(
+        command.traitId,
+        trait.name,
+        isTalent,
+        command.tier,
+        cost,
+        command.specialization,
+        spending,
+        grantedRanks,
+        purchase,
+      );
     }
     const items = await this.itemRepository.findByCharacterId(character.id);
     this.characterProcessorService.process(character, items);
     const updated = await this.characterRepository.update(character);
     await this.events.publishChanges('character', character);
     return updated;
+  }
+
+  /** Workspace spec 077, C12: a restricted talent costs half rounded up, a restricted flaw half rounded towards 0. */
+  static restrictedCost(cost: number, isTalent: boolean, restricted: boolean): number {
+    if (!restricted) return cost;
+    return isTalent ? Math.ceil(cost / 2) : Math.trunc(cost / 2) || 0;
+  }
+
+  /**
+   * Workspace spec 077: the purchase data of the trait. The link of a flaw is checked whenever it is sent; the rest of
+   * the purchase rules (prerequisites per tier, flaws that hinder, one loose flaw) only with the game option
+   * talentPurchaseRules (C11).
+   */
+  private async purchase(
+    character: Character,
+    trait: TraitResponse,
+    current: CharacterTrait | undefined,
+    command: AddTraitCommand,
+    cost: number,
+    rules: GameRules,
+    restricted: TraitRestriction | undefined,
+  ): Promise<CharacterTraitPurchase> {
+    const result: CharacterTraitPurchase = current ? CharacterTrait.purchaseOf(current) : {};
+    if (restricted) result.restricted = restricted;
+    if (command.purchase.linkedTo && !current) result.linkedTo = command.purchase.linkedTo;
+    if (result.linkedTo) {
+      const talent = await this.traitClient.getTraitById(result.linkedTo.traitId).catch(() => undefined);
+      TalentPurchasePolicy.checkLink(character, trait, command.specialization, result.linkedTo, talent, cost);
+    }
+    // Without the option a chosen prerequisite is ignored
+    if (!rules.options.talentPurchaseRules) return result;
+    const chosen = command.purchase.prerequisite;
+    if (trait.isTalent) {
+      if (chosen && MASTER_PREREQUISITES.includes(chosen.type)) {
+        await this.characterAccess.checkManage(character, command.userId, command.roles);
+      }
+      const acquired = TalentPurchasePolicy.acquisitions(character, trait, current, command.tier ?? 1, command.specialization, chosen);
+      if (acquired.length) result.acquiredBy = [...(result.acquiredBy ?? []), ...acquired];
+      return result;
+    }
+    if (!current) {
+      const { pendingApproval } = TalentPurchasePolicy.checkHindering(character, trait, command.specialization);
+      // Bought by the game master, the flaw is already approved
+      if (pendingApproval && !(await this.characterAccess.canManage(character, command.userId, command.roles))) {
+        result.pendingApproval = true;
+      }
+    }
+    if (!result.linkedTo) TalentPurchasePolicy.checkLooseLimit(character, trait.id, command.specialization, cost);
+    return result;
   }
 
   private validateCommand(command: AddTraitCommand, trait: TraitResponse): void {
@@ -85,8 +167,15 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
    *   bonusDevPointsCapAtCreation is set.
    * - 'race-points-at-creation': at creation only bonus points; afterwards only improvements of the talents already owned.
    * - 'flaw-points-at-creation': at creation only the points returned by flaws, which flaws feed instead of the normal pool.
+   * The pool the player chooses (workspace spec 076, A3) only applies when the policy fixes none.
    */
-  private getSpending(character: Character, rules: GameRules, cost: number, isImprovement: boolean): TraitSpending {
+  private getSpending(
+    character: Character,
+    rules: GameRules,
+    cost: number,
+    isImprovement: boolean,
+    pool: DevPointsPoolChoice = 'auto',
+  ): TraitSpending {
     const creation = character.isInCreation();
     const { talentPolicy, bonusDevPointsCapAtCreation } = rules.options;
     const spend = {
@@ -124,7 +213,14 @@ export class AddTraitHandler implements ICommandHandler<AddTraitCommand, Charact
           ),
       };
     }
-    return { spend, flawPool };
+    if (pool === 'normal') {
+      return {
+        spend: { ...spend, pools: poolsFor(pool) },
+        flawPool,
+        onInsufficient: () => new ValidationError('Insufficient normal development points to acquire the trait', DEV_POINTS_INSUFFICIENT),
+      };
+    }
+    return { spend: { ...spend, pools: poolsFor(pool) }, flawPool };
   }
 
   // Flaws have a negative cost and no limit

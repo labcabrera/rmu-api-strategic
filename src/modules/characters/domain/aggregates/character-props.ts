@@ -1,3 +1,4 @@
+import type { LostLimb } from '../value-objects/lost-limb.vo.js';
 import { NamedEntity } from '../../../shared/domain/entities/named-entity.js';
 import { CharacterAttack } from '../value-objects/character-attack.vo.js';
 import { CharacterDefense } from '../value-objects/character-defense.vo.js';
@@ -46,6 +47,8 @@ export interface CharacterProps {
   appliedTacticalGames: string[];
   /** Workspace spec 068: lasting morale and fear modifiers (missing in documents before it) */
   temporaryModifiers?: CharacterTemporaryModifier[];
+  /** Workspace spec 079, C1: limbs lost for good (missing in documents before it) */
+  lostLimbs?: LostLimb[];
   description: string | undefined;
   imageUrl: string | undefined;
   owner: string;

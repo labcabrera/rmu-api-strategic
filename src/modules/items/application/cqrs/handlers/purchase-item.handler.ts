@@ -50,7 +50,7 @@ export class PurchaseItemHandler implements ICommandHandler<PurchaseItemCommand,
     const amount = options.amount ?? 1;
     const stackable = !!itemType.info.stackable;
     PurchasePricing.checkAmount(itemType, amount);
-    const powerMultiplier = await this.pricing.powerMultiplier(options.powerLevel);
+    const powerMultiplier = await this.pricing.powerMultiplier(options.powerLevel, buyer.gameId);
     const { instance, unitBase } = PurchasePricing.unitBase(itemType, options.instance, Math.random, options.wielderSize, powerMultiplier);
     const base = options.unitPrice ?? unitBase;
     if (base < 0) throw new ValidationError('The price cannot be negative', 'err-item-invalid-price');

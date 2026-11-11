@@ -9,11 +9,12 @@ export interface AppliedTraitEffect {
 }
 
 // When the same trait is present twice (race and character), only the highest tier counts. A trait imported without
-// its catalog entry (spec 024) has no effect
+// its catalog entry (spec 024) has no effect, and a restricted one (workspace spec 077, C12) only acts in some
+// situations: its effects are not part of the sheet
 export function getEffectiveTraits(traits: CharacterTrait[] | undefined | null): CharacterTrait[] {
   const result = new Map<string, CharacterTrait>();
   (traits || [])
-    .filter(trait => !trait.missingReference)
+    .filter(trait => !trait.missingReference && !trait.restricted)
     .forEach(trait => {
       const key = `${trait.traitId}|${trait.specialization ?? ''}`;
       const current = result.get(key);

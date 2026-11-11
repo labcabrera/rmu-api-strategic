@@ -14,7 +14,7 @@ export class CharacterSkill {
     public readonly statistics: string[],
     public readonly development: number[],
     public professional: ProfessionalBonusType[] | null,
-    // Total ranks: culture ranks plus developed ranks
+    // Total ranks: culture ranks plus talent ranks plus developed ranks
     public ranks: number,
     public ranksDeveloped: number,
     public statBonus: number,
@@ -35,6 +35,11 @@ export class CharacterSkill {
     public styleAbilities?: StyleAbilitySelection[],
     // Workspace spec 039: skill category, for the talents that affect a whole category
     public categoryId?: string,
+    // Workspace spec 076, A7: ranks granted by a talent (Multilingual). They cost no points, do not count as developed
+    // ranks and are removed with the talent
+    public talentRanks: number = 0,
+    // Workspace spec 076, A6: indexes of the culture entries that granted the culture ranks, for the breakdown
+    public cultureSources?: number[],
   ) {}
 
   static empty(

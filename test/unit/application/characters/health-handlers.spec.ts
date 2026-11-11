@@ -1,3 +1,4 @@
+import type { GameAccess } from '../../../../src/modules/games/application/services/game-access.service.js';
 import { fakeEventPublisher } from '../../support/fake-event-publisher.js';
 import { ApplyTacticalOutcomeCommand } from '../../../../src/modules/characters/application/cqrs/commands/apply-tactical-outcome.command.js';
 import { RestCharacterCommand } from '../../../../src/modules/characters/application/cqrs/commands/rest-character.command.js';
@@ -85,7 +86,14 @@ const setup = (characters: Character[], results: AbsoluteManeuverResponse['resul
   const saveAll = vi.fn(() => Promise.resolve());
   const healingLogRepository = { saveAll } as unknown as HealingLogRepository;
   const { publisher, publish } = fakeEventPublisher();
-  const store = new CharacterHealthStore(characterRepository, gameRepository, healingLogRepository, publisher);
+  const store = new CharacterHealthStore(
+    characterRepository,
+    gameRepository,
+    healingLogRepository,
+    publisher,
+    { canManage: (game: Game | null, userId: string) => game?.owner === userId } as unknown as GameAccess,
+    { canChange: (c: Character, userId: string) => Promise.resolve(c.owner === userId) } as unknown as CharacterAccess,
+  );
   const tables: HealingTablesClientPort = { getHealingTables: () => Promise.resolve(healingTables) };
   const queue = [...results];
   const rolls: number[] = [];

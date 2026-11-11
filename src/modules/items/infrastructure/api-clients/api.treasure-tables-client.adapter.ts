@@ -8,7 +8,7 @@ import type { TreasureTables } from '../../domain/value-objects/treasure-tables.
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 /**
- * Treasure tables of rmu-api-core (workspace spec 067), read with the service token and kept in process for a while,
+ * Treasure tables of rmu-api-items (workspace specs 067 and 095), read with the service token and kept in process for a while,
  * like the alchemy tables of workspace spec 064.
  */
 @Injectable()
@@ -23,7 +23,7 @@ export class ApiTreasureTablesClientAdapter implements TreasureTablesClientPort 
 
   async getTreasureTables(): Promise<TreasureTables | null> {
     if (this.cache && Date.now() < this.cache.expiresAt) return this.cache.value;
-    const uri = `${this.configService.get('RMU_API_CORE_URI') as string}/treasure-tables`;
+    const uri = `${this.configService.get('RMU_API_ITEMS_URI') as string}/treasure-tables`;
     let value: TreasureTables | null;
     try {
       value = await this.httpClient.get<TreasureTables>(uri, { token: await this.tokenService.getToken() });

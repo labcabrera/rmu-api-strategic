@@ -14,6 +14,7 @@ import { SetUpProfessionalSkillCommand } from '../../application/cqrs/commands/s
 import { AddStyleAbilityCommand } from '../../application/cqrs/commands/add-style-ability.command.js';
 import { RemoveStyleAbilityCommand } from '../../application/cqrs/commands/remove-style-ability.command.js';
 import { AddStyleAbilityDto } from './dto/add-style-ability.dto.js';
+import { DevPointsPoolQueryDto } from './dto/dev-points-pool.dto.js';
 import { UpdateSkillCommand } from '../../application/cqrs/commands/update-skill.command.js';
 import { Character } from '../../domain/aggregates/character.js';
 import { ApiErrors } from '../../../shared/interfaces/http/api-errors.decorator.js';
@@ -77,12 +78,13 @@ export class CharacterSkillController {
     @Param('id') id: string,
     @Param('skillId') skillId: string,
     @Query('specialization') specialization: string | null,
+    @Query() poolQuery: DevPointsPoolQueryDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     this.logger.debug(`Leveling up character ${id} skill  ${skillId} for user ${user.id}`);
     const userId = user.id;
     const roles = user.roles;
-    const command = new LevelUpSkillCommand(id, skillId, specialization, userId, roles);
+    const command = new LevelUpSkillCommand(id, skillId, specialization, userId, roles, poolQuery.pool ?? 'auto');
     const entity = await this.commandBus.execute<LevelUpSkillCommand, Character>(command);
     return CharacterDto.fromEntity(entity);
   }

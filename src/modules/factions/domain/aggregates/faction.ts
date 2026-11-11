@@ -1,13 +1,18 @@
 import { randomUUID } from 'crypto';
 import { FactionCreatedEvent, FactionUpdatedEvent } from '../events/faction.events.js';
 import { FactionManagement } from '../value-objects/faction-management.vo.js';
-import { ValidationError } from '../../../shared/domain/errors/errors.js';
+import { ConflictError, ValidationError } from '../../../shared/domain/errors/errors.js';
 import { FACTION_NPC_MAX_COUNT, FACTION_NPC_MIN_COUNT, type FactionNpc, MAX_FACTION_NPCS } from '../value-objects/faction-npc.vo.js';
 import type { CreateFactionProps, FactionProps, UpdateFactionProps } from './faction-props.js';
 import { BaseAggregateRoot } from '../../../shared/domain/aggregates/base-aggregate.js';
 
+/** Spec 072, decision 5. */
+export const MAX_FACTION_PLAYERS = 20;
+
 export class Faction extends BaseAggregateRoot<FactionProps> {
   public importId: string | undefined = undefined;
+  /** Spec 072, decision 5: the players of the game who change the faction and what hangs from it. */
+  public players: string[] = [];
 
   private constructor(
     id: string,
@@ -59,7 +64,34 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       props.updatedAt,
     );
     faction.importId = props.importId;
+    faction.players = [...(props.players ?? [])];
     return faction;
+  }
+
+  isPlayer(userId: string): boolean {
+    return this.players.includes(userId);
+  }
+
+  /** Spec 072, decision 5: the whole list (the handler checks that each one is a player of the game). */
+  setPlayers(players: string[]) {
+    const next = [...new Set(players)];
+    if (next.length > MAX_FACTION_PLAYERS) {
+      throw new ConflictError(`A faction has at most ${MAX_FACTION_PLAYERS} players`, 'faction-player-limit');
+    }
+    if (next.length === this.players.length && next.every(id => this.players.includes(id))) return;
+    this.players = next;
+    this.updatedAt = new Date();
+    this.apply(new FactionUpdatedEvent(this));
+  }
+
+  addPlayer(userId: string) {
+    if (this.isPlayer(userId)) return;
+    this.setPlayers([...this.players, userId]);
+  }
+
+  removePlayer(userId: string) {
+    if (!this.isPlayer(userId)) return;
+    this.setPlayers(this.players.filter(id => id !== userId));
   }
 
   update(props: UpdateFactionProps) {
@@ -113,6 +145,7 @@ export class Faction extends BaseAggregateRoot<FactionProps> {
       imageUrl: this.imageUrl,
       owner: this.owner,
       npcs: this.npcs.map(npc => ({ ...npc })),
+      players: [...this.players],
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       ...(this.importId ? { importId: this.importId } : {}),

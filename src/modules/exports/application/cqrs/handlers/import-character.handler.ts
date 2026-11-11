@@ -7,7 +7,7 @@ import { NotFoundError } from '../../../../shared/domain/errors/errors.js';
 import { type ImportPreview, type ImportResult, ImportService } from '../../services/import.service.js';
 import { ImportCharacterCommand } from '../commands/import-character.command.js';
 
-/** Workspace spec 024, decision 13: whoever can create a character in the faction (rmu-user or rmu-admin). */
+/** Workspace spec 024, decision 13: whoever can create a character in the faction (a player of the game, spec 071). */
 @CommandHandler(ImportCharacterCommand)
 export class ImportCharacterHandler implements ICommandHandler<ImportCharacterCommand, ImportPreview | ImportResult> {
   constructor(
@@ -23,6 +23,7 @@ export class ImportCharacterHandler implements ICommandHandler<ImportCharacterCo
     if (!faction) throw new NotFoundError('Faction', command.factionId, 'err-faction-not-found');
     const game = await this.gameAccess.findGame(faction.gameId);
     if (!game) throw new NotFoundError('Game', faction.gameId, 'err-game-not-found');
+    await this.characterAccess.checkCreateIn(game, faction, command.userId, command.roles);
     const prepared = await this.imports.prepare(
       command.file,
       { target: 'character', game, faction, characterRef: command.characterRef },

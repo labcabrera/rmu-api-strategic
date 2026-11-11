@@ -12,6 +12,8 @@ export interface CharacterHealthState {
   conditions: CharacterCondition[];
   /** Workspace spec 068 (always set in the merged state) */
   temporaryModifiers?: CharacterTemporaryModifier[];
+  /** Workspace spec 077, D10: endurance.fatiguePenalty, 0-50 (always set in the merged state) */
+  fatiguePenalty?: number;
 }
 
 export interface OutcomeMergeSummary {
@@ -27,6 +29,9 @@ export interface OutcomeMergeSummary {
   temporaryModifiersAdded?: string[];
   fate?: string;
   dead: boolean;
+  /** Workspace spec 077, D10: only when the outcome carries the fatigue */
+  fatigueBefore?: number;
+  fatigueAfter?: number;
 }
 
 export interface OutcomeMergeResult {
@@ -35,6 +40,9 @@ export interface OutcomeMergeResult {
 }
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+/** §5.5: the fatigue penalty never goes beyond 50; what goes beyond is an injury that tactical already created. */
+export const MAX_FATIGUE_PENALTY = 50;
 
 /**
  * The recovery base of an injury is never below its current penalty: an absolute failure in the game worsens both
@@ -80,6 +88,8 @@ export class TacticalOutcomeMerger {
         treatments,
         // Workspace spec 068: a tactical before it sends no limits, so the strategic ones stay
         ...(incoming.limits === undefined && existing.limits !== undefined ? { limits: existing.limits } : {}),
+        // Workspace spec 079, C2: tactical does not know the strenuous failures, so the strategic one stays
+        ...(incoming.strenuousFailure === undefined && existing.strenuousFailure ? { strenuousFailure: existing.strenuousFailure } : {}),
         createdAt: existing.createdAt || incoming.createdAt,
         updatedAt: now,
       });
@@ -120,14 +130,22 @@ export class TacticalOutcomeMerger {
       resolved.push(id);
     }
     const source: InjurySource = { kind: 'manual', tacticalGameId: outcome.tacticalGameId, tacticalGameName: outcome.tacticalGameName };
+    // Workspace spec 079, C6: a death keeps the day of the campaign it happened on
+    const deathDay = (condition: CharacterCondition): Partial<CharacterCondition> =>
+      condition.status === 'dead' && condition.gameDay === undefined ? { gameDay: currentGameDay } : {};
     for (const condition of outcome.conditions || []) {
-      addCondition({ ...condition, source: { ...source, ...(condition.source || {}) }, createdAt: condition.createdAt || now });
+      addCondition({
+        ...condition,
+        source: { ...source, ...(condition.source || {}) },
+        createdAt: condition.createdAt || now,
+        ...deathDay(condition),
+      });
     }
     let status = current.status;
     if (outcome.fate === 'dead' || (outcome.conditions || []).some(c => c.status === 'dead')) {
       status = 'dead';
       if (!conditions.some(c => !c.resolvedAt && c.status === 'dead')) {
-        addCondition({ id: randomUUID(), status: 'dead', source, createdAt: now });
+        addCondition({ id: randomUUID(), status: 'dead', source, createdAt: now, gameDay: currentGameDay });
       }
     }
     if (outcome.fate === 'permanent-unconscious') {
@@ -154,8 +172,20 @@ export class TacticalOutcomeMerger {
 
     const delta = outcome.hp?.delta ?? 0;
     const hpAfter = clamp(current.hp.current + delta, -Math.abs(deathThreshold), current.hp.max);
+    // Workspace spec 077, D10: the change of the fatigue in the game; an outcome without it keeps the fatigue
+    const fatigueBefore = Math.abs(current.fatiguePenalty ?? 0);
+    const fatigueDelta = Number(outcome.fatigue?.delta);
+    const fatigueAfter =
+      outcome.fatigue && Number.isFinite(fatigueDelta) ? clamp(fatigueBefore + fatigueDelta, 0, MAX_FATIGUE_PENALTY) : fatigueBefore;
     return {
-      state: { hp: { max: current.hp.max, current: hpAfter }, status, injuries, conditions, temporaryModifiers },
+      state: {
+        hp: { max: current.hp.max, current: hpAfter },
+        status,
+        injuries,
+        conditions,
+        temporaryModifiers,
+        fatiguePenalty: fatigueAfter,
+      },
       summary: {
         hpBefore: current.hp.current,
         hpAfter,
@@ -168,6 +198,7 @@ export class TacticalOutcomeMerger {
         ...(modifiersAdded.length > 0 ? { temporaryModifiersAdded: modifiersAdded } : {}),
         fate: outcome.fate,
         dead: status === 'dead',
+        ...(outcome.fatigue ? { fatigueBefore, fatigueAfter } : {}),
       },
     };
   }

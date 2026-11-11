@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return -- HTTP bodies read as loose JSON */
 import request from 'supertest';
-import { startApp, type E2eApp, type UserName } from './support/app.js';
+import { startApp, USERS, type E2eApp, type UserName } from './support/app.js';
 import { createCharacter, createFaction, createGame } from './support/builders.js';
 import { maneuverCalls, tradingTables } from './support/fakes.js';
 
@@ -93,13 +93,21 @@ describe('item operations (e2e)', () => {
     expect(await gold()).toBe(92);
   });
 
-  it('lets a player spend the coins of its character but not the gold of the faction', async () => {
+  it('lets the players of the faction spend its gold and the coins of its characters, and nobody else (spec 072)', async () => {
+    const players = (method: 'put' | 'delete') =>
+      request(e2e.server)[method](`/v1/factions/${factionId}/players/${USERS.other.sub}`).set('Authorization', e2e.auth('owner'));
+    // other plays the soldier, but is not a player of the faction any more
+    await players('delete').expect(200);
     const denied = await as('other').post('/v1/items/purchases', { buyer: holder('character', soldierId), itemTypeId: 'sword' });
     expect(denied.status).toBe(403);
-    expect(await gold()).toBe(100);
-    // The game master gives the soldier coins, and the soldier buys with them
-    expect((await as('owner').patch(`/v1/characters/${soldierId}/transfer-faction-gold`, { amount: 20 })).status).toBe(200);
     expect((await as('other').patch(`/v1/characters/${soldierId}/transfer-faction-gold`, { amount: 5 })).status).toBe(403);
+    expect((await as('other').post('/v1/items/purchases', { buyer: holder('faction', faction.id()), itemTypeId: 'sword' })).status).toBe(
+      403,
+    );
+    expect(await gold()).toBe(100);
+
+    await players('put').expect(200);
+    expect((await as('other').patch(`/v1/characters/${soldierId}/transfer-faction-gold`, { amount: 20 })).status).toBe(200);
     const bought = await as('other').post('/v1/items/purchases', {
       buyer: holder('character', soldierId),
       itemTypeId: 'sword',
@@ -108,7 +116,21 @@ describe('item operations (e2e)', () => {
     expect(bought.status, JSON.stringify(bought.body)).toBe(201);
     const coins = await as('other').get(`/v1/items?q=characterId==${soldierId};itemTypeId==gold-coin`);
     expect((coins.body as Body).content[0]).toMatchObject({ amount: 10 });
-    expect(await gold()).toBe(80);
+    const armory = await as('other').post('/v1/items/purchases', { buyer: holder('faction', faction.id()), itemTypeId: 'sword' });
+    expect(armory.status, JSON.stringify(armory.body)).toBe(201);
+    expect(await gold()).toBe(70);
+    // add-gold and the name stay with the masters
+    expect((await as('other').post(`/v1/factions/${factionId}/add-gold`, { gold: 10 })).status).toBe(403);
+    expect((await as('other').patch(`/v1/factions/${factionId}`, { name: 'Mine' })).status).toBe(403);
+
+    // An ex-player spends nothing, and is no longer a player to add
+    await request(e2e.server).delete(`/v1/strategic-games/${gameId}/members/me`).set('Authorization', e2e.auth('other')).expect(200);
+    const after = await as('other').post('/v1/items/purchases', { buyer: holder('faction', faction.id()), itemTypeId: 'sword' });
+    expect(after.status).toBe(403);
+    expect(await gold()).toBe(70);
+    const notPlayer = await as('owner').patch(`/v1/factions/${factionId}`, { players: [USERS.other.sub] });
+    expect(notPlayer.status).toBe(400);
+    expect(notPlayer.body).toMatchObject({ code: 'faction-player-not-a-player' });
   });
 
   it('rejects a purchase the faction cannot afford without charging anything', async () => {

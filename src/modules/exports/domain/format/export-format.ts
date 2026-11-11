@@ -4,10 +4,18 @@ import type { CharacterRealm } from '../../../characters/domain/value-objects/ch
 import type { CharacterGender } from '../../../characters/domain/value-objects/character-roleplay-info.vo.js';
 import type { StatKey } from '../../../characters/domain/value-objects/character-stat.vo.js';
 import type { CharacterStatus } from '../../../characters/domain/value-objects/character-status.vo.js';
-import type { TraitPayment } from '../../../characters/domain/value-objects/character-trait.vo.js';
+import type {
+  TraitAcquisition,
+  TraitGrantedRanks,
+  TraitLink,
+  TraitPayment,
+  TraitRestriction,
+} from '../../../characters/domain/value-objects/character-trait.vo.js';
+import type { IntenseTrainingSkill, StatGainPayment } from '../../../characters/domain/value-objects/character-xp.vo.js';
 import type { ProfessionalBonusType } from '../../../characters/domain/value-objects/professional-bonus-type.vo.js';
 import type { WeaponDevelopmentType } from '../../../characters/domain/value-objects/weapon-development-type.vo.js';
-import type { Injury } from '../../../characters/domain/value-objects/injury.vo.js';
+import type { BodySide, Injury } from '../../../characters/domain/value-objects/injury.vo.js';
+import type { LostLimbCause, LostLimbLocation } from '../../../characters/domain/value-objects/lost-limb.vo.js';
 import type { TemporaryModifier } from '../../../characters/domain/value-objects/temporary-modifier.vo.js';
 import type { ItemArmor } from '../../../items/domain/value-objects/item-armor.vo.js';
 import type { ItemCatalogInfo } from '../../../items/domain/value-objects/item-catalog-info.vo.js';
@@ -33,7 +41,7 @@ import type { ItemWeapon } from '../../../items/domain/value-objects/item-weapon
  * this file holds raises CURRENT_FORMAT_VERSION and adds an upcaster (decision 2, ADR 0008).
  */
 export const EXPORT_FORMAT = 'rmu-strategic-export';
-export const CURRENT_FORMAT_VERSION = 12;
+export const CURRENT_FORMAT_VERSION = 14;
 export const EXPORT_APP = 'rmu-api-strategic';
 
 /** Limits of a file (decision 11). */
@@ -100,6 +108,10 @@ export interface CharacterExportExperience {
   weaponDevelopment: WeaponDevelopmentType[];
   bonusDevPointsSpentThisLevel: number;
   flawDevPoints: number;
+  /** Workspace spec 076 (format 13). */
+  intenseTrainingSkill: IntenseTrainingSkill | null;
+  savedDevPoints: number;
+  statGainPayments: StatGainPayment[];
 }
 
 export interface CharacterExportStat {
@@ -117,6 +129,10 @@ export interface CharacterExportSkill {
   ranks: number;
   ranksDeveloped: number;
   cultureRanks: number;
+  /** Workspace spec 076 (format 13): ranks of a talent such as Multilingual. */
+  talentRanks: number;
+  /** Workspace spec 076: culture entries of the culture ranks; missing when unknown. */
+  cultureSources?: number[];
   devPointsSpent: { normal: number; bonus: number };
   knackBonus: number | null;
   /** Fighting style skills (workspace spec 032); missing in files of older versions. */
@@ -132,6 +148,13 @@ export interface CharacterExportTrait {
   cost: number;
   specialization: string | null;
   paidWith: TraitPayment | null;
+  /** Workspace spec 076: skill ranks granted by the talent (Multilingual); missing for the other traits. */
+  grantedRanks?: TraitGrantedRanks[];
+  /** Workspace spec 077 (format 13, unreleased until then): purchase data, all optional. */
+  acquiredBy?: TraitAcquisition[];
+  linkedTo?: TraitLink;
+  restricted?: TraitRestriction;
+  pendingApproval?: boolean;
 }
 
 export interface CharacterExportEndurance {
@@ -156,6 +179,14 @@ export interface CharacterExportResistance {
 export type CharacterExportTemporaryModifier = Omit<TemporaryModifier, 'tacticalGameId'> & { remainingDays: number | null };
 
 /** A character without ids, owner, game or derived values (decision 3). */
+/** Workspace spec 079 (format 14): a lost limb of the character. */
+export interface CharacterExportLostLimb {
+  location: LostLimbLocation;
+  side: BodySide;
+  at: string;
+  cause?: LostLimbCause;
+}
+
 export interface CharacterExport {
   name: string;
   info: CharacterExportInfo;
@@ -176,6 +207,8 @@ export interface CharacterExport {
   conditions: CharacterCondition[];
   /** Workspace spec 068 (format 12) */
   temporaryModifiers: CharacterExportTemporaryModifier[];
+  /** Workspace spec 079 (format 14): limbs lost for good (the day of the campaign does not travel) */
+  lostLimbs: CharacterExportLostLimb[];
   description: string | null;
   imageUrl: string | null;
 }

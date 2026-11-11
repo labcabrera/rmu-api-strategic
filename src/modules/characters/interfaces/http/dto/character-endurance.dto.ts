@@ -16,8 +16,17 @@ export class CharacterEnduranceDto {
   @ApiProperty({ description: 'Endurance accumulator', example: 20 })
   accumulator: number;
 
-  @ApiProperty({ description: 'Fatigue penalty', example: 5 })
+  @ApiProperty({
+    description: 'Accumulated fatigue penalty, 0-50, shown as a negative modifier (workspace spec 077: recovered resting, 1 per minute)',
+    example: 5,
+  })
   fatiguePenalty: number;
+
+  @ApiProperty({ description: 'Racial endurance bonus (with Body Development, the endurance bonus of a tactical game)', example: 0 })
+  racialBonus: number;
+
+  @ApiProperty({ description: 'Bonus of Vigorous (+10/tier) and Feeble (-10/tier) to every Endurance roll (spec 079, D2)', example: 10 })
+  traitBonus: number;
 
   static fromEntity(endurance: CharacterEndurance): CharacterEnduranceDto {
     const dto = new CharacterEnduranceDto();
@@ -25,7 +34,9 @@ export class CharacterEnduranceDto {
     dto.max = endurance.max;
     dto.current = endurance.current;
     dto.accumulator = endurance.accumulator;
-    dto.fatiguePenalty = endurance.fatiguePenalty;
+    dto.fatiguePenalty = endurance.fatiguePenalty ?? 0;
+    dto.racialBonus = endurance.racialBonus ?? 0;
+    dto.traitBonus = endurance.traitBonus ?? 0;
     return dto;
   }
 }
