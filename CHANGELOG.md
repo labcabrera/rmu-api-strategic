@@ -1,3 +1,49 @@
+# [0.7.0](https://github.com/labcabrera/rmu-api-strategic/compare/0.6.0...0.7.0) (2026-11-11)
+
+
+* feat(factions)!: faction players, open reads for members and access per entity ([e960fba](https://github.com/labcabrera/rmu-api-strategic/commit/e960fba35e37aea211b7261ab6888e6384adfdb2))
+
+
+### Bug Fixes
+
+* poison clock of 12 rounds a minute (spec 079, phase 1) ([b47722c](https://github.com/labcabrera/rmu-api-strategic/commit/b47722ccafab95fc6c325a658c8b14d1f362bdf7))
+
+
+### Features
+
+* amputation, healing without rest and the day of a death (spec 079, phase 5) ([72efd6a](https://github.com/labcabrera/rmu-api-strategic/commit/72efd6a3e495c15954d8bb75e90046aa426d9b99))
+* attack size on the whole size scale (spec 075) ([5e7be73](https://github.com/labcabrera/rmu-api-strategic/commit/5e7be732797379ca5b798ceaaa234cec148539be))
+* **characters:** culture sources of the culture ranks (spec 076) ([99d8a28](https://github.com/labcabrera/rmu-api-strategic/commit/99d8a2806902723bd37c3bdea126885c84b8f81b))
+* **characters:** intense training, creation as one level, pool choice and saved points (spec 076) ([743ef43](https://github.com/labcabrera/rmu-api-strategic/commit/743ef43bd7450cbfbc1789a7d3199d60091f9d7c))
+* **characters:** multilingual language ranks and pool choice on traits (spec 076) ([cc3da3d](https://github.com/labcabrera/rmu-api-strategic/commit/cc3da3dbe1f2698d29f7c59b1d032e12b640c16d))
+* **characters:** unarmed attacks of the unarmed skills (spec 076, B-08) ([e7a64bd](https://github.com/labcabrera/rmu-api-strategic/commit/e7a64bd70b020d87d2b6d459c3195b72a62dd010))
+* **chronicle:** campaign chronicle chapters ([286f8ff](https://github.com/labcabrera/rmu-api-strategic/commit/286f8ffcbbbf2540dd0b78e4bc7085fc9bc25bfd))
+* endurance, load and sleeper talents, deadeye share per range (spec 079, phase 7) ([d3dfac5](https://github.com/labcabrera/rmu-api-strategic/commit/d3dfac51bf01628179dfb1755b6a501a69860e0a))
+* **exports:** export format 13 with the development data of spec 076 ([97955e8](https://github.com/labcabrera/rmu-api-strategic/commit/97955e89147156e0c4e939be7c78e5aaa1d2db91))
+* faction leader, sheet and cover views, items by holder (spec 071) ([a319579](https://github.com/labcabrera/rmu-api-strategic/commit/a319579f23b2ff371db4d15c595520ce6390aeec))
+* fatigue round trip and recovery on rest (spec 077, phase 4) ([f051112](https://github.com/labcabrera/rmu-api-strategic/commit/f05111201abff94f85e21a9812cc6ddf72ea8cb8))
+* game members, join requests and access levels (spec 071) ([8bad314](https://github.com/labcabrera/rmu-api-strategic/commit/8bad3144a00bede640c157154175cd545ae2c7e8))
+* **games:** follow the new name of a user in members and join requests ([4d8f728](https://github.com/labcabrera/rmu-api-strategic/commit/4d8f72879e658c128c06b1927d996fd31447d30b))
+* **games:** intense training and saving development points options (spec 076) ([4c2f1b3](https://github.com/labcabrera/rmu-api-strategic/commit/4c2f1b31fd493f8bbed51eaca472b1a75df41638))
+* power level presets, group experience and starting wealth (spec 079, phase 8) ([9448738](https://github.com/labcabrera/rmu-api-strategic/commit/9448738a162c5c2464da33b64fa8881829b4feb2))
+* talent purchase rules, restricted talents and lowering flaws (spec 077, phase 3) ([a4322ac](https://github.com/labcabrera/rmu-api-strategic/commit/a4322ac997073aac1d2ca8022d0f81f92430d6b5))
+* worn armor in encumbrance and fitted weight (spec 077, phase 1) ([d6ed861](https://github.com/labcabrera/rmu-api-strategic/commit/d6ed861fb8d3d8cfef1c6c8a222e2685b4d98c6e))
+
+
+### BREAKING CHANGES
+
+* `leaderId` and the summary and cover projections of characters
+and factions are gone, and the owner of a character no longer changes it unless
+they are a player of its faction.
+* GET characters and factions answer summaries to readers
+outside the faction, and add-xp is only for the masters.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* characters can no longer be created by users who are not
+players of the game; private games are only read by their members.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
 # [0.6.0](https://github.com/labcabrera/rmu-api-strategic/compare/0.5.2...0.6.0) (2026-11-02)
 
 
